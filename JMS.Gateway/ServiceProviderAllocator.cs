@@ -9,7 +9,7 @@ using Way.Lib;
 namespace JMS
 {
     /// <summary>
-    /// 微服务分配
+    /// 微服务分配器，轮流分配原则
     /// </summary>
     class ServiceProviderAllocator: IServiceProviderAllocator
     {
