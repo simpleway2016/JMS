@@ -51,7 +51,7 @@ namespace TestApplication
             //Console.WriteLine(sw.ElapsedMilliseconds);
             Thread.Sleep(3000);
 
-            using ( var tran = new MicroServiceTransaction("localhost", 8911) )
+            using (var tran = new MicroServiceTransaction("localhost", 8911))
             {
                 tran.Header = new Dictionary<string, string>() {
                     { "auth" , "123456789"}
@@ -63,7 +63,7 @@ namespace TestApplication
                 var controller1 = tran.GetMicroService("Controller1");
                 var Service2 = tran.GetMicroService("Service2");
 
-                var ret = controller1.Invoke<string>("Test" , 123 , "Jack.T");
+                var ret = controller1.Invoke<string>("Test", 123, "Jack.T");
                 Console.WriteLine("调用结果：{0}", ret);
 
                 controller1.InvokeAsync("Test2");
