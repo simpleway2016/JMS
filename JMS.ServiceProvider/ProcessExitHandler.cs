@@ -7,9 +7,9 @@ using System.Threading;
 namespace JMS
 {
     /// <summary>
-    /// 关于进程退出时的处理
+    /// 关于进程退出时的处理,linux如果要关闭进程，需要使用 "kill -15 进程id" 命令，这样，ProcessExitHandler才能处理
     /// </summary>
-    class ProcessExitHandler:IDisposable
+    class ProcessExitHandler :IDisposable
     {
         public MicroServiceProvider _microServiceProvider;
         TransactionDelegateCenter _transactionDelegateCenter;
