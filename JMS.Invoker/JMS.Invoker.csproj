@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>JMS</RootNamespace>
+    <AssemblyName>JMS.Invoker</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JMS.Models\JMS.Models.csproj" />
+  </ItemGroup>
+
+</Project>
