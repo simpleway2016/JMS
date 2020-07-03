@@ -4,7 +4,7 @@ using System.Text;
 
 namespace JMS.Interfaces
 {
-    interface IKeyLocker
+    public interface IKeyLocker
     {
         /// <summary>
         /// 申请锁住指定的key
