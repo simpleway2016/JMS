@@ -8,7 +8,7 @@ namespace JMS
     public interface IMicroService
     {
         /// <summary>
-        /// 获取微服务的客户端c#代码
+        /// 获取微服务的客户端c#代码（只在debug模式下有效）
         /// </summary>
         /// <param name="nameSpace">代码使用什么命名空间</param>
         /// <param name="className">类名</param>

@@ -45,7 +45,7 @@ namespace JMS
 #if DEBUG
                 netclient.ReadTimeout = 0;
 #else
-            netclient.ReadTimeout = 20000;
+            netclient.ReadTimeout = 16000;
 #endif
                 var cmd = new InvokeCommand()
                 {

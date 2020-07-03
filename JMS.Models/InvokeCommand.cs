@@ -12,7 +12,8 @@ namespace JMS
         /// <summary>
         /// 获取访问服务的c#代码类
         /// </summary>
-        GenerateInvokeCode = 3
+        GenerateInvokeCode = 3,
+        HealthyCheck=4
     }
     public class InvokeCommand
     {

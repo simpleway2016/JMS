@@ -120,6 +120,10 @@ namespace JMS.Impls
                         netclient.WriteServiceData(new InvokeResult() { Success = true });
                         return;
                     }
+                    else if (cmd.Type == InvokeType.HealthyCheck)
+                    {
+                        netclient.WriteServiceData("ok");
+                    }
                 }
             }
             catch (SocketException)

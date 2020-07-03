@@ -44,7 +44,7 @@ namespace JMS.Impls
 #if DEBUG
                 _client.ReadTimeout = 0;
 #else
-                _client.ReadTimeout = 20000;
+                _client.ReadTimeout = 16000;
 #endif
 
                 GatewayCommand cmd = new GatewayCommand()

@@ -70,7 +70,7 @@ namespace JMS
         public string GetServiceClassCode(string nameSpace, string className)
         {
             var netclient = new Way.Lib.NetStream(_serviceLocation.Host, _serviceLocation.Port);
-            netclient.ReadTimeout = 20000;
+            netclient.ReadTimeout = 16000;
             netclient.WriteServiceData(new InvokeCommand() { 
                  Type = InvokeType.GenerateInvokeCode,
                  Service = _serviceName,

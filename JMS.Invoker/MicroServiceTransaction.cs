@@ -45,7 +45,7 @@ namespace Microsoft.AspNetCore.Mvc
 #if DEBUG
                 netclient.ReadTimeout = 0;
 #else
-                netclient.ReadTimeout = 20000;
+                netclient.ReadTimeout = 16000;
 #endif
                 netclient.WriteServiceData(new GatewayCommand()
                 {
@@ -105,64 +105,98 @@ namespace Microsoft.AspNetCore.Mvc
             _finished = true;
             var errors = endResponse(InvokeType.CommitTranaction);
             if (errors.Count > 0)
-                throw new TransactionCommitArrayException(errors, "commit transaction error");
+                throw new TransactionArrayException(errors, "commit transaction error");
         }
 
-        List<TransactionCommitException> endResponse(InvokeType invokeType)
+        List<TransactionException> endResponse(InvokeType invokeType)
         {
             waitTasks();
 
-            List<TransactionCommitException> errors = new List<TransactionCommitException>(_Connects.Count);
-
+            List<TransactionException> errors = new List<TransactionException>(_Connects.Count);
+            //健康检查
             Parallel.For(0, _Connects.Count, (i) => {
                 var client = _Connects[i];
-                bool reconnect = false;
-                while (true)
+                try
                 {
-                    try
+                    client.NetClient.WriteServiceData(new InvokeCommand()
                     {
-                        if(reconnect)
+                        Type = InvokeType.HealthyCheck,
+                    });
+                    client.NetClient.ReadServiceObject<string>();
+                }
+                catch (Exception ex)
+                {
+                    client.NetClient.Dispose();
+                    errors.Add(new TransactionException(client.ServiceLocation, ex.Message));
+                }
+                
+            });
+
+            if (errors.Count > 0)
+            {
+                foreach( var client in _Connects )
+                {
+                    client.NetClient.Dispose();
+                }
+                if(invokeType == InvokeType.CommitTranaction)
+                    throw new TransactionException(null, "提交事务时，有连接中断，所有事务将回滚");
+                else
+                    throw new TransactionException(null, "回滚事务时，有连接中断，所有事务将稍后回滚");
+            }
+
+            if (errors.Count == 0)
+            {
+                Parallel.For(0, _Connects.Count, (i) => {
+                    var client = _Connects[i];
+                    bool reconnect = false;
+                    while (true)
+                    {
+                        try
                         {
-                            Thread.Sleep(1000);
-                            client.ReConnect();
-                        }
-                       
-                        if (errors.Count == 0)
-                        {
-                            client.NetClient.WriteServiceData(new InvokeCommand()
+                            if (reconnect)
                             {
-                                Type = invokeType,
-                                Header = this.Header
-                            });
-                            client.NetClient.ReadServiceObject<InvokeResult>();
+                                Thread.Sleep(1000);
+                                client.ReConnect();
+                            }
+
+                            if (errors.Count == 0)
+                            {
+                                client.NetClient.WriteServiceData(new InvokeCommand()
+                                {
+                                    Type = invokeType,
+                                    Header = this.Header
+                                });
+                                client.NetClient.ReadServiceObject<InvokeResult>();
+                            }
+                            else
+                            {
+                                errors.Add(new TransactionException(client.ServiceLocation, "cancel"));
+                            }
+                            break;
                         }
-                        else
+                        catch (SocketException ex)
                         {
-                            errors.Add(new TransactionCommitException(client.ServiceLocation, "cancel"));
+                            if (client.ReConnectCount < 10)
+                            {
+                                client.NetClient.Dispose();
+                                reconnect = true;
+                            }
+                            else
+                            {
+                                errors.Add(new TransactionException(client.ServiceLocation, ex.Message));
+                                break;
+                            }
                         }
-                        break;
-                    }
-                    catch(SocketException ex)
-                    {
-                        if (client.ReConnectCount < 10)
+                        catch (Exception ex)
                         {
-                            client.NetClient.Dispose();
-                            reconnect = true;
-                        }
-                        else
-                        {
-                            errors.Add(new TransactionCommitException(client.ServiceLocation, ex.Message));
+                            errors.Add(new TransactionException(client.ServiceLocation, ex.Message));
                             break;
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        errors.Add(new TransactionCommitException(client.ServiceLocation, ex.Message));
-                        break;
-                    }
-                }
-                client.NetClient.Dispose();
-            });
+                    client.NetClient.Dispose();
+                });
+            }
+           
 
             _Connects.Clear();
             _Tasks.Clear();
@@ -179,7 +213,7 @@ namespace Microsoft.AspNetCore.Mvc
 
            var errors = endResponse(InvokeType.RollbackTranaction);
             if (errors.Count > 0)
-                throw new TransactionCommitArrayException(errors, "rollback transaction error");
+                throw new TransactionArrayException(errors, "rollback transaction error");
         }
 
         public void Dispose()

@@ -18,7 +18,7 @@ namespace JMS.Impls
         {
             using (var netclient = new Way.Lib.NetStream(_microServiceProvider.GatewayAddress,_microServiceProvider.GatewayPort))
             {
-                netclient.ReadTimeout = 20000;
+                netclient.ReadTimeout = 16000;
                 netclient.WriteServiceData(new GatewayCommand { 
                     Type = CommandType.LockKey,
                     Content = new LockKeyInfo { 
@@ -37,7 +37,7 @@ namespace JMS.Impls
         {
             using (var netclient = new Way.Lib.NetStream(_microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort))
             {
-                netclient.ReadTimeout = 20000;
+                netclient.ReadTimeout = 16000;
                 netclient.WriteServiceData(new GatewayCommand
                 {
                     Type = CommandType.LockKey,
