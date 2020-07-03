@@ -7,7 +7,7 @@ using Way.Lib;
 
 namespace JMS
 {
-    class Client
+    class InvokeConnect
     {
         public RegisterServiceLocation ServiceLocation { get; }
         internal Way.Lib.NetStream NetClient;
@@ -20,7 +20,7 @@ namespace JMS
         {
             get;
         }
-        public Client(string serviceName , RegisterServiceLocation location)
+        public InvokeConnect(string serviceName , RegisterServiceLocation location)
         {
             ServiceName = serviceName;
             this.ServiceLocation = location;
@@ -64,7 +64,7 @@ namespace JMS
                 NetClient = netclient;
 
                 if (result.SupportTransaction)
-                    tran.AddClient(this);
+                    tran.AddConnect(this);
                 else
                 {
                     netclient.Dispose();

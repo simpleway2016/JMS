@@ -13,7 +13,7 @@ namespace Microsoft.AspNetCore.Mvc
     /// </summary>
     public class MicroServiceTransaction : IDisposable
     {
-        List<Client> _Clients = new List<Client>();
+        List<InvokeConnect> _Connects = new List<InvokeConnect>();
         List<Task> _Tasks = new List<Task>();
 
         private string _TransactionId;
@@ -66,11 +66,11 @@ namespace Microsoft.AspNetCore.Mvc
             return null;
         }
 
-        internal void AddClient(Client   client)
+        internal void AddConnect(InvokeConnect   connect)
         {
-            lock(_Clients)
+            lock(_Connects)
             {
-                _Clients.Add(client);
+                _Connects.Add(connect);
             }           
         }
         internal void AddTask(Task task)
@@ -100,10 +100,10 @@ namespace Microsoft.AspNetCore.Mvc
         {
             waitTasks();
 
-            List<TransactionCommitException> errors = new List<TransactionCommitException>(_Clients.Count);
+            List<TransactionCommitException> errors = new List<TransactionCommitException>(_Connects.Count);
 
-            Parallel.For(0, _Clients.Count, (i) => {
-                var client = _Clients[i];
+            Parallel.For(0, _Connects.Count, (i) => {
+                var client = _Connects[i];
                 bool reconnect = false;
                 while (true)
                 {
@@ -152,7 +152,7 @@ namespace Microsoft.AspNetCore.Mvc
                 client.NetClient.Dispose();
             });
 
-            _Clients.Clear();
+            _Connects.Clear();
             _Tasks.Clear();
 
             return errors;

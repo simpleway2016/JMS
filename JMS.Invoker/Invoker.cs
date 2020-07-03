@@ -48,21 +48,21 @@ namespace JMS
 
         public void Invoke(string method, params object[] parameters)
         {
-            new Client(_serviceName, _serviceLocation).Invoke<object>(method, ServiceTransaction, parameters);
+            new InvokeConnect(_serviceName, _serviceLocation).Invoke<object>(method, ServiceTransaction, parameters);
         }
         public T Invoke<T>(string method, params object[] parameters)
         {
-            return new Client(_serviceName, _serviceLocation).Invoke<T>(method, ServiceTransaction, parameters);
+            return new InvokeConnect(_serviceName, _serviceLocation).Invoke<T>(method, ServiceTransaction, parameters);
         }
         public Task<T> InvokeAsync<T>(string method, params object[] parameters)
         {
-            var task = new Client(_serviceName, _serviceLocation).InvokeAsync<T>(method,  ServiceTransaction, parameters);
+            var task = new InvokeConnect(_serviceName, _serviceLocation).InvokeAsync<T>(method,  ServiceTransaction, parameters);
             ServiceTransaction.AddTask(task);
             return task;
         }
         public Task InvokeAsync(string method, params object[] parameters)
         {
-            var task = new Client(_serviceName, _serviceLocation).InvokeAsync<object>(method, ServiceTransaction, parameters);
+            var task = new InvokeConnect(_serviceName, _serviceLocation).InvokeAsync<object>(method, ServiceTransaction, parameters);
             ServiceTransaction.AddTask(task);
             return task;
         }
