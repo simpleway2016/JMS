@@ -36,10 +36,9 @@ namespace JMS
             {
                 try
                 {
-                    var keys = _cache.Keys.ToArray();
-                    for (int i = 0; i < keys.Length; i++)
+                    foreach (var pair in _cache)
                     {
-                        var obj = _cache[keys[i]];
+                        var obj = pair.Value;
                         if (obj.Locker > 0)
                         {
                             if (obj.LockTime != null)

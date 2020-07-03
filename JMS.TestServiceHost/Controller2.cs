@@ -11,6 +11,8 @@ namespace JMS
         {
             this.TransactionControl = new TransactionDelegate(this.Header["TranId"]) { 
                 CommitAction = () => {
+                    this.UnLock("testkey");
+                    logger.LogInformation("unlocked testkey");
                     logger.LogInformation("Controller2 提交事务");
                 },
                 RollbackAction = () => {
@@ -20,7 +22,7 @@ namespace JMS
         }
         public string GetName()
         {
-            return "lock result: " + this.TryLock("test", false);
+            return "lock result: " + this.TryLock("testkey", false);
         }
     }
 }
