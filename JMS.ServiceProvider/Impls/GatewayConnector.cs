@@ -13,6 +13,10 @@ namespace JMS.Impls
 {
     class GatewayConnector : IGatewayConnector
     {
+        /// <summary>
+        /// 在网关处的id
+        /// </summary>
+        internal int ServiceId;
         Way.Lib.NetStream _client;
         ILogger<GatewayConnector> _logger;
         MicroServiceProvider _microServiceProvider;
@@ -49,11 +53,13 @@ namespace JMS.Impls
                     {
                         ServiceNames = _microServiceProvider.ServiceNames.Keys.ToArray(),
                         Port = _microServiceProvider.ServicePort,
-                        MaxThread = Environment.ProcessorCount
+                        MaxThread = Environment.ProcessorCount,
+                        ServiceId = this.ServiceId
                     }.ToJsonString()
                 };
                 _client.WriteServiceData(cmd);
-                _client.ReadServiceData();
+                var ret = _client.ReadServiceObject<InvokeResult>();
+                this.ServiceId = Convert.ToInt32(ret.Data);
 
                 _client.ReadTimeout = 0;
                 _ready = true;

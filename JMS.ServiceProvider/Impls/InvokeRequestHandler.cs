@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using Way.Lib;
-
+using Microsoft.Extensions.DependencyInjection;
 namespace JMS.Impls
 {
     class InvokeRequestHandler : IRequestHandler
@@ -37,6 +37,7 @@ namespace JMS.Impls
                 var controllerType = _MicroServiceProvider.ServiceNames[cmd.Service];
                 controller = (MicroServiceControllerBase)_MicroServiceProvider.ServiceProvider.GetService(controllerType);
                 controller.NetClient = netclient;
+                controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();
                 _logger?.LogDebug("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters);
                 var method = controllerType.GetMethod(cmd.Method, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                 var parameterInfos = method.GetParameters();

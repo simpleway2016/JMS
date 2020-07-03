@@ -28,6 +28,7 @@ namespace JMS
             services.AddSingleton<IRequestReception,RequestReception>();
             services.AddSingleton<ICommandHandlerManager, CommandHandlerManager>();
             services.AddSingleton<Gateway>();
+            services.AddSingleton<LockKeyManager>();
             services.AddTransient<IMicroServiceReception,MicroServiceReception>();
             services.AddSingleton<TransactionIdBuilder>();
 
@@ -38,6 +39,8 @@ namespace JMS
 
             services.AddSingleton<IServiceProviderAllocator>(serviceProviderAllocator);
             var serviceProvider = services.BuildServiceProvider();
+            serviceProvider.GetService<LockKeyManager>();
+            
             var gateway = serviceProvider.GetService<Gateway>();
             gateway.ServiceProvider = serviceProvider;
             gateway.Run(port);

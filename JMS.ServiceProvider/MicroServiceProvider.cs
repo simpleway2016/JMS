@@ -54,6 +54,7 @@ namespace JMS
        
         public void Run(string gatewayAddress, int gatewayPort, int servicePort)
         {
+            _services.AddSingleton<IKeyLocker, KeyLocker>();
             _services.AddSingleton<ICodeBuilder, CodeBuilder>();
             _services.AddSingleton<IGatewayConnector, GatewayConnector>();
             _services.AddSingleton<IRequestReception,RequestReception>();

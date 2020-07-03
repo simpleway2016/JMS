@@ -17,15 +17,31 @@ namespace JMS
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
         internal IServiceProvider ServiceProvider { get; set; }
-        public List<MicroServiceReception> OnlineMicroServices { get; set; }
+        public System.Collections.ObjectModel.ObservableCollection<IMicroServiceReception> OnlineMicroServices { get; set; }
 
 
         public Gateway(ILogger<Gateway> logger)
         {
             _Logger = logger;
-            OnlineMicroServices = new List<MicroServiceReception>();
+            OnlineMicroServices = new System.Collections.ObjectModel.ObservableCollection<IMicroServiceReception>();
         }
 
+        public IMicroServiceReception GetServiceById(int id)
+        {
+            try
+            {
+                for (int i = 0; i < OnlineMicroServices.Count; i++)
+                {
+                    if (OnlineMicroServices[i].Id == id)
+                        return OnlineMicroServices[i];
+                }
+            }
+            catch
+            {
+                
+            }
+            return null;
+        }
         public void Run(int port)
         {
             _requestReception = ServiceProvider.GetService<IRequestReception>();

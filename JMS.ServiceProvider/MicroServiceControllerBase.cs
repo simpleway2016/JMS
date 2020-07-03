@@ -1,4 +1,5 @@
 ﻿using JMS;
+using JMS.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,6 +8,7 @@ using Way.Lib;
 
 public class MicroServiceControllerBase
 {
+    internal IKeyLocker _keyLocker;
     internal Way.Lib.NetStream NetClient;
     internal static ThreadLocal<InvokeCommand> RequestingCommand = new ThreadLocal<InvokeCommand>();
 
@@ -25,6 +27,7 @@ public class MicroServiceControllerBase
     }
     public TransactionDelegate TransactionControl { set; get; }
 
+
     /// <summary>
     /// 终止请求，并返回指定的值
     /// </summary>
@@ -39,6 +42,22 @@ public class MicroServiceControllerBase
 
         });
         throw new ResponseEndException();
+    }
+
+    /// <summary>
+    /// 申请锁住指定的key
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="waitToSuccess">一直等到成功为止</param>
+    /// <returns>是否成功</returns>
+    public bool TryLock(string key,bool waitToSuccess)
+    {
+        return _keyLocker.TryLock(key , waitToSuccess);
+    }
+
+    public void UnLock(string key)
+    {
+        _keyLocker.UnLock(key);
     }
 
     public virtual void InvokeError(string actionName, object[] parameters,Exception error)

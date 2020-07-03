@@ -19,19 +19,36 @@ namespace JMS.Impls
         Gateway _Gateway;
         Way.Lib.NetStream NetClient;
         public RegisterServiceInfo ServiceInfo { get; set; }
+        public int Id { get; private set; }
+        static int Seed;
         IServiceProviderAllocator _ServiceProviderAllocator;
-        public MicroServiceReception(ILogger<MicroServiceReception> logger, Gateway gateway, IServiceProviderAllocator serviceProviderAllocator)
-        {
+        LockKeyManager _lockKeyManager;
+        public MicroServiceReception(ILogger<MicroServiceReception> logger,
+            Gateway gateway, 
+            LockKeyManager lockKeyManager,
+            IServiceProviderAllocator serviceProviderAllocator)
+        {           
             _Gateway = gateway;
             _ServiceProviderAllocator = serviceProviderAllocator;
                _Logger = logger;
+            _lockKeyManager = lockKeyManager;
         }
         public void HealthyCheck( Way.Lib.NetStream netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
+            if(ServiceInfo.ServiceId > 0)
+            {
+                this.Id = ServiceInfo.ServiceId;
+            }
+            else
+            {
+                this.Id = Interlocked.Increment(ref Seed);
+            }
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
-            NetClient.WriteServiceData(new byte[] { 0x1 });
+            NetClient.WriteServiceData(new InvokeResult{ 
+                Data = this.Id
+            });
             lock(_Gateway.OnlineMicroServices)
             {
                 _Gateway.OnlineMicroServices.Add(this);                

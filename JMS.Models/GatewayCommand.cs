@@ -10,7 +10,8 @@ namespace JMS
         Register = 1,
         GetServiceProvider = 2,
         GetAllServiceProviders = 3,
-        ReportClientConnectQuantity = 4
+        ReportClientConnectQuantity = 4,
+        LockKey = 5
     }
     public class GatewayCommand
     {
