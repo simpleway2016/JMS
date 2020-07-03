@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JMS.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -6,26 +7,33 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.DependencyInjection;
+using JMS.Impls;
 namespace JMS
 {
     class Gateway
     {
         TcpListener _tcpListener;
         ILogger<Gateway> _Logger;
+        IRequestReception _requestReception;
         internal IServiceProvider ServiceProvider { get; set; }
-        public List<ServiceClient> ServiceClients { get; set; }
+        public List<MicroServiceReception> OnlineMicroServices { get; set; }
+
+
         public Gateway(ILogger<Gateway> logger)
         {
             _Logger = logger;
-               ServiceClients = new List<ServiceClient>();
+            OnlineMicroServices = new List<MicroServiceReception>();
         }
 
         void onSocketConnect(Socket socket)
         {
             try
             {
-                new CommandHandler(ServiceProvider).Handle(socket);
+                using (var client = new Way.Lib.NetStream(socket))
+                {
+                    _requestReception.Interview(client);
+                }
             }
             catch(Exception ex)
             {
@@ -35,7 +43,8 @@ namespace JMS
 
         public void Run(int port)
         {
-            _tcpListener = new TcpListener(IPAddress.Any, port);
+            _requestReception = ServiceProvider.GetService<IRequestReception>();
+               _tcpListener = new TcpListener(IPAddress.Any, port);
             _tcpListener.Start();
             _Logger?.LogInformation("Gateway started, port:{0}", port);
             while (true)
@@ -57,9 +66,9 @@ namespace JMS
         public RegisterServiceInfo[] GetAllServiceProviders()
         {
             List<RegisterServiceInfo> ret = new List<RegisterServiceInfo>();
-            for(int i = 0; i < ServiceClients.Count; i ++)
+            for(int i = 0; i < OnlineMicroServices.Count; i ++)
             {
-                var client = ServiceClients[i];
+                var client = OnlineMicroServices[i];
                 if(client != null && ret.Contains(client.ServiceInfo) == false)
                 {
                     ret.Add(client.ServiceInfo);

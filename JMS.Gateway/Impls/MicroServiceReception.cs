@@ -1,50 +1,54 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JMS.Interfaces;
+using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Utilities.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
 
-namespace JMS
+namespace JMS.Impls
 {
-    class ServiceClient
+    class MicroServiceReception: IMicroServiceReception
     {
-        ILogger<ServiceClient> _Logger;
+        ILogger<MicroServiceReception> _Logger;
         Gateway _Gateway;
-        internal CommandHandler _commandHandler;
+        Way.Lib.NetStream NetClient;
         public RegisterServiceInfo ServiceInfo { get; set; }
         IServiceProviderAllocator _ServiceProviderAllocator;
-        public ServiceClient(ILogger<ServiceClient> logger, Gateway gateway, IServiceProviderAllocator serviceProviderAllocator)
+        public MicroServiceReception(ILogger<MicroServiceReception> logger, Gateway gateway, IServiceProviderAllocator serviceProviderAllocator)
         {
             _Gateway = gateway;
             _ServiceProviderAllocator = serviceProviderAllocator;
                _Logger = logger;
         }
-        public void Init(GatewayCommand registerCmd)
+        public void HealthyCheck( Way.Lib.NetStream netclient, GatewayCommand registerCmd)
         {
+            this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
-            ServiceInfo.Host = _commandHandler.Host.Address.ToString();
-            _commandHandler.Write(new byte[] { 0x1 });
-            lock(_Gateway.ServiceClients)
+            ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
+            NetClient.WriteServiceData(new byte[] { 0x1 });
+            lock(_Gateway.OnlineMicroServices)
             {
-                _Gateway.ServiceClients.Add(this);                
+                _Gateway.OnlineMicroServices.Add(this);                
             }
             Task.Run(() => {
                 _ServiceProviderAllocator.ServiceInfoChanged(_Gateway.GetAllServiceProviders());
             });
             _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}注册");
-            new Thread(checkState).Start();
+
+            checkState();
         }
 
         void disconnect()
         {
-            _commandHandler.Dispose();
-            lock (_Gateway.ServiceClients)
+            lock (_Gateway.OnlineMicroServices)
             {
-                _Gateway.ServiceClients.Remove(this);
+                _Gateway.OnlineMicroServices.Remove(this);
             }
             Task.Run(() => {
                 _ServiceProviderAllocator.ServiceInfoChanged(_Gateway.GetAllServiceProviders());
@@ -57,8 +61,8 @@ namespace JMS
             {
                 try
                 {
-                   var command = _commandHandler.ReadCommand();
-                    if(command.Type == CommandType.ReportClientConnectQuantity)
+                    var command = NetClient.ReadServiceObject<GatewayCommand>();
+                    if (command.Type == CommandType.ReportClientConnectQuantity)
                     {
                         //微服务向我报告当前它的请求连接数
                         //_Logger?.LogDebug($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port} 当前连接数：{command.Content}");

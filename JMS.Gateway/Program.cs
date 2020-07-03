@@ -3,6 +3,8 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using JMS.Interfaces;
+using JMS.Impls;
 
 namespace JMS
 {
@@ -23,8 +25,10 @@ namespace JMS
                 loggingBuilder.AddConsole(); // 将日志输出到控制台
             });
             services.AddSingleton<IConfiguration>(configuration);
+            services.AddSingleton<IRequestReception,RequestReception>();
+            services.AddSingleton<ICommandHandlerManager, CommandHandlerManager>();
             services.AddSingleton<Gateway>();
-            services.AddTransient<ServiceClient>();
+            services.AddTransient<IMicroServiceReception,MicroServiceReception>();
             services.AddSingleton<TransactionIdBuilder>();
 
             var assembly = Assembly.Load(configuration.GetValue<string>("ServiceProviderAllocator:Assembly"));

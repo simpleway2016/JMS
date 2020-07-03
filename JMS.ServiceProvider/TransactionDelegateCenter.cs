@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using Way.Lib;
 
 namespace JMS
 {
@@ -41,7 +42,7 @@ namespace JMS
                                 _logger?.LogError(ex, ex.Message);
                             }
 
-                            _logger?.LogInformation("超时未处理，自动回滚事务，事务id:{0}",delegateItem.TransactionId);
+                            _logger?.LogInformation("超时未处理，自动回滚事务，原始请求:{0}",delegateItem.RequestCommand?.ToJsonString());
                             lock (List)
                             {
                                 List.RemoveAt(i);

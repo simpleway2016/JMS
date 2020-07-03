@@ -65,7 +65,7 @@ namespace JMS
                         return;
                     }
 
-                    MicroServiceController.InvokeCommand.Value = cmd;
+                    MicroServiceController.RequestingCommand.Value = cmd;
                     var controllerType = _ServiceProvider.ServiceNames[cmd.Service];
                     controller = (MicroServiceController)_ServiceProvider.ServiceProvider.GetService(controllerType);
                     controller.NetClient = Client;
@@ -82,6 +82,7 @@ namespace JMS
                         {
                             startPIndex = 1;
                             parameters[0] = transactionDelegate = new TransactionDelegate(cmd.Header["TranId"]);
+                            transactionDelegate.RequestCommand = cmd;
                         }
                     }
 
@@ -117,6 +118,7 @@ namespace JMS
                     else if (controller.TransactionControl != null && (controller.TransactionControl.CommitAction != null || controller.TransactionControl.RollbackAction != null))
                     {
                         transactionDelegate = controller.TransactionControl;
+                        transactionDelegate.RequestCommand = cmd;
                         supportTran = true;
                     }
                     Client.WriteServiceData(new InvokeResult

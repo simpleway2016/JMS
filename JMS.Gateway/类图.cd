@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="JMS.Gateway" Collapsed="true">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAgAAAQAAAAAABAAAAAAAAAAAgCAQAAAAIAIAI=</HashCode>
+      <FileName>Gateway.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="JMS.Impls.CommandHandles.RegisterHandler" Collapsed="true">
+    <Position X="7.75" Y="2.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAAAAAAAAAAAAAAAAAAAAIAAAAAAAABAAA=</HashCode>
+      <FileName>Impls\CommandHandles\RegisterHandler.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Interface Name="JMS.Interfaces.IRequestReception" Collapsed="true">
+    <Position X="3.25" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Interfaces\IRequestReception.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="JMS.Interfaces.ICommandHandlerManager" Collapsed="true">
+    <Position X="7.25" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Interfaces\ICommandHandlerManager.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="JMS.Interfaces.ICommandHandler" Collapsed="true">
+    <Position X="7.25" Y="1.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAA=</HashCode>
+      <FileName>Interfaces\ICommandHandler.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="JMS.Interfaces.IMicroServiceReception" Collapsed="true">
+    <Position X="11" Y="2.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Interfaces\IMicroServiceReception.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Microsoft YaHei UI" Size="9" />
+</ClassDiagram>

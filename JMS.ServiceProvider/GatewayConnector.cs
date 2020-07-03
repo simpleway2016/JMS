@@ -17,6 +17,7 @@ namespace JMS
         public event EventHandler Disconnect;
         ILogger<GatewayConnector> _logger;
         MicroServiceProvider _microServiceProvider;
+        bool _manualDisconnected = false;
         public GatewayConnector(ILogger<GatewayConnector> logger , MicroServiceProvider microServiceProvider)
         {
             _microServiceProvider = microServiceProvider;
@@ -25,6 +26,11 @@ namespace JMS
             _event = new AutoResetEvent(false);
         }
 
+        internal void DisconnectGateway()
+        {
+            _manualDisconnected = true;
+               _client?.Dispose();
+        }
         public void Connect(string gatewayAddress, int gatewayPort)
         {
             try
@@ -37,7 +43,7 @@ namespace JMS
             }
             catch(SocketException)
             {
-                if (Disconnect != null)
+                if (!_manualDisconnected && Disconnect != null)
                 {
                     try
                     {
@@ -51,7 +57,7 @@ namespace JMS
             catch (Exception ex)
             {               
                 _logger?.LogError(ex, ex.Message);
-                if (Disconnect != null)
+                if (!_manualDisconnected && Disconnect != null)
                 {
                     try
                     {
@@ -129,7 +135,7 @@ namespace JMS
                 {
                     _client.Dispose();
                     _logger?.LogError("和网关连接断开");
-                    if (Disconnect != null)
+                    if (!_manualDisconnected && Disconnect != null)
                     {
                         try
                         {
@@ -145,7 +151,7 @@ namespace JMS
                 {
                     _client.Dispose();
                     _logger?.LogError(ex, ex.Message);
-                    if (Disconnect != null)
+                    if (!_manualDisconnected && Disconnect != null)
                     {
                         try
                         {

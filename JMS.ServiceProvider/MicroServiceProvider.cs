@@ -30,6 +30,10 @@ namespace JMS
             
         }
 
+        internal void DisconnectGateway()
+        {
+            _GatewayConnector.DisconnectGateway();
+        }
         private void _GatewayConnector_Disconnect(object sender, EventArgs e)
         {
             Thread.Sleep(2000);

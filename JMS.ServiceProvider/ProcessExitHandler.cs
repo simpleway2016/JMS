@@ -35,7 +35,7 @@ namespace JMS
         {
             ProcessExited = true;
             _logger?.LogInformation("进程即将被终止");
-
+            _microServiceProvider.DisconnectGateway();
             _transactionDelegateCenter.RollbackAll();
 
             _logger?.LogInformation("TransactionDelegateCenter RollbackAll 完毕");

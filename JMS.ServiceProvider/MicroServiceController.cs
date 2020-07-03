@@ -8,7 +8,7 @@ using Way.Lib;
 public class MicroServiceController
 {
     internal Way.Lib.NetStream NetClient;
-    internal static ThreadLocal<InvokeCommand> InvokeCommand = new ThreadLocal<InvokeCommand>();
+    internal static ThreadLocal<InvokeCommand> RequestingCommand = new ThreadLocal<InvokeCommand>();
 
 
     private IDictionary<string,string> _Header;
@@ -18,7 +18,7 @@ public class MicroServiceController
         {
             if(_Header == null)
             {
-                _Header = InvokeCommand.Value.Header;
+                _Header = RequestingCommand.Value.Header;
             }
             return _Header;
         }

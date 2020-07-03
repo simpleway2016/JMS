@@ -9,6 +9,7 @@ namespace JMS
     /// </summary>
     public class TransactionDelegate
     {
+        internal InvokeCommand RequestCommand;
         public string TransactionId { get; }
         public TransactionDelegate(string tranId)
         {
