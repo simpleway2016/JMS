@@ -58,6 +58,16 @@ namespace Microsoft.AspNetCore.Mvc
                 return serviceLocations;
             }
         }
+
+        public T GetMicroService<T>(string serviceName) where T : IImplInvoker
+        {
+            var invoker = new Invoker(this, serviceName);
+            if (invoker.Init())
+                return (T)Activator.CreateInstance(typeof(T), new object[] { invoker });
+            return default(T);
+        }
+
+
         public IMicroService GetMicroService( string serviceName)
         {
             var invoker = new Invoker(this, serviceName);
@@ -65,6 +75,8 @@ namespace Microsoft.AspNetCore.Mvc
                 return invoker;
             return null;
         }
+
+      
 
         internal void AddConnect(InvokeConnect   connect)
         {

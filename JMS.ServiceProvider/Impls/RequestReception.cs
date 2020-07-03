@@ -7,23 +7,27 @@ using System.Text;
 using System.Threading;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
+
 namespace JMS.Impls
 {
     class RequestReception : IRequestReception
     {
+        Dictionary<InvokeType, IRequestHandler> _cache = new Dictionary<InvokeType, IRequestHandler>();
         MicroServiceProvider _MicroServiceProvider;
         ILogger<RequestReception> _logger;
-        IInvokeRequestHandler _invokeRequestHandler;
-        ICommitRequestHandler _commitTransactionHandler;
         public RequestReception(ILogger<RequestReception> logger, 
-            ICommitRequestHandler commitTransactionHandler,
-            IInvokeRequestHandler invokeRequestHandler,
             MicroServiceProvider microServiceProvider)
         {
             _logger = logger;
             _MicroServiceProvider = microServiceProvider;
-            _invokeRequestHandler = invokeRequestHandler;
-            _commitTransactionHandler = commitTransactionHandler;
+
+            var handlerTypes = typeof(RequestReception).Assembly.DefinedTypes.Where(m => m.ImplementedInterfaces.Contains(typeof(IRequestHandler)));
+            foreach( var type in handlerTypes )
+            {
+                var handler = (IRequestHandler)microServiceProvider.ServiceProvider.GetService(type);
+                _cache[handler.MatchType] = handler;
+            }
         }
         public void Interview(Socket socket)
         {
@@ -33,15 +37,7 @@ namespace JMS.Impls
                 using (var netclient = new Way.Lib.NetStream(socket))
                 {
                     var cmd = netclient.ReadServiceObject<InvokeCommand>();
-                    switch(cmd.Type)
-                    {
-                        case InvokeType.Invoke:
-                            _invokeRequestHandler.Handle(netclient, cmd);
-                            break;
-                        case InvokeType.CommitTranaction:
-                            _commitTransactionHandler.Handle(netclient, cmd);
-                            break;
-                    }
+                    _cache[cmd.Type].Handle(netclient, cmd);
                     
                 }
             }

@@ -8,7 +8,11 @@ namespace JMS
     {
         Invoke = 0,
         CommitTranaction = 1,
-        RollbackTranaction = 2
+        RollbackTranaction = 2,
+        /// <summary>
+        /// 获取访问服务的c#代码类
+        /// </summary>
+        GenerateInvokeCode = 3
     }
     public class InvokeCommand
     {

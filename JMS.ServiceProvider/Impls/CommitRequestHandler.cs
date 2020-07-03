@@ -6,13 +6,17 @@ using Way.Lib;
 
 namespace JMS.Impls
 {
-    class CommitRequestHandler : ICommitRequestHandler
+    class CommitRequestHandler : IRequestHandler
     {
+
         TransactionDelegateCenter _transactionDelegateCenter;
         public CommitRequestHandler(TransactionDelegateCenter transactionDelegateCenter)
         {
             _transactionDelegateCenter = transactionDelegateCenter;
         }
+
+        public InvokeType MatchType => InvokeType.CommitTranaction;
+
         public void Handle(NetStream netclient, InvokeCommand cmd)
         {
             _transactionDelegateCenter.Commit(cmd.Header["TranId"]);

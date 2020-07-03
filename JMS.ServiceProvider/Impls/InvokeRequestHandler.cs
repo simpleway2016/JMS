@@ -8,7 +8,7 @@ using Way.Lib;
 
 namespace JMS.Impls
 {
-    class InvokeRequestHandler : IInvokeRequestHandler
+    class InvokeRequestHandler : IRequestHandler
     {
         MicroServiceProvider _MicroServiceProvider;
         TransactionDelegateCenter _transactionDelegateCenter;
@@ -21,6 +21,9 @@ namespace JMS.Impls
             _MicroServiceProvider = microServiceProvider;
             _logger = logger;
         }
+
+        public InvokeType MatchType => InvokeType.Invoke;
+
         public void Handle(NetStream netclient, InvokeCommand cmd)
         {
             netclient.ReadTimeout = 0;

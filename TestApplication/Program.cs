@@ -54,12 +54,12 @@ namespace TestApplication
             using (var tran = new MicroServiceTransaction("localhost", 8911))
             {
                 /////微服务 性能测试
-                //var controller1 = tran.GetMicroService("Controller1");
+                //var c1 = new Controller1( tran.GetMicroService("Controller1"));
                 //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
                 //sw.Start();
-                //for (int i = 0; i < 2000; i++)
+                //for (int i = 0; i < 1000; i++)
                 //{
-                //    var ret = controller1.Invoke<string>("test");
+                //    var ret22 = c1.test();
                 //}
                 //sw.Stop();
                 //Console.WriteLine(sw.ElapsedMilliseconds);
@@ -71,15 +71,15 @@ namespace TestApplication
                 var locations = tran.ListMicroService("");//列出所有微服务
                 Console.WriteLine("微服务位置：{0}", locations.ToJsonString());
 
-                var controller1 = tran.GetMicroService("Controller1");
+                var controller1 = tran.GetMicroService<Controller1>("Controller1");
                 var Service2 = tran.GetMicroService("Service2");
 
-                var ret = controller1.Invoke<string>("Test", 123, "Jack.T");
+                var ret = controller1.Test(123, "Jack.T");
                 Console.WriteLine("调用结果：{0}", ret);
 
-                controller1.InvokeAsync("Test2");
+                controller1.Test2Async();
 
-                var task = controller1.InvokeAsync<long>("IntTest", 889, "Async.T");
+                var task = controller1.IntTestAsync();
                 task.Wait();
                 Console.WriteLine("异步调用结果：{0}", task.Result);
 

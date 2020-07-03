@@ -4,8 +4,8 @@ using System.Text;
 
 namespace JMS.Interfaces
 {
-    interface IRollbackRequestHandler
+    interface ICodeBuilder
     {
-        void Handle(Way.Lib.NetStream netclient,InvokeCommand cmd);
+        string GenerateCode(string nameSpace,string className,string serviceName);
     }
 }

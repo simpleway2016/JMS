@@ -1,4 +1,5 @@
-﻿using JMS.Impls;
+﻿using JMS.GenerateCode;
+using JMS.Impls;
 using JMS.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -53,16 +54,18 @@ namespace JMS
        
         public void Run(string gatewayAddress, int gatewayPort, int servicePort)
         {
+            _services.AddSingleton<ICodeBuilder, CodeBuilder>();
             _services.AddSingleton<IGatewayConnector, GatewayConnector>();
             _services.AddSingleton<IRequestReception,RequestReception>();
-            _services.AddSingleton<IInvokeRequestHandler, InvokeRequestHandler>();
-            _services.AddSingleton<ICommitRequestHandler, CommitRequestHandler>();
-            _services.AddSingleton<IRollbackRequestHandler, RollbackRequestHandler>();
+            _services.AddSingleton<InvokeRequestHandler>();
+            _services.AddSingleton<GenerateInvokeCodeRequestHandler>();
+            _services.AddSingleton<CommitRequestHandler>();
+            _services.AddSingleton<RollbackRequestHandler>();
             _services.AddSingleton<ProcessExitHandler>();
             _services.AddSingleton<MicroServiceProvider>(this);
             _services.AddSingleton<TransactionDelegateCenter>();
             ServiceProvider = _services.BuildServiceProvider();
-                       
+
             _logger = ServiceProvider.GetService<ILogger<MicroServiceProvider>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
 
@@ -71,7 +74,7 @@ namespace JMS
             ServicePort = servicePort;
 
             _GatewayConnector.ConnectAsync();
-
+            
             _RequestReception = ServiceProvider.GetService<IRequestReception>();
             TcpListener listener = new TcpListener(ServicePort);
             listener.Start();

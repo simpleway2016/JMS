@@ -66,5 +66,20 @@ namespace JMS
             ServiceTransaction.AddTask(task);
             return task;
         }
+
+        public string GetServiceClassCode(string nameSpace, string className)
+        {
+            var netclient = new Way.Lib.NetStream(_serviceLocation.Host, _serviceLocation.Port);
+            netclient.ReadTimeout = 20000;
+            netclient.WriteServiceData(new InvokeCommand() { 
+                 Type = InvokeType.GenerateInvokeCode,
+                 Service = _serviceName,
+                 Parameters = new string[] { nameSpace,className }
+            });
+            var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+            if (!ret.Success)
+                throw new RemoteException(ret.Error);
+            return ret.Data;
+        }
     }
 }
