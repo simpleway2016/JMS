@@ -6,6 +6,7 @@ namespace JMS.Interfaces
 {
     interface IGatewayConnector
     {
+        int ServiceId { get; }
         void DisconnectGateway();
         void ConnectAsync();
     }

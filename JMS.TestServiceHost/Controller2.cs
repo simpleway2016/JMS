@@ -20,7 +20,7 @@ namespace JMS
         }
         public string GetName()
         {
-            return "Jack";
+            return "lock result: " + this.TryLock("test", false);
         }
     }
 }

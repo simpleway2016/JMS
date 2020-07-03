@@ -16,7 +16,7 @@ namespace JMS.Impls
         /// <summary>
         /// 在网关处的id
         /// </summary>
-        internal int ServiceId;
+        public int ServiceId { get; private set; }
         Way.Lib.NetStream _client;
         ILogger<GatewayConnector> _logger;
         MicroServiceProvider _microServiceProvider;

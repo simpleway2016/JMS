@@ -17,6 +17,7 @@ namespace JMS
     {
         ILogger<MicroServiceProvider> _logger;
         IGatewayConnector _GatewayConnector;
+        internal IGatewayConnector GatewayConnector => _GatewayConnector;
         public string GatewayAddress { private set; get; }
         public int GatewayPort { private set; get; }
         internal Dictionary<string, Type> ServiceNames = new Dictionary<string, Type>();

@@ -10,16 +10,6 @@ namespace JMS.Impls
     {
         MicroServiceProvider _microServiceProvider;
 
-        private GatewayConnector _GatewayConnector;
-        public GatewayConnector GatewayConnector
-        {
-            get
-            {
-                if(_GatewayConnector == null)
-                    _GatewayConnector = _microServiceProvider.ServiceProvider.GetService<GatewayConnector>();
-                return _GatewayConnector;
-            }
-        }
         public KeyLocker(MicroServiceProvider microServiceProvider)
         {
             _microServiceProvider = microServiceProvider;
@@ -33,7 +23,7 @@ namespace JMS.Impls
                     Type = CommandType.LockKey,
                     Content = new LockKeyInfo { 
                          Key = key,
-                          MicroServiceId = _GatewayConnector.ServiceId,
+                          MicroServiceId = _microServiceProvider.GatewayConnector.ServiceId,
                            WaitToSuccess = waitToSuccess
                     }.ToJsonString()
                 });
@@ -54,7 +44,7 @@ namespace JMS.Impls
                     Content = new LockKeyInfo
                     {
                         Key = key,
-                        MicroServiceId = _GatewayConnector.ServiceId,
+                        MicroServiceId = _microServiceProvider.GatewayConnector.ServiceId,
                         IsUnlock = true
                     }.ToJsonString()
                 });
