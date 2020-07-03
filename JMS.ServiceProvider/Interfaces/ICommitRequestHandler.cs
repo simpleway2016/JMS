@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
 using System.Text;
 
 namespace JMS.Interfaces
 {
-    interface IRequestReception
+    interface ICommitRequestHandler
     {
-        void Interview(Socket socket);
+        void Handle(Way.Lib.NetStream netclient,InvokeCommand cmd);
     }
 }

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
 using System.Text;
 
 namespace JMS.Interfaces
 {
-    interface IRequestReception
+    interface IGatewayConnector
     {
-        void Interview(Socket socket);
+        void DisconnectGateway();
+        void ConnectAsync();
     }
 }

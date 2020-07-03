@@ -26,21 +26,6 @@ namespace JMS
             OnlineMicroServices = new List<MicroServiceReception>();
         }
 
-        void onSocketConnect(Socket socket)
-        {
-            try
-            {
-                using (var client = new Way.Lib.NetStream(socket))
-                {
-                    _requestReception.Interview(client);
-                }
-            }
-            catch(Exception ex)
-            {
-                _Logger?.LogError(ex, ex.Message);
-            }           
-        }
-
         public void Run(int port)
         {
             _requestReception = ServiceProvider.GetService<IRequestReception>();
@@ -52,7 +37,7 @@ namespace JMS
                 try
                 {
                     var socket = _tcpListener.AcceptSocket();
-                    Task.Run(() => onSocketConnect(socket));
+                    Task.Run(() => _requestReception.Interview(socket));
                 }
                 catch (Exception ex)
                 {

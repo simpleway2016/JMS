@@ -5,7 +5,7 @@ using System.Text;
 
 namespace JMS
 {
-    class Controller2 : MicroServiceController
+    class Controller2 : MicroServiceControllerBase
     {
         public Controller2(ILogger<Controller2> logger)
         {

@@ -6,13 +6,13 @@ namespace JMS
 {
     public enum InvokeType
     {
-        None = 0,
+        Invoke = 0,
         CommitTranaction = 1,
         RollbackTranaction = 2
     }
     public class InvokeCommand
     {
-        public InvokeType Type = InvokeType.None;
+        public InvokeType Type = InvokeType.Invoke;
         public IDictionary<string, string> Header;
         public string Service;
         public string Method;

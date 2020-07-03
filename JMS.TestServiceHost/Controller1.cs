@@ -5,12 +5,17 @@ using System.Text;
 
 namespace JMS
 {
-    public class Controller1: MicroServiceController
+    public class Controller1: MicroServiceControllerBase
     {
         ILogger<Controller1> _logger;
         public Controller1(ILogger<Controller1> logger)
         {
             _logger = logger;
+        }
+
+        public string test()
+        {
+            return "abc";
         }
         public void Test2(TransactionDelegate tran)
         {

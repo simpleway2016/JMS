@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using Way.Lib;
 
-public class MicroServiceController
+public class MicroServiceControllerBase
 {
     internal Way.Lib.NetStream NetClient;
     internal static ThreadLocal<InvokeCommand> RequestingCommand = new ThreadLocal<InvokeCommand>();
@@ -39,6 +39,11 @@ public class MicroServiceController
 
         });
         throw new ResponseEndException();
+    }
+
+    public virtual void InvokeError(string actionName, object[] parameters,Exception error)
+    {
+
     }
 
     public virtual void BeforeAction(string actionName, object[] parameters)

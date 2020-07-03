@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Text;
 using Way.Lib;
 
@@ -16,12 +17,24 @@ namespace JMS.Impls
             _logger = logger;
             _manager = manager;
         }
-        public void Interview(NetStream netclient)
+        public void Interview(Socket socket)
         {
-            var cmd = netclient.ReadServiceObject<GatewayCommand>();
-            _logger?.LogDebug("收到命令，type:{0} content:{1}", cmd.Type, cmd.Content);
+            try
+            {
+                using (var client = new Way.Lib.NetStream(socket))
+                {
+                    var cmd = client.ReadServiceObject<GatewayCommand>();
+                    _logger?.LogDebug("收到命令，type:{0} content:{1}", cmd.Type, cmd.Content);
 
-            _manager.AllocHandler(cmd)?.Handle(netclient, cmd);
+                    _manager.AllocHandler(cmd)?.Handle(client, cmd);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, ex.Message);
+            }
+
+           
         }
     }
 }

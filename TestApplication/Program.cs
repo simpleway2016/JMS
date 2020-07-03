@@ -40,19 +40,30 @@ namespace TestApplication
 
             //Expression<Func<object,object>> exp = (s) => ((Func<object,int>)s)(t);
 
-            //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            //sw.Start();
-            //for(int i = 0; i < 1000000; i ++)
+            ////web api 性能测试
+            //System.Diagnostics.Stopwatch sw2 = new System.Diagnostics.Stopwatch();
+            //sw2.Start();
+            //for (int i = 0; i < 2000; i++)
             //{
-            //    //func(t);
-            //    method.Invoke(t,p);
+            //    var ret = Way.Lib.HttpClient.GetContent("http://localhost:8888/home/test", 8000);
             //}
-            //sw.Stop();
-            //Console.WriteLine(sw.ElapsedMilliseconds);
+            //sw2.Stop();
+            //Console.WriteLine(sw2.ElapsedMilliseconds);
             Thread.Sleep(3000);
 
             using (var tran = new MicroServiceTransaction("localhost", 8911))
             {
+                /////微服务 性能测试
+                //var controller1 = tran.GetMicroService("Controller1");
+                //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+                //sw.Start();
+                //for (int i = 0; i < 2000; i++)
+                //{
+                //    var ret = controller1.Invoke<string>("test");
+                //}
+                //sw.Stop();
+                //Console.WriteLine(sw.ElapsedMilliseconds);
+
                 tran.Header = new Dictionary<string, string>() {
                     { "auth" , "123456789"}
                 };
