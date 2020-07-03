@@ -13,6 +13,7 @@ namespace JMS
 {
     class Gateway
     {
+        public string Id { get; }
         TcpListener _tcpListener;
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
@@ -22,6 +23,7 @@ namespace JMS
 
         public Gateway(ILogger<Gateway> logger)
         {
+            this.Id = Guid.NewGuid().ToString("N");
             _Logger = logger;
             OnlineMicroServices = new System.Collections.ObjectModel.ObservableCollection<IMicroServiceReception>();
         }

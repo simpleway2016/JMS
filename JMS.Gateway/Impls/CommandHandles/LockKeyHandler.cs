@@ -54,6 +54,11 @@ namespace JMS.Impls.CommandHandles
             {
                 while (!_lockKeyManager.TryLock(info.Key, service))
                     Thread.Sleep(100);
+
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = true
+                });
             }
         }
     }

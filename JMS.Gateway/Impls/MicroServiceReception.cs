@@ -37,8 +37,9 @@ namespace JMS.Impls
         {
             this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
-            if(ServiceInfo.ServiceId > 0)
+            if(ServiceInfo.ServiceId > 0 && ServiceInfo.GatewayId == _Gateway.Id)
             {
+                //这是一个曾经断开的微服务
                 this.Id = ServiceInfo.ServiceId;
             }
             else
@@ -47,7 +48,7 @@ namespace JMS.Impls
             }
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
             NetClient.WriteServiceData(new InvokeResult{ 
-                Data = this.Id
+                Data = new string[] { this.Id.ToString(), _Gateway.Id }
             });
             lock(_Gateway.OnlineMicroServices)
             {

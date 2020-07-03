@@ -17,6 +17,7 @@ namespace JMS.Impls
         /// 在网关处的id
         /// </summary>
         public int ServiceId { get; private set; }
+        string _gatewayId;
         Way.Lib.NetStream _client;
         ILogger<GatewayConnector> _logger;
         MicroServiceProvider _microServiceProvider;
@@ -54,12 +55,14 @@ namespace JMS.Impls
                         ServiceNames = _microServiceProvider.ServiceNames.Keys.ToArray(),
                         Port = _microServiceProvider.ServicePort,
                         MaxThread = Environment.ProcessorCount,
-                        ServiceId = this.ServiceId
+                        ServiceId = this.ServiceId,
+                        GatewayId = _gatewayId
                     }.ToJsonString()
                 };
                 _client.WriteServiceData(cmd);
-                var ret = _client.ReadServiceObject<InvokeResult>();
-                this.ServiceId = Convert.ToInt32(ret.Data);
+                var ret = _client.ReadServiceObject<InvokeResult<string[]>>();
+                this.ServiceId = Convert.ToInt32(ret.Data[0]);
+                _gatewayId = ret.Data[1];
 
                 _client.ReadTimeout = 0;
                 _ready = true;

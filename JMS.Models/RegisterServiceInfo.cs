@@ -23,6 +23,7 @@ namespace JMS
         /// </summary>
         public int MaxThread;
         public int ServiceId;
+        public string GatewayId;
 
     }
 

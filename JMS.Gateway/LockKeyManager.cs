@@ -1,6 +1,7 @@
 ﻿using JMS.Impls;
 using JMS.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,40 +17,54 @@ namespace JMS
         Gateway _gateway;
         IConfiguration _configuration;
         int timeout;
-        public LockKeyManager(Gateway gateway,IConfiguration configuration)
+        ILogger<LockKeyManager> _logger;
+        public LockKeyManager(Gateway gateway,IConfiguration configuration,ILogger<LockKeyManager> logger)
         {
             _cache = new System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject>();
             _gateway = gateway;
             _configuration = configuration;
-            _gateway.OnlineMicroServices.CollectionChanged += OnlineMicroServices_CollectionChanged;
+            _logger = logger;
+
             timeout = configuration.GetValue<int>("UnLockKeyTimeout");
+
+            new Thread(checkTimeout).Start();
         }
 
-        private void OnlineMicroServices_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void checkTimeout()
         {
-            if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
+            while(true)
             {
-                var removedItems = e.OldItems;
-                foreach(IMicroServiceReception service in removedItems)
+                try
                 {
                     var keys = _cache.Keys.ToArray();
-                    for (int i = 0; i < keys.Length; i ++)
+                    for (int i = 0; i < keys.Length; i++)
                     {
                         var obj = _cache[keys[i]];
-                        if(obj.Locker == service.Id)
+                        if (obj.Locker > 0)
                         {
-                            //考虑离线需要释放锁
-                            Task.Run(()=> {
-                                //等待10秒，如果还是没上线，释放锁
-                                Thread.Sleep(timeout);
-                                if( _gateway.GetServiceById(obj.Locker) == null )
+                            if (obj.LockTime != null)
+                            {
+                                if((DateTime.Now - obj.LockTime.Value).TotalMilliseconds > timeout)
                                 {
-                                    //释放锁
-                                    obj.Locker = 0;
+                                    _cache.TryRemove(obj.Key, out obj);
+                                    _logger?.LogInformation($"key:{obj.Key}超时被unlock");
                                 }
-                            });
+                            }
+                            else
+                            {
+                                obj.LockTime = DateTime.Now;
+                            }
                         }
+                       
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, ex.Message);
+                }
+                finally
+                {
+                    Thread.Sleep(2000);
                 }
             }
         }
@@ -64,7 +79,8 @@ namespace JMS
                     if (_cache.TryAdd(key, new KeyObject()
                     {
                         Key = key,
-                        Locker = locker.Id
+                        Locker = locker.Id,
+                        LockTime = DateTime.Now
                     }))
                     {
                         return true;
@@ -76,8 +92,15 @@ namespace JMS
                 }
                 else
                 {
+                    if(keyObj.Locker == locker.Id)
+                    {
+                        //同一个微服务进行时间更新
+                        keyObj.LockTime = DateTime.Now;
+                        return true;
+                    }
                     if (Interlocked.CompareExchange(ref keyObj.Locker, locker.Id, 0) == 0)
                     {
+                        keyObj.LockTime = DateTime.Now;
                         return true;
                     }
                     else
@@ -93,7 +116,7 @@ namespace JMS
             {
                 if (keyObj.Locker == service.Id)
                 {
-                    keyObj.Locker = 0;
+                    _cache.TryRemove(key, out keyObj);
                 }
             }
         }
@@ -106,5 +129,6 @@ namespace JMS
         /// 不为0:locked 0:unlocked
         /// </summary>
         public int Locker;
+        public DateTime? LockTime;
     }
 }
