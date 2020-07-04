@@ -1,6 +1,7 @@
 ﻿using JMS.GenerateCode;
 using JMS.Impls;
 using JMS.Interfaces;
+using JMS.ScheduleTask;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -29,10 +30,11 @@ namespace JMS
         public IServiceProvider ServiceProvider { private set; get; }
         ServiceCollection _services;
         IRequestReception _RequestReception;
+        ScheduleTaskManager _scheduleTaskManager;
         public MicroServiceHost(ServiceCollection services)
         {
             _services = services;
-            
+            _scheduleTaskManager = new ScheduleTaskManager(this);
         }
 
         internal void DisconnectGateway()
@@ -52,9 +54,30 @@ namespace JMS
             ServiceNames[serviceName] = typeof(T);
         }
 
-       
+        /// <summary>
+        /// 注册定时任务
+        /// </summary>
+        /// <param name="task"></param>
+        public void RegisterScheduleTask(IScheduleTask task)
+        {
+            _scheduleTaskManager.AddTask(task);
+        }
+
+        /// <summary>
+        /// 注销定时任务
+        /// </summary>
+        /// <param name="task"></param>
+        public void UnRegisterScheduleTask(IScheduleTask task)
+        {
+            _scheduleTaskManager.RemoveTask(task);
+        }
+
+
+
         public void Run(string gatewayAddress, int gatewayPort, int servicePort)
         {
+            _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
+            _services.AddTransient<ScheduleTaskController>();
             _services.AddSingleton<IKeyLocker, KeyLocker>();
             _services.AddSingleton<ICodeBuilder, CodeBuilder>();
             _services.AddSingleton<IGatewayConnector, GatewayConnector>();
@@ -64,7 +87,7 @@ namespace JMS
             _services.AddSingleton<CommitRequestHandler>();
             _services.AddSingleton<RollbackRequestHandler>();
             _services.AddSingleton<ProcessExitHandler>();
-            _services.AddSingleton<MicroServiceHost>(this);
+            _services.AddSingleton<MicroServiceHost>(this);            
             _services.AddSingleton<TransactionDelegateCenter>();
             ServiceProvider = _services.BuildServiceProvider();
 
@@ -78,6 +101,8 @@ namespace JMS
             _GatewayConnector.ConnectAsync();
             
             _RequestReception = ServiceProvider.GetService<IRequestReception>();
+            _scheduleTaskManager.StartTasks();
+
             TcpListener listener = new TcpListener(ServicePort);
             listener.Start();
 

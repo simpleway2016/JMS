@@ -15,10 +15,15 @@ namespace JMS
         TransactionDelegateCenter _transactionDelegateCenter;
         public bool ProcessExited = false;
         ILogger<ProcessExitHandler> _logger;
-        public ProcessExitHandler(TransactionDelegateCenter transactionDelegateCenter, ILogger<ProcessExitHandler> logger)
+        ScheduleTaskManager _scheduleTaskManager;
+        public ProcessExitHandler(
+            TransactionDelegateCenter transactionDelegateCenter,
+            ScheduleTaskManager scheduleTaskManager,
+            ILogger<ProcessExitHandler> logger)
         {
             _transactionDelegateCenter = transactionDelegateCenter;
             _logger = logger;
+            _scheduleTaskManager = scheduleTaskManager;
         }
         public void Dispose()
         {
@@ -37,6 +42,7 @@ namespace JMS
             _logger?.LogInformation("进程即将被终止");
             _microServiceProvider.DisconnectGateway();
             _transactionDelegateCenter.RollbackAll();
+            _scheduleTaskManager.StopTasks();
 
             _logger?.LogInformation("TransactionDelegateCenter RollbackAll 完毕");
             //等待客户连接处理完毕

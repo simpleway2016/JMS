@@ -76,7 +76,7 @@ namespace JMS.Impls
 
         void checkState()
         {
-            NetClient.ReadTimeout = 0;
+            NetClient.ReadTimeout = 30000;
             while(true)
             {
                 try
