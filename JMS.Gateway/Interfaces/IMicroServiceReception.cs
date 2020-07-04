@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JMS.Dtos;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,6 +9,6 @@ namespace JMS.Interfaces
     {
         RegisterServiceInfo ServiceInfo { get; set; }
         int Id { get; }
-        void HealthyCheck(Way.Lib.NetStream netclient, GatewayCommand registerCmd);
+        void HealthyCheck(NetClient netclient, GatewayCommand registerCmd);
     }
 }

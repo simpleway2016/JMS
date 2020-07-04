@@ -6,16 +6,18 @@ using System.Net.Sockets;
 using System.Text;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
+using JMS.Dtos;
+
 namespace JMS.Impls
 {
     class InvokeRequestHandler : IRequestHandler
     {
-        MicroServiceProvider _MicroServiceProvider;
+        MicroServiceHost _MicroServiceProvider;
         TransactionDelegateCenter _transactionDelegateCenter;
         ILogger<InvokeRequestHandler> _logger;
         public InvokeRequestHandler(TransactionDelegateCenter transactionDelegateCenter,
             ILogger<InvokeRequestHandler> logger,
-            MicroServiceProvider microServiceProvider)
+            MicroServiceHost microServiceProvider)
         {
             _transactionDelegateCenter = transactionDelegateCenter;
             _MicroServiceProvider = microServiceProvider;
@@ -24,9 +26,8 @@ namespace JMS.Impls
 
         public InvokeType MatchType => InvokeType.Invoke;
 
-        public void Handle(NetStream netclient, InvokeCommand cmd)
+        public void Handle(NetClient netclient, InvokeCommand cmd)
         {
-            netclient.ReadTimeout = 0;
             TransactionDelegate transactionDelegate = null;
             MicroServiceControllerBase controller = null;
             object[] parameters = null;
@@ -103,6 +104,7 @@ namespace JMS.Impls
                     return;
                 }
 
+                netclient.ReadTimeout = 0;
                 while (true)
                 {
                     cmd = netclient.ReadServiceObject<InvokeCommand>();

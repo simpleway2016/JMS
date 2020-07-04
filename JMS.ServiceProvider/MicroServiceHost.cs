@@ -13,9 +13,9 @@ using Way.Lib;
 
 namespace JMS
 {
-    public class MicroServiceProvider
+    public class MicroServiceHost
     {
-        ILogger<MicroServiceProvider> _logger;
+        ILogger<MicroServiceHost> _logger;
         IGatewayConnector _GatewayConnector;
         internal IGatewayConnector GatewayConnector => _GatewayConnector;
         public string GatewayAddress { private set; get; }
@@ -29,7 +29,7 @@ namespace JMS
         public IServiceProvider ServiceProvider { private set; get; }
         ServiceCollection _services;
         IRequestReception _RequestReception;
-        public MicroServiceProvider(ServiceCollection services)
+        public MicroServiceHost(ServiceCollection services)
         {
             _services = services;
             
@@ -64,11 +64,11 @@ namespace JMS
             _services.AddSingleton<CommitRequestHandler>();
             _services.AddSingleton<RollbackRequestHandler>();
             _services.AddSingleton<ProcessExitHandler>();
-            _services.AddSingleton<MicroServiceProvider>(this);
+            _services.AddSingleton<MicroServiceHost>(this);
             _services.AddSingleton<TransactionDelegateCenter>();
             ServiceProvider = _services.BuildServiceProvider();
 
-            _logger = ServiceProvider.GetService<ILogger<MicroServiceProvider>>();
+            _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
 
             GatewayAddress = gatewayAddress;

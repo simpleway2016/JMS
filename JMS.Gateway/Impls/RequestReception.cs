@@ -1,4 +1,5 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Dtos;
+using JMS.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace JMS.Impls
         {
             try
             {
-                using (var client = new Way.Lib.NetStream(socket))
+                using (var client = new NetClient(socket))
                 {
                     var cmd = client.ReadServiceObject<GatewayCommand>();
                     _logger?.LogDebug("收到命令，type:{0} content:{1}", cmd.Type, cmd.Content);

@@ -8,16 +8,17 @@ using System.Threading;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
+using JMS.Dtos;
 
 namespace JMS.Impls
 {
     class RequestReception : IRequestReception
     {
         Dictionary<InvokeType, IRequestHandler> _cache = new Dictionary<InvokeType, IRequestHandler>();
-        MicroServiceProvider _MicroServiceProvider;
+        MicroServiceHost _MicroServiceProvider;
         ILogger<RequestReception> _logger;
         public RequestReception(ILogger<RequestReception> logger, 
-            MicroServiceProvider microServiceProvider)
+            MicroServiceHost microServiceProvider)
         {
             _logger = logger;
             _MicroServiceProvider = microServiceProvider;
@@ -34,7 +35,7 @@ namespace JMS.Impls
             try
             {
                 Interlocked.Increment(ref _MicroServiceProvider.ClientConnected);
-                using (var netclient = new Way.Lib.NetStream(socket))
+                using (var netclient = new NetClient(socket))
                 {
                     var cmd = netclient.ReadServiceObject<InvokeCommand>();
                     _cache[cmd.Type].Handle(netclient, cmd);

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using JMS.Dtos;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,9 +23,8 @@ namespace JMS
         public bool Init()
         {
             //获取服务地址
-            using (var netclient = new Way.Lib.NetStream(this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayPort))
+            using (var netclient = new NetClient(this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayPort))
             {
-                netclient.ReadTimeout = 16000;
                 netclient.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.GetServiceProvider,
@@ -69,8 +69,7 @@ namespace JMS
 
         public string GetServiceClassCode(string nameSpace, string className)
         {
-            var netclient = new Way.Lib.NetStream(_serviceLocation.Host, _serviceLocation.Port);
-            netclient.ReadTimeout = 16000;
+            var netclient = new NetClient(_serviceLocation.Host, _serviceLocation.Port);
             netclient.WriteServiceData(new InvokeCommand() { 
                  Type = InvokeType.GenerateInvokeCode,
                  Service = _serviceName,

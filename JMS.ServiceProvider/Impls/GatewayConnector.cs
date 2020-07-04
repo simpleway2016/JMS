@@ -1,4 +1,5 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Dtos;
+using JMS.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -18,12 +19,12 @@ namespace JMS.Impls
         /// </summary>
         public int ServiceId { get; private set; }
         string _gatewayId;
-        Way.Lib.NetStream _client;
+        NetClient _client;
         ILogger<GatewayConnector> _logger;
-        MicroServiceProvider _microServiceProvider;
+        MicroServiceHost _microServiceProvider;
         bool _manualDisconnected;
         bool _ready;
-        public GatewayConnector(MicroServiceProvider microServiceProvider,ILogger<GatewayConnector> logger)
+        public GatewayConnector(MicroServiceHost microServiceProvider,ILogger<GatewayConnector> logger)
         {
             _microServiceProvider = microServiceProvider;
             _logger = logger;
@@ -40,12 +41,7 @@ namespace JMS.Impls
                 _ready = false;
                 _client?.Dispose();
 
-                _client = new Way.Lib.NetStream(_microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort);
-#if DEBUG
-                _client.ReadTimeout = 0;
-#else
-                _client.ReadTimeout = 16000;
-#endif
+                _client = new NetClient(_microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort);
 
                 GatewayCommand cmd = new GatewayCommand()
                 {
@@ -64,7 +60,6 @@ namespace JMS.Impls
                 this.ServiceId = Convert.ToInt32(ret.Data[0]);
                 _gatewayId = ret.Data[1];
 
-                _client.ReadTimeout = 0;
                 _ready = true;
                 _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1}", _microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort);
 
@@ -135,6 +130,7 @@ namespace JMS.Impls
                 }
                 try
                 {
+                    _client.ReadTimeout = 0;
                     var data = _client.ReadServiceData();
                 }
                 catch (SocketException)

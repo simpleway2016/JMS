@@ -24,7 +24,7 @@ namespace JMS
             });
             services.AddSingleton<IConfiguration>(configuration);
 
-            var msp = new MicroServiceProvider(services);
+            var msp = new MicroServiceHost(services);
             msp.Register<Controller1>("Controller1");
             msp.Register<Controller2>("Service2");
             msp.Run("localhost", 8911, 8912);

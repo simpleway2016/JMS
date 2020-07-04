@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
+using JMS.Dtos;
+
 namespace JMS.Impls.CommandHandles
 {
     class RegisterHandler : ICommandHandler
@@ -15,7 +17,7 @@ namespace JMS.Impls.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.Register;
 
-        public void Handle(NetStream netclient, GatewayCommand cmd)
+        public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             var serviceClient = _serviceProvider.GetService<IMicroServiceReception>();
             serviceClient.HealthyCheck(netclient , cmd);

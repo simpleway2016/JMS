@@ -5,6 +5,7 @@ using System.Text;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
+using JMS.Dtos;
 
 namespace JMS.Impls.CommandHandles
 {
@@ -19,7 +20,7 @@ namespace JMS.Impls.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.GetServiceProvider;
 
-        public void Handle(NetStream netclient, GatewayCommand cmd)
+        public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             if (cmd.Header.ContainsKey("TranId") == false)
             {

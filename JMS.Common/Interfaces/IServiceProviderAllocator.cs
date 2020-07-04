@@ -1,4 +1,5 @@
-﻿using Org.BouncyCastle.Operators;
+﻿using JMS.Dtos;
+using Org.BouncyCastle.Operators;
 using System;
 using System.Collections.Generic;
 using System.Text;

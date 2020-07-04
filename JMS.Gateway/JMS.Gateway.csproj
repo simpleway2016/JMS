@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JMS.Models\JMS.Models.csproj" />
+    <ProjectReference Include="..\JMS.Common\JMS.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

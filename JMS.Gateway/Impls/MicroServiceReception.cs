@@ -1,4 +1,5 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Dtos;
+using JMS.Interfaces;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Utilities.Net;
 using System;
@@ -17,7 +18,7 @@ namespace JMS.Impls
     {
         ILogger<MicroServiceReception> _Logger;
         Gateway _Gateway;
-        Way.Lib.NetStream NetClient;
+        NetClient NetClient;
         public RegisterServiceInfo ServiceInfo { get; set; }
         public int Id { get; private set; }
         static int Seed;
@@ -33,7 +34,7 @@ namespace JMS.Impls
                _Logger = logger;
             _lockKeyManager = lockKeyManager;
         }
-        public void HealthyCheck( Way.Lib.NetStream netclient, GatewayCommand registerCmd)
+        public void HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
@@ -75,6 +76,7 @@ namespace JMS.Impls
 
         void checkState()
         {
+            NetClient.ReadTimeout = 0;
             while(true)
             {
                 try

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using JMS.Dtos;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,7 +11,7 @@ namespace JMS
     class InvokeConnect
     {
         public RegisterServiceLocation ServiceLocation { get; }
-        internal Way.Lib.NetStream NetClient;
+        internal NetClient NetClient;
         /// <summary>
         /// 重连次数
         /// </summary>
@@ -29,8 +30,7 @@ namespace JMS
        public void ReConnect()
         {
             ReConnectCount++;
-               NetClient = new Way.Lib.NetStream(this.ServiceLocation.Host, this.ServiceLocation.Port);
-            NetClient.ReadTimeout = 0;
+               NetClient = new NetClient(this.ServiceLocation.Host, this.ServiceLocation.Port);
         }
 
         public T Invoke<T>(string method,MicroServiceTransaction tran, params object[] parameter)
@@ -39,14 +39,9 @@ namespace JMS
             {
                 throw new ArgumentNullException("tran");
             }
-            var netclient = new Way.Lib.NetStream(this.ServiceLocation.Host, this.ServiceLocation.Port);
+            var netclient = new NetClient(this.ServiceLocation.Host, this.ServiceLocation.Port);
             try
             {
-#if DEBUG
-                netclient.ReadTimeout = 0;
-#else
-            netclient.ReadTimeout = 16000;
-#endif
                 var cmd = new InvokeCommand()
                 {
                     Header = tran.Header.Count > 0 ? tran.Header : null,

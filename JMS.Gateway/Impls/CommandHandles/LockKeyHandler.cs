@@ -6,6 +6,7 @@ using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading;
+using JMS.Dtos;
 
 namespace JMS.Impls.CommandHandles
 {
@@ -22,7 +23,7 @@ namespace JMS.Impls.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.LockKey;
 
-        public void Handle(NetStream netclient, GatewayCommand cmd)
+        public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             var info = cmd.Content.FromJson<LockKeyInfo>();
             var service = _gateway.GetServiceById(info.MicroServiceId);

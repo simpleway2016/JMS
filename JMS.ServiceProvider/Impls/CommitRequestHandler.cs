@@ -1,4 +1,5 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Dtos;
+using JMS.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,7 +18,7 @@ namespace JMS.Impls
 
         public InvokeType MatchType => InvokeType.CommitTranaction;
 
-        public void Handle(NetStream netclient, InvokeCommand cmd)
+        public void Handle(NetClient netclient, InvokeCommand cmd)
         {
             _transactionDelegateCenter.Commit(cmd.Header["TranId"]);
             netclient.WriteServiceData(new InvokeResult() { Success = true });

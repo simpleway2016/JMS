@@ -1,4 +1,5 @@
 ﻿using JMS;
+using JMS.Dtos;
 using JMS.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using Way.Lib;
 public class MicroServiceControllerBase
 {
     internal IKeyLocker _keyLocker;
-    internal Way.Lib.NetStream NetClient;
+    internal NetClient NetClient;
     internal static ThreadLocal<InvokeCommand> RequestingCommand = new ThreadLocal<InvokeCommand>();
 
 

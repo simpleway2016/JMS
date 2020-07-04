@@ -11,7 +11,7 @@ namespace JMS
     /// </summary>
     class ProcessExitHandler :IDisposable
     {
-        public MicroServiceProvider _microServiceProvider;
+        public MicroServiceHost _microServiceProvider;
         TransactionDelegateCenter _transactionDelegateCenter;
         public bool ProcessExited = false;
         ILogger<ProcessExitHandler> _logger;
@@ -25,7 +25,7 @@ namespace JMS
             AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
         }
 
-        public void Listen(MicroServiceProvider microServiceProvider)
+        public void Listen(MicroServiceHost microServiceProvider)
         {
             _microServiceProvider = microServiceProvider;
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;

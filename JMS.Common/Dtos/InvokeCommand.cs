@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace JMS
+namespace JMS.Dtos
 {
     public enum InvokeType
     {

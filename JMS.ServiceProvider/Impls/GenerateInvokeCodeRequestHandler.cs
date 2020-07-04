@@ -1,4 +1,5 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Dtos;
+using JMS.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -49,7 +50,7 @@ namespace JMS.Impls
             }
         }
 
-        public void Handle(NetStream netclient, InvokeCommand cmd)
+        public void Handle(NetClient netclient, InvokeCommand cmd)
         {
             if( !IsDebug )
             {

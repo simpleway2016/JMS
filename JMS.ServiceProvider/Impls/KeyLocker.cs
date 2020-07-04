@@ -4,21 +4,22 @@ using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
+using JMS.Dtos;
+
 namespace JMS.Impls
 {
     class KeyLocker : IKeyLocker
     {
-        MicroServiceProvider _microServiceProvider;
+        MicroServiceHost _microServiceProvider;
 
-        public KeyLocker(MicroServiceProvider microServiceProvider)
+        public KeyLocker(MicroServiceHost microServiceProvider)
         {
             _microServiceProvider = microServiceProvider;
         }
         public bool TryLock(string key, bool waitToSuccess)
         {
-            using (var netclient = new Way.Lib.NetStream(_microServiceProvider.GatewayAddress,_microServiceProvider.GatewayPort))
+            using (var netclient = new NetClient(_microServiceProvider.GatewayAddress,_microServiceProvider.GatewayPort))
             {
-                netclient.ReadTimeout = 16000;
                 netclient.WriteServiceData(new GatewayCommand { 
                     Type = CommandType.LockKey,
                     Content = new LockKeyInfo { 
@@ -35,9 +36,8 @@ namespace JMS.Impls
 
         public void UnLock(string key)
         {
-            using (var netclient = new Way.Lib.NetStream(_microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort))
+            using (var netclient = new NetClient(_microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort))
             {
-                netclient.ReadTimeout = 16000;
                 netclient.WriteServiceData(new GatewayCommand
                 {
                     Type = CommandType.LockKey,

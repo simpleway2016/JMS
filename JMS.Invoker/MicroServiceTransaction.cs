@@ -1,4 +1,5 @@
 ﻿using JMS;
+using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -40,13 +41,8 @@ namespace Microsoft.AspNetCore.Mvc
         }
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
-            using (var netclient = new Way.Lib.NetStream(GatewayAddress, GatewayPort))
+            using (var netclient = new NetClient(GatewayAddress, GatewayPort))
             {
-#if DEBUG
-                netclient.ReadTimeout = 0;
-#else
-                netclient.ReadTimeout = 16000;
-#endif
                 netclient.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.GetAllServiceProviders,

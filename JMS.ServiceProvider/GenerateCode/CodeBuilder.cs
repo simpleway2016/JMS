@@ -15,8 +15,8 @@ namespace JMS.GenerateCode
 {
     class CodeBuilder : ICodeBuilder
     {
-        MicroServiceProvider _microServiceProvider;
-        public CodeBuilder(MicroServiceProvider microServiceProvider)
+        MicroServiceHost _microServiceProvider;
+        public CodeBuilder(MicroServiceHost microServiceProvider)
         {
             _microServiceProvider = microServiceProvider;
         }

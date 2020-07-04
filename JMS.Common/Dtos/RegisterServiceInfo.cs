@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text;
 
-namespace JMS
+namespace JMS.Dtos
 {
     public class RegisterServiceLocation
     {
