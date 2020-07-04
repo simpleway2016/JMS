@@ -7,6 +7,7 @@ using System.Text;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using JMS.Dtos;
+using System.Linq;
 
 namespace JMS.Impls
 {
@@ -35,12 +36,14 @@ namespace JMS.Impls
             try
             {
                 MicroServiceControllerBase.RequestingCommand.Value = cmd;
-                var controllerType = _MicroServiceProvider.ServiceNames[cmd.Service];
-                controller = (MicroServiceControllerBase)_MicroServiceProvider.ServiceProvider.GetService(controllerType);
+                var controllerTypeInfo = _MicroServiceProvider.ServiceNames[cmd.Service];
+                controller = (MicroServiceControllerBase)_MicroServiceProvider.ServiceProvider.GetService(controllerTypeInfo.Type);
                 controller.NetClient = netclient;
                 controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();
                 _logger?.LogDebug("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters);
-                var method = controllerType.GetMethod(cmd.Method, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                var method = controllerTypeInfo.Methods.FirstOrDefault(m=>m.Name == cmd.Method);
+                if (method == null)
+                    throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
                 var parameterInfos = method.GetParameters();
                 object result = null;
 

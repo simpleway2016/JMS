@@ -11,6 +11,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
+using System.Reflection;
 
 namespace JMS
 {
@@ -21,7 +22,7 @@ namespace JMS
         internal IGatewayConnector GatewayConnector => _GatewayConnector;
         public string GatewayAddress { private set; get; }
         public int GatewayPort { private set; get; }
-        internal Dictionary<string, Type> ServiceNames = new Dictionary<string, Type>();
+        internal Dictionary<string, ControllerTypeInfo> ServiceNames = new Dictionary<string, ControllerTypeInfo>();
         internal int ServicePort;
         /// <summary>
         /// 当前处理中的请求数
@@ -51,7 +52,14 @@ namespace JMS
         public void Register<T>(string serviceName) where T : MicroServiceControllerBase
         {
             _services.AddTransient<T>();
-            ServiceNames[serviceName] = typeof(T);
+            ServiceNames[serviceName] = new ControllerTypeInfo() { 
+            Type = typeof(T),
+            Methods = typeof(T).GetTypeInfo().DeclaredMethods.Where(m => 
+                m.IsStatic == false && 
+                m.IsPublic && 
+                m.DeclaringType != typeof(MicroServiceControllerBase)
+                && m.DeclaringType != typeof(object)).ToArray()
+        };
         }
 
         /// <summary>

@@ -106,9 +106,9 @@ namespace JMS.GenerateCode
         public string GenerateCode(string nameSpace,string className, string serviceName)
         {
 
-            var controllerType = _microServiceProvider.ServiceNames[serviceName];
+            var controllerTypeInfo = _microServiceProvider.ServiceNames[serviceName];
             System.Xml.XmlDocument xmldoc = null;
-            var xmlpath = $"{Path.GetDirectoryName(controllerType.Assembly.Location)}/{Path.GetFileNameWithoutExtension(controllerType.Assembly.Location)}.xml";
+            var xmlpath = $"{Path.GetDirectoryName(controllerTypeInfo.Type.Assembly.Location)}/{Path.GetFileNameWithoutExtension(controllerTypeInfo.Type.Assembly.Location)}.xml";
             if(File.Exists(xmlpath))
             {
                 xmldoc = new System.Xml.XmlDocument();
@@ -118,8 +118,7 @@ namespace JMS.GenerateCode
             if(xmldoc != null)
                 memberXmlNodeList = (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
 
-            var methods = controllerType.GetTypeInfo().DeclaredMethods.Where(m => m.IsPublic && m.DeclaringType != typeof(MicroServiceControllerBase)
-            && m.DeclaringType != typeof(object)).ToArray();
+            var methods = controllerTypeInfo.Methods;
 
             //https://docs.microsoft.com/zh-cn/dotnet/api/system.codedom.codepropertysetvaluereferenceexpression?view=dotnet-plat-ext-3.1
             CodeCompileUnit unit = new CodeCompileUnit();

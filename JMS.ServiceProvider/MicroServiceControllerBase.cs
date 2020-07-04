@@ -3,6 +3,7 @@ using JMS.Dtos;
 using JMS.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using Way.Lib;
@@ -74,4 +75,10 @@ public class MicroServiceControllerBase
     {
 
     }
+}
+
+class ControllerTypeInfo
+{
+    public Type Type;
+    public MethodInfo[] Methods;
 }

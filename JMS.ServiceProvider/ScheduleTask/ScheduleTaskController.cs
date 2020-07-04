@@ -21,7 +21,7 @@ namespace JMS.ScheduleTask
         Thread _thread;
         TaskState _state = TaskState.Stopped;
         ManualResetEvent _waitobject = new ManualResetEvent(false);
-        DateTime? _lastRunTime = null;
+        DateTime _lastRunTime = DateTime.Now;
         public ScheduleTaskController(ILogger<ScheduleTaskController> logger)
         {
             _logger = logger;
@@ -72,7 +72,7 @@ namespace JMS.ScheduleTask
 
                                 //转换成当天的执行时间点
                                 DateTime time = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd " + h + ":" + m + ":00"));
-                                if (DateTime.Now >= time && _lastRunTime.GetValueOrDefault() < time)
+                                if (DateTime.Now >= time && _lastRunTime < time)
                                 {
                                     _logger?.LogInformation("执行任务：{0}", taskname);
                                     toRun = true;
@@ -86,7 +86,7 @@ namespace JMS.ScheduleTask
                             var milliseconds = int.MaxValue;
                             if (_lastRunTime != null)
                             {
-                                milliseconds = (int)(DateTime.Now - _lastRunTime.Value).TotalMilliseconds;
+                                milliseconds = (int)(DateTime.Now - _lastRunTime).TotalMilliseconds;
                             }
                             if (milliseconds >= this.Task.Interval)
                             {
