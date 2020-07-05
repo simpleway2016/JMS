@@ -38,6 +38,7 @@ namespace JMS
             services.AddTransient<IMicroServiceReception,MicroServiceReception>();
             services.AddSingleton<TransactionIdBuilder>();
             services.AddSingleton<ServiceIdBuilder>();
+            services.AddSingleton<GatewayIdBuilder>();
 
             var assembly = Assembly.Load(configuration.GetValue<string>("ServiceProviderAllocator:Assembly"));
             var serviceProviderAllocatorType = assembly.GetType(configuration.GetValue<string>("ServiceProviderAllocator:FullName"));
