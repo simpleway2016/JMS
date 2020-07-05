@@ -35,79 +35,60 @@ namespace JMS
 
         private void SystemEventCenter_MicroServiceOnline(object sender, Dtos.RegisterServiceInfo e)
         {
-            string[] keys = null;
             while (true)
             {
                 try
                 {
-                    keys = _cache.Keys.ToArray();
+                    foreach (var pair in _cache)
+                    {
+                        var obj = pair.Value;
+                        if (obj.Locker == e.ServiceId)
+                        {
+                            obj.RemoveTime = null;
+                        }
+
+                    }
                     break;
                 }
-                catch
+                catch (Exception)
                 {
                     Thread.Sleep(0);
-                }
-            }
-            for (int i = 0; i < keys.Length; i++)
-            {
-                KeyObject obj = null;
-                try
-                {
-                    obj = _cache[keys[i]];
-                }
-                catch
-                {
                     continue;
                 }
 
-                if (obj != null)
-                {
-                    if (obj.Locker == e.ServiceId)
-                    {
-                        obj.RemoveTime = null;
-                    }
-                }
             }
         }
 
         private void SystemEventCenter_MicroServiceOnffline(object sender, Dtos.RegisterServiceInfo e)
         {
             //把这个微服务的lockkey设置下线时间
-            string[] keys = null;
             while (true)
             {
                 try
                 {
-                    keys = _cache.Keys.ToArray();
+                    foreach (var pair in _cache)
+                    {
+                        var obj = pair.Value;
+                        if (obj.Locker == e.ServiceId)
+                        {
+                            obj.RemoveTime = DateTime.Now.AddMilliseconds(_timeout);
+                        }
+
+                    }
                     break;
                 }
-                catch
+                catch (Exception)
                 {
                     Thread.Sleep(0);
-                }
-            }
-            for(int i = 0; i < keys.Length; i ++)
-            {
-                KeyObject obj = null;
-                try
-                {
-                    obj = _cache[keys[i]];
-                }
-                catch
-                {
                     continue;
                 }
-
-                if(obj != null)
-                {
-                    if(obj.Locker == e.ServiceId)
-                    {
-                        obj.RemoveTime = DateTime.Now.AddMilliseconds(_timeout);
-                    }
-                }
+                
             }
         }
 
+        /// <summary>
+        /// 检查已经断线的微服务
+        /// </summary>
         private void checkTimeout()
         {
             while(true)
