@@ -55,6 +55,8 @@ namespace JMS.Impls
             {
                 _Gateway.OnlineMicroServices.Add(this);                
             }
+            SystemEventCenter.OnMicroServiceOnline(this.ServiceInfo);
+
             Task.Run(() => {
                 _ServiceProviderAllocator.ServiceInfoChanged(_Gateway.GetAllServiceProviders());
             });
@@ -69,6 +71,8 @@ namespace JMS.Impls
             {
                 _Gateway.OnlineMicroServices.Remove(this);
             }
+            SystemEventCenter.OnMicroServiceOnffline(this.ServiceInfo);
+
             Task.Run(() => {
                 _ServiceProviderAllocator.ServiceInfoChanged(_Gateway.GetAllServiceProviders());
             });

@@ -16,18 +16,95 @@ namespace JMS
         System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject> _cache;
         Gateway _gateway;
         IConfiguration _configuration;
-        int timeout;
+        int _timeout;
         ILogger<LockKeyManager> _logger;
         public LockKeyManager(Gateway gateway,IConfiguration configuration,ILogger<LockKeyManager> logger)
         {
+            _timeout = configuration.GetValue<int>("UnLockKeyTimeout");
             _cache = new System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject>();
             _gateway = gateway;
             _configuration = configuration;
             _logger = logger;
 
-            timeout = configuration.GetValue<int>("UnLockKeyTimeout");
+            SystemEventCenter.MicroServiceOnffline += SystemEventCenter_MicroServiceOnffline;
+            SystemEventCenter.MicroServiceOnline += SystemEventCenter_MicroServiceOnline;
 
             new Thread(checkTimeout).Start();
+        }
+
+        private void SystemEventCenter_MicroServiceOnline(object sender, Dtos.RegisterServiceInfo e)
+        {
+            string[] keys = null;
+            while (true)
+            {
+                try
+                {
+                    keys = _cache.Keys.ToArray();
+                    break;
+                }
+                catch
+                {
+                    Thread.Sleep(0);
+                }
+            }
+            for (int i = 0; i < keys.Length; i++)
+            {
+                KeyObject obj = null;
+                try
+                {
+                    obj = _cache[keys[i]];
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (obj != null)
+                {
+                    if (obj.Locker == e.ServiceId)
+                    {
+                        obj.RemoveTime = null;
+                    }
+                }
+            }
+        }
+
+        private void SystemEventCenter_MicroServiceOnffline(object sender, Dtos.RegisterServiceInfo e)
+        {
+            //把这个微服务的lockkey设置下线时间
+            string[] keys = null;
+            while (true)
+            {
+                try
+                {
+                    keys = _cache.Keys.ToArray();
+                    break;
+                }
+                catch
+                {
+                    Thread.Sleep(0);
+                }
+            }
+            for(int i = 0; i < keys.Length; i ++)
+            {
+                KeyObject obj = null;
+                try
+                {
+                    obj = _cache[keys[i]];
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if(obj != null)
+                {
+                    if(obj.Locker == e.ServiceId)
+                    {
+                        obj.RemoveTime = DateTime.Now.AddMilliseconds(_timeout);
+                    }
+                }
+            }
         }
 
         private void checkTimeout()
@@ -41,17 +118,10 @@ namespace JMS
                         var obj = pair.Value;
                         if (obj.Locker > 0)
                         {
-                            if (obj.LockTime != null)
+                            if (obj.RemoveTime != null && DateTime.Now >= obj.RemoveTime.GetValueOrDefault())
                             {
-                                if((DateTime.Now - obj.LockTime.Value).TotalMilliseconds > timeout)
-                                {
-                                    _cache.TryRemove(obj.Key, out obj);
-                                    _logger?.LogInformation($"key:{obj.Key}超时被unlock");
-                                }
-                            }
-                            else
-                            {
-                                obj.LockTime = DateTime.Now;
+                                _cache.TryRemove(obj.Key, out obj);
+                                _logger?.LogInformation($"key:{obj.Key}超时被unlock");
                             }
                         }
                        
@@ -79,7 +149,6 @@ namespace JMS
                     {
                         Key = key,
                         Locker = locker.Id,
-                        LockTime = DateTime.Now
                     }))
                     {
                         return true;
@@ -93,13 +162,12 @@ namespace JMS
                 {
                     if(keyObj.Locker == locker.Id)
                     {
-                        //同一个微服务进行时间更新
-                        keyObj.LockTime = DateTime.Now;
+                        keyObj.RemoveTime = null;
                         return true;
                     }
                     if (Interlocked.CompareExchange(ref keyObj.Locker, locker.Id, 0) == 0)
                     {
-                        keyObj.LockTime = DateTime.Now;
+                        keyObj.RemoveTime = null;
                         return true;
                     }
                     else
@@ -128,6 +196,9 @@ namespace JMS
         /// 不为0:locked 0:unlocked
         /// </summary>
         public int Locker;
-        public DateTime? LockTime;
+        /// <summary>
+        /// 设定移除时间
+        /// </summary>
+        public DateTime? RemoveTime;
     }
 }

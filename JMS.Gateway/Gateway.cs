@@ -20,14 +20,14 @@ namespace JMS
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
         internal IServiceProvider ServiceProvider { get; set; }
-        public System.Collections.ObjectModel.ObservableCollection<IMicroServiceReception> OnlineMicroServices { get; set; }
+        public List<IMicroServiceReception> OnlineMicroServices { get; set; }
 
 
         public Gateway(ILogger<Gateway> logger)
         {
             this.Id = Guid.NewGuid().ToString("N");
             _Logger = logger;
-            OnlineMicroServices = new System.Collections.ObjectModel.ObservableCollection<IMicroServiceReception>();
+            OnlineMicroServices = new List<IMicroServiceReception>();
         }
 
         public IMicroServiceReception GetServiceById(int id)
