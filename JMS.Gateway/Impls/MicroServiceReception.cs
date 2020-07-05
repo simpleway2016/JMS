@@ -20,18 +20,20 @@ namespace JMS.Impls
         Gateway _Gateway;
         NetClient NetClient;
         public RegisterServiceInfo ServiceInfo { get; set; }
-        static int Seed;
+        ServiceIdBuilder _ServiceIdBuilder;
         IServiceProviderAllocator _ServiceProviderAllocator;
         LockKeyManager _lockKeyManager;
         public MicroServiceReception(ILogger<MicroServiceReception> logger,
             Gateway gateway, 
             LockKeyManager lockKeyManager,
+            ServiceIdBuilder serviceIdBuilder,
             IServiceProviderAllocator serviceProviderAllocator)
         {           
             _Gateway = gateway;
             _ServiceProviderAllocator = serviceProviderAllocator;
                _Logger = logger;
             _lockKeyManager = lockKeyManager;
+            _ServiceIdBuilder = serviceIdBuilder;
         }
         public void HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
         {
@@ -43,7 +45,7 @@ namespace JMS.Impls
             }
             else
             {
-                ServiceInfo.ServiceId = Interlocked.Increment(ref Seed);
+                ServiceInfo.ServiceId = _ServiceIdBuilder.Build();
             }
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
             NetClient.WriteServiceData(new InvokeResult{ 

@@ -18,6 +18,12 @@ namespace JMS
 
             var port = configuration.GetValue<int>("Port");
 
+            var datafolder = configuration.GetValue<string>("DataFolder");
+            if (!System.IO.Directory.Exists(datafolder))
+            {
+                System.IO.Directory.CreateDirectory(datafolder);
+            }
+
             ServiceCollection services = new ServiceCollection();
             services.AddLogging(loggingBuilder =>
             {
@@ -31,6 +37,7 @@ namespace JMS
             services.AddSingleton<LockKeyManager>();
             services.AddTransient<IMicroServiceReception,MicroServiceReception>();
             services.AddSingleton<TransactionIdBuilder>();
+            services.AddSingleton<ServiceIdBuilder>();
 
             var assembly = Assembly.Load(configuration.GetValue<string>("ServiceProviderAllocator:Assembly"));
             var serviceProviderAllocatorType = assembly.GetType(configuration.GetValue<string>("ServiceProviderAllocator:FullName"));

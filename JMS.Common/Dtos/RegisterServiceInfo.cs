@@ -27,9 +27,19 @@ namespace JMS.Dtos
 
     }
 
-    public class RegisterServiceRunningInfo : RegisterServiceInfo
+    public class RegisterServiceRunningInfo
     {
-       
+        public int Port;
+        public string Host;
+        /// <summary>
+        /// 支持的服务
+        /// </summary>
+        public string[] ServiceNames;
+        /// <summary>
+        /// 本机最多同时并发几个线程
+        /// </summary>
+        public int MaxThread;
+        public int ServiceId;
         /// <summary>
         /// 当前连接的请求数
         /// </summary>

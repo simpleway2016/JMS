@@ -27,28 +27,24 @@ namespace JMS.Impls.CommandHandles
 
         }
 
-        public RegisterServiceLocation[] List(string serviceName)
+        public RegisterServiceRunningInfo[] List(string serviceName)
         {
-            if (serviceName == "")
+            var list = _Gateway.GetAllServiceProviders().AsQueryable();
+            if (!string.IsNullOrEmpty(serviceName))
             {
-                var allocator = _serviceProvider.GetService<IServiceProviderAllocator>();
-                return _Gateway.GetAllServiceProviders().Select(m => new RegisterServiceRunningInfo
-                {
-                    Host = m.Host,
-                    Port = m.Port,
-                    ServiceNames = m.ServiceNames,
-                    MaxThread = m.MaxThread,
-                    ClientConnected = allocator.GetClientConnectQuantity(m)
-                }).ToArray();
+                list = list.Where(m => m.ServiceNames.Contains(serviceName));
             }
-            else
+
+            var allocator = _serviceProvider.GetService<IServiceProviderAllocator>();
+            return list.Select(m => new RegisterServiceRunningInfo
             {
-                return _Gateway.GetAllServiceProviders().Select(m => new RegisterServiceLocation
-                {
-                    Host = m.Host,
-                    Port = m.Port
-                }).ToArray();
-            }
+                Host = m.Host,
+                Port = m.Port,
+                ServiceId = m.ServiceId,
+                ServiceNames = m.ServiceNames,
+                MaxThread = m.MaxThread,
+                ClientConnected = allocator.GetClientConnectQuantity(m)
+            }).ToArray();
         }
     }
 }
