@@ -30,14 +30,14 @@ namespace JMS
             OnlineMicroServices = new List<IMicroServiceReception>();
         }
 
-        public IMicroServiceReception GetServiceById(int id)
+        public RegisterServiceInfo GetServiceById(int id)
         {
             try
             {
                 for (int i = 0; i < OnlineMicroServices.Count; i++)
                 {
-                    if (OnlineMicroServices[i].Id == id)
-                        return OnlineMicroServices[i];
+                    if (OnlineMicroServices[i].ServiceInfo.ServiceId == id)
+                        return OnlineMicroServices[i].ServiceInfo;
                 }
             }
             catch

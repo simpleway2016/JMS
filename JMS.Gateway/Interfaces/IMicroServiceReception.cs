@@ -8,7 +8,6 @@ namespace JMS.Interfaces
     interface IMicroServiceReception
     {
         RegisterServiceInfo ServiceInfo { get; set; }
-        int Id { get; }
         void HealthyCheck(NetClient netclient, GatewayCommand registerCmd);
     }
 }

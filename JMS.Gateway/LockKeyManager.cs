@@ -1,4 +1,5 @@
-﻿using JMS.Impls;
+﻿using JMS.Dtos;
+using JMS.Impls;
 using JMS.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -138,7 +139,7 @@ namespace JMS
             }
         }
 
-        public bool TryLock(string key, IMicroServiceReception locker)
+        public bool TryLock(string key, RegisterServiceInfo locker)
         {
             KeyObject keyObj = null;
             while (true)
@@ -148,7 +149,7 @@ namespace JMS
                     if (_cache.TryAdd(key, new KeyObject()
                     {
                         Key = key,
-                        Locker = locker.Id,
+                        Locker = locker.ServiceId
                     }))
                     {
                         return true;
@@ -160,12 +161,12 @@ namespace JMS
                 }
                 else
                 {
-                    if(keyObj.Locker == locker.Id)
+                    if(keyObj.Locker == locker.ServiceId)
                     {
                         keyObj.RemoveTime = null;
                         return true;
                     }
-                    if (Interlocked.CompareExchange(ref keyObj.Locker, locker.Id, 0) == 0)
+                    if (Interlocked.CompareExchange(ref keyObj.Locker, locker.ServiceId, 0) == 0)
                     {
                         keyObj.RemoveTime = null;
                         return true;
@@ -176,12 +177,12 @@ namespace JMS
             }
         }
 
-        public void UnLock(string key,IMicroServiceReception service)
+        public void UnLock(string key,RegisterServiceInfo service)
         {
             KeyObject keyObj = null;
             if (_cache.TryGetValue(key, out keyObj)  )
             {
-                if (keyObj.Locker == service.Id)
+                if (keyObj.Locker == service.ServiceId)
                 {
                     _cache.TryRemove(key, out keyObj);
                 }

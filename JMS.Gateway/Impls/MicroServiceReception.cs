@@ -20,7 +20,6 @@ namespace JMS.Impls
         Gateway _Gateway;
         NetClient NetClient;
         public RegisterServiceInfo ServiceInfo { get; set; }
-        public int Id { get; private set; }
         static int Seed;
         IServiceProviderAllocator _ServiceProviderAllocator;
         LockKeyManager _lockKeyManager;
@@ -40,16 +39,15 @@ namespace JMS.Impls
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
             if(ServiceInfo.ServiceId > 0 && ServiceInfo.GatewayId == _Gateway.Id)
             {
-                //这是一个曾经断开的微服务
-                this.Id = ServiceInfo.ServiceId;
+                //这是一个曾经断开的微服务，不用更改serviceid
             }
             else
             {
-                this.Id = Interlocked.Increment(ref Seed);
+                ServiceInfo.ServiceId = Interlocked.Increment(ref Seed);
             }
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
             NetClient.WriteServiceData(new InvokeResult{ 
-                Data = new string[] { this.Id.ToString(), _Gateway.Id }
+                Data = new string[] { ServiceInfo.ServiceId.ToString(), _Gateway.Id }
             });
             lock(_Gateway.OnlineMicroServices)
             {
