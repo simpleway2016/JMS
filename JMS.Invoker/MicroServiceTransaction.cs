@@ -118,7 +118,13 @@ namespace Microsoft.AspNetCore.Mvc
                     {
                         Type = InvokeType.HealthyCheck,
                     });
-                    client.NetClient.ReadServiceObject<string>();
+                    var ret = client.NetClient.ReadServiceObject<InvokeResult>();
+                    if(ret.Success == false)
+                    {
+                        //有人不同意提交事务
+                        //把提交更改为回滚
+                        invokeType = InvokeType.RollbackTranaction;
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -127,7 +127,9 @@ namespace JMS.Impls
                     }
                     else if (cmd.Type == InvokeType.HealthyCheck)
                     {
-                        netclient.WriteServiceData("ok");
+                        netclient.WriteServiceData(new InvokeResult { 
+                            Success = transactionDelegate.AgreeCommit
+                        });
                     }
                 }
             }
