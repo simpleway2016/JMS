@@ -3,6 +3,7 @@ using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,11 +56,13 @@ namespace Microsoft.AspNetCore.Mvc
             }
         }
 
-        public T GetMicroService<T>(string serviceName) where T : IImplInvoker
+        public T GetMicroService<T>() where T : IImplInvoker
         {
-            var invoker = new Invoker(this, serviceName);
+            var classType = typeof(T);
+            
+            var invoker = new Invoker(this, classType.GetCustomAttribute<InvokerInfoAttribute>().ServiceName);
             if (invoker.Init())
-                return (T)Activator.CreateInstance(typeof(T), new object[] { invoker });
+                return (T)Activator.CreateInstance(classType, new object[] { invoker });
             return default(T);
         }
 

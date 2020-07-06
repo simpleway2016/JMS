@@ -137,6 +137,10 @@ namespace JMS.GenerateCode
             myClass.BaseTypes.Add(new CodeTypeReference("IImplInvoker"));
             codeNamespace.Types.Add(myClass);
 
+            //添加ServiceName attribute
+            CodeAttributeDeclaration attr = new CodeAttributeDeclaration("InvokerInfo" , new CodeAttributeArgument(new CodePrimitiveExpression(serviceName)));
+            myClass.CustomAttributes.Add(attr);
+
             foreach (var methodInfo in methods)
             {
                 var methodcode = getMethodCode(methodInfo, false);

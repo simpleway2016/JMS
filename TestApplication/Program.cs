@@ -71,7 +71,9 @@ namespace TestApplication
                 var locations = tran.ListMicroService("");//列出所有微服务
                 Console.WriteLine("微服务位置：{0}", locations.ToJsonString());
 
-                var controller1 = tran.GetMicroService<Controller1>("Controller1");
+               //var code =  tran.GetMicroService("Controller1").GetServiceClassCode("TestApplication", "Controller1");
+
+                var controller1 = tran.GetMicroService<Controller1>();
                 var Service2 = tran.GetMicroService("Service2");
 
                 var ret = controller1.Test(123, "Jack.T");

@@ -15,6 +15,7 @@ namespace TestApplication
     using System.Linq;
 
 
+    [InvokerInfo("Controller1")]
     public class Controller1 : IImplInvoker
     {
 
@@ -25,11 +26,19 @@ namespace TestApplication
             this._microService = microService;
         }
 
+        /// <summary>
+        ///            test测试
+        ///            </summary>
+        /// <returns></returns>
         public virtual string test()
         {
             return this._microService.Invoke<string>("test");
         }
 
+        /// <summary>
+        ///            test测试
+        ///            </summary>
+        /// <returns></returns>
         public virtual System.Threading.Tasks.Task<string> testAsync()
         {
             return this._microService.InvokeAsync<string>("test");
@@ -45,11 +54,25 @@ namespace TestApplication
             return this._microService.InvokeAsync("Test2");
         }
 
+        /// <summary>
+        ///            测试
+        ///            </summary>
+        /// <param name="tran"></param>
+        /// <param name="p">年龄</param>
+        /// <param name="str">名称</param>
+        /// <returns>返回需要的字符串</returns>
         public virtual string Test(System.Nullable<int> p, string str)
         {
             return this._microService.Invoke<string>("Test", p, str);
         }
 
+        /// <summary>
+        ///            测试
+        ///            </summary>
+        /// <param name="tran"></param>
+        /// <param name="p">年龄</param>
+        /// <param name="str">名称</param>
+        /// <returns>返回需要的字符串</returns>
         public virtual System.Threading.Tasks.Task<string> TestAsync(System.Nullable<int> p, string str)
         {
             return this._microService.InvokeAsync<string>("Test", p, str);
