@@ -11,7 +11,8 @@ namespace JMS.Dtos
         GetServiceProvider = 2,
         GetAllServiceProviders = 3,
         ReportClientConnectQuantity = 4,
-        LockKey = 5
+        LockKey = 5,
+        ApplyToBeMaster = 6,
     }
     public class GatewayCommand
     {
