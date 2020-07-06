@@ -11,7 +11,7 @@ namespace JMS.Impls
     class KeyLocker : IKeyLocker
     {
         MicroServiceHost _microServiceProvider;
-
+        internal List<string> LockedKeys = new List<string>();
         public KeyLocker(MicroServiceHost microServiceProvider)
         {
             _microServiceProvider = microServiceProvider;
@@ -30,12 +30,22 @@ namespace JMS.Impls
                 });
 
                 var ret = netclient.ReadServiceObject<InvokeResult>();
+                if(ret.Success)
+                {
+                    lock (LockedKeys)
+                    {
+                        LockedKeys.Add(key);
+                    }
+                }
                 return ret.Success;
             }
         }
 
         public void UnLock(string key)
         {
+            if (LockedKeys.Contains(key) == false)
+                return;
+
             using (var netclient = new NetClient(_microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort))
             {
                 netclient.WriteServiceData(new GatewayCommand
@@ -50,6 +60,14 @@ namespace JMS.Impls
                 });
 
                 var ret = netclient.ReadServiceObject<InvokeResult>();
+
+                lock (LockedKeys)
+                {
+                    if (LockedKeys.Contains(key))
+                    {
+                        LockedKeys.Remove(key);
+                    }
+                }
             }
         }
     }
