@@ -50,9 +50,14 @@ namespace JMS
         void toBeMaster()
         {
             while(true)
-            {
+            {              
                 try
                 {
+                    if (!this.IsMaster)
+                    {
+                        _lockKeyManager.IsReady = false;
+                    }
+
                     using (var client = new NetClient(_refereeAddress))
                     {
                         client.WriteServiceData(new GatewayCommand { 
@@ -71,6 +76,7 @@ namespace JMS
                                 //等待所有微服务上传locked key
                                 for (int i = 0; i < 10 && _waitServiceList.Count > 0; i++)
                                     Thread.Sleep(1000);
+                                _lockKeyManager.IsReady = true;
                             }                           
                         }
                     }

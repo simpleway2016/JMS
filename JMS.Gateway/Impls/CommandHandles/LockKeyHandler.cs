@@ -27,40 +27,53 @@ namespace JMS.Impls.CommandHandles
         {
             var info = cmd.Content.FromJson<LockKeyInfo>();
             var service = _gateway.GetServiceById(info.MicroServiceId);
-            if (info.IsUnlock)
-            {
-                _lockKeyManager.UnLock(info.Key, service);
-                netclient.WriteServiceData(new InvokeResult
-                {
-                    Success = true
-                });
-                return;
-            }
 
-            if (_lockKeyManager.TryLock(info.Key, service))
+            try
             {
-                netclient.WriteServiceData(new InvokeResult
+                if (info.IsUnlock)
                 {
-                    Success = true
-                });
-            }
-            else if (!info.WaitToSuccess)
-            {
-                netclient.WriteServiceData(new InvokeResult
-                {
-                    Success = false
-                });
-            }
-            else
-            {
-                while (!_lockKeyManager.TryLock(info.Key, service))
-                    Thread.Sleep(100);
+                    _lockKeyManager.UnLock(info.Key, service);
+                    netclient.WriteServiceData(new InvokeResult
+                    {
+                        Success = true
+                    });
+                    return;
+                }
 
+                if (_lockKeyManager.TryLock(info.Key, service))
+                {
+                    netclient.WriteServiceData(new InvokeResult
+                    {
+                        Success = true
+                    });
+                }
+                else if (!info.WaitToSuccess)
+                {
+                    netclient.WriteServiceData(new InvokeResult
+                    {
+                        Success = false
+                    });
+                }
+                else
+                {
+                    while (!_lockKeyManager.TryLock(info.Key, service))
+                        Thread.Sleep(100);
+
+                    netclient.WriteServiceData(new InvokeResult
+                    {
+                        Success = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
                 netclient.WriteServiceData(new InvokeResult
                 {
-                    Success = true
+                    Success = false,
+                    Data = ex.Message
                 });
             }
+           
         }
     }
 }

@@ -30,14 +30,16 @@ namespace JMS.Impls
                     }.ToJsonString()
                 });
 
-                var ret = netclient.ReadServiceObject<InvokeResult>();
-                if(ret.Success)
+                var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+                if (ret.Success)
                 {
                     lock (LockedKeys)
                     {
                         LockedKeys.Add(key);
                     }
                 }
+                else if (ret.Data != null)
+                    throw new Exception(ret.Data);
                 return ret.Success;
             }
         }
@@ -60,7 +62,9 @@ namespace JMS.Impls
                     }.ToJsonString()
                 });
 
-                var ret = netclient.ReadServiceObject<InvokeResult>();
+                var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+                if (!ret.Success && ret.Data != null)
+                    throw new Exception(ret.Data);
 
                 lock (LockedKeys)
                 {
