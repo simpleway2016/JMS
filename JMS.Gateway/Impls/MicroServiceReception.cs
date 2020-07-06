@@ -49,6 +49,7 @@ namespace JMS.Impls
             }
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
             NetClient.WriteServiceData(new InvokeResult{ 
+                Success = true,
                 Data = new string[] { ServiceInfo.ServiceId.ToString(), _Gateway.Id }
             });
             lock(_Gateway.OnlineMicroServices)

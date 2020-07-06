@@ -13,7 +13,7 @@ namespace JMS
         static void Main(string[] args)
         {
             var builder = new ConfigurationBuilder();
-            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
+            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
             var configuration = builder.Build();
 
             var port = configuration.GetValue<int>("Port");

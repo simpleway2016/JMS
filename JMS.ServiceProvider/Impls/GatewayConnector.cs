@@ -57,6 +57,11 @@ namespace JMS.Impls
                 };
                 _client.WriteServiceData(cmd);
                 var ret = _client.ReadServiceObject<InvokeResult<string[]>>();
+                if(ret.Success == false)
+                {
+                    _client.Dispose();
+                    throw new Exception("网关不允许当前ip作为微服务");
+                }
                 this.ServiceId = Convert.ToInt32(ret.Data[0]);
                 _gatewayId = ret.Data[1];
 
