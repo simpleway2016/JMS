@@ -17,6 +17,7 @@ namespace JMS
 {
     public class MicroServiceHost
     {
+        public string Id { get; private set; }
         ILogger<MicroServiceHost> _logger;
         IGatewayConnector _GatewayConnector;
         internal IGatewayConnector GatewayConnector => _GatewayConnector;
@@ -34,6 +35,7 @@ namespace JMS
         ScheduleTaskManager _scheduleTaskManager;
         public MicroServiceHost(ServiceCollection services)
         {
+            this.Id = Guid.NewGuid().ToString("N");
             _services = services;
             _scheduleTaskManager = new ScheduleTaskManager(this);
         }

@@ -6,7 +6,7 @@ namespace JMS.Dtos
 {
     public class LockKeyInfo
     {
-        public int MicroServiceId;
+        public string MicroServiceId;
         public string Key;
         /// <summary>
         /// 一直等待，直到成功

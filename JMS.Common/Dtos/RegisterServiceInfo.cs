@@ -22,8 +22,7 @@ namespace JMS.Dtos
         /// 本机最多同时并发几个线程
         /// </summary>
         public int MaxThread;
-        public int ServiceId;
-        public string GatewayId;
+        public string ServiceId;
 
     }
 
@@ -39,7 +38,7 @@ namespace JMS.Dtos
         /// 本机最多同时并发几个线程
         /// </summary>
         public int MaxThread;
-        public int ServiceId;
+        public string ServiceId;
         /// <summary>
         /// 当前连接的请求数
         /// </summary>

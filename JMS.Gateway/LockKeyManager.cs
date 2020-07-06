@@ -98,7 +98,7 @@ namespace JMS
                     foreach (var pair in _cache)
                     {
                         var obj = pair.Value;
-                        if (obj.Locker > 0)
+                        if (obj.Locker != null)
                         {
                             if (obj.RemoveTime != null && DateTime.Now >= obj.RemoveTime.GetValueOrDefault())
                             {
@@ -147,11 +147,6 @@ namespace JMS
                         keyObj.RemoveTime = null;
                         return true;
                     }
-                    if (Interlocked.CompareExchange(ref keyObj.Locker, locker.ServiceId, 0) == 0)
-                    {
-                        keyObj.RemoveTime = null;
-                        return true;
-                    }
                     else
                         return false;
                 }
@@ -174,10 +169,7 @@ namespace JMS
     class KeyObject
     {
         public string Key;
-        /// <summary>
-        /// 不为0:locked 0:unlocked
-        /// </summary>
-        public int Locker;
+        public string Locker;
         /// <summary>
         /// 设定移除时间
         /// </summary>

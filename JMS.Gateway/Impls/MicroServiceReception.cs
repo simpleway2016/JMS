@@ -20,37 +20,27 @@ namespace JMS.Impls
         Gateway _Gateway;
         NetClient NetClient;
         public RegisterServiceInfo ServiceInfo { get; set; }
-        ServiceIdBuilder _ServiceIdBuilder;
+
         IServiceProviderAllocator _ServiceProviderAllocator;
         LockKeyManager _lockKeyManager;
         public MicroServiceReception(ILogger<MicroServiceReception> logger,
             Gateway gateway, 
             LockKeyManager lockKeyManager,
-            ServiceIdBuilder serviceIdBuilder,
             IServiceProviderAllocator serviceProviderAllocator)
         {           
             _Gateway = gateway;
             _ServiceProviderAllocator = serviceProviderAllocator;
                _Logger = logger;
             _lockKeyManager = lockKeyManager;
-            _ServiceIdBuilder = serviceIdBuilder;
         }
         public void HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
-            if(ServiceInfo.ServiceId > 0 && ServiceInfo.GatewayId == _Gateway.Id)
-            {
-                //这是一个曾经断开的微服务，不用更改serviceid
-            }
-            else
-            {
-                ServiceInfo.ServiceId = _ServiceIdBuilder.Build();
-            }
+
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
             NetClient.WriteServiceData(new InvokeResult{ 
-                Success = true,
-                Data = new string[] { ServiceInfo.ServiceId.ToString(), _Gateway.Id }
+                Success = true
             });
             lock(_Gateway.OnlineMicroServices)
             {

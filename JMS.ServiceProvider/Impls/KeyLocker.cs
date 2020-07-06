@@ -24,7 +24,7 @@ namespace JMS.Impls
                     Type = CommandType.LockKey,
                     Content = new LockKeyInfo { 
                          Key = key,
-                          MicroServiceId = _microServiceProvider.GatewayConnector.ServiceId,
+                          MicroServiceId = _microServiceProvider.Id,
                            WaitToSuccess = waitToSuccess
                     }.ToJsonString()
                 });
@@ -44,7 +44,7 @@ namespace JMS.Impls
                     Content = new LockKeyInfo
                     {
                         Key = key,
-                        MicroServiceId = _microServiceProvider.GatewayConnector.ServiceId,
+                        MicroServiceId = _microServiceProvider.Id,
                         IsUnlock = true
                     }.ToJsonString()
                 });

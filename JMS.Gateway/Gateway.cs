@@ -15,7 +15,6 @@ namespace JMS
 {
     class Gateway
     {
-        public string Id { get; }
         TcpListener _tcpListener;
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
@@ -23,14 +22,13 @@ namespace JMS
         public List<IMicroServiceReception> OnlineMicroServices { get; set; }
 
 
-        public Gateway(ILogger<Gateway> logger,GatewayIdBuilder gatewayIdBuilder)
+        public Gateway(ILogger<Gateway> logger)
         {
-            this.Id = gatewayIdBuilder.Build();
             _Logger = logger;
             OnlineMicroServices = new List<IMicroServiceReception>();
         }
 
-        public RegisterServiceInfo GetServiceById(int id)
+        public RegisterServiceInfo GetServiceById(string id)
         {
             try
             {
@@ -51,7 +49,7 @@ namespace JMS
             _requestReception = ServiceProvider.GetService<IRequestReception>();
                _tcpListener = new TcpListener(IPAddress.Any, port);
             _tcpListener.Start();
-            _Logger?.LogInformation("Gateway started, port:{0} GatewayId:{1}", port , this.Id);
+            _Logger?.LogInformation("Gateway started, port:{0}", port );
             while (true)
             {
                 try

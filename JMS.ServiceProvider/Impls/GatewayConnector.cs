@@ -14,19 +14,14 @@ namespace JMS.Impls
 {
     class GatewayConnector : IGatewayConnector
     {
-        /// <summary>
-        /// 在网关处的id
-        /// </summary>
-        public int ServiceId { get; private set; }
-        string _gatewayId;
         NetClient _client;
         ILogger<GatewayConnector> _logger;
-        MicroServiceHost _microServiceProvider;
+        MicroServiceHost _microServiceHost;
         bool _manualDisconnected;
         bool _ready;
-        public GatewayConnector(MicroServiceHost microServiceProvider,ILogger<GatewayConnector> logger)
+        public GatewayConnector(MicroServiceHost microServiceHost,ILogger<GatewayConnector> logger)
         {
-            _microServiceProvider = microServiceProvider;
+            _microServiceHost = microServiceHost;
             _logger = logger;
             new Thread(sendConnectQuantity).Start();           
         }
@@ -41,32 +36,29 @@ namespace JMS.Impls
                 _ready = false;
                 _client?.Dispose();
 
-                _client = new NetClient(_microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort);
+                _client = new NetClient(_microServiceHost.GatewayAddress, _microServiceHost.GatewayPort);
 
                 GatewayCommand cmd = new GatewayCommand()
                 {
                     Type = CommandType.Register,
                     Content = new RegisterServiceInfo
                     {
-                        ServiceNames = _microServiceProvider.ServiceNames.Keys.ToArray(),
-                        Port = _microServiceProvider.ServicePort,
+                        ServiceNames = _microServiceHost.ServiceNames.Keys.ToArray(),
+                        Port = _microServiceHost.ServicePort,
                         MaxThread = Environment.ProcessorCount,
-                        ServiceId = this.ServiceId,
-                        GatewayId = _gatewayId
+                        ServiceId = _microServiceHost.Id
                     }.ToJsonString()
                 };
                 _client.WriteServiceData(cmd);
-                var ret = _client.ReadServiceObject<InvokeResult<string[]>>();
+                var ret = _client.ReadServiceObject<InvokeResult>();
                 if(ret.Success == false)
                 {
                     _client.Dispose();
                     throw new Exception("网关不允许当前ip作为微服务");
                 }
-                this.ServiceId = Convert.ToInt32(ret.Data[0]);
-                _gatewayId = ret.Data[1];
 
                 _ready = true;
-                _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1}", _microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort);
+                _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1}", _microServiceHost.GatewayAddress, _microServiceHost.GatewayPort);
 
                 new Thread(healthyCheck).Start();
             }
@@ -112,7 +104,7 @@ namespace JMS.Impls
                         _client.WriteServiceData(new GatewayCommand
                         {
                             Type = CommandType.ReportClientConnectQuantity,
-                            Content = _microServiceProvider.ClientConnected.ToString()
+                            Content = _microServiceHost.ClientConnected.ToString()
                         });
                     }
                     
