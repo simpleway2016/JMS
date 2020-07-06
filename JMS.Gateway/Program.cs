@@ -47,7 +47,10 @@ namespace JMS
             services.AddSingleton<IServiceProviderAllocator>(serviceProviderAllocator);
             var serviceProvider = services.BuildServiceProvider();
             serviceProvider.GetService<LockKeyManager>();
-            
+
+            //启动GatewayRefereeClient，申请成为主网关
+            serviceProvider.GetService<GatewayRefereeClient>();
+
             var gateway = serviceProvider.GetService<Gateway>();
             gateway.ServiceProvider = serviceProvider;
             gateway.Run(port);

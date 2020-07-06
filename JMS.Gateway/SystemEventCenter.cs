@@ -9,6 +9,7 @@ namespace JMS
     {
         public static event EventHandler<RegisterServiceInfo> MicroServiceOnline;
         public static event EventHandler<RegisterServiceInfo> MicroServiceOnffline;
+        public static event EventHandler<RegisterServiceInfo> MicroServiceUploadLockedKeyCompleted;
 
         public static void OnMicroServiceOnline(RegisterServiceInfo serviceInfo)
         {
@@ -20,6 +21,12 @@ namespace JMS
         {
             if (MicroServiceOnffline != null)
                 MicroServiceOnffline(null, serviceInfo);
+        }
+
+        public static void OnMicroServiceUploadLockedKeyCompleted(RegisterServiceInfo serviceInfo)
+        {
+            if (MicroServiceUploadLockedKeyCompleted != null)
+                MicroServiceUploadLockedKeyCompleted(null, serviceInfo);
         }
     }
 }

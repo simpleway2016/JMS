@@ -22,10 +22,13 @@ namespace JMS.Impls
         MicroServiceHost _microServiceHost;
         bool _manualDisconnected;
         bool _ready;
-        public GatewayConnector(MicroServiceHost microServiceHost,ILogger<GatewayConnector> logger)
+        IKeyLocker _keyLocker;
+        public GatewayConnector(MicroServiceHost microServiceHost,ILogger<GatewayConnector> logger,IKeyLocker keyLocker)
         {
             _microServiceHost = microServiceHost;
             _logger = logger;
+            _keyLocker = keyLocker;
+
             new Thread(sendConnectQuantity).Start();           
         }
         public void ConnectAsync()
@@ -71,6 +74,11 @@ namespace JMS.Impls
                     }
 
                 });
+
+                if(_microServiceHost.MasterGatewayAddress != null)
+                {
+                    _logger?.LogInformation("找到主网关{0}:{1}", _microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
+                }
                 Thread.Sleep(1000);
             }
            
@@ -86,7 +94,7 @@ namespace JMS.Impls
 
                 _client = new NetClient(_microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
                 
-                GatewayCommand cmd = new GatewayCommand()
+                _client.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.RegisterSerivce,
                     Content = new RegisterServiceInfo
@@ -96,8 +104,7 @@ namespace JMS.Impls
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id
                     }.ToJsonString()
-                };
-                _client.WriteServiceData(cmd);
+                });
                 var ret = _client.ReadServiceObject<InvokeResult>();
                 if(ret.Success == false)
                 {
@@ -107,6 +114,21 @@ namespace JMS.Impls
 
                 _ready = true;
                 _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1}", _microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
+
+
+                //上传已经lock的key
+                using (var client = new NetClient(_microServiceHost.MasterGatewayAddress))
+                {
+                    client.WriteServiceData(new GatewayCommand
+                    {
+                        Type = CommandType.UploadLockKeys,
+                        Header = new Dictionary<string, string> {
+                                    { "ServiceId",_microServiceHost.Id}
+                                },
+                        Content = _keyLocker.LockedKeys.ToJsonString()
+                    });
+                    client.ReadServiceObject<InvokeResult>();
+                }
 
                 new Thread(healthyCheck).Start();
             }

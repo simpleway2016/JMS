@@ -14,7 +14,11 @@ namespace JMS.Dtos
         LockKey = 5,
         ApplyToBeMaster = 6,
         UnRegisterSerivce = 7,
-        FindMaster = 8
+        /// <summary>
+        /// 询问网关是否是主网关
+        /// </summary>
+        FindMaster = 8,
+        UploadLockKeys = 9
     }
     public class GatewayCommand
     {

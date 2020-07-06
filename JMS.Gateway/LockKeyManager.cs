@@ -19,6 +19,7 @@ namespace JMS
         IConfiguration _configuration;
         int _timeout;
         ILogger<LockKeyManager> _logger;
+        internal bool IsReady;
         public LockKeyManager(Gateway gateway,IConfiguration configuration,ILogger<LockKeyManager> logger)
         {
             _timeout = configuration.GetValue<int>("UnLockKeyTimeout");
@@ -122,6 +123,9 @@ namespace JMS
 
         public bool TryLock(string key, RegisterServiceInfo locker)
         {
+            if (IsReady == false)
+                throw new Exception("lock key is not ready");
+
             KeyObject keyObj = null;
             while (true)
             {
@@ -155,6 +159,9 @@ namespace JMS
 
         public void UnLock(string key,RegisterServiceInfo service)
         {
+            if (IsReady == false)
+                throw new Exception("lock key is not ready");
+
             KeyObject keyObj = null;
             if (_cache.TryGetValue(key, out keyObj)  )
             {

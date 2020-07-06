@@ -11,10 +11,11 @@ namespace JMS.Impls
     class KeyLocker : IKeyLocker
     {
         MicroServiceHost _microServiceHost;
-        internal List<string> LockedKeys = new List<string>();
+        public List<string> LockedKeys { get; }
         public KeyLocker(MicroServiceHost microServiceHost)
         {
             _microServiceHost = microServiceHost;
+            this.LockedKeys = new List<string>();
         }
         public bool TryLock(string key, bool waitToSuccess)
         {

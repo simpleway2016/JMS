@@ -22,11 +22,12 @@ namespace JMS.Gateway.Impls.CommandHandles
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             bool success;
+            var ip = ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString();
             lock (_referee)
             {
-                if (_referee.MasterIp == null)
+                if (_referee.MasterIp == null || _referee.MasterIp == ip)
                 {
-                    _referee.MasterIp = ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString();
+                    _referee.MasterIp = ip;
                     success = true;                  
                 }
                 else

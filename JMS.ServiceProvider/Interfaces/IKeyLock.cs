@@ -6,6 +6,7 @@ namespace JMS.Interfaces
 {
     public interface IKeyLocker
     {
+        List<string> LockedKeys { get; }
         /// <summary>
         /// 申请锁住指定的key
         /// </summary>
