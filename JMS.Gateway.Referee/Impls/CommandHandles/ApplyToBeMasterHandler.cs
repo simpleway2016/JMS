@@ -12,10 +12,11 @@ namespace JMS.Gateway.Impls.CommandHandles
         public CommandType MatchCommandType => CommandType.ApplyToBeMaster;
         Referee _referee;
         IServiceProvider _serviceProvider;
-        public ApplyToBeMasterHandler(Referee referee,IServiceProvider serviceProvider)
+        public ApplyToBeMasterHandler(IServiceProvider serviceProvider)
         {
-            _referee = referee;
+           
             _serviceProvider = serviceProvider;
+            _referee = serviceProvider.GetService<Referee>();
         }
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
@@ -36,7 +37,8 @@ namespace JMS.Gateway.Impls.CommandHandles
 
             netclient.WriteServiceData(new InvokeResult
             {
-                Success = success
+                Success = success,
+                Data = success ? _referee.MasterGatewayServices : null
             });
 
             if (success)

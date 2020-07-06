@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JMS.Common.Dtos;
+using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
@@ -8,6 +9,10 @@ namespace JMS
 {
     public class NetClient:Way.Lib.NetStream
     {
+        public NetClient(NetAddress addr) : base(addr.Address, addr.Port)
+        {
+            this.ReadTimeout = 16000;
+        }
         public NetClient(string ip,int port) : base(ip,port)
         {
             this.ReadTimeout = 16000;

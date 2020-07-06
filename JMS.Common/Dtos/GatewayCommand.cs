@@ -7,12 +7,14 @@ namespace JMS.Dtos
 {
     public enum CommandType
     {
-        Register = 1,
+        RegisterSerivce = 1,
         GetServiceProvider = 2,
         GetAllServiceProviders = 3,
         ReportClientConnectQuantity = 4,
         LockKey = 5,
         ApplyToBeMaster = 6,
+        UnRegisterSerivce = 7,
+        FindMaster = 8
     }
     public class GatewayCommand
     {

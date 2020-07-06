@@ -10,21 +10,21 @@ namespace JMS.Impls
 {
     class KeyLocker : IKeyLocker
     {
-        MicroServiceHost _microServiceProvider;
+        MicroServiceHost _microServiceHost;
         internal List<string> LockedKeys = new List<string>();
-        public KeyLocker(MicroServiceHost microServiceProvider)
+        public KeyLocker(MicroServiceHost microServiceHost)
         {
-            _microServiceProvider = microServiceProvider;
+            _microServiceHost = microServiceHost;
         }
         public bool TryLock(string key, bool waitToSuccess)
         {
-            using (var netclient = new NetClient(_microServiceProvider.GatewayAddress,_microServiceProvider.GatewayPort))
+            using (var netclient = new NetClient(_microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port))
             {
                 netclient.WriteServiceData(new GatewayCommand { 
                     Type = CommandType.LockKey,
                     Content = new LockKeyInfo { 
                          Key = key,
-                          MicroServiceId = _microServiceProvider.Id,
+                          MicroServiceId = _microServiceHost.Id,
                            WaitToSuccess = waitToSuccess
                     }.ToJsonString()
                 });
@@ -46,7 +46,7 @@ namespace JMS.Impls
             if (LockedKeys.Contains(key) == false)
                 return;
 
-            using (var netclient = new NetClient(_microServiceProvider.GatewayAddress, _microServiceProvider.GatewayPort))
+            using (var netclient = new NetClient(_microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port))
             {
                 netclient.WriteServiceData(new GatewayCommand
                 {
@@ -54,7 +54,7 @@ namespace JMS.Impls
                     Content = new LockKeyInfo
                     {
                         Key = key,
-                        MicroServiceId = _microServiceProvider.Id,
+                        MicroServiceId = _microServiceHost.Id,
                         IsUnlock = true
                     }.ToJsonString()
                 });

@@ -31,6 +31,7 @@ namespace JMS
                 loggingBuilder.AddConsole(); // 将日志输出到控制台
             });
             services.AddSingleton<IConfiguration>(configuration);
+            services.AddSingleton<GatewayRefereeClient>();
             services.AddSingleton<IRequestReception,RequestReception>();
             services.AddSingleton<ICommandHandlerManager, CommandHandlerManager>();
             services.AddSingleton<Gateway>();

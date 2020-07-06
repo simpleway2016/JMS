@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
 using System.Reflection;
+using JMS.Common.Dtos;
 
 namespace JMS
 {
@@ -21,8 +22,9 @@ namespace JMS
         ILogger<MicroServiceHost> _logger;
         IGatewayConnector _GatewayConnector;
         internal IGatewayConnector GatewayConnector => _GatewayConnector;
-        public string GatewayAddress { private set; get; }
-        public int GatewayPort { private set; get; }
+        public NetAddress MasterGatewayAddress { internal set; get; }
+        public NetAddress[] AllGatewayAddresses { get; private set; }
+
         internal Dictionary<string, ControllerTypeInfo> ServiceNames = new Dictionary<string, ControllerTypeInfo>();
         internal int ServicePort;
         /// <summary>
@@ -84,7 +86,7 @@ namespace JMS
 
 
 
-        public void Run(string gatewayAddress, int gatewayPort, int servicePort)
+        public void Run(int servicePort , NetAddress[] gatewayAddresses)
         {
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
@@ -104,8 +106,7 @@ namespace JMS
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
 
-            GatewayAddress = gatewayAddress;
-            GatewayPort = gatewayPort;
+            AllGatewayAddresses = gatewayAddresses;
             ServicePort = servicePort;
 
             _GatewayConnector.ConnectAsync();

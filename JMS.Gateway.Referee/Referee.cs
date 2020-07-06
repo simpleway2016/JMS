@@ -1,6 +1,8 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Dtos;
+using JMS.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -12,12 +14,14 @@ namespace JMS.Gateway
     class Referee
     {
         public string MasterIp { get; set; }
+        internal ConcurrentDictionary<string,RegisterServiceInfo> MasterGatewayServices { get; }
         ILogger<Referee> _logger;
         IRequestReception _requestReception;
         public Referee(ILogger<Referee> logger,IRequestReception requestReception)
         {
             _logger = logger;
             _requestReception = requestReception;
+            MasterGatewayServices = new ConcurrentDictionary<string, RegisterServiceInfo>();
         }
         public void Run(int port)
         {

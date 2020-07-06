@@ -12,6 +12,9 @@ using Way.Lib;
 
 namespace JMS.Impls
 {
+    /// <summary>
+    /// 连接主网关，和维持主网关的心跳
+    /// </summary>
     class GatewayConnector : IGatewayConnector
     {
         NetClient _client;
@@ -29,6 +32,49 @@ namespace JMS.Impls
         {
             new Thread(connect).Start();
         }
+
+        /// <summary>
+        /// 找出master网关
+        /// </summary>
+        void findMasterGateway()
+        {
+            if(_microServiceHost.AllGatewayAddresses.Length == 1)
+            {
+                _microServiceHost.MasterGatewayAddress = _microServiceHost.AllGatewayAddresses[0];
+                return;
+            }
+
+            _microServiceHost.MasterGatewayAddress = null;
+            while (_microServiceHost.MasterGatewayAddress == null)
+            {
+                Parallel.For(0, _microServiceHost.AllGatewayAddresses.Length, (index) =>
+                {
+                    var addr = _microServiceHost.AllGatewayAddresses[index];
+                    try
+                    {
+                        using (var client = new NetClient(addr))
+                        {
+                            client.WriteServiceData(new GatewayCommand
+                            {
+                                Type = CommandType.FindMaster
+                            });
+                            var ret = client.ReadServiceObject<InvokeResult>();
+                            if (ret.Success == true && _microServiceHost.MasterGatewayAddress == null)
+                            {
+                                _microServiceHost.MasterGatewayAddress = addr;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
+                    }
+
+                });
+                Thread.Sleep(1000);
+            }
+           
+        }
         void connect()
         {
             try
@@ -36,11 +82,13 @@ namespace JMS.Impls
                 _ready = false;
                 _client?.Dispose();
 
-                _client = new NetClient(_microServiceHost.GatewayAddress, _microServiceHost.GatewayPort);
+                findMasterGateway();
 
+                _client = new NetClient(_microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
+                
                 GatewayCommand cmd = new GatewayCommand()
                 {
-                    Type = CommandType.Register,
+                    Type = CommandType.RegisterSerivce,
                     Content = new RegisterServiceInfo
                     {
                         ServiceNames = _microServiceHost.ServiceNames.Keys.ToArray(),
@@ -58,7 +106,7 @@ namespace JMS.Impls
                 }
 
                 _ready = true;
-                _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1}", _microServiceHost.GatewayAddress, _microServiceHost.GatewayPort);
+                _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1}", _microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
 
                 new Thread(healthyCheck).Start();
             }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using JMS.Common.Dtos;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -27,7 +28,12 @@ namespace JMS
             var msp = new MicroServiceHost(services);
             msp.Register<Controller1>("Controller1");
             msp.Register<Controller2>("Service2");
-            msp.Run("localhost", 8911, 8912);
+            msp.Run(8912 , new NetAddress[] {
+               new NetAddress{
+                    Address = "localhost",
+                    Port = 8911
+               }
+            });
         }
     }
 }

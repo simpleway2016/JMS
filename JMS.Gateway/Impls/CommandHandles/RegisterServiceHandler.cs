@@ -11,16 +11,19 @@ using System.Net;
 
 namespace JMS.Impls.CommandHandles
 {
-    class RegisterHandler : ICommandHandler
+    class RegisterServiceHandler : ICommandHandler
     {
         IServiceProvider _serviceProvider;
         IConfiguration _configuration;
-        public RegisterHandler(IServiceProvider serviceProvider)
+        GatewayRefereeClient _gatewayRefereeClient;
+
+        public RegisterServiceHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _configuration = serviceProvider.GetService<IConfiguration>();
+            _gatewayRefereeClient = serviceProvider.GetService<GatewayRefereeClient>();
         }
-        public CommandType MatchCommandType => CommandType.Register;
+        public CommandType MatchCommandType => CommandType.RegisterSerivce;
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
@@ -34,6 +37,7 @@ namespace JMS.Impls.CommandHandles
                 });
                 return;
             }
+
             var serviceClient = _serviceProvider.GetService<IMicroServiceReception>();
             serviceClient.HealthyCheck(netclient , cmd);
         }

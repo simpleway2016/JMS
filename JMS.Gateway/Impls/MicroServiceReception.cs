@@ -23,20 +23,25 @@ namespace JMS.Impls
 
         IServiceProviderAllocator _ServiceProviderAllocator;
         LockKeyManager _lockKeyManager;
+        GatewayRefereeClient _gatewayReferee;
         public MicroServiceReception(ILogger<MicroServiceReception> logger,
             Gateway gateway, 
             LockKeyManager lockKeyManager,
+            GatewayRefereeClient gatewayReferee,
             IServiceProviderAllocator serviceProviderAllocator)
         {           
             _Gateway = gateway;
             _ServiceProviderAllocator = serviceProviderAllocator;
                _Logger = logger;
             _lockKeyManager = lockKeyManager;
+            _gatewayReferee = gatewayReferee;
         }
         public void HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
+
+            _gatewayReferee.AddMicroService(ServiceInfo);
 
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
             NetClient.WriteServiceData(new InvokeResult{ 

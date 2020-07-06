@@ -6,7 +6,7 @@ namespace JMS.Common.Dtos
 {
     public class NetAddress
     {
-        public string Address;
-        public int Port;
+        public string Address { get; set; }
+        public int Port { get; set; }
     }
 }
