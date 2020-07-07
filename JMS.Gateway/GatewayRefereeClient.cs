@@ -87,10 +87,10 @@ namespace JMS
                                 _lockKeyManager.IsReady = true;
 
                                 _logger?.LogInformation("lockKeyManager就绪");
+                            }
 
-                                client.KeepAlive();
-                                _logger?.LogInformation("与裁判的连接断开");
-                            }                           
+                            client.KeepAlive();
+                            _logger?.LogInformation("与裁判的连接断开");
                         }
                         else
                         {
@@ -112,12 +112,13 @@ namespace JMS
                 }
                 catch(SocketException)
                 {
+                    Thread.Sleep(2000);
                 }
                 catch (Exception ex)
                 {
+                    Thread.Sleep(2000);
                     _logger?.LogError(ex, ex.Message);
                 }
-                Thread.Sleep(2000);
             }
         }
 
