@@ -53,6 +53,15 @@ namespace JMS
 
         void toBeMaster()
         {
+            /*
+申请成为master -->
+                    成为master     --> 维持心跳          --> 心跳断开后 -->重新连接裁判机
+                                                                                            -->还是master
+                                                                                            -->如果不再是master --> 断开连接的所有微服务
+                    不能成为master --> 和master维持心跳  --> 心跳断开后 -->重新连接裁判机
+             */
+
+
             NetAddress masterAddr = null;
             while(true)
             {              
