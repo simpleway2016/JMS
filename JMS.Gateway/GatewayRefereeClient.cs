@@ -19,17 +19,20 @@ namespace JMS
         ILogger<GatewayRefereeClient> _logger;
         LockKeyManager _lockKeyManager;
         ConcurrentDictionary<string, RegisterServiceInfo> _waitServiceList;
+        Gateway _gateway;
         /// <summary>
         /// 记录当前网关是否是master
         /// </summary>
         public bool IsMaster { get; private set; }
         public GatewayRefereeClient(IConfiguration configuration,
             LockKeyManager lockKeyManager,
+            Gateway gateway,
             ILogger<GatewayRefereeClient> logger)
         {
             _refereeAddress = configuration.GetSection("Cluster:Referee").Get<NetAddress>();
             _logger = logger;
             _lockKeyManager = lockKeyManager;
+            _gateway = gateway;
 
             if (_refereeAddress == null)
             {
@@ -45,6 +48,30 @@ namespace JMS
         private void SystemEventCenter_MicroServiceUploadLockedKeyCompleted(object sender, RegisterServiceInfo e)
         {
             _waitServiceList?.TryRemove(e.ServiceId,out RegisterServiceInfo o);
+        }
+
+        void keepAlive(NetClient netclient)
+        {
+            while (true)
+            {
+                try
+                {
+                    netclient.WriteServiceData(new GatewayCommand());
+                    netclient.ReadServiceData();
+                }
+                catch(Exception ex)
+                {
+                    netclient.Dispose();
+                    _logger?.LogError(ex, "网关连接断开");
+                    _lockKeyManager.IsReady = false;
+                    this.IsMaster = false;
+
+                    //断开所有微服务
+                    var list = _gateway.OnlineMicroServices.ToArray();
+                    foreach (var service in list)
+                        service.Close();
+                }
+            }
         }
 
         void toBeMaster()
@@ -64,7 +91,7 @@ namespace JMS
                             Type = CommandType.ApplyToBeMaster
                         });
                         var ret = client.ReadServiceObject<InvokeResult<ConcurrentDictionary<string, RegisterServiceInfo>>>();
-                        client.Dispose();
+
 
                         if(ret.Success)
                         {
@@ -77,13 +104,16 @@ namespace JMS
                                 for (int i = 0; i < 10 && _waitServiceList.Count > 0; i++)
                                     Thread.Sleep(1000);
                                 _lockKeyManager.IsReady = true;
+
+                                keepAlive(client);
                             }                           
                         }
+
+                        client.Dispose();
                     }
                 }
                 catch(SocketException)
                 {
-
                 }
                 catch (Exception ex)
                 {

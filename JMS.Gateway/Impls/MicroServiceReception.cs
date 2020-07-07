@@ -73,7 +73,10 @@ namespace JMS.Impls
                 _ServiceProviderAllocator.ServiceInfoChanged(_Gateway.GetAllServiceProviders());
             });
         }
-
+        public void Close()
+        {
+            NetClient?.Dispose();
+        }
         void checkState()
         {
             NetClient.ReadTimeout = 30000;

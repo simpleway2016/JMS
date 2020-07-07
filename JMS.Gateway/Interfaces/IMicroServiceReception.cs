@@ -9,5 +9,6 @@ namespace JMS.Interfaces
     {
         RegisterServiceInfo ServiceInfo { get; set; }
         void HealthyCheck(NetClient netclient, GatewayCommand registerCmd);
+        void Close();
     }
 }

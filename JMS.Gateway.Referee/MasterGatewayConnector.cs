@@ -27,6 +27,7 @@ namespace JMS.Gateway
                 try
                 {
                     var cmd = netclient.ReadServiceObject<GatewayCommand>();
+                    netclient.WriteServiceData("");
                 }
                 catch (Exception ex)
                 {
