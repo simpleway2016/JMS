@@ -27,18 +27,25 @@ namespace JMS.Impls.CommandHandles
         {
             var keys = cmd.Content.FromJson<string[]>();
             var service = _gateway.GetServiceById(cmd.Header["ServiceId"]);
-            if (service != null)
+            if (service != null && service.Host == ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString())
             {
                 foreach (var key in keys)
                 {
                     _lockKeyManager.TryLock(key, service);
                 }
+                SystemEventCenter.OnMicroServiceUploadLockedKeyCompleted(service);
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = true
+                });
             }
-            SystemEventCenter.OnMicroServiceUploadLockedKeyCompleted(service);
-            netclient.WriteServiceData(new InvokeResult
+            else
             {
-                Success = true
-            });
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = false
+                });
+            }
 
         }
     }
