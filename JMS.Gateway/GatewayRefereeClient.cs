@@ -94,6 +94,15 @@ namespace JMS
                         }
                         else
                         {
+                            if(this.IsMaster)
+                            {
+                                this.IsMaster = false;
+                                _lockKeyManager.IsReady = false;
+                                //不是主网关，需要断开所有微服务
+                                var allservices = _gateway.OnlineMicroServices.ToArray();
+                                foreach(var s in allservices)
+                                    s.Close();
+                            }
                             //另一个网关成为主网关
                             masterAddr = ret.Data.FromJson<NetAddress>();
                            
