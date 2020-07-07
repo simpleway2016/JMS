@@ -8,5 +8,9 @@ namespace JMS.Common.Dtos
     {
         public string Address { get; set; }
         public int Port { get; set; }
+        public bool Equals(string ip ,int port)
+        {
+            return Address == ip && Port == port;
+        }
     }
 }

@@ -85,8 +85,13 @@ namespace JMS.Impls
                 try
                 {
                     var command = NetClient.ReadServiceObject<GatewayCommand>();
-                    if (command.Type == CommandType.ReportClientConnectQuantity)
+                    NetClient.WriteServiceData(new InvokeResult
                     {
+                        Success = true
+                    });
+
+                    if (command.Type == CommandType.ReportClientConnectQuantity)
+                    {                       
                         //微服务向我报告当前它的请求连接数
                         //_Logger?.LogDebug($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port} 当前连接数：{command.Content}");
                         Task.Run(() =>

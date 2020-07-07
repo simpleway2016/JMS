@@ -22,12 +22,15 @@ namespace JMS.Gateway
 
         public void Start(NetClient netclient)
         {
-            while(true)
+            netclient.ReadTimeout = 30000;
+            while (true)
             {
                 try
                 {
                     var cmd = netclient.ReadServiceObject<GatewayCommand>();
-                    netclient.WriteServiceData("");
+                    netclient.WriteServiceData(new InvokeResult { 
+                        Success = true
+                    });
                 }
                 catch (Exception ex)
                 {

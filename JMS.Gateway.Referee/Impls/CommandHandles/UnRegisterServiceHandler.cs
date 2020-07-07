@@ -24,7 +24,7 @@ namespace JMS.Impls.CommandHandles
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             var service = cmd.Content.FromJson<RegisterServiceInfo>();
-            if (((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString() != _referee.MasterIp)
+            if (((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString() != _referee.MasterIp.Address)
             {
                 netclient.WriteServiceData(new InvokeResult
                 {

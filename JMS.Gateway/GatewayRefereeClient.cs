@@ -50,32 +50,10 @@ namespace JMS
             _waitServiceList?.TryRemove(e.ServiceId,out RegisterServiceInfo o);
         }
 
-        void keepAlive(NetClient netclient)
-        {
-            while (true)
-            {
-                try
-                {
-                    netclient.WriteServiceData(new GatewayCommand());
-                    netclient.ReadServiceData();
-                }
-                catch(Exception ex)
-                {
-                    netclient.Dispose();
-                    _logger?.LogError(ex, "网关连接断开");
-                    _lockKeyManager.IsReady = false;
-                    this.IsMaster = false;
-
-                    //断开所有微服务
-                    var list = _gateway.OnlineMicroServices.ToArray();
-                    foreach (var service in list)
-                        service.Close();
-                }
-            }
-        }
 
         void toBeMaster()
         {
+            NetAddress masterAddr = null;
             while(true)
             {              
                 try
@@ -88,16 +66,19 @@ namespace JMS
                     using (var client = new NetClient(_refereeAddress))
                     {
                         client.WriteServiceData(new GatewayCommand { 
-                            Type = CommandType.ApplyToBeMaster
+                            Type = CommandType.ApplyToBeMaster,
+                            Content = _gateway.Port.ToString()
                         });
-                        var ret = client.ReadServiceObject<InvokeResult<ConcurrentDictionary<string, RegisterServiceInfo>>>();
+                        var ret = client.ReadServiceObject<InvokeResult<string>>();
 
 
                         if(ret.Success)
                         {
-                            if(this.IsMaster == false)
+                            masterAddr = null;
+                            if (this.IsMaster == false)
                             {
-                                _waitServiceList = ret.Data;
+                                _logger?.LogInformation("成为主网关");
+                                _waitServiceList = ret.Data.FromJson<ConcurrentDictionary<string, RegisterServiceInfo>>();
                                 this.IsMaster = true;
 
                                 //等待所有微服务上传locked key
@@ -105,11 +86,28 @@ namespace JMS
                                     Thread.Sleep(1000);
                                 _lockKeyManager.IsReady = true;
 
-                                keepAlive(client);
+                                _logger?.LogInformation("lockKeyManager就绪");
+
+                                client.KeepAlive();
+                                _logger?.LogInformation("与裁判的连接断开");
                             }                           
                         }
+                        else
+                        {
+                            //另一个网关成为主网关
+                            masterAddr = ret.Data.FromJson<NetAddress>();
+                           
+                        }
+                    }
 
-                        client.Dispose();
+                    if(masterAddr != null)
+                    {
+                        //连上主网关，知道连接出现问题，再申请成为主网关
+                        using (var client = new NetClient(masterAddr))
+                        {
+                            client.KeepAlive();
+                            _logger?.LogInformation("与主网关连接断开");
+                        }
                     }
                 }
                 catch(SocketException)

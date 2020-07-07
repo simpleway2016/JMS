@@ -18,7 +18,8 @@ namespace JMS.Dtos
         /// 询问网关是否是主网关
         /// </summary>
         FindMaster = 8,
-        UploadLockKeys = 9
+        UploadLockKeys = 9,
+        HealthyCheck =10
     }
     public class GatewayCommand
     {

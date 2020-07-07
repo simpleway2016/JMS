@@ -1,8 +1,11 @@
 ﻿using JMS.Common.Dtos;
+using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS
@@ -20,6 +23,81 @@ namespace JMS
         public NetClient(Socket socket):base(socket)
         {
             this.ReadTimeout = 16000;
+        }
+
+        /// <summary>
+        /// 发送HealthyCheck命令，维持心跳
+        /// </summary>
+        public void KeepAlive()
+        {
+
+            Task.Run(() => {
+                while (true)
+                {
+                    Thread.Sleep(10000);
+                    try
+                    {
+                        this.WriteServiceData(new GatewayCommand()
+                        {
+                            Type = CommandType.HealthyCheck
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        return;
+                    }
+                }
+            });
+
+            this.ReadTimeout = 30000;
+            while (true)
+            {
+                try
+                {
+                    this.ReadServiceObject<InvokeResult>();
+                }
+                catch 
+                {
+                    return;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// 发送特定命令，维持心跳
+        /// </summary>
+        /// <param name="cmdAction"></param>
+        public void KeepAlive(Func<object> cmdAction)
+        {
+
+            Task.Run(() => {
+                while (true)
+                {
+                    Thread.Sleep(10000);
+                    try
+                    {
+                        this.WriteServiceData(cmdAction());
+                    }
+                    catch (Exception ex)
+                    {
+                        return;
+                    }
+                }
+            });
+
+            this.ReadTimeout = 30000;
+            while (true)
+            {
+                try
+                {
+                    this.ReadServiceObject<InvokeResult>();
+                }
+                catch
+                {
+                    return;
+                }
+            }
         }
 
         public  string ReadServiceData()

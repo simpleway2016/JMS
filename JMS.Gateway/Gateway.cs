@@ -18,6 +18,7 @@ namespace JMS
         TcpListener _tcpListener;
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
+        internal int Port;
         internal IServiceProvider ServiceProvider { get; set; }
         public List<IMicroServiceReception> OnlineMicroServices { get; set; }
 
@@ -46,6 +47,7 @@ namespace JMS
         }
         public void Run(int port)
         {
+            this.Port = port;
             _requestReception = ServiceProvider.GetService<IRequestReception>();
                _tcpListener = new TcpListener(IPAddress.Any, port);
             _tcpListener.Start();

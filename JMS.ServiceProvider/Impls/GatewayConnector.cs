@@ -28,8 +28,7 @@ namespace JMS.Impls
             _microServiceHost = microServiceHost;
             _logger = logger;
             _keyLocker = keyLocker;
-
-            new Thread(sendConnectQuantity).Start();           
+          
         }
         public void ConnectAsync()
         {
@@ -137,14 +136,28 @@ namespace JMS.Impls
                     client.ReadServiceObject<InvokeResult>();
                 }
 
-                new Thread(healthyCheck).Start();
+                //保持心跳，并且定期发送ClientConnected
+                _client.KeepAlive(() => {
+                    return new GatewayCommand
+                    {
+                        Type = CommandType.ReportClientConnectQuantity,
+                        Content = _microServiceHost.ClientConnected.ToString()
+                    };
+                });
+
+                _logger?.LogError("和网关连接断开");
+                if (!_manualDisconnected)
+                {
+                    Thread.Sleep(2000);
+                    this.ConnectAsync();
+                }
             }
             catch (SocketException)
             {
                 if (!_manualDisconnected)
                 {
                     Thread.Sleep(2000);
-                    connect();
+                    this.ConnectAsync();
                 }
             }
             catch (Exception ex)
@@ -153,7 +166,7 @@ namespace JMS.Impls
                 if (!_manualDisconnected)
                 {
                     Thread.Sleep(2000);
-                    connect();
+                    this.ConnectAsync();
                 }
             }
 
@@ -166,70 +179,5 @@ namespace JMS.Impls
         }
 
 
-        /// <summary>
-        /// 定时发送当前连接数
-        /// </summary>
-        void sendConnectQuantity()
-        {
-            while (!_manualDisconnected)
-            {
-                try
-                {
-                    Thread.Sleep(10000);
-                    if(_ready)
-                    {
-                        _client.WriteServiceData(new GatewayCommand
-                        {
-                            Type = CommandType.ReportClientConnectQuantity,
-                            Content = _microServiceHost.ClientConnected.ToString()
-                        });
-                    }
-                    
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, ex.Message);
-                }
-            }
-        }
-
-        void healthyCheck()
-        {
-            while (!_manualDisconnected)
-            {
-                if(!_ready)
-                {
-                    Thread.Sleep(1000);
-                    continue;
-                }
-                try
-                {
-                    _client.ReadTimeout = 0;
-                    var data = _client.ReadServiceData();
-                }
-                catch (SocketException)
-                {
-                    _client.Dispose();
-                    _logger?.LogError("和网关连接断开");
-                    if (!_manualDisconnected)
-                    {
-                        Thread.Sleep(2000);
-                        connect();
-                    }
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    _client.Dispose();
-                    _logger?.LogError(ex, ex.Message);
-                    if (!_manualDisconnected)
-                    {
-                        Thread.Sleep(2000);
-                        connect();
-                    }
-                    return;
-                }
-            }
-        }
     }
 }

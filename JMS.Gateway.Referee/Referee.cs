@@ -1,4 +1,5 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Dtos;
+using JMS.Dtos;
 using JMS.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
@@ -13,7 +14,7 @@ namespace JMS.Gateway
 {
     class Referee
     {
-        public string MasterIp { get; set; }
+        public NetAddress MasterIp { get; set; }
         internal ConcurrentDictionary<string,RegisterServiceInfo> MasterGatewayServices { get; }
         ILogger<Referee> _logger;
         IRequestReception _requestReception;
