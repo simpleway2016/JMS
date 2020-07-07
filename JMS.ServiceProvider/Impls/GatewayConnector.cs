@@ -48,36 +48,43 @@ namespace JMS.Impls
             }
 
             _microServiceHost.MasterGatewayAddress = null;
+            ManualResetEvent waitobj = new ManualResetEvent(false);
+
             while (_microServiceHost.MasterGatewayAddress == null)
             {
-                Parallel.For(0, _microServiceHost.AllGatewayAddresses.Length, (index) =>
+                for(int i = 0; i < _microServiceHost.AllGatewayAddresses.Length; i ++)
                 {
-                    var addr = _microServiceHost.AllGatewayAddresses[index];
-                    try
-                    {
-                        using (var client = new NetClient(addr))
+                    var addr = _microServiceHost.AllGatewayAddresses[i];
+                    Task.Run(() => {
+                        try
                         {
-                            client.WriteServiceData(new GatewayCommand
+                            using (var client = new NetClient(addr))
                             {
-                                Type = CommandType.FindMaster
-                            });
-                            var ret = client.ReadServiceObject<InvokeResult>();
-                            if (ret.Success == true && _microServiceHost.MasterGatewayAddress == null)
-                            {
-                                _microServiceHost.MasterGatewayAddress = addr;
+                                client.WriteServiceData(new GatewayCommand
+                                {
+                                    Type = CommandType.FindMaster
+                                });
+                                var ret = client.ReadServiceObject<InvokeResult>();
+                                if (ret.Success == true && _microServiceHost.MasterGatewayAddress == null)
+                                {
+                                    _microServiceHost.MasterGatewayAddress = addr;
+                                    waitobj.Set();
+                                }
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
-                    }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
+                        }
+                    });
+                }
+                waitobj.WaitOne();
+                waitobj.Dispose();
 
-                });
-
-                if(_microServiceHost.MasterGatewayAddress != null)
+                if (_microServiceHost.MasterGatewayAddress != null)
                 {
                     _logger?.LogInformation("找到主网关{0}:{1}", _microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
+                    break;
                 }
                 Thread.Sleep(1000);
             }
