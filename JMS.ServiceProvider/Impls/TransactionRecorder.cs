@@ -18,7 +18,7 @@ namespace JMS.Impls
       
         public TransactionRecorder(ILogger<TransactionRecorder> logger)
         {
-            _logger = logger;
+               _logger = logger;
             new Thread(runForWriteFile).Start();
         }
 
