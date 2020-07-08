@@ -35,6 +35,7 @@ namespace JMS
         ServiceCollection _services;
         IRequestReception _RequestReception;
         ScheduleTaskManager _scheduleTaskManager;
+        bool _registerMyServicesed = false;
         public MicroServiceHost(ServiceCollection services)
         {
             this.Id = Guid.NewGuid().ToString("N");
@@ -51,19 +52,32 @@ namespace JMS
         /// <summary>
         /// 向网关注册服务
         /// </summary>
-        /// <param name="gatewayAddress">网关地址</param>
+        /// <typeparam name="T">Controller</typeparam>
         /// <param name="serviceName">服务名称</param>
         public void Register<T>(string serviceName) where T : MicroServiceControllerBase
         {
-            _services.AddTransient<T>();
-            ServiceNames[serviceName] = new ControllerTypeInfo() { 
-            Type = typeof(T),
-            Methods = typeof(T).GetTypeInfo().DeclaredMethods.Where(m => 
-                m.IsStatic == false && 
-                m.IsPublic && 
-                m.DeclaringType != typeof(MicroServiceControllerBase)
-                && m.DeclaringType != typeof(object)).ToArray()
-        };
+            this.Register(typeof(T), serviceName);
+        }
+
+        /// <summary>
+        /// 向网关注册服务
+        /// </summary>
+        /// <param name="contollerType">Controller类型</param>
+        /// <param name="serviceName">服务名称</param>
+        public void Register(Type contollerType, string serviceName)
+        {
+            registerServices();
+
+            _services.AddTransient(contollerType);
+            ServiceNames[serviceName] = new ControllerTypeInfo()
+            {
+                Type = contollerType,
+                Methods = contollerType.GetTypeInfo().DeclaredMethods.Where(m =>
+                    m.IsStatic == false &&
+                    m.IsPublic &&
+                    m.DeclaringType != typeof(MicroServiceControllerBase)
+                    && m.DeclaringType != typeof(object)).ToArray()
+            };
         }
 
         /// <summary>
@@ -84,23 +98,31 @@ namespace JMS
             _scheduleTaskManager.RemoveTask(task);
         }
 
-
-
-        public void Run(int servicePort , NetAddress[] gatewayAddresses)
+        void registerServices()
         {
+            if (_registerMyServicesed)
+                return;
+            _registerMyServicesed = true;
+
+            _services.AddSingleton<ITransactionRecorder, TransactionRecorder>();
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
             _services.AddSingleton<IKeyLocker, KeyLocker>();
             _services.AddSingleton<ICodeBuilder, CodeBuilder>();
             _services.AddSingleton<IGatewayConnector, GatewayConnector>();
-            _services.AddSingleton<IRequestReception,RequestReception>();
+            _services.AddSingleton<IRequestReception, RequestReception>();
             _services.AddSingleton<InvokeRequestHandler>();
             _services.AddSingleton<GenerateInvokeCodeRequestHandler>();
             _services.AddSingleton<CommitRequestHandler>();
             _services.AddSingleton<RollbackRequestHandler>();
             _services.AddSingleton<ProcessExitHandler>();
-            _services.AddSingleton<MicroServiceHost>(this);            
+            _services.AddSingleton<MicroServiceHost>(this);
             _services.AddSingleton<TransactionDelegateCenter>();
+        }
+
+        public void Run(int servicePort , NetAddress[] gatewayAddresses)
+        {
+          
             ServiceProvider = _services.BuildServiceProvider();
 
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();

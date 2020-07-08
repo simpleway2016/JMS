@@ -16,13 +16,16 @@ namespace JMS.Impls
         MicroServiceHost _MicroServiceProvider;
         TransactionDelegateCenter _transactionDelegateCenter;
         ILogger<InvokeRequestHandler> _logger;
+        ITransactionRecorder _transactionRecorder;
         public InvokeRequestHandler(TransactionDelegateCenter transactionDelegateCenter,
             ILogger<InvokeRequestHandler> logger,
+            ITransactionRecorder transactionRecorder,
             MicroServiceHost microServiceProvider)
         {
             _transactionDelegateCenter = transactionDelegateCenter;
             _MicroServiceProvider = microServiceProvider;
             _logger = logger;
+            _transactionRecorder = transactionRecorder;
         }
 
         public InvokeType MatchType => InvokeType.Invoke;
@@ -94,6 +97,12 @@ namespace JMS.Impls
                     transactionDelegate.RequestCommand = cmd;
                     supportTran = true;
                 }
+
+                if(supportTran)
+                {
+                    _transactionRecorder.Record(transactionDelegate);
+                }
+
                 netclient.WriteServiceData(new InvokeResult
                 {
                     Success = true,
