@@ -16,10 +16,16 @@ namespace JMS.Impls
         ConcurrentQueue<TransactionDelegate> Caches = new ConcurrentQueue<TransactionDelegate>();
         AutoResetEvent _waitForObject = new AutoResetEvent(false);
         Way.Lib.FileLogger _fileLogger;
-        public TransactionRecorder(ILogger<TransactionRecorder> logger)
+        MicroServiceHost _microServiceHost;
+        public TransactionRecorder(ILogger<TransactionRecorder> logger, MicroServiceHost microServiceHost)
         {
-            _fileLogger = new FileLogger("./TransactionLogs", "log");
+            _microServiceHost = microServiceHost;
+            if (string.IsNullOrEmpty(microServiceHost.Option.TransactionLogFolder))
+                return;
+
+            _fileLogger = new FileLogger(microServiceHost.Option.TransactionLogFolder, "log");
             _logger = logger;
+           
             new Thread(runForWriteFile).Start();
         }
 
@@ -39,7 +45,7 @@ namespace JMS.Impls
                     if((DateTime.Now - checktime).TotalDays > 1)
                     {
                         checktime = DateTime.Now;
-                        FileLogger.DeleteFiles("./TransactionLogs", DateTime.Now.AddDays(-10));
+                        FileLogger.DeleteFiles(_microServiceHost.Option.TransactionLogFolder, DateTime.Now.AddDays(-10));
                     }
                 }
                 catch (Exception ex)
@@ -51,6 +57,9 @@ namespace JMS.Impls
 
         public void Record(TransactionDelegate tranDelegate)
         {
+            if (_fileLogger == null)
+                return;
+
             Caches.Enqueue(tranDelegate);
             _waitForObject.Set();
         }
