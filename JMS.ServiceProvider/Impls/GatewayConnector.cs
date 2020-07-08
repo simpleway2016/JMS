@@ -47,11 +47,12 @@ namespace JMS.Impls
             }
 
             _microServiceHost.MasterGatewayAddress = null;
-            ManualResetEvent waitobj = new ManualResetEvent(false);
+          
 
             while (_microServiceHost.MasterGatewayAddress == null)
             {
-                for(int i = 0; i < _microServiceHost.AllGatewayAddresses.Length; i ++)
+                ManualResetEvent waitobj = new ManualResetEvent(false);
+                for (int i = 0; i < _microServiceHost.AllGatewayAddresses.Length; i ++)
                 {
                     var addr = _microServiceHost.AllGatewayAddresses[i];
                     Task.Run(() => {
