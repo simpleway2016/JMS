@@ -120,7 +120,7 @@ namespace JMS
 
                     if(masterAddr != null)
                     {
-                        //连上主网关，知道连接出现问题，再申请成为主网关
+                        //连上主网关，直到连接出现问题，再申请成为主网关
                         using (var client = new NetClient(masterAddr))
                         {
                             client.KeepAlive();
