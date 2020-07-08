@@ -15,26 +15,31 @@ namespace JMS.Impls
         ILogger<TransactionRecorder> _logger;
         ConcurrentQueue<TransactionDelegate> Caches = new ConcurrentQueue<TransactionDelegate>();
         AutoResetEvent _waitForObject = new AutoResetEvent(false);
-      
+        Way.Lib.FileLogger _fileLogger;
         public TransactionRecorder(ILogger<TransactionRecorder> logger)
         {
-               _logger = logger;
+            _fileLogger = new FileLogger("./TransactionLogs", "log");
+            _logger = logger;
             new Thread(runForWriteFile).Start();
         }
 
         void runForWriteFile()
         {
+            DateTime checktime = DateTime.Now;
             while(true)
             {
                 try
                 {
                     _waitForObject.WaitOne();
-                    using (var clog = new CLog("./TransactionLogs/Log", false))
+                    while (Caches.TryDequeue(out TransactionDelegate item))
                     {
-                        while (Caches.TryDequeue(out TransactionDelegate item))
-                        {
-                            clog.Log("TranId:{0} Submit Content:{1}", item.TransactionId, item.RequestCommand.ToJsonString());
-                        }
+                        _fileLogger.Log("TranId:{0} Submit Content:{1}", item.TransactionId, item.RequestCommand.ToJsonString());
+                    }
+
+                    if((DateTime.Now - checktime).TotalDays > 1)
+                    {
+                        checktime = DateTime.Now;
+                        FileLogger.DeleteFiles("./TransactionLogs", DateTime.Now.AddDays(-10));
                     }
                 }
                 catch (Exception ex)
