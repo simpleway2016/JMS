@@ -124,6 +124,7 @@ namespace JMS
                         using (var client = new NetClient(masterAddr))
                         {
                             client.KeepAlive();
+                            Thread.Sleep(100);
                             _logger?.LogInformation("与主网关连接断开");
                         }
                     }
