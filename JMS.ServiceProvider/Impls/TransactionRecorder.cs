@@ -7,9 +7,25 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using Way.Lib;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace JMS.Impls
+namespace JMS
 {
+    public class TransactionRecorderOption
+    {
+        public string TransactionLogFolder { get; set; }
+    }
+    public static class TransactionRecorderOptionExtension
+    {
+        internal static TransactionRecorderOption Option = new TransactionRecorderOption();
+        public static MicroServiceHost UseTransactionRecorder( this MicroServiceHost host, Action<TransactionRecorderOption> action)
+        {
+            host._services.AddSingleton<ITransactionRecorder, TransactionRecorder>();
+            if (action != null)
+                action(Option);
+            return host;
+        }
+    }
     class TransactionRecorder : ITransactionRecorder
     {
         ILogger<TransactionRecorder> _logger;
@@ -20,10 +36,10 @@ namespace JMS.Impls
         public TransactionRecorder(ILogger<TransactionRecorder> logger, MicroServiceHost microServiceHost)
         {
             _microServiceHost = microServiceHost;
-            if (string.IsNullOrEmpty(microServiceHost.Option.TransactionLogFolder))
+            if (string.IsNullOrEmpty(TransactionRecorderOptionExtension.Option.TransactionLogFolder))
                 return;
 
-            _fileLogger = new FileLogger(microServiceHost.Option.TransactionLogFolder, "log");
+            _fileLogger = new FileLogger(TransactionRecorderOptionExtension.Option.TransactionLogFolder, "log");
             _logger = logger;
            
             new Thread(runForWriteFile).Start();
@@ -45,7 +61,7 @@ namespace JMS.Impls
                     if((DateTime.Now - checktime).TotalDays > 1)
                     {
                         checktime = DateTime.Now;
-                        FileLogger.DeleteFiles(_microServiceHost.Option.TransactionLogFolder, DateTime.Now.AddDays(-10));
+                        FileLogger.DeleteFiles(TransactionRecorderOptionExtension.Option.TransactionLogFolder, DateTime.Now.AddDays(-10));
                     }
                 }
                 catch (Exception ex)

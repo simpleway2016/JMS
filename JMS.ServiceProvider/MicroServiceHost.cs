@@ -27,13 +27,13 @@ namespace JMS
 
         internal Dictionary<string, ControllerTypeInfo> ServiceNames = new Dictionary<string, ControllerTypeInfo>();
         internal int ServicePort;
-        internal MicroServiceOption Option;
+
         /// <summary>
         /// 当前处理中的请求数
         /// </summary>
         internal int ClientConnected;
         public IServiceProvider ServiceProvider { private set; get; }
-        ServiceCollection _services;
+        internal ServiceCollection _services;
         IRequestReception _RequestReception;
         ScheduleTaskManager _scheduleTaskManager;
         bool _registerMyServicesed = false;
@@ -105,7 +105,7 @@ namespace JMS
                 return;
             _registerMyServicesed = true;
 
-            _services.AddSingleton<ITransactionRecorder, TransactionRecorder>();
+           
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
             _services.AddSingleton<IKeyLocker, KeyLocker>();
@@ -121,16 +121,20 @@ namespace JMS
             _services.AddSingleton<TransactionDelegateCenter>();
         }
 
-        public void Run(MicroServiceOption option)
+        public MicroServiceHost Build(int port,NetAddress[] gatewayAddresses)
         {
-            this.Option = option;
+            AllGatewayAddresses = gatewayAddresses;
+            this.ServicePort = port;
+            return this;
+        }
+
+        public void Run()
+        {
             ServiceProvider = _services.BuildServiceProvider();
 
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
 
-            AllGatewayAddresses = option.GatewayAddresses;
-            ServicePort = option.Port;
 
             _GatewayConnector.ConnectAsync();
             

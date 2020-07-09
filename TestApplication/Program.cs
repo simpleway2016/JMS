@@ -54,15 +54,15 @@ namespace TestApplication
             using (var tran = new MicroServiceTransaction("localhost", 8911))
             {
                 /////微服务 性能测试
-                var c1 = new Controller1(tran.GetMicroService("Controller1"));
-                System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-                sw.Start();
-                for (int i = 0; i < 1000; i++)
-                {
-                    var ret22 = c1.test();
-                }
-                sw.Stop();
-                Console.WriteLine(sw.ElapsedMilliseconds);
+                //var c1 = new Controller1(tran.GetMicroService("Controller1"));
+                //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+                //sw.Start();
+                //for (int i = 0; i < 1000; i++)
+                //{
+                //    var ret22 = c1.test();
+                //}
+                //sw.Stop();
+                //Console.WriteLine(sw.ElapsedMilliseconds);
 
                 tran.SetHeader("auth", "123456789");
 
