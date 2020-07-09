@@ -137,7 +137,7 @@ namespace JMS
 
         public  void WriteServiceData(byte[] data)
         {
-            if (data.Length > 4096)
+            if (data.Length > 10240)
             {
                 data = GZipHelper.Compress(data);
                 int len = (data.Length << 2) | 1;
