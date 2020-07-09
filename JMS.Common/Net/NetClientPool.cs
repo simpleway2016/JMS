@@ -9,6 +9,8 @@ namespace JMS
 {
     public class NetClientPool
     {
+        const int POOLSIZE = 20;
+        const int RELEASESECONDS = 5;
         static ConcurrentDictionary<string, NetClientSeat[]> Dict = new ConcurrentDictionary<string, NetClientSeat[]>();
         static NetClientPool()
         {
@@ -28,7 +30,7 @@ namespace JMS
                         for (int i = 0; i < array.Length; i++)
                         {
                             var item = array[i];
-                            if (item.Client != null && item.Used == 0 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= 5)
+                            if (item.Client != null && item.Used == 0 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS)
                             {
                                 if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
                                 {
@@ -104,7 +106,7 @@ namespace JMS
 
         static NetClientSeat[] GetArray()
         {
-            var ret = new NetClientSeat[20];
+            var ret = new NetClientSeat[POOLSIZE];
             for(int i = 0; i < ret.Length; i ++)
             {
                 ret[i] = new NetClientSeat();
