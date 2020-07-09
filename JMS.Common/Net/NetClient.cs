@@ -1,4 +1,5 @@
-﻿using JMS.Common.Dtos;
+﻿using JMS.Common;
+using JMS.Common.Dtos;
 using JMS.Dtos;
 using System;
 using System.Collections.Generic;
@@ -100,10 +101,20 @@ namespace JMS
             }
         }
 
+        public byte[] ReadServiceDataBytes()
+        {
+            var flag = this.ReadInt();
+            var isgzip = (flag & 1) == 1;
+            var len = flag >> 2;
+            var datas = this.ReceiveDatas(len);
+            if(isgzip)
+                datas = GZipHelper.Decompress(datas);
+            return datas;
+        }
+
         public  string ReadServiceData()
         {
-            var len = this.ReadInt();
-            var data = this.ReceiveDatas(len);
+            var data = ReadServiceDataBytes();
             if (data.Length == 0)
                 return null;
             return Encoding.UTF8.GetString(data);
@@ -111,8 +122,7 @@ namespace JMS
 
         public  T ReadServiceObject<T>()
         {
-            var len = this.ReadInt();
-            var datas = this.ReceiveDatas(len);
+            var datas = ReadServiceDataBytes();
             string str = Encoding.UTF8.GetString(datas);
             try
             {
@@ -127,8 +137,19 @@ namespace JMS
 
         public  void WriteServiceData(byte[] data)
         {
-            this.Write(data.Length);
-            this.Write(data);
+            if (data.Length > 4096)
+            {
+                data = GZipHelper.Compress(data);
+                int len = (data.Length << 2) | 1;
+                this.Write(len);
+                this.Write(data);
+            }
+            else
+            {
+                int len = (data.Length << 2);
+                this.Write(len);
+                this.Write(data);
+            }
         }
         public  void WriteServiceData(object value)
         {
