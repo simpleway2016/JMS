@@ -75,6 +75,11 @@ public class MicroServiceControllerBase
     {
 
     }
+
+    public virtual void UnLoad()
+    {
+
+    }
 }
 
 class ControllerTypeInfo

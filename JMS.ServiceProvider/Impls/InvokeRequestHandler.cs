@@ -181,6 +181,10 @@ namespace JMS.Impls
                 });
                 return;
             }
+            finally
+            {
+                controller?.UnLoad();
+            }
         }
     }
 }
