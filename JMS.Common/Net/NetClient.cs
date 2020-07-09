@@ -13,6 +13,10 @@ namespace JMS
 {
     public class NetClient:Way.Lib.NetStream
     {
+        /// <summary>
+        /// 启动GZip压缩的起点
+        /// </summary>
+        const int CompressionMinSize = 2048;
         public bool KeepClient { get; set; }
         public string Address { get; private set; }
         public int Port { get; private set; }
@@ -145,7 +149,7 @@ namespace JMS
 
         public  void WriteServiceData(byte[] data)
         {
-            if (data.Length > 5120)
+            if (data.Length > CompressionMinSize)
             {
                 data = GZipHelper.Compress(data);
                 int len = (data.Length << 2) | 1;//第一位表示gzip，第二位表示keepclient
