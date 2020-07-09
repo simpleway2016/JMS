@@ -57,6 +57,8 @@ namespace Microsoft.AspNetCore.Mvc
 
         public void SetHeader(string key,string value)
         {
+            if (key == "TranId")
+                throw new Exception("key='TranId' is not allow");
             _Header[key] = value;
         }
 
