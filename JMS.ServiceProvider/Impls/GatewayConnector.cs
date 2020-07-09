@@ -63,6 +63,7 @@ namespace JMS.Impls
 
             while (_microServiceHost.MasterGatewayAddress == null)
             {
+                int errCount = 0;
                 ManualResetEvent waitobj = new ManualResetEvent(false);
                 for (int i = 0; i < _microServiceHost.AllGatewayAddresses.Length; i ++)
                 {
@@ -82,10 +83,20 @@ namespace JMS.Impls
                                     _microServiceHost.MasterGatewayAddress = addr;
                                     waitobj.Set();
                                 }
+                                else
+                                {
+                                    Interlocked.Increment(ref errCount);
+                                    if (errCount == _microServiceHost.AllGatewayAddresses.Length)
+                                        waitobj.Set();
+                                }
                             }
                         }
                         catch (Exception ex)
                         {
+                            Interlocked.Increment(ref errCount);
+                            if (errCount == _microServiceHost.AllGatewayAddresses.Length)
+                                waitobj.Set();
+
                             _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
                         }
                     });

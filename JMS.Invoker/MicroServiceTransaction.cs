@@ -51,6 +51,67 @@ namespace Microsoft.AspNetCore.Mvc
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="gatewayAddresses">多个集群网关地址</param>
+        /// <param name="gatewayClientCert">与网关互通的证书</param>
+        /// <param name="serviceClientCert">与微服务互通的证书</param>
+        public MicroServiceTransaction(NetAddress[] gatewayAddresses,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        {
+            //先找到master网关
+            NetAddress masterAddress = null;
+            if (gatewayAddresses.Length == 1)
+            {
+                masterAddress = gatewayAddresses[0];
+            }
+            else
+            {
+                ManualResetEvent waitobj = new ManualResetEvent(false);
+                int errCount = 0;
+                for (int i = 0; i < gatewayAddresses.Length; i++)
+                {
+                    var addr = gatewayAddresses[i];
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var client = new CertClient(addr, gatewayClientCert))
+                            {
+                                client.WriteServiceData(new GatewayCommand
+                                {
+                                    Type = CommandType.FindMaster
+                                });
+                                var ret = client.ReadServiceObject<InvokeResult>();
+                                if (ret.Success == true && masterAddress == null)
+                                {
+                                    masterAddress = addr;
+                                    waitobj.Set();
+                                }
+                                else
+                                {
+                                    throw new Exception();
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            Interlocked.Increment(ref errCount);
+                            if (errCount == gatewayAddresses.Length)
+                                waitobj.Set();
+                        }
+                    });
+                }
+                waitobj.WaitOne();
+                waitobj.Dispose();
+            }
+
+            if (masterAddress == null)
+                throw new MissMasterGatewayException("无法找到主网关");
+            GatewayAddress = masterAddress;
+            GatewayClientCertificate = gatewayClientCert;
+            ServiceClientCertificate = serviceClientCert;
+        }
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
             using (var netclient = new CertClient(GatewayAddress, GatewayClientCertificate))

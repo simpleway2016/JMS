@@ -6,6 +6,7 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using JMS;
+using JMS.Common.Dtos;
 using JMS.Token;
 using Microsoft.AspNetCore.Mvc;
 using Way.Lib;
@@ -53,7 +54,9 @@ namespace TestApplication
             Thread.Sleep(3000);
 
             var cert = new X509Certificate2("d:/test.pfx", "123456");
-            using (var tran = new MicroServiceTransaction("localhost", 8911, cert , cert))
+            using (var tran = new MicroServiceTransaction(new NetAddress[] { 
+                new NetAddress("localhost", 8911)
+            }, cert , cert))
             {
                 /////微服务 性能测试
                 //var c1 = new Controller1(tran.GetMicroService("Controller1"));
