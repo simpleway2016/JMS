@@ -42,7 +42,7 @@ namespace JMS
                 })
                 .UseSSL(c=> {
                     c.GatewayClientCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2("d:/test.pfx", "123456");
-                    c.ServerCertificate = c.GatewayClientCertificate;
+                    //c.ServerCertificate = c.GatewayClientCertificate;
                 })
                 .Run();
         }

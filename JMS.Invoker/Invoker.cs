@@ -23,7 +23,7 @@ namespace JMS
         public bool Init()
         {
             //获取服务地址
-            using (var netclient = new CertClient(this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate))
+            using (var netclient = new ProxyClient( this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate))
             {
                 netclient.WriteServiceData(new GatewayCommand()
                 {
@@ -69,16 +69,19 @@ namespace JMS
 
         public string GetServiceClassCode(string nameSpace, string className)
         {
-            var netclient = new NetClient(_serviceLocation.Host, _serviceLocation.Port);
-            netclient.WriteServiceData(new InvokeCommand() { 
-                 Type = InvokeType.GenerateInvokeCode,
-                 Service = _serviceName,
-                 Parameters = new string[] { nameSpace,className }
-            });
-            var ret = netclient.ReadServiceObject<InvokeResult<string>>();
-            if (!ret.Success)
-                throw new RemoteException(ret.Error);
-            return ret.Data;
+            using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress ,new Common.Dtos.NetAddress(_serviceLocation.Host, _serviceLocation.Port) , ServiceTransaction.ServiceClientCertificate))
+            {
+                netclient.WriteServiceData(new InvokeCommand()
+                {
+                    Type = InvokeType.GenerateInvokeCode,
+                    Service = _serviceName,
+                    Parameters = new string[] { nameSpace, className }
+                });
+                var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+                if (!ret.Success)
+                    throw new RemoteException(ret.Error);
+                return ret.Data;
+            }
         }
     }
 }

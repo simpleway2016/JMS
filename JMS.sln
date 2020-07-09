@@ -19,7 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.TokenServer", "JMS.Toke
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Common", "JMS.Common\JMS.Common.csproj", "{89EFE918-C027-4855-9D67-09AC7CC004C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.Gateway.Referee", "JMS.Gateway.Referee\JMS.Gateway.Referee.csproj", "{DE05C171-9EED-4A7B-B6C3-CDC653656775}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Gateway.Referee", "JMS.Gateway.Referee\JMS.Gateway.Referee.csproj", "{DE05C171-9EED-4A7B-B6C3-CDC653656775}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.Proxy", "JMS.Proxy\JMS.Proxy.csproj", "{38B4F31C-C377-45FB-9917-0DA069BBD455}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{DE05C171-9EED-4A7B-B6C3-CDC653656775}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE05C171-9EED-4A7B-B6C3-CDC653656775}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE05C171-9EED-4A7B-B6C3-CDC653656775}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38B4F31C-C377-45FB-9917-0DA069BBD455}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38B4F31C-C377-45FB-9917-0DA069BBD455}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38B4F31C-C377-45FB-9917-0DA069BBD455}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38B4F31C-C377-45FB-9917-0DA069BBD455}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

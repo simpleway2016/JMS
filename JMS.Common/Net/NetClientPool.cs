@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JMS.Common.Dtos;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +52,7 @@ namespace JMS
             }
         }
 
-        public static NetClient CreateClient(string ip,int port, X509Certificate2 cert)
+        public static NetClient CreateClient( NetAddress proxy, string ip,int port, X509Certificate2 cert)
         {
             var key = $"{ip}--{port}";
             NetClientSeat[] array;
@@ -64,7 +65,7 @@ namespace JMS
             var freeitem = GetFree(array);
             if (freeitem == null)
             {
-                freeitem = new CertClient(ip, port, cert);
+                freeitem = new ProxyClient(proxy,new NetAddress(ip, port), cert);
                 freeitem.KeepAlive = array.Any(m => m.Client == null);
             }
 

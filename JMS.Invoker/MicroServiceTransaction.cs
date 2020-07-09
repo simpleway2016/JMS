@@ -34,6 +34,7 @@ namespace Microsoft.AspNetCore.Mvc
         }
         bool _finished = false;
         public NetAddress GatewayAddress { get; }
+        public NetAddress ProxyAddress { get; }
 
         Dictionary<string, string> _Header = new Dictionary<string, string>();
         public X509Certificate2 GatewayClientCertificate { get;private set; }
@@ -45,11 +46,12 @@ namespace Microsoft.AspNetCore.Mvc
         /// <param name="port">网关端口</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public MicroServiceTransaction(string gatewayAddress, int port, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public MicroServiceTransaction(string gatewayAddress, int port, NetAddress proxyAddress = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
             GatewayAddress = new NetAddress(gatewayAddress, port);
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
+            this.ProxyAddress = proxyAddress;
         }
         /// <summary>
         /// 
@@ -57,8 +59,9 @@ namespace Microsoft.AspNetCore.Mvc
         /// <param name="gatewayAddresses">多个集群网关地址</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public MicroServiceTransaction(NetAddress[] gatewayAddresses,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public MicroServiceTransaction(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
+            this.ProxyAddress = proxyAddress;
             //先找到master网关
             NetAddress masterAddress = null;
             if (gatewayAddresses.Length == 1)
@@ -76,7 +79,7 @@ namespace Microsoft.AspNetCore.Mvc
                     {
                         try
                         {
-                            using (var client = new CertClient(addr, gatewayClientCert))
+                            using (var client = new ProxyClient( this.ProxyAddress , addr, gatewayClientCert))
                             {
                                 client.WriteServiceData(new GatewayCommand
                                 {
@@ -114,7 +117,7 @@ namespace Microsoft.AspNetCore.Mvc
         }
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
-            using (var netclient = new CertClient(GatewayAddress, GatewayClientCertificate))
+            using (var netclient = new ProxyClient( this.ProxyAddress, GatewayAddress, GatewayClientCertificate))
             {
                 netclient.WriteServiceData(new GatewayCommand()
                 {

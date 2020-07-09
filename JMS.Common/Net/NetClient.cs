@@ -18,8 +18,8 @@ namespace JMS
         /// </summary>
         const int CompressionMinSize = 2048;
         public bool KeepAlive { get; set; }
-        public string Address { get; private set; }
-        public int Port { get; private set; }
+        public string Address { get; protected set; }
+        public int Port { get; protected set; }
         public NetClient(NetAddress addr) : base(addr.Address, addr.Port)
         {
             this.Address = addr.Address;

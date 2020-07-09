@@ -30,7 +30,7 @@ namespace JMS
        public void ReConnect(MicroServiceTransaction tran)
         {
             ReConnectCount++;
-               NetClient = NetClientPool.CreateClient(this.ServiceLocation.Host, this.ServiceLocation.Port, tran.ServiceClientCertificate);
+               NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.ServiceLocation.Host, this.ServiceLocation.Port, tran.ServiceClientCertificate);
         }
 
         public T Invoke<T>(string method,MicroServiceTransaction tran, params object[] parameter)
@@ -39,7 +39,7 @@ namespace JMS
             {
                 throw new ArgumentNullException("tran");
             }
-            var netclient = NetClientPool.CreateClient(this.ServiceLocation.Host, this.ServiceLocation.Port, tran.ServiceClientCertificate);
+            var netclient = NetClientPool.CreateClient(tran.ProxyAddress, this.ServiceLocation.Host, this.ServiceLocation.Port, tran.ServiceClientCertificate);
             try
             {
                 var cmd = new InvokeCommand()

@@ -53,21 +53,24 @@ namespace TestApplication
             //Console.WriteLine(sw2.ElapsedMilliseconds);
             Thread.Sleep(3000);
 
+            var gatewayCert = new X509Certificate2("d:/test.pfx", "123456");
             var cert = new X509Certificate2("d:/test.pfx", "123456");
+            cert = null;
+
             using (var tran = new MicroServiceTransaction(new NetAddress[] { 
                 new NetAddress("localhost", 8911)
-            }, cert , cert))
+            },null, gatewayCert, cert))
             {
                 /////微服务 性能测试
-                //var c1 = new Controller1(tran.GetMicroService("Controller1"));
-                //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-                //sw.Start();
-                //for (int i = 0; i < 1000; i++)
-                //{
-                //    var ret22 = c1.test();
-                //}
-                //sw.Stop();
-                //Console.WriteLine(sw.ElapsedMilliseconds);
+                var c1 = new Controller1(tran.GetMicroService("Controller1"));
+                System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+                sw.Start();
+                for (int i = 0; i < 1000; i++)
+                {
+                    var ret22 = c1.test();
+                }
+                sw.Stop();
+                Console.WriteLine(sw.ElapsedMilliseconds);
 
                 tran.SetHeader("auth", "123456789");
 
