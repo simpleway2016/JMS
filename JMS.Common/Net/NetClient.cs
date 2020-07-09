@@ -13,12 +13,19 @@ namespace JMS
 {
     public class NetClient:Way.Lib.NetStream
     {
+        public bool KeepClient { get; set; }
+        public string Address { get; private set; }
+        public int Port { get; private set; }
         public NetClient(NetAddress addr) : base(addr.Address, addr.Port)
         {
+            this.Address = addr.Address;
+            this.Port = addr.Port;
             this.ReadTimeout = 16000;
         }
         public NetClient(string ip,int port) : base(ip,port)
         {
+            this.Address = ip;
+            this.Port = port;
             this.ReadTimeout = 16000;
         }
         public NetClient(Socket socket):base(socket)
@@ -105,6 +112,7 @@ namespace JMS
         {
             var flag = this.ReadInt();
             var isgzip = (flag & 1) == 1;
+            this.KeepClient = (flag & 2) == 2;
             var len = flag >> 2;
             var datas = this.ReceiveDatas(len);
             if(isgzip)
@@ -140,13 +148,17 @@ namespace JMS
             if (data.Length > 5120)
             {
                 data = GZipHelper.Compress(data);
-                int len = (data.Length << 2) | 1;
+                int len = (data.Length << 2) | 1;//第一位表示gzip，第二位表示keepclient
+                if (KeepClient)
+                    len |= 2;
                 this.Write(len);
                 this.Write(data);
             }
             else
             {
                 int len = (data.Length << 2);
+                if (KeepClient)
+                    len |= 2;
                 this.Write(len);
                 this.Write(data);
             }

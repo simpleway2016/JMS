@@ -26,15 +26,14 @@ namespace Microsoft.AspNetCore.Mvc
             {
                 if (_TransactionId != value)
                 {
-                    _TransactionId = value;
-                    this.Header["TranId"] = value;
+                    _TransactionId = value;                   
                 }
             }
         }
         bool _finished = false;
         public string GatewayAddress { get; }
         public int GatewayPort { get; }
-        public Dictionary<string, string> Header = new Dictionary<string, string>();
+        Dictionary<string, string> _Header = new Dictionary<string, string>();
         public MicroServiceTransaction(string gatewayAddress, int port)
         {
             GatewayAddress = gatewayAddress;
@@ -48,12 +47,28 @@ namespace Microsoft.AspNetCore.Mvc
                 {
                     Type = CommandType.GetAllServiceProviders,
                     Content = serviceName,
-                    Header = this.Header
+                    Header = this.GetCommandHeader(),
                 });
                 var serviceLocations = netclient.ReadServiceObject<RegisterServiceRunningInfo[]>();
                
                 return serviceLocations;
             }
+        }
+
+        public void SetHeader(string key,string value)
+        {
+            _Header[key] = value;
+        }
+
+        public Dictionary<string,string> GetCommandHeader()
+        {
+            var header = new Dictionary<string, string>();
+            header["TranId"] = this.TransactionId;
+            foreach (var pair in _Header)
+            {
+                header[pair.Key] = pair.Value;
+            }
+            return header;
         }
 
         public T GetMicroService<T>() where T : IImplInvoker
@@ -114,14 +129,14 @@ namespace Microsoft.AspNetCore.Mvc
             List<TransactionException> errors = new List<TransactionException>(_Connects.Count);
             //健康检查
             Parallel.For(0, _Connects.Count, (i) => {
-                var client = _Connects[i];
+                var connect = _Connects[i];
                 try
                 {
-                    client.NetClient.WriteServiceData(new InvokeCommand()
+                    connect.NetClient.WriteServiceData(new InvokeCommand()
                     {
                         Type = InvokeType.HealthyCheck,
                     });
-                    var ret = client.NetClient.ReadServiceObject<InvokeResult>();
+                    var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
                     if(ret.Success == false)
                     {
                         //有人不同意提交事务
@@ -131,8 +146,8 @@ namespace Microsoft.AspNetCore.Mvc
                 }
                 catch (Exception ex)
                 {
-                    client.NetClient.Dispose();
-                    errors.Add(new TransactionException(client.ServiceLocation, ex.Message));
+                    connect.NetClient.Dispose();
+                    errors.Add(new TransactionException(connect.ServiceLocation, ex.Message));
                 }
                 
             });
@@ -152,7 +167,7 @@ namespace Microsoft.AspNetCore.Mvc
             if (errors.Count == 0)
             {
                 Parallel.For(0, _Connects.Count, (i) => {
-                    var client = _Connects[i];
+                    var connect = _Connects[i];
                     bool reconnect = false;
                     while (true)
                     {
@@ -161,44 +176,52 @@ namespace Microsoft.AspNetCore.Mvc
                             if (reconnect)
                             {
                                 Thread.Sleep(1000);
-                                client.ReConnect();
+                                connect.ReConnect();
                             }
 
                             if (errors.Count == 0)
                             {
-                                client.NetClient.WriteServiceData(new InvokeCommand()
+                                connect.NetClient.WriteServiceData(new InvokeCommand()
                                 {
                                     Type = invokeType,
-                                    Header = this.Header
+                                    Header = this.GetCommandHeader()
                                 });
-                                client.NetClient.ReadServiceObject<InvokeResult>();
+                                connect.NetClient.ReadServiceObject<InvokeResult>();
                             }
                             else
                             {
-                                errors.Add(new TransactionException(client.ServiceLocation, "cancel"));
+                                errors.Add(new TransactionException(connect.ServiceLocation, "cancel"));
                             }
                             break;
                         }
                         catch (SocketException ex)
                         {
-                            if (client.ReConnectCount < 10)
+                            if (connect.ReConnectCount < 10)
                             {
-                                client.NetClient.Dispose();
+                                connect.NetClient.Dispose();
                                 reconnect = true;
                             }
                             else
                             {
-                                errors.Add(new TransactionException(client.ServiceLocation, ex.Message));
+                                errors.Add(new TransactionException(connect.ServiceLocation, ex.Message));
                                 break;
                             }
                         }
                         catch (Exception ex)
                         {
-                            errors.Add(new TransactionException(client.ServiceLocation, ex.Message));
+                            errors.Add(new TransactionException(connect.ServiceLocation, ex.Message));
                             break;
                         }
                     }
-                    client.NetClient.Dispose();
+
+                    if (connect.NetClient.HasSocketException == false)
+                    {
+                        NetClientPool.AddClientToPool(connect.NetClient);
+                    }
+                    else
+                    {
+                        connect.NetClient.Dispose();
+                    }
                 });
             }
            

@@ -64,9 +64,7 @@ namespace TestApplication
                 sw.Stop();
                 Console.WriteLine(sw.ElapsedMilliseconds);
 
-                tran.Header = new Dictionary<string, string>() {
-                    { "auth" , "123456789"}
-                };
+                tran.SetHeader("auth", "123456789");
 
                 var locations = tran.ListMicroService("");//列出所有微服务
                 Console.WriteLine("微服务位置：{0}", locations.ToJsonString());

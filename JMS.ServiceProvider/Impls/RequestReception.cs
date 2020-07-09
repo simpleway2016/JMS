@@ -17,11 +17,14 @@ namespace JMS.Impls
         Dictionary<InvokeType, IRequestHandler> _cache = new Dictionary<InvokeType, IRequestHandler>();
         MicroServiceHost _MicroServiceProvider;
         ILogger<RequestReception> _logger;
-        public RequestReception(ILogger<RequestReception> logger, 
+        ProcessExitHandler _processExitHandler;
+        public RequestReception(ILogger<RequestReception> logger,
+            ProcessExitHandler processExitHandler,
             MicroServiceHost microServiceProvider)
         {
             _logger = logger;
             _MicroServiceProvider = microServiceProvider;
+            _processExitHandler = processExitHandler;
 
             var handlerTypes = typeof(RequestReception).Assembly.DefinedTypes.Where(m => m.ImplementedInterfaces.Contains(typeof(IRequestHandler)));
             foreach( var type in handlerTypes )
@@ -33,13 +36,32 @@ namespace JMS.Impls
         public void Interview(Socket socket)
         {
             try
-            {
-                Interlocked.Increment(ref _MicroServiceProvider.ClientConnected);
+            {                
                 using (var netclient = new NetClient(socket))
                 {
-                    var cmd = netclient.ReadServiceObject<InvokeCommand>();
-                    _cache[cmd.Type].Handle(netclient, cmd);
-                    
+                    while (true)
+                    {
+                        var cmd = netclient.ReadServiceObject<InvokeCommand>();
+                        if (_processExitHandler.ProcessExited)
+                            return;
+
+                        Interlocked.Increment(ref _MicroServiceProvider.ClientConnected);
+                        try
+                        {
+                            _cache[cmd.Type].Handle(netclient, cmd);
+                        }
+                        catch
+                        {
+                            throw;
+                        }
+                        finally
+                        {
+                            Interlocked.Decrement(ref _MicroServiceProvider.ClientConnected);
+                        }
+
+                        if (netclient.HasSocketException || !netclient.KeepClient)
+                            break;
+                    }
                 }
             }
             catch (SocketException)
@@ -49,10 +71,6 @@ namespace JMS.Impls
             catch (Exception ex)
             {
                 _logger?.LogError(ex, ex.Message);
-            }
-            finally
-            {
-                Interlocked.Decrement(ref _MicroServiceProvider.ClientConnected);
             }
         }
     }

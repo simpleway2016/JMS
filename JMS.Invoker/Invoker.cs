@@ -28,7 +28,7 @@ namespace JMS
                 netclient.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.GetServiceProvider,
-                    Header = ServiceTransaction.Header,
+                    Header = ServiceTransaction.GetCommandHeader(),
                     Content = new GetServiceProviderRequest
                     {
                         ServiceName = _serviceName,                       
