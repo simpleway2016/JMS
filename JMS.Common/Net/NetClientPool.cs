@@ -94,6 +94,7 @@ namespace JMS
                     {
                         item.OnSeatTime = DateTime.Now;
                         item.Client = client;
+                        client.ReadTimeout = 16000;
                         item.Used = 0;
                         return;
                     }
