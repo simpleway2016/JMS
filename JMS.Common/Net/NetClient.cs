@@ -17,7 +17,7 @@ namespace JMS
         /// 启动GZip压缩的起点
         /// </summary>
         const int CompressionMinSize = 2048;
-        public bool KeepClient { get; set; }
+        public bool KeepAlive { get; set; }
         public string Address { get; private set; }
         public int Port { get; private set; }
         public NetClient(NetAddress addr) : base(addr.Address, addr.Port)
@@ -40,7 +40,7 @@ namespace JMS
         /// <summary>
         /// 发送HealthyCheck命令，维持心跳
         /// </summary>
-        public void KeepAlive()
+        public void KeepHeartBeating()
         {
 
             Task.Run(() => {
@@ -80,7 +80,7 @@ namespace JMS
         /// 发送特定命令，维持心跳
         /// </summary>
         /// <param name="cmdAction"></param>
-        public void KeepAlive(Func<object> cmdAction)
+        public void KeepHeartBeating(Func<object> cmdAction)
         {
 
             Task.Run(() => {
@@ -116,7 +116,7 @@ namespace JMS
         {
             var flag = this.ReadInt();
             var isgzip = (flag & 1) == 1;
-            this.KeepClient = (flag & 2) == 2;
+            this.KeepAlive = (flag & 2) == 2;
             var len = flag >> 2;
             var datas = this.ReceiveDatas(len);
             if(isgzip)
@@ -153,7 +153,7 @@ namespace JMS
             {
                 data = GZipHelper.Compress(data);
                 int len = (data.Length << 2) | 1;//第一位表示gzip，第二位表示keepclient
-                if (KeepClient)
+                if (KeepAlive)
                     len |= 2;
                 this.Write(len);
                 this.Write(data);
@@ -161,7 +161,7 @@ namespace JMS
             else
             {
                 int len = (data.Length << 2);
-                if (KeepClient)
+                if (KeepAlive)
                     len |= 2;
                 this.Write(len);
                 this.Write(data);

@@ -138,7 +138,7 @@ namespace JMS.Impls
                 }
 
                 //保持心跳，并且定期发送ClientConnected
-                _client.KeepAlive(() => {
+                _client.KeepHeartBeating(() => {
                     return new GatewayCommand
                     {
                         Type = CommandType.ReportClientConnectQuantity,

@@ -64,7 +64,7 @@ namespace JMS
             if (freeitem == null)
             {
                 freeitem = new NetClient(ip, port);
-                freeitem.KeepClient = array.Any(m => m.Client == null);
+                freeitem.KeepAlive = array.Any(m => m.Client == null);
             }
 
             return freeitem;
@@ -72,7 +72,7 @@ namespace JMS
 
         public static void AddClientToPool(NetClient client)
         {
-            if (!client.KeepClient)
+            if (!client.KeepAlive)
             {
                 client.Dispose();
                 return;

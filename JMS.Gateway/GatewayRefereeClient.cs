@@ -98,7 +98,7 @@ namespace JMS
                                 _logger?.LogInformation("lockKeyManager就绪");
                             }
 
-                            client.KeepAlive();
+                            client.KeepHeartBeating();
                             _logger?.LogInformation("与裁判的连接断开");
                         }
                         else
@@ -123,7 +123,7 @@ namespace JMS
                         //连上主网关，直到连接出现问题，再申请成为主网关
                         using (var client = new NetClient(masterAddr))
                         {
-                            client.KeepAlive();
+                            client.KeepHeartBeating();
                             Thread.Sleep(100);
                             _logger?.LogInformation("与主网关连接断开");
                         }

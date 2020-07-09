@@ -59,7 +59,7 @@ namespace JMS.Impls
                             Interlocked.Decrement(ref _MicroServiceProvider.ClientConnected);
                         }
 
-                        if (netclient.HasSocketException || !netclient.KeepClient)
+                        if (netclient.HasSocketException || !netclient.KeepAlive)
                             break;
                     }
                 }
