@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 
@@ -50,7 +51,7 @@ namespace JMS
             }
         }
 
-        public static NetClient CreateClient(string ip,int port)
+        public static NetClient CreateClient(string ip,int port, X509Certificate2 cert)
         {
             var key = $"{ip}--{port}";
             NetClientSeat[] array;
@@ -63,7 +64,7 @@ namespace JMS
             var freeitem = GetFree(array);
             if (freeitem == null)
             {
-                freeitem = new NetClient(ip, port);
+                freeitem = new CertClient(ip, port, cert);
                 freeitem.KeepAlive = array.Any(m => m.Client == null);
             }
 

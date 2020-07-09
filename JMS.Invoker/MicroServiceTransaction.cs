@@ -1,9 +1,11 @@
 ﻿using JMS;
+using JMS.Common.Dtos;
 using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,17 +33,27 @@ namespace Microsoft.AspNetCore.Mvc
             }
         }
         bool _finished = false;
-        public string GatewayAddress { get; }
-        public int GatewayPort { get; }
+        public NetAddress GatewayAddress { get; }
+
         Dictionary<string, string> _Header = new Dictionary<string, string>();
-        public MicroServiceTransaction(string gatewayAddress, int port)
+        public X509Certificate2 GatewayClientCertificate { get;private set; }
+        public X509Certificate2 ServiceClientCertificate { get; private set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="gatewayAddress">网关ip</param>
+        /// <param name="port">网关端口</param>
+        /// <param name="gatewayClientCert">与网关互通的证书</param>
+        /// <param name="serviceClientCert">与微服务互通的证书</param>
+        public MicroServiceTransaction(string gatewayAddress, int port, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
-            GatewayAddress = gatewayAddress;
-            GatewayPort = port;
+            GatewayAddress = new NetAddress(gatewayAddress, port);
+            GatewayClientCertificate = gatewayClientCert;
+            ServiceClientCertificate = serviceClientCert;
         }
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
-            using (var netclient = new NetClient(GatewayAddress, GatewayPort))
+            using (var netclient = new CertClient(GatewayAddress, GatewayClientCertificate))
             {
                 netclient.WriteServiceData(new GatewayCommand()
                 {
@@ -178,7 +190,7 @@ namespace Microsoft.AspNetCore.Mvc
                             if (reconnect)
                             {
                                 Thread.Sleep(1000);
-                                connect.ReConnect();
+                                connect.ReConnect(this);
                             }
 
                             if (errors.Count == 0)

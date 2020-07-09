@@ -11,6 +11,16 @@ namespace JMS.Impls
     class KeyLocker : IKeyLocker
     {
         MicroServiceHost _microServiceHost;
+
+        //IGatewayConnector不能依赖注入，因为GatewayConnector依赖注入了KeyLocker
+        IGatewayConnector _gatewayConnector;
+        IGatewayConnector GatewayConnector
+        {
+            get
+            {
+                return _gatewayConnector??= _microServiceHost.ServiceProvider.GetService<IGatewayConnector>();
+            }
+        }
         public List<string> LockedKeys { get; }
         public KeyLocker(MicroServiceHost microServiceHost)
         {
@@ -19,7 +29,7 @@ namespace JMS.Impls
         }
         public bool TryLock(string key, bool waitToSuccess)
         {
-            using (var netclient = new NetClient(_microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port))
+            using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
             {
                 netclient.WriteServiceData(new GatewayCommand { 
                     Type = CommandType.LockKey,
@@ -49,7 +59,7 @@ namespace JMS.Impls
             if (LockedKeys.Contains(key) == false)
                 return;
 
-            using (var netclient = new NetClient(_microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port))
+            using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
             {
                 netclient.WriteServiceData(new GatewayCommand
                 {

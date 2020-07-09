@@ -23,7 +23,7 @@ namespace JMS
         public bool Init()
         {
             //获取服务地址
-            using (var netclient = new NetClient(this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayPort))
+            using (var netclient = new CertClient(this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate))
             {
                 netclient.WriteServiceData(new GatewayCommand()
                 {

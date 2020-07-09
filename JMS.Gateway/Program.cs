@@ -5,6 +5,10 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 using JMS.Interfaces;
 using JMS.Impls;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
+using System.Linq;
 
 namespace JMS
 {
@@ -52,6 +56,15 @@ namespace JMS
             serviceProvider.GetService<GatewayRefereeClient>();
 
             var gateway = serviceProvider.GetService<Gateway>();
+
+            //SSL
+            var certPath = configuration.GetValue<string>("SSL:Cert");
+            if(!string.IsNullOrEmpty(certPath))
+            {
+                gateway.ServerCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, configuration.GetValue<string>("SSL:Password"));
+                gateway.AcceptCertHash = configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
+            }
+
             gateway.ServiceProvider = serviceProvider;
             gateway.Run(port);
         }

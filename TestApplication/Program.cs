@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using JMS;
 using JMS.Token;
@@ -51,7 +52,8 @@ namespace TestApplication
             //Console.WriteLine(sw2.ElapsedMilliseconds);
             Thread.Sleep(3000);
 
-            using (var tran = new MicroServiceTransaction("localhost", 8911))
+            var cert = new X509Certificate2("d:/test.pfx", "123456");
+            using (var tran = new MicroServiceTransaction("localhost", 8911, cert , cert))
             {
                 /////微服务 性能测试
                 //var c1 = new Controller1(tran.GetMicroService("Controller1"));

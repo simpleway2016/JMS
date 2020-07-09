@@ -37,6 +37,13 @@ namespace JMS
             };
 
             msp.Build(8912, gateways)
+                .UseTransactionRecorder(o=> {
+                    o.TransactionLogFolder = "./tranlogs";
+                })
+                .UseSSL(c=> {
+                    c.GatewayClientCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2("d:/test.pfx", "123456");
+                    c.ServerCertificate = c.GatewayClientCertificate;
+                })
                 .Run();
         }
     }

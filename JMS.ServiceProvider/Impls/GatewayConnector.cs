@@ -9,6 +9,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
+using Microsoft.Extensions.DependencyInjection;
+using JMS.Common.Dtos;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+using JMS.Net;
 
 namespace JMS.Impls
 {
@@ -23,13 +28,20 @@ namespace JMS.Impls
         bool _manualDisconnected;
         bool _ready;
         IKeyLocker _keyLocker;
+        SSLConfiguration _SSLConfiguration;
         public GatewayConnector(MicroServiceHost microServiceHost,ILogger<GatewayConnector> logger,IKeyLocker keyLocker)
         {
             _microServiceHost = microServiceHost;
             _logger = logger;
             _keyLocker = keyLocker;
-          
+            _SSLConfiguration = microServiceHost.ServiceProvider.GetService<SSLConfiguration>();
         }
+       
+        public NetClient CreateClient(NetAddress addr)
+        {
+            return new GatewayClient(addr, _SSLConfiguration);
+        }
+
         public void ConnectAsync()
         {
             new Thread(connect).Start();
@@ -58,7 +70,7 @@ namespace JMS.Impls
                     Task.Run(() => {
                         try
                         {
-                            using (var client = new NetClient(addr))
+                            using (var client = CreateClient(addr))
                             {
                                 client.WriteServiceData(new GatewayCommand
                                 {
@@ -99,7 +111,7 @@ namespace JMS.Impls
 
                 findMasterGateway();
 
-                _client = new NetClient(_microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
+                _client = CreateClient(_microServiceHost.MasterGatewayAddress);
                 
                 _client.WriteServiceData(new GatewayCommand()
                 {
@@ -124,7 +136,7 @@ namespace JMS.Impls
 
 
                 //上传已经lock的key
-                using (var client = new NetClient(_microServiceHost.MasterGatewayAddress))
+                using (var client = CreateClient(_microServiceHost.MasterGatewayAddress))
                 {
                     client.WriteServiceData(new GatewayCommand
                     {

@@ -114,14 +114,23 @@ namespace JMS
 
         public byte[] ReadServiceDataBytes()
         {
-            var flag = this.ReadInt();
-            var isgzip = (flag & 1) == 1;
-            this.KeepAlive = (flag & 2) == 2;
-            var len = flag >> 2;
-            var datas = this.ReceiveDatas(len);
-            if(isgzip)
-                datas = GZipHelper.Decompress(datas);
-            return datas;
+            try
+            {
+                var flag = this.ReadInt();
+                var isgzip = (flag & 1) == 1;
+                this.KeepAlive = (flag & 2) == 2;
+                var len = flag >> 2;
+                var datas = this.ReceiveDatas(len);
+                if (isgzip)
+                    datas = GZipHelper.Decompress(datas);
+                return datas;
+            }
+            catch(System.IO.IOException ex)
+            {
+                if (ex.InnerException is SocketException)
+                    throw ex.InnerException;
+                throw ex;
+            }
         }
 
         public  string ReadServiceData()

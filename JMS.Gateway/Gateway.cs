@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using JMS.Impls;
 using JMS.Dtos;
+using System.Security.Cryptography.X509Certificates;
 
 namespace JMS
 {
@@ -19,6 +20,8 @@ namespace JMS
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
         internal int Port;
+        public X509Certificate2 ServerCert { get; set; }
+        public string[] AcceptCertHash { get; set; }
         internal IServiceProvider ServiceProvider { get; set; }
         public List<IMicroServiceReception> OnlineMicroServices { get; set; }
 
