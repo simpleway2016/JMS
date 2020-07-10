@@ -46,6 +46,9 @@ namespace JMS.Impls
                 var method = controllerTypeInfo.Methods.FirstOrDefault(m=>m.Name == cmd.Method);
                 if (method == null)
                     throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
+
+                MicroServiceControllerBase.Current = controller;
+
                 var parameterInfos = method.GetParameters();
                 object result = null;
 
@@ -184,6 +187,7 @@ namespace JMS.Impls
             finally
             {
                 controller?.UnLoad();
+                MicroServiceControllerBase.Current = null;
             }
         }
     }

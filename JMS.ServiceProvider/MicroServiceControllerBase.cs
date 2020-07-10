@@ -29,6 +29,21 @@ public class MicroServiceControllerBase
     }
     public TransactionDelegate TransactionControl { set; get; }
 
+    internal static ThreadLocal<MicroServiceControllerBase> ThreadCurrent = new ThreadLocal<MicroServiceControllerBase>();
+    /// <summary>
+    /// 与当前请求相关联的Controller对象
+    /// </summary>
+    public static MicroServiceControllerBase Current
+    {
+        get
+        {
+            return ThreadCurrent.Value;
+        }
+        internal set
+        {
+            ThreadCurrent.Value = value;
+        }
+    }
 
     /// <summary>
     /// 终止请求，并返回指定的值
