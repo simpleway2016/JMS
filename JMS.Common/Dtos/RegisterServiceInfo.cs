@@ -26,6 +26,18 @@ namespace JMS.Dtos
 
     }
 
+    public class PerformanceInfo
+    {
+        /// <summary>
+        /// 当前连接的请求数
+        /// </summary>
+        public int? RequestQuantity;
+        /// <summary>
+        /// CPU利用率
+        /// </summary>
+        public double? CpuUsage;
+    }
+
     public class RegisterServiceRunningInfo
     {
         public int Port;
@@ -40,8 +52,8 @@ namespace JMS.Dtos
         public int MaxThread;
         public string ServiceId;
         /// <summary>
-        /// 当前连接的请求数
+        /// 当前微服务的负载情况
         /// </summary>
-        public int? ClientConnected;
+        public PerformanceInfo PerformanceInfo;
     }
 }

@@ -98,7 +98,8 @@ namespace JMS.Impls
                         {
                             try
                             {
-                                _ServiceProviderAllocator.SetClientConnectQuantity(this.ServiceInfo,Convert.ToInt32(command.Content));
+                                var hardwareInfo = command.Content.FromJson<PerformanceInfo>();
+                                _ServiceProviderAllocator.SetServicePerformanceInfo(this.ServiceInfo, hardwareInfo);
                             }
                             catch
                             {

@@ -51,7 +51,7 @@ namespace TestApplication
             //}
             //sw2.Stop();
             //Console.WriteLine(sw2.ElapsedMilliseconds);
-            Thread.Sleep(3000);
+            Thread.Sleep(6000);
 
             var gatewayCert = new X509Certificate2("d:/test.pfx", "123456");
             var cert = new X509Certificate2("d:/test.pfx", "123456");

@@ -43,7 +43,7 @@ namespace JMS.Impls.CommandHandles
                 ServiceId = m.ServiceId,
                 ServiceNames = m.ServiceNames,
                 MaxThread = m.MaxThread,
-                ClientConnected = allocator.GetClientConnectQuantity(m)
+                PerformanceInfo = allocator.GetPerformanceInfo(m)
             }).ToArray();
         }
     }

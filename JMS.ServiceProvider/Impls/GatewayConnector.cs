@@ -14,6 +14,7 @@ using JMS.Common.Dtos;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using JMS.Net;
+using JMS.Interfaces.Hardware;
 
 namespace JMS.Impls
 {
@@ -29,11 +30,15 @@ namespace JMS.Impls
         bool _ready;
         IKeyLocker _keyLocker;
         SSLConfiguration _SSLConfiguration;
-        public GatewayConnector(MicroServiceHost microServiceHost,ILogger<GatewayConnector> logger,IKeyLocker keyLocker)
+        ICpuInfo _cpuInfo;
+        public GatewayConnector(MicroServiceHost microServiceHost,
+            ICpuInfo cpuInfo,
+            ILogger<GatewayConnector> logger,IKeyLocker keyLocker)
         {
             _microServiceHost = microServiceHost;
             _logger = logger;
             _keyLocker = keyLocker;
+            _cpuInfo = cpuInfo;
             _SSLConfiguration = microServiceHost.ServiceProvider.GetService<SSLConfiguration>();
         }
        
@@ -165,7 +170,10 @@ namespace JMS.Impls
                     return new GatewayCommand
                     {
                         Type = CommandType.ReportClientConnectQuantity,
-                        Content = _microServiceHost.ClientConnected.ToString()
+                        Content = new PerformanceInfo { 
+                            RequestQuantity = _microServiceHost.ClientConnected , 
+                            CpuUsage = _cpuInfo.GetCpuUsage() 
+                        }.ToJsonString()
                     };
                 });
 

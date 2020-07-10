@@ -21,16 +21,17 @@ namespace JMS
         RegisterServiceLocation Alloc(GetServiceProviderRequest request);
 
         /// <summary>
-        /// 获取当前微服务的客户端连接数
+        /// 获取当前微服务的负载情况
         /// </summary>
         /// <param name="serviceInfo"></param>
         /// <returns></returns>
-        int GetClientConnectQuantity(RegisterServiceInfo serviceInfo);
+        PerformanceInfo GetPerformanceInfo(RegisterServiceInfo serviceInfo);
 
         /// <summary>
-        /// 设置当前微服务连接的请求数
+        /// 设置微服务的负载情况
         /// </summary>
         /// <param name="serviceInfo"></param>
-        void SetClientConnectQuantity(RegisterServiceInfo serviceInfo,int quantity);
+        /// <param name="performanceInfo">负载情况</param>
+        void SetServicePerformanceInfo(RegisterServiceInfo serviceInfo, PerformanceInfo performanceInfo);
     }
 }

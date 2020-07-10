@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 using Way.Lib;
 using System.Reflection;
 using JMS.Common.Dtos;
+using System.Runtime.InteropServices;
+using JMS.Interfaces.Hardware;
+using JMS.Impls.Haredware;
 
 namespace JMS
 {
@@ -106,6 +109,18 @@ namespace JMS
             _registerMyServicesed = true;
 
            
+            if(RuntimeInformation.IsOSPlatform( OSPlatform.Linux ))
+            {
+                _services.AddSingleton<ICpuInfo,CpuInfoForLinux>();
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                _services.AddSingleton<ICpuInfo, CpuInfoForWin>();
+            }
+            else
+            {
+                _services.AddSingleton<ICpuInfo, CpuInfoForUnkown>();
+            }
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
             _services.AddSingleton<IKeyLocker, KeyLocker>();
