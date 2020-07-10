@@ -3,10 +3,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Way.Lib;
+using System.Linq;
 
 namespace JMS.TokenServer
 {
@@ -15,7 +18,8 @@ namespace JMS.TokenServer
         static ILogger<Program> Logger;
         static string[] key;
         static byte[] data;
-
+        static X509Certificate2 ServerCert;
+        static string[] AcceptCertHash;
         static string GetRandomString(int length)
         {
             byte[] b = new byte[4];
@@ -61,6 +65,14 @@ namespace JMS.TokenServer
             bs.AddRange(strByte);
             data = bs.ToArray();
 
+            //SSL
+            var certPath = configuration.GetValue<string>("SSL:Cert");
+            if (!string.IsNullOrEmpty(certPath))
+            {
+                ServerCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, configuration.GetValue<string>("SSL:Password"));
+                AcceptCertHash = configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
+            }
+
             TcpListener listener = new TcpListener(port);
             listener.Start();
 
@@ -70,13 +82,26 @@ namespace JMS.TokenServer
                 Task.Run(()=>onSocket(socket));
             }
         }
-
+        static bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            if (AcceptCertHash != null && AcceptCertHash.Length > 0 && AcceptCertHash.Contains(certificate.GetCertHashString()) == false)
+            {
+                return false;
+            }
+            return true;
+        }
         static void onSocket(Socket socket)
         {
             Way.Lib.NetStream client = null;
             try
             {
                 client = new Way.Lib.NetStream(socket);
+                if (ServerCert != null)
+                {
+                    var sslts = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
+                    sslts.AuthenticateAsServer(ServerCert, true, System.Security.Authentication.SslProtocols.Tls, true);
+                    client.InnerStream = sslts;
+                }
                 client.Write(data);
             }
             catch(SocketException)

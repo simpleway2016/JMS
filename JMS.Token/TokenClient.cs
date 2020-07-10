@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Net.Security;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Way.Lib;
 
@@ -12,13 +14,33 @@ namespace JMS.Token
     {
       
         static string[] Keys;
-        public TokenClient(string serverAddress ,int serverPort)
+        X509Certificate2 _cert;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serverAddress">Token服务器地址</param>
+        /// <param name="serverPort">Token服务器端口</param>
+        /// <param name="cert">与服务器交互的客户端证书</param>
+        public TokenClient(string serverAddress ,int serverPort, X509Certificate2 cert = null)
         {
+            _cert = cert;
             if(Keys == null)
             {
                 NetStream client = new NetStream(serverAddress, serverPort);
+                if(_cert != null)
+                {
+                    SslStream sslStream = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
+                    X509CertificateCollection certs = new X509CertificateCollection();
+                    certs.Add(cert);
+                    sslStream.AuthenticateAsClient("SslSocket", certs, System.Security.Authentication.SslProtocols.Tls, true);
+                    client.InnerStream = sslStream;
+                }
                 Keys = Encoding.UTF8.GetString( client.ReceiveDatas(client.ReadInt())).FromJson<string[]>();
             }
+        }
+        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
         }
         /// <summary>
         /// 根据字符串内容，生成token
