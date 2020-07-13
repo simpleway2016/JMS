@@ -42,8 +42,8 @@ namespace JMS
             services.AddSingleton<LockKeyManager>();
             services.AddTransient<IMicroServiceReception,MicroServiceReception>();
             services.AddSingleton<TransactionIdBuilder>();
-            services.AddSingleton<FileListener>();
-            services.AddTransient<ListenFileChangeChannel>();
+            services.AddSingleton<FileChangeWatcher>();
+            services.AddTransient<ListenFileChangeReception>();
 
             var assembly = Assembly.Load(configuration.GetValue<string>("ServiceProviderAllocator:Assembly"));
             var serviceProviderAllocatorType = assembly.GetType(configuration.GetValue<string>("ServiceProviderAllocator:FullName"));
@@ -53,7 +53,7 @@ namespace JMS
             services.AddSingleton<IServiceProviderAllocator>(serviceProviderAllocator);
             var serviceProvider = services.BuildServiceProvider();
             serviceProvider.GetService<LockKeyManager>();
-            serviceProvider.GetService<FileListener>();
+            serviceProvider.GetService<FileChangeWatcher>();
 
             //启动GatewayRefereeClient，申请成为主网关
             serviceProvider.GetService<GatewayRefereeClient>();

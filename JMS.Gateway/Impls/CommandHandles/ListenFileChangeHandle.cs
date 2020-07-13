@@ -26,7 +26,7 @@ namespace JMS.Impls.CommandHandles
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
-            _serviceProvider.GetService<ListenFileChangeChannel>().Handle(netclient, cmd);
+            _serviceProvider.GetService<ListenFileChangeReception>().Handle(netclient, cmd);
 
         }
     }

@@ -8,15 +8,15 @@ using System.Threading;
 
 namespace JMS
 {
-    class FileListener
+    class FileChangeWatcher
     {
         IConfiguration _configuration;
         FileSystemWatcher _fw;
-        ILogger<FileListener> _logger;
+        ILogger<FileChangeWatcher> _logger;
         string _root;
         List<string> _changingFiles = new List<string>();
         AutoResetEvent _waitObj = new AutoResetEvent(false);
-        public FileListener(IConfiguration configuration,ILogger<FileListener> logger)
+        public FileChangeWatcher(IConfiguration configuration,ILogger<FileChangeWatcher> logger)
         {
             _configuration = configuration;
             _logger = logger;

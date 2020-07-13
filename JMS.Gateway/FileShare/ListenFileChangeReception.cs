@@ -12,15 +12,15 @@ using Way.Lib;
 
 namespace JMS
 {
-    class ListenFileChangeChannel
+    class ListenFileChangeReception
     {
         AutoResetEvent _waitObj = new AutoResetEvent(false);
         List<string> _changedFiles = new List<string>();
         string[] _listeningFiles;
         IConfiguration _configuration;
-        ILogger<ListenFileChangeChannel> _logger;
+        ILogger<ListenFileChangeReception> _logger;
         string _root;
-        public ListenFileChangeChannel(IConfiguration configuration, ILogger<ListenFileChangeChannel> logger)
+        public ListenFileChangeReception(IConfiguration configuration, ILogger<ListenFileChangeReception> logger)
         {
             _configuration = configuration;
             _logger = logger;
