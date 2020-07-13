@@ -47,11 +47,21 @@ namespace JMS.Impls
                         client.InnerStream = sslts;
                     }
 
-                    var cmd = client.ReadServiceObject<GatewayCommand>();
-                    _logger?.LogDebug("收到命令，type:{0} content:{1}", cmd.Type, cmd.Content);
+                    while (true)
+                    {
+                        var cmd = client.ReadServiceObject<GatewayCommand>();
+                        _logger?.LogDebug("收到命令，type:{0} content:{1}", cmd.Type, cmd.Content);
 
-                    _manager.AllocHandler(cmd)?.Handle(client, cmd);
+                        _manager.AllocHandler(cmd)?.Handle(client, cmd);
+
+                        if (client.HasSocketException || !client.KeepAlive)
+                            break;
+                    }
                 }
+            }
+            catch(SocketException)
+            {
+
             }
             catch (Exception ex)
             {

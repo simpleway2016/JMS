@@ -36,7 +36,7 @@ namespace JMS
                             {
                                 if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
                                 {
-                                    item.Client.Dispose();
+                                    item.Client?.Dispose();
                                     item.Client = null;
                                     item.Used = 0;
                                 }
@@ -54,9 +54,13 @@ namespace JMS
 
         public static NetClient CreateClient( NetAddress proxy, string ip,int port, X509Certificate2 cert)
         {
-            var key = $"{ip}--{port}";
+            return CreateClient(proxy, new NetAddress(ip, port), cert);
+        }
+        public static NetClient CreateClient(NetAddress proxy, NetAddress addr, X509Certificate2 cert)
+        {
+            var key = $"{addr.Address}--{addr.Port}";
             NetClientSeat[] array;
-            if ( Dict.TryGetValue(key, out array) == false)
+            if (Dict.TryGetValue(key, out array) == false)
             {
                 Dict.TryAdd(key, GetArray());
                 array = Dict[key];
@@ -65,13 +69,12 @@ namespace JMS
             var freeitem = GetFree(array);
             if (freeitem == null)
             {
-                freeitem = new ProxyClient(proxy,new NetAddress(ip, port), cert);
+                freeitem = new ProxyClient(proxy, addr, cert);
                 freeitem.KeepAlive = array.Any(m => m.Client == null);
             }
 
             return freeitem;
         }
-
         public static void AddClientToPool(NetClient client)
         {
             if (!client.KeepAlive)

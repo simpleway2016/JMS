@@ -51,11 +51,21 @@ namespace TestApplication
             //}
             //sw2.Stop();
             //Console.WriteLine(sw2.ElapsedMilliseconds);
-            Thread.Sleep(6000);
+            Thread.Sleep(4000);
 
             var gatewayCert = new X509Certificate2("d:/test.pfx", "123456");
             var cert = new X509Certificate2("d:/test.pfx", "123456");
             cert = null;
+
+            for (int i = 0; i < 5; i++)
+            {
+                using (var tran = new MicroServiceTransaction(new NetAddress[] {
+                new NetAddress("localhost", 8911)
+            }, null, gatewayCert, cert))
+                {
+                    var c1 = tran.GetMicroService<Controller1>();
+                }
+            }
 
             using (var tran = new MicroServiceTransaction(new NetAddress[] { 
                 new NetAddress("localhost", 8911)

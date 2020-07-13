@@ -23,7 +23,8 @@ namespace JMS
         public bool Init()
         {
             //获取服务地址
-            using (var netclient = new ProxyClient( this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate))
+            var netclient = NetClientPool.CreateClient(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate);
+            try
             {
                 netclient.WriteServiceData(new GatewayCommand()
                 {
@@ -31,7 +32,7 @@ namespace JMS
                     Header = ServiceTransaction.GetCommandHeader(),
                     Content = new GetServiceProviderRequest
                     {
-                        ServiceName = _serviceName,                       
+                        ServiceName = _serviceName,
                     }.ToJsonString()
                 });
                 var serviceLocation = netclient.ReadServiceObject<RegisterServiceLocation>();
@@ -42,7 +43,16 @@ namespace JMS
                 if (serviceLocation.Port == 0)
                     return false;
                 _serviceLocation = serviceLocation;
+
+                NetClientPool.AddClientToPool(netclient);
             }
+            catch (Exception)
+            {
+                netclient.Dispose();
+                throw;
+            }
+               
+            
             return true;
         }
 
