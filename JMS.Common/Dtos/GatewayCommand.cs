@@ -19,7 +19,11 @@ namespace JMS.Dtos
         /// </summary>
         FindMaster = 8,
         UploadLockKeys = 9,
-        HealthyCheck =10
+        HealthyCheck =10,
+        /// <summary>
+        /// 监测共享文件的变化
+        /// </summary>
+        ListenFileChange = 11
     }
     public class GatewayCommand
     {
@@ -34,4 +38,5 @@ namespace JMS.Dtos
         public IDictionary<string, string> Header;
         public string ClientAddress;
     }
+
 }

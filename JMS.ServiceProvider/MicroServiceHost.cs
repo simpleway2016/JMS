@@ -16,6 +16,7 @@ using JMS.Common.Dtos;
 using System.Runtime.InteropServices;
 using JMS.Interfaces.Hardware;
 using JMS.Impls.Haredware;
+using JMS.MapShareFiles;
 
 namespace JMS
 {
@@ -39,17 +40,30 @@ namespace JMS
         internal ServiceCollection _services;
         IRequestReception _RequestReception;
         ScheduleTaskManager _scheduleTaskManager;
+        MapFileManager _mapFileManager;
         bool _registerMyServicesed = false;
         public MicroServiceHost(ServiceCollection services)
         {
             this.Id = Guid.NewGuid().ToString("N");
             _services = services;
             _scheduleTaskManager = new ScheduleTaskManager(this);
+            _mapFileManager = new MapFileManager(this);
         }
 
         internal void DisconnectGateway()
         {
             _GatewayConnector.DisconnectGateway();
+        }
+
+        /// <summary>
+        /// 映射网关上的共享文件到本地
+        /// </summary>
+        /// <param name="gatewayAddress">包含共享文件的网关地址</param>
+        /// <param name="shareFilePath">共享文件路径</param>
+        /// <param name="localFilePath">映射本地的路径</param>
+        public void MapShareFileToLocal( NetAddress gatewayAddress, string shareFilePath , string localFilePath)
+        {
+            _mapFileManager.MapShareFileToLocal(gatewayAddress, shareFilePath, localFilePath);
         }
 
 
@@ -121,6 +135,7 @@ namespace JMS
             {
                 _services.AddSingleton<ICpuInfo, CpuInfoForUnkown>();
             }
+            _services.AddSingleton<MapFileManager>(_mapFileManager);
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
             _services.AddSingleton<IKeyLocker, KeyLocker>();
@@ -155,6 +170,8 @@ namespace JMS
             
             _RequestReception = ServiceProvider.GetService<IRequestReception>();
             _scheduleTaskManager.StartTasks();
+
+            _mapFileManager.Start();
 
             TcpListener listener = new TcpListener(ServicePort);
             listener.Start();
