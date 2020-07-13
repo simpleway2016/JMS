@@ -61,9 +61,10 @@ namespace JMS
         /// <param name="gatewayAddress">包含共享文件的网关地址</param>
         /// <param name="shareFilePath">共享文件路径</param>
         /// <param name="localFilePath">映射本地的路径</param>
-        public void MapShareFileToLocal( NetAddress gatewayAddress, string shareFilePath , string localFilePath)
+        /// <param name="callback">文件写入本地后，回调委托</param>
+        public void MapShareFileToLocal( NetAddress gatewayAddress, string shareFilePath , string localFilePath,Action<string,string> callback = null)
         {
-            _mapFileManager.MapShareFileToLocal(gatewayAddress, shareFilePath, localFilePath);
+            _mapFileManager.MapShareFileToLocal(gatewayAddress, shareFilePath, localFilePath, callback);
         }
 
 

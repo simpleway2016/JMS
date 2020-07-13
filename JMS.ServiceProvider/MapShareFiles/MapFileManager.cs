@@ -15,7 +15,13 @@ namespace JMS.MapShareFiles
 {
     class MapFileManager
     {
-        Dictionary<string, string> _dict = new Dictionary<string, string>();
+        class MapItem
+        {
+            public string LocalPath;
+            public Action<string, string> Callback;
+        }
+
+        Dictionary<string, MapItem> _dict = new Dictionary<string, MapItem>();
         NetAddress _gatewayAddress;
 
         MicroServiceHost _microServiceHost;
@@ -24,13 +30,16 @@ namespace JMS.MapShareFiles
         {
             _microServiceHost = microServiceHost;
         }
-        public void MapShareFileToLocal( NetAddress gatewayAddress, string shareFilePath, string localFilePath)
+        public void MapShareFileToLocal( NetAddress gatewayAddress, string shareFilePath, string localFilePath,Action<string, string> callback)
         {
             if (_gatewayAddress != null && _gatewayAddress.Equals(gatewayAddress.Address , gatewayAddress.Port) == false)
             {
                 throw new Exception("不能监测不同网关的文件");
             }
-            _dict[shareFilePath] = localFilePath;
+            _dict[shareFilePath] = new MapItem { 
+                LocalPath = localFilePath,
+                Callback = callback
+            };
 
             _gatewayAddress = gatewayAddress;
         }
@@ -77,8 +86,11 @@ namespace JMS.MapShareFiles
                                 var data = client.ReceiveDatas(len);
                                 try
                                 {
-                                    string localpath = _dict[filepath];
+                                    var item = _dict[filepath];
+                                    string localpath = item.LocalPath;
                                     File.WriteAllBytes(localpath, data);
+                                    if (item.Callback != null)
+                                        item.Callback(filepath, localpath);
                                 }
                                 catch (Exception ex)
                                 {

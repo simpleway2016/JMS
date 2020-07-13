@@ -36,7 +36,9 @@ namespace JMS
                }
             };
 
-            msp.MapShareFileToLocal(gateways[0] , "test/appsettings.json", "./appsettings.json");
+            msp.MapShareFileToLocal(gateways[0] , "test/appsettings.json", "./appsettings.json",(p,p2)=> {
+                Console.WriteLine(p + "回调");
+            });
             msp.MapShareFileToLocal(gateways[0], "test/appsettings2.json", "./appsettings2.json");
 
             msp.Build(8912, gateways)
