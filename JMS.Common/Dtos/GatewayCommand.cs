@@ -23,7 +23,8 @@ namespace JMS.Dtos
         /// <summary>
         /// 监测共享文件的变化
         /// </summary>
-        ListenFileChange = 11
+        ListenFileChange = 11,
+        GetShareFile = 12
     }
     public class GatewayCommand
     {

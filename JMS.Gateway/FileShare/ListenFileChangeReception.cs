@@ -45,7 +45,6 @@ namespace JMS
             try
             {
                 _listeningFiles = cmd.Content.FromJson<string[]>();
-                _changedFiles.AddRange(_listeningFiles);
 
                 while (true)
                 {                    

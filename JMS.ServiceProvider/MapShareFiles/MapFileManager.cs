@@ -10,6 +10,7 @@ using Way.Lib;
 using Org.BouncyCastle.Crypto.Engines;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
 
 namespace JMS.MapShareFiles
 {
@@ -29,6 +30,24 @@ namespace JMS.MapShareFiles
         public MapFileManager(MicroServiceHost microServiceHost)
         {
             _microServiceHost = microServiceHost;
+        }
+
+        public void GetGatewayShareFile(NetAddress gatewayAddr, string filepath, string localFilePath , X509Certificate2 gatewayClientCert)
+        {
+            using (var client = new CertClient(gatewayAddr, gatewayClientCert))
+            {
+                client.WriteServiceData(new GatewayCommand
+                {
+                    Type = CommandType.GetShareFile,
+                    Content = filepath
+                });
+
+                var ret = client.ReadServiceObject<InvokeResult<int>>();
+                int len = ret.Data;
+                var data = client.ReceiveDatas(len);
+ 
+                File.WriteAllBytes(localFilePath, data);
+            }
         }
         public void MapShareFileToLocal( NetAddress gatewayAddress, string shareFilePath, string localFilePath,Action<string, string> callback)
         {
