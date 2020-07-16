@@ -17,7 +17,7 @@ namespace TestApplication
     {
         static void Main(string[] args)
         {
-            //Thread.Sleep(1000);
+
             //var tokenclient = new TokenClient("localhost", 9911);
             //var token = tokenclient.BuildForString(new { userid = 12 , expire = 12u}.ToJsonString());
             //var body = tokenclient.VerifyForString(token);
@@ -26,31 +26,6 @@ namespace TestApplication
             //var body2 = tokenclient.VerifyForLongs(token);
 
 
-
-            //var t = new test();
-            //var type = t.GetType();
-            //var method = type.GetMethod("c");
-            //var p = new object[] {2 };
-
-
-            //var e1 = Expression.Parameter(typeof(object), "s");
-            //var e2 = Expression.Convert(e1, typeof(test));
-            //var body = Expression.Call(e2, typeof(test).GetMethod("c"), Expression.Constant(2));
-            //var ee2 = Expression.Lambda(body, e1);
-            //var func = (Func<object, MyResut>)ee2.Compile();
-
-
-            //Expression<Func<object,object>> exp = (s) => ((Func<object,int>)s)(t);
-
-            ////web api 性能测试
-            //System.Diagnostics.Stopwatch sw2 = new System.Diagnostics.Stopwatch();
-            //sw2.Start();
-            //for (int i = 0; i < 2000; i++)
-            //{
-            //    var ret = Way.Lib.HttpClient.GetContent("http://localhost:8888/home/test", 8000);
-            //}
-            //sw2.Stop();
-            //Console.WriteLine(sw2.ElapsedMilliseconds);
             Thread.Sleep(4000);
 
             var gatewayCert = new X509Certificate2("d:/test.pfx", "123456");
@@ -64,15 +39,15 @@ namespace TestApplication
             },null, gatewayCert, cert))
             {
                 /////微服务 性能测试
-                var c1 = new Controller1(tran.GetMicroService("Controller1"));
-                System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-                sw.Start();
-                for (int i = 0; i < 1000; i++)
-                {
-                    var ret22 = c1.test();
-                }
-                sw.Stop();
-                Console.WriteLine(sw.ElapsedMilliseconds);
+                //var c1 = new Controller1(tran.GetMicroService("Controller1"));
+                //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+                //sw.Start();
+                //for (int i = 0; i < 1000; i++)
+                //{
+                //    var ret22 = c1.test();
+                //}
+                //sw.Stop();
+                //Console.WriteLine(sw.ElapsedMilliseconds);
 
                 tran.SetHeader("auth", "123456789");
 

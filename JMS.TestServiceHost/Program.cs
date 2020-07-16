@@ -55,9 +55,9 @@ namespace JMS
                 .UseTransactionRecorder(o=> {
                     o.TransactionLogFolder = "./tranlogs";
                 })
-                //.UseSSL(c=> {
+                //.UseSSL(c=> { //配置ssl
                 //    c.GatewayClientCertificate = gatewaycert;
-                //    //c.ServerCertificate = c.GatewayClientCertificate;
+                //    c.ServerCertificate = c.GatewayClientCertificate;
                 //})
                 .Run();
         }
