@@ -21,7 +21,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Common", "JMS.Common\JM
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Gateway.Referee", "JMS.Gateway.Referee\JMS.Gateway.Referee.csproj", "{DE05C171-9EED-4A7B-B6C3-CDC653656775}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.Proxy", "JMS.Proxy\JMS.Proxy.csproj", "{38B4F31C-C377-45FB-9917-0DA069BBD455}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Proxy", "JMS.Proxy\JMS.Proxy.csproj", "{38B4F31C-C377-45FB-9917-0DA069BBD455}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTest", "UnitTest", "{DE2C6DA8-9CDF-44F6-B3B5-FCF43966E7B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
