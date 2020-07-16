@@ -9,6 +9,7 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Linq;
+using JMS.Common;
 
 namespace JMS
 {
@@ -16,17 +17,27 @@ namespace JMS
     {
         static void Main(string[] args)
         {
+            if(args.Length > 1&& args[0].EndsWith(".pfx") )
+            {
+                var cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(args[0], args[1]);
+                Console.WriteLine(cert.GetCertHashString());
+                return;
+            }
+
             var builder = new ConfigurationBuilder();
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
             var configuration = builder.Build();
 
             var port = configuration.GetValue<int>("Port");
+            CommandArgParser cmdArg = new CommandArgParser(args);
+            port = cmdArg.TryGetValue<int>("port", port);
 
             var datafolder = configuration.GetValue<string>("DataFolder");
             if (!System.IO.Directory.Exists(datafolder))
             {
                 System.IO.Directory.CreateDirectory(datafolder);
             }
+            datafolder = cmdArg.TryGetValue<string>("DataFolder", datafolder);
 
             ServiceCollection services = new ServiceCollection();
             services.AddLogging(loggingBuilder =>

@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Way.Lib" Version="2.0.8.1" />
+    <PackageReference Include="Way.Lib" Version="2.0.8.2" />
   </ItemGroup>
 
 </Project>

@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Proxy", "JMS.Proxy\JMS.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTest", "UnitTest", "{DE2C6DA8-9CDF-44F6-B3B5-FCF43966E7B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject1", "UnitTestProject1\UnitTestProject1.csproj", "{4BA38941-75D1-428E-9A77-2948F335A9EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,9 +73,16 @@ Global
 		{38B4F31C-C377-45FB-9917-0DA069BBD455}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38B4F31C-C377-45FB-9917-0DA069BBD455}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38B4F31C-C377-45FB-9917-0DA069BBD455}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BA38941-75D1-428E-9A77-2948F335A9EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BA38941-75D1-428E-9A77-2948F335A9EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BA38941-75D1-428E-9A77-2948F335A9EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BA38941-75D1-428E-9A77-2948F335A9EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4BA38941-75D1-428E-9A77-2948F335A9EA} = {DE2C6DA8-9CDF-44F6-B3B5-FCF43966E7B2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8DD244BC-BF73-4AE3-A9FA-16E8AC1283AF}
