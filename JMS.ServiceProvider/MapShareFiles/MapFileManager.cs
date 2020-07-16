@@ -42,8 +42,11 @@ namespace JMS.MapShareFiles
                     Content = filepath
                 });
 
-                var ret = client.ReadServiceObject<InvokeResult<int>>();
-                int len = ret.Data;
+                var ret = client.ReadServiceObject<InvokeResult<int?>>();
+                if (ret.Success == false)
+                    throw new Exception(ret.Error);
+
+                int len = ret.Data.GetValueOrDefault();
                 var data = client.ReceiveDatas(len);
  
                 File.WriteAllBytes(localFilePath, data);

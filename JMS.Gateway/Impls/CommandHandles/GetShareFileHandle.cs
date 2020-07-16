@@ -31,14 +31,26 @@ namespace JMS.Impls.CommandHandles
             var filepath = cmd.Content;
             var root = _configuration.GetValue<string>("ShareFolder");
 
-            byte[] data = File.ReadAllBytes($"{root}/{filepath}");
-
-            netclient.WriteServiceData(new InvokeResult
+            filepath = $"{root}/{filepath}";
+            if (File.Exists(filepath))
             {
-                Success = true,
-                Data = data.Length
-            });
-            netclient.Write(data);
+                byte[] data = File.ReadAllBytes(filepath);
+
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = true,
+                    Data = data.Length
+                });
+                netclient.Write(data);
+            }
+            else
+            {
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = false,
+                    Error = "file not found"
+                });
+            }
 
         }
     }
