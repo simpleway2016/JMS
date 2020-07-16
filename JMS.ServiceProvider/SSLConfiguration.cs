@@ -9,7 +9,13 @@ namespace JMS
 {
     public class SSLConfiguration
     {
+        /// <summary>
+        /// 与网关通讯的证书
+        /// </summary>
         public X509Certificate2 GatewayClientCertificate { get; set; }
+        /// <summary>
+        /// 微服务证书
+        /// </summary>
         public X509Certificate2 ServerCertificate { get; set; }
         /// <summary>
         /// 哪些客户端证书被信任，空表示信任所有证书

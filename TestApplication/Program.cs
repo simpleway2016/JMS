@@ -28,15 +28,11 @@ namespace TestApplication
 
             Thread.Sleep(4000);
 
-            var gatewayCert = new X509Certificate2("d:/test.pfx", "123456");
-            var cert = new X509Certificate2("d:/test.pfx", "123456");
-            gatewayCert = null;
-            cert = null;
-
+            var cert = new X509Certificate2("../../../../pfx/client.pfx", "123456");
 
             using (var tran = new MicroServiceTransaction(new NetAddress[] { 
                 new NetAddress("localhost", 8911)
-            },null, gatewayCert, cert))
+            },null, cert, cert))
             {
                 /////微服务 性能测试
                 //var c1 = new Controller1(tran.GetMicroService("Controller1"));

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace JMS
@@ -55,10 +56,11 @@ namespace JMS
                 .UseTransactionRecorder(o=> {
                     o.TransactionLogFolder = "./tranlogs";
                 })
-                //.UseSSL(c=> { //配置ssl
-                //    c.GatewayClientCertificate = gatewaycert;
-                //    c.ServerCertificate = c.GatewayClientCertificate;
-                //})
+                .UseSSL(c =>
+                { //配置ssl
+                    c.GatewayClientCertificate = new X509Certificate2("../../../../pfx/client.pfx", "123456");
+                    c.ServerCertificate = new X509Certificate2("../../../../pfx/service_server.pfx", "123456");
+                })
                 .Run();
         }
     }
