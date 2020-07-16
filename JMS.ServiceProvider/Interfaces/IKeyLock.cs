@@ -15,5 +15,6 @@ namespace JMS.Interfaces
         /// <returns>是否成功</returns>
         bool TryLock(string key,bool waitToSuccess);
         void UnLock(string key);
+        string[] GetLockedKeys();
     }
 }

@@ -10,6 +10,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Linq;
 using JMS.Common;
+using System.Diagnostics;
 
 namespace JMS
 {
@@ -23,6 +24,8 @@ namespace JMS
                 Console.WriteLine(cert.GetCertHashString());
                 return;
             }
+
+            System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
             var builder = new ConfigurationBuilder();
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);

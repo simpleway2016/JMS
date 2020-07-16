@@ -22,6 +22,7 @@ namespace JMS.Impls
             }
         }
         public List<string> LockedKeys { get; }
+        public string[] GetLockedKeys() => LockedKeys.ToArray();
         public KeyLocker(MicroServiceHost microServiceHost)
         {
             _microServiceHost = microServiceHost;
