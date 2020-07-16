@@ -24,7 +24,7 @@ namespace JMS
                 Console.WriteLine(cert.GetCertHashString());
                 return;
             }
-
+            //固定当前工作目录
             System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
             var builder = new ConfigurationBuilder();
