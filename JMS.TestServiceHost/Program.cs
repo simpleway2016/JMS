@@ -14,7 +14,7 @@ namespace JMS
         static void Main(string[] args)
         {
             Thread.Sleep(1000);
-            var gatewaycert = new System.Security.Cryptography.X509Certificates.X509Certificate2("d:/test.pfx", "123456");
+            var gatewaycert = new System.Security.Cryptography.X509Certificates.X509Certificate2("../../../../pfx/client.pfx", "123456");
 
             ServiceCollection services = new ServiceCollection();
 
@@ -58,7 +58,7 @@ namespace JMS
                 })
                 .UseSSL(c =>
                 { //配置ssl
-                    c.GatewayClientCertificate = new X509Certificate2("../../../../pfx/client.pfx", "123456");
+                    c.GatewayClientCertificate = gatewaycert;
                     c.ServerCertificate = new X509Certificate2("../../../../pfx/service_server.pfx", "123456");
                 })
                 .Run();
