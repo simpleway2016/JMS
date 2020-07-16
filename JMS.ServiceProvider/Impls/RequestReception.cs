@@ -23,13 +23,12 @@ namespace JMS.Impls
         SSLConfiguration _SSLConfiguration;
         public RequestReception(ILogger<RequestReception> logger,
             ProcessExitHandler processExitHandler,
-            SSLConfiguration sSLConfiguration,
             MicroServiceHost microServiceProvider)
         {
             _logger = logger;
             _MicroServiceProvider = microServiceProvider;
             _processExitHandler = processExitHandler;
-            _SSLConfiguration = sSLConfiguration;
+            _SSLConfiguration = _MicroServiceProvider.ServiceProvider.GetService<SSLConfiguration>();
 
             var handlerTypes = typeof(RequestReception).Assembly.DefinedTypes.Where(m => m.ImplementedInterfaces.Contains(typeof(IRequestHandler)));
             foreach( var type in handlerTypes )

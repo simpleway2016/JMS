@@ -55,6 +55,7 @@ namespace TestApplication
 
             var gatewayCert = new X509Certificate2("d:/test.pfx", "123456");
             var cert = new X509Certificate2("d:/test.pfx", "123456");
+            gatewayCert = null;
             cert = null;
 
 

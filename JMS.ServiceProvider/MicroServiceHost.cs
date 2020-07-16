@@ -177,7 +177,6 @@ namespace JMS
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
 
-
             _GatewayConnector.ConnectAsync();
             
             _RequestReception = ServiceProvider.GetService<IRequestReception>();
@@ -185,8 +184,21 @@ namespace JMS
 
             _mapFileManager.Start();
 
+            var sslConfig = ServiceProvider.GetService<SSLConfiguration>();
+
             TcpListener listener = new TcpListener(ServicePort);
             listener.Start();
+            _logger?.LogInformation("Service host started , port:{0}",ServicePort);
+            _logger?.LogInformation("Gateways:" + AllGatewayAddresses.ToJsonString());
+
+            if (sslConfig != null)
+            {
+                if(sslConfig.GatewayClientCertificate != null)
+                    _logger?.LogInformation("Gateway client use ssl,certificate hash:{0}", sslConfig.GatewayClientCertificate.GetCertHashString());
+
+                if (sslConfig.ServerCertificate != null)
+                    _logger?.LogInformation("Service host use ssl,certificate hash:{0}", sslConfig.ServerCertificate.GetCertHashString());
+            }
 
             using (var processExitHandler = ServiceProvider.GetService<ProcessExitHandler>())
             {

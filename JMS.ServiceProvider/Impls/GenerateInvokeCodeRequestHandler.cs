@@ -52,6 +52,7 @@ namespace JMS.Impls
 
         public void Handle(NetClient netclient, InvokeCommand cmd)
         {
+            //System.Diagnostics.Debugger.Launch();
             if( !IsDebug )
             {
                 netclient.WriteServiceData(new InvokeResult()

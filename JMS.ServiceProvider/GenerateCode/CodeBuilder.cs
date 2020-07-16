@@ -23,6 +23,9 @@ namespace JMS.GenerateCode
 
         void AddComment(CodeMemberMethod codeMethod,MethodInfo methodInfo,XmlElement parentEle)
         {
+            if (parentEle == null)
+                return;
+
             XmlElement commentEle = null;
             foreach( XmlElement node in parentEle.ChildNodes )
             {

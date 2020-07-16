@@ -55,6 +55,10 @@ namespace JMS
                _tcpListener = new TcpListener(IPAddress.Any, port);
             _tcpListener.Start();
             _Logger?.LogInformation("Gateway started, port:{0}", port );
+            if(ServerCert != null)
+            {
+                _Logger?.LogInformation("Use ssl,certificate hash:{0}", ServerCert.GetCertHashString());
+            }
             while (true)
             {
                 try

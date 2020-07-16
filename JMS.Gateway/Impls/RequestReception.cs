@@ -50,7 +50,7 @@ namespace JMS.Impls
                     while (true)
                     {
                         var cmd = client.ReadServiceObject<GatewayCommand>();
-                        _logger?.LogDebug("收到命令，type:{0} content:{1}", cmd.Type, cmd.Content);
+                        _logger?.LogDebug("type:{0} content:{1}", cmd.Type, cmd.Content);
 
                         _manager.AllocHandler(cmd)?.Handle(client, cmd);
 
