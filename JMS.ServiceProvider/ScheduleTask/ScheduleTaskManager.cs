@@ -26,7 +26,7 @@ namespace JMS
         /// <summary>
         /// 启动所有任务
         /// </summary>
-        public void StartTasks()
+        internal void StartTasks()
         {
             if (_started)
                 return;
@@ -97,12 +97,10 @@ namespace JMS
         /// <summary>
         /// 终止所有任务
         /// </summary>
-        public void StopTasks()
+        internal void StopTasks()
         {
             if (_started == false)
                 return;
-
-            _started = false;
 
             foreach ( var controller in _controllers )
             {
@@ -121,6 +119,8 @@ namespace JMS
                 _controllers.Clear();
             }
             _taskBuffer.Clear();
+
+            _started = false;
         }
     }
 }
