@@ -33,13 +33,14 @@ namespace JMS.Impls
         ICpuInfo _cpuInfo;
         public GatewayConnector(MicroServiceHost microServiceHost,
             ICpuInfo cpuInfo,
+            SSLConfiguration sSLConfiguration,
             ILogger<GatewayConnector> logger,IKeyLocker keyLocker)
         {
             _microServiceHost = microServiceHost;
             _logger = logger;
             _keyLocker = keyLocker;
             _cpuInfo = cpuInfo;
-            _SSLConfiguration = microServiceHost.ServiceProvider.GetService<SSLConfiguration>();
+            _SSLConfiguration = sSLConfiguration;
         }
        
         public NetClient CreateClient(NetAddress addr)

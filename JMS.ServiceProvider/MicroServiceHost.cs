@@ -147,6 +147,7 @@ namespace JMS
             {
                 _services.AddSingleton<ICpuInfo, CpuInfoForUnkown>();
             }
+            _services.AddSingleton<SSLConfiguration>(new SSLConfiguration());
             _services.AddSingleton<MapFileManager>(_mapFileManager);
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
