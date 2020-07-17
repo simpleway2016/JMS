@@ -113,7 +113,7 @@ namespace JMS
         /// <summary>
         /// 注册定时任务，任务在MicroServiceHost.Run时，按计划执行
         /// </summary>
-        /// <typeparam name="T">定时任务的类，必须实现IScheduleTask</typeparam>
+        /// <typeparam name="T">定时任务的类，必须实现IScheduleTask（注册的类会自动支持依赖注入）</typeparam>
         public void RegisterScheduleTask<T>() where T: IScheduleTask
         {
             var type = typeof(T);
