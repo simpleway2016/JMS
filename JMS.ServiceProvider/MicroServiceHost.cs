@@ -111,7 +111,7 @@ namespace JMS
         }
 
         /// <summary>
-        /// 注册定时任务
+        /// 注册定时任务，任务在MicroServiceHost.Run时，按计划执行
         /// </summary>
         /// <param name="task"></param>
         public void RegisterScheduleTask(IScheduleTask task)
