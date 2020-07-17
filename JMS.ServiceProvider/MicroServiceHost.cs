@@ -43,6 +43,7 @@ namespace JMS
         ScheduleTaskManager _scheduleTaskManager;
         MapFileManager _mapFileManager;
         bool _registerMyServicesed = false;
+        Action<IServiceProvider> _onServiceProviderBuilded;
         public MicroServiceHost(ServiceCollection services)
         {
             this.Id = Guid.NewGuid().ToString("N");
@@ -173,6 +174,17 @@ namespace JMS
             return this;
         }
 
+        /// <summary>
+        /// 当依赖注入容器准备好之后，会触发这个方法
+        /// </summary>
+        /// <param name="func"></param>
+        /// <returns></returns>
+        public MicroServiceHost OnServiceProviderBuilded(Action<IServiceProvider> func)
+        {
+            _onServiceProviderBuilded = func;
+            return this;
+        }
+
         public void Run()
         {
             ServiceProvider = _services.BuildServiceProvider();
@@ -201,6 +213,20 @@ namespace JMS
 
                 if (sslConfig.ServerCertificate != null)
                     _logger?.LogInformation("Service host use ssl,certificate hash:{0}", sslConfig.ServerCertificate.GetCertHashString());
+            }
+
+            if(_onServiceProviderBuilded != null)
+            {
+                Task.Run(()=> {
+                    try
+                    {
+                        _onServiceProviderBuilded(this.ServiceProvider);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, ex.Message);
+                    }
+                });
             }
 
             using (var processExitHandler = ServiceProvider.GetService<ProcessExitHandler>())
