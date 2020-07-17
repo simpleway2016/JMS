@@ -113,19 +113,21 @@ namespace JMS
         /// <summary>
         /// 注册定时任务，任务在MicroServiceHost.Run时，按计划执行
         /// </summary>
-        /// <param name="task"></param>
-        public void RegisterScheduleTask(IScheduleTask task)
+        /// <typeparam name="T">定时任务的类，必须实现IScheduleTask</typeparam>
+        public void RegisterScheduleTask<T>() where T: IScheduleTask
         {
-            _scheduleTaskManager.AddTask(task);
+            var type = typeof(T);
+            _services.AddTransient(type);
+            _scheduleTaskManager.AddTask(type);
         }
 
         /// <summary>
         /// 注销定时任务
         /// </summary>
-        /// <param name="task"></param>
-        public void UnRegisterScheduleTask(IScheduleTask task)
+        /// <typeparam name="T"></typeparam>
+        public void UnRegisterScheduleTask<T>() where T : IScheduleTask
         {
-            _scheduleTaskManager.RemoveTask(task);
+            _scheduleTaskManager.RemoveTask(typeof(T));
         }
 
         void registerServices()

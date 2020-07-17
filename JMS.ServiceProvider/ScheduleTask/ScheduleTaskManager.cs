@@ -17,6 +17,7 @@ namespace JMS
         List<ScheduleTaskController> _controllers = new List<ScheduleTaskController>();
         ManualResetEvent _waitObj = new ManualResetEvent(false);
         bool _started;
+        List<Type> _taskBuffer = new List<Type>();
         public ScheduleTaskManager(MicroServiceHost microServiceHost)
         {
             _microServiceHost = microServiceHost;
@@ -30,16 +31,21 @@ namespace JMS
             if (_started)
                 return;
 
-            
             _logger = _microServiceHost.ServiceProvider.GetService<ILogger<ScheduleTaskManager>>();
             _started = true;
+
+            foreach( var t in _taskBuffer)
+            {
+                runtask(t);
+            }
+
             _waitObj.Set();
         }
 
-        public void AddTask(IScheduleTask task)
+        void runtask(Type taskType)
         {
             var controller = _microServiceHost.ServiceProvider.GetService<ScheduleTask.ScheduleTaskController>();
-            controller.Start(task,_waitObj);
+            controller.Start((IScheduleTask)_microServiceHost.ServiceProvider.GetService(taskType), _waitObj);
 
             lock (_controllers)
             {
@@ -47,33 +53,43 @@ namespace JMS
             }
         }
 
-        public void RemoveTask(IScheduleTask task)
+        public void AddTask(Type taskType)
         {
-            ScheduleTaskController controller = null;
+            if(!_started)
+            {
+                _taskBuffer.Add(taskType);
+            }
+            else
+            {
+                runtask(taskType);
+            }            
+        }
+
+        public void RemoveTask(Type taskType)
+        {
+            if( !_started && _taskBuffer.Contains(taskType))
+            {
+                _taskBuffer.Remove(taskType);
+                return;
+            }
             try
             {
                 for (int i = 0; i < _controllers.Count; i++)
                 {
                     var ctrl = _controllers[i];
-                    if (ctrl.Task == task)
+                    if (ctrl.Task.GetType() == taskType)
                     {
-                        controller = ctrl;
-                        break;
+                        ctrl.Stop();
+                        lock (_controllers)
+                        {
+                            _controllers.Remove(ctrl);
+                        }
                     }
                 }
             }
             catch
             {
 
-            }
-
-            if(controller != null)
-            {
-                controller.Stop();
-                lock (_controllers)
-                {
-                    _controllers.Remove(controller);
-                }
             }
 
         }
@@ -103,7 +119,8 @@ namespace JMS
             lock (_controllers)
             {
                 _controllers.Clear();
-            }           
+            }
+            _taskBuffer.Clear();
         }
     }
 }
