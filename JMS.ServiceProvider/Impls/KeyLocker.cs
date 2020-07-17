@@ -32,6 +32,9 @@ namespace JMS.Impls
         {
             using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
             {
+                if(waitToSuccess)
+                    netclient.ReadTimeout = 0;
+
                 netclient.WriteServiceData(new GatewayCommand { 
                     Type = CommandType.LockKey,
                     Content = new LockKeyInfo { 
