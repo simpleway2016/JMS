@@ -30,6 +30,9 @@ namespace JMS.Impls
         }
         public bool TryLock(string key, bool waitToSuccess)
         {
+            if (_microServiceHost.MasterGatewayAddress == null)
+                throw new MissMasterGatewayException("未连接上主网关");
+
             using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
             {
                 if(waitToSuccess)
@@ -60,6 +63,9 @@ namespace JMS.Impls
 
         public void UnLock(string key)
         {
+            if (_microServiceHost.MasterGatewayAddress == null)
+                throw new MissMasterGatewayException("未连接上主网关");
+
             if (LockedKeys.Contains(key) == false)
                 return;
 
