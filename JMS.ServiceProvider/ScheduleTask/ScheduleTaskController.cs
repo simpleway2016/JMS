@@ -12,7 +12,8 @@ namespace JMS.ScheduleTask
     {
         Stopped = 0,
         Running = 1,
-        WaitToStop = 2
+        WaitToStop = 2,
+        WaitToRun = 3
     }
     class ScheduleTaskController
     {
@@ -22,14 +23,16 @@ namespace JMS.ScheduleTask
         TaskState _state = TaskState.Stopped;
         ManualResetEvent _waitobject = new ManualResetEvent(false);
         DateTime _lastRunTime = DateTime.Now;
+        ManualResetEvent _mainWaitObj;
         public ScheduleTaskController(ILogger<ScheduleTaskController> logger)
         {
             _logger = logger;
         }
 
-        public void Start(IScheduleTask task)
+        public void Start(IScheduleTask task,ManualResetEvent waitObj)
         {
-            _state = TaskState.Running;
+            _state = TaskState.WaitToRun;
+            _mainWaitObj = waitObj;           
             this.Task = task;
             _thread = new Thread(run);
             _thread.Start();
@@ -37,6 +40,13 @@ namespace JMS.ScheduleTask
 
         void run()
         {
+            _mainWaitObj.WaitOne();
+            if(_state == TaskState.Stopped)
+            {
+                return;
+            }
+
+            _state = TaskState.Running;
             string taskname = this.Task.GetType().FullName;
             while (_state == TaskState.Running)
             {
@@ -123,10 +133,16 @@ namespace JMS.ScheduleTask
 
         public void Stop()
         {
+            if (_state == TaskState.WaitToRun || _state == TaskState.Stopped)
+            {
+                _state = TaskState.Stopped;
+                return;
+            }
+
             _logger?.LogInformation("准备停止任务{0}", Task.GetType().FullName);
             _state = TaskState.WaitToStop;
             _waitobject.Set();
-            while (_state != TaskState.Stopped)
+            while (_state == TaskState.WaitToStop)
                 Thread.Sleep(10);
         }
     }

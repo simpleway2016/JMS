@@ -6,15 +6,17 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using JMS.ScheduleTask;
 using System.Linq;
+using System.Threading;
 
 namespace JMS
 {
     class ScheduleTaskManager
     {
         MicroServiceHost _microServiceHost;
-        List<IScheduleTask> _tasks = new List<IScheduleTask>();
         ILogger<ScheduleTaskManager> _logger;
         List<ScheduleTaskController> _controllers = new List<ScheduleTaskController>();
+        ManualResetEvent _waitObj = new ManualResetEvent(false);
+        bool _started;
         public ScheduleTaskManager(MicroServiceHost microServiceHost)
         {
             _microServiceHost = microServiceHost;
@@ -25,29 +27,55 @@ namespace JMS
         /// </summary>
         public void StartTasks()
         {
+            if (_started)
+                return;
+
+            
             _logger = _microServiceHost.ServiceProvider.GetService<ILogger<ScheduleTaskManager>>();
-            foreach ( var task in _tasks )
-            {
-                var controller = _microServiceHost.ServiceProvider.GetService<ScheduleTask.ScheduleTaskController>();
-                controller.Start(task);
-                _controllers.Add(controller);
-            }
+            _started = true;
+            _waitObj.Set();
         }
 
         public void AddTask(IScheduleTask task)
         {
-            _tasks.Add(task);
+            var controller = _microServiceHost.ServiceProvider.GetService<ScheduleTask.ScheduleTaskController>();
+            controller.Start(task,_waitObj);
+
+            lock (_controllers)
+            {
+                _controllers.Add(controller);
+            }
         }
 
         public void RemoveTask(IScheduleTask task)
         {
-            var controller = _controllers.FirstOrDefault(m=>m.Task == task);
+            ScheduleTaskController controller = null;
+            try
+            {
+                for (int i = 0; i < _controllers.Count; i++)
+                {
+                    var ctrl = _controllers[i];
+                    if (ctrl.Task == task)
+                    {
+                        controller = ctrl;
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+
             if(controller != null)
             {
                 controller.Stop();
-                _controllers.Remove(controller);
+                lock (_controllers)
+                {
+                    _controllers.Remove(controller);
+                }
             }
-            _tasks.Remove(task);
+
         }
 
         /// <summary>
@@ -55,7 +83,12 @@ namespace JMS
         /// </summary>
         public void StopTasks()
         {
-            foreach( var controller in _controllers )
+            if (_started == false)
+                return;
+
+            _started = false;
+
+            foreach ( var controller in _controllers )
             {
                 try
                 {
@@ -66,8 +99,11 @@ namespace JMS
                     _logger?.LogError(ex, "停止任务{0}出错", controller.Task.GetType().FullName);
                 }
             }
-            _controllers.Clear();
-            _tasks.Clear();
+
+            lock (_controllers)
+            {
+                _controllers.Clear();
+            }           
         }
     }
 }
