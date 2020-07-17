@@ -161,6 +161,19 @@ namespace JMS.Impls
             }
             catch (Exception ex)
             {
+                if(transactionDelegate != null )
+                {
+                    try
+                    {
+                        if(transactionDelegate.RollbackAction != null)
+                            transactionDelegate.RollbackAction();
+                    }
+                    catch (Exception rollex)
+                    {
+                        _logger?.LogError(rollex, rollex.Message);
+                    }
+                    transactionDelegate = null;
+                }
                 try
                 {
                     controller?.InvokeError(cmd.Method, parameters, ex);
