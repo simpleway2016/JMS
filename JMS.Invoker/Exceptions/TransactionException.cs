@@ -3,6 +3,7 @@ using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Way.Lib;
 
 namespace JMS
 {
@@ -12,7 +13,7 @@ namespace JMS
     public class TransactionException : Exception
     {
         public RegisterServiceLocation ServiceLocation { get; }
-        public TransactionException(RegisterServiceLocation serviceLocation, string message) : base(message)
+        public TransactionException(RegisterServiceLocation serviceLocation, string message) : base(message + $" 微服务器位置：" + serviceLocation.ToJsonString())
         {
             ServiceLocation = serviceLocation;
         }
