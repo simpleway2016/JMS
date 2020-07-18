@@ -75,7 +75,7 @@ namespace JMS.TokenServer
 
             TcpListener listener = new TcpListener(port);
             listener.Start();
-
+            Console.WriteLine($"Token server started,port：{port}");
             while(true)
             {
                 var socket = listener.AcceptSocket();

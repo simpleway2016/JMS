@@ -19,10 +19,10 @@ namespace TestApplication
         {
 
             //var tokenclient = new TokenClient("localhost", 9911);
-            //var token = tokenclient.BuildForString(new { userid = 12 , expire = 12u}.ToJsonString());
+            //var token = tokenclient.BuildForString(new { userid = 12, expire = 12u }.ToJsonString());
             //var body = tokenclient.VerifyForString(token);
 
-            //token = tokenclient.BuildForLongs(new[] {12u,(long)(DateTime.Now - Convert.ToDateTime("1970-1-1")).TotalSeconds });
+            //token = tokenclient.BuildForLongs(new[] { 12u, (long)(DateTime.Now - Convert.ToDateTime("1970-1-1")).TotalSeconds });
             //var body2 = tokenclient.VerifyForLongs(token);
 
 
