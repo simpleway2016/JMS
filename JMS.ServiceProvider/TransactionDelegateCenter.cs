@@ -35,7 +35,14 @@ namespace JMS
                             //大于30秒没有处理的事务，马上回滚
                             try
                             {
-                                delegateItem.RollbackAction?.Invoke();
+                                lock (delegateItem)
+                                {
+                                    if (delegateItem.Handled == false)
+                                    {
+                                        delegateItem.RollbackAction?.Invoke();
+                                        delegateItem.Handled = true;
+                                    }
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -45,7 +52,7 @@ namespace JMS
                             _logger?.LogInformation("超时未处理，自动回滚事务，原始请求:{0}",delegateItem.RequestCommand?.ToJsonString());
                             lock (List)
                             {
-                                List.RemoveAt(i);
+                                List.Remove(delegateItem);
                             }
                             i--;
                         }
@@ -79,63 +86,89 @@ namespace JMS
             }
         }
 
-        public void Commit(string tranId)
+        public bool Commit(string tranId)
         {
             for(int i = 0; i < List.Count; i ++)
             {
                 var delegateItem = List[i];
                 if(delegateItem != null && delegateItem.TransactionId == tranId)
                 {
-                    delegateItem.CommitAction?.Invoke();
+                    lock (delegateItem)
+                    {
+                        if (delegateItem.Handled)
+                            return false;
+
+                        delegateItem.CommitAction?.Invoke();
+                        delegateItem.Handled = true;                        
+                    }
+
                     lock (List)
                     {
-                        List.RemoveAt(i);
+                        List.Remove(delegateItem);
                     }
-                    return;
+                    return true;
                 }
             }
 
-            throw new Exception("找不到指定事务，可能事务已经回滚");
+            return false;
         }
 
-        public void Rollback(string tranId)
+        public bool Rollback(string tranId)
         {
             for (int i = 0; i < List.Count; i++)
             {
                 var delegateItem = List[i];
                 if (delegateItem != null && delegateItem.TransactionId == tranId)
                 {
-                    delegateItem.RollbackAction?.Invoke();
+                    lock (delegateItem)
+                    {
+                        if (delegateItem.Handled)
+                            return false;
+
+                        delegateItem.RollbackAction?.Invoke();
+                        delegateItem.Handled = true;                       
+                    }
+
                     lock (List)
                     {
-                        List.RemoveAt(i);
+                        List.Remove(delegateItem);
                     }
-                    break;
+                    return true;
                 }
             }
+
+            return false;
         }
 
         public void RollbackAll()
         {
-            for (int i = 0; i < List.Count; i++)
+            TransactionDelegate[] items = null;
+            lock (List)
             {
-                var delegateItem = List[i];
+                items = List.ToArray();
+                List.Clear();
+            }
+
+            foreach( var delegateItem in items)
+            {
                 if (delegateItem != null)
                 {
                     try
                     {
-                        delegateItem.RollbackAction?.Invoke();
+                        lock (delegateItem)
+                        {
+                            if (delegateItem.Handled == false)
+                            {
+                                delegateItem.RollbackAction?.Invoke();
+                                delegateItem.Handled = true;
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
                         _logger?.LogError(ex, ex.Message);
                     }
 
-                    lock (List)
-                    {
-                        List.RemoveAt(i);
-                    }
-                    i--;
                 }
             }
         }

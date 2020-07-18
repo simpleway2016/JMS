@@ -234,6 +234,17 @@ namespace Microsoft.AspNetCore.Mvc
             {
                 foreach( var client in _Connects )
                 {
+                    try
+                    {
+                        client.NetClient.WriteServiceData(new InvokeCommand()
+                        {
+                            Type = InvokeType.RollbackTranaction,
+                            Header = this.GetCommandHeader()
+                        });
+                    }
+                    catch
+                    {
+                    }
                     client.NetClient.Dispose();
                 }
                 if(invokeType == InvokeType.CommitTranaction)
@@ -264,7 +275,11 @@ namespace Microsoft.AspNetCore.Mvc
                                     Type = invokeType,
                                     Header = this.GetCommandHeader()
                                 });
-                                connect.NetClient.ReadServiceObject<InvokeResult>();
+                                var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
+                                if( ret.Success == false )
+                                {
+                                    errors.Add(new TransactionException(connect.ServiceLocation, "事务已被回滚"));
+                                }
                             }
                             else
                             {

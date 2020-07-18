@@ -20,8 +20,8 @@ namespace JMS.Impls
 
         public void Handle(NetClient netclient, InvokeCommand cmd)
         {
-            _transactionDelegateCenter.Commit(cmd.Header["TranId"]);
-            netclient.WriteServiceData(new InvokeResult() { Success = true });
+            var ret = _transactionDelegateCenter.Commit(cmd.Header["TranId"]);
+            netclient.WriteServiceData(new InvokeResult() { Success = ret });
         }
     }
 }

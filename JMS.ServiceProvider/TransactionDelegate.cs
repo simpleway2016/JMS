@@ -25,6 +25,7 @@ namespace JMS
 
         public Action CommitAction { get; set; }
         public Action RollbackAction { get; set; }
+        internal bool Handled { get; set; }
 
     }
 }
