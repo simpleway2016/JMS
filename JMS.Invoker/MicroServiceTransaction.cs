@@ -197,7 +197,7 @@ namespace Microsoft.AspNetCore.Mvc
             _finished = true;
             var errors = endResponse(InvokeType.CommitTranaction);
             if (errors.Count > 0)
-                throw new TransactionArrayException(errors, "commit transaction error");
+                throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
         }
 
         List<TransactionException> endResponse(InvokeType invokeType)
@@ -276,7 +276,7 @@ namespace Microsoft.AspNetCore.Mvc
                                     Header = this.GetCommandHeader()
                                 });
                                 var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
-                                if( ret.Success == false )
+                                if( ret.Success == false && invokeType == InvokeType.CommitTranaction)
                                 {
                                     errors.Add(new TransactionException(connect.ServiceLocation, "事务已被回滚"));
                                 }
