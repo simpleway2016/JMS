@@ -53,9 +53,6 @@ namespace JMS
             msp.Register<Controller1>("Controller1");
             msp.Register<Controller2>("Service2");
             msp.Build(8912, gateways)
-                .UseTransactionRecorder(o=> {
-                    o.TransactionLogFolder = "./tranlogs";
-                })
                 .UseSSL(c =>
                 { //配置ssl
                     c.GatewayClientCertificate = gatewaycert;

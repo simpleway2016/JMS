@@ -1,6 +1,7 @@
 ﻿using JMS;
 using JMS.Common.Dtos;
 using JMS.Dtos;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -39,28 +40,36 @@ namespace Microsoft.AspNetCore.Mvc
         Dictionary<string, string> _Header = new Dictionary<string, string>();
         public X509Certificate2 GatewayClientCertificate { get;private set; }
         public X509Certificate2 ServiceClientCertificate { get; private set; }
+
+        ILogger<MicroServiceTransaction> _logger;
         /// <summary>
         /// 
         /// </summary>
         /// <param name="gatewayAddress">网关ip</param>
         /// <param name="port">网关端口</param>
+        /// <param name="proxyAddress"></param>
+        /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public MicroServiceTransaction(string gatewayAddress, int port, NetAddress proxyAddress = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public MicroServiceTransaction(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<MicroServiceTransaction> logger = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
             GatewayAddress = new NetAddress(gatewayAddress, port);
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
             this.ProxyAddress = proxyAddress;
+            _logger = logger;
         }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="gatewayAddresses">多个集群网关地址</param>
+        /// <param name="proxyAddress"></param>
+        /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public MicroServiceTransaction(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public MicroServiceTransaction(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<MicroServiceTransaction> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
+            _logger = logger;
             this.ProxyAddress = proxyAddress;
             //先找到master网关
             NetAddress masterAddress = null;
@@ -225,7 +234,7 @@ namespace Microsoft.AspNetCore.Mvc
                 catch (Exception ex)
                 {
                     connect.NetClient.Dispose();
-                    errors.Add(new TransactionException(connect.ServiceLocation, ex.Message));
+                    errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                 }
                 
             });
@@ -278,12 +287,12 @@ namespace Microsoft.AspNetCore.Mvc
                                 var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
                                 if( ret.Success == false && invokeType == InvokeType.CommitTranaction)
                                 {
-                                    errors.Add(new TransactionException(connect.ServiceLocation, "事务已被回滚"));
+                                    errors.Add(new TransactionException(connect.InvokingInfo, "事务已被回滚"));
                                 }
                             }
                             else
                             {
-                                errors.Add(new TransactionException(connect.ServiceLocation, "cancel"));
+                                errors.Add(new TransactionException(connect.InvokingInfo, "cancel"));
                             }
                             break;
                         }
@@ -296,13 +305,13 @@ namespace Microsoft.AspNetCore.Mvc
                             }
                             else
                             {
-                                errors.Add(new TransactionException(connect.ServiceLocation, ex.Message));
+                                errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                                 break;
                             }
                         }
                         catch (Exception ex)
                         {
-                            errors.Add(new TransactionException(connect.ServiceLocation, ex.Message));
+                            errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                             break;
                         }
                     }
@@ -316,6 +325,12 @@ namespace Microsoft.AspNetCore.Mvc
                         connect.NetClient.Dispose();
                     }
                 });
+
+                if(errors.Count > 0)
+                {
+                    foreach (var err in errors)
+                        _logger?.LogError(err, $"事务:{TransactionId}发生错误");
+                }
             }
            
 

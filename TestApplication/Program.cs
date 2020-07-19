@@ -32,7 +32,7 @@ namespace TestApplication
 
             using (var tran = new MicroServiceTransaction(new NetAddress[] { 
                 new NetAddress("localhost", 8911)
-            },null, cert, cert))
+            },null,null , cert, cert))
             {
                 /////微服务 性能测试
                 //var c1 = new Controller1(tran.GetMicroService("Controller1"));

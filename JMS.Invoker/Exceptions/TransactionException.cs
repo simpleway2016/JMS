@@ -12,10 +12,10 @@ namespace JMS
     /// </summary>
     public class TransactionException : Exception
     {
-        public RegisterServiceLocation ServiceLocation { get; }
-        public TransactionException(RegisterServiceLocation serviceLocation, string message) : base(message + $" 微服务器位置：" + serviceLocation.ToJsonString())
+        public InvokingInformation InvokingInfo { get; }
+        public TransactionException(InvokingInformation invokeInfo, string message) : base(message + $" 详细请求信息：" + invokeInfo.ToJsonString())
         {
-            ServiceLocation = serviceLocation;
+            InvokingInfo = invokeInfo;
         }
     }
 }

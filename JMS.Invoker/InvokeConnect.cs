@@ -8,47 +8,59 @@ using Way.Lib;
 
 namespace JMS
 {
+    public class InvokingInformation
+    {
+        public RegisterServiceLocation ServiceLocation { get; internal set; }
+        public string ServiceName
+        {
+            get;
+            internal set;
+        }
+        public string MethodName { get; internal set; }
+        public object[] Parameters { get; internal set; }
+    }
     class InvokeConnect
     {
-        public RegisterServiceLocation ServiceLocation { get; }
+       
         internal NetClient NetClient;
         /// <summary>
         /// 重连次数
         /// </summary>
         internal int ReConnectCount = 0;
+        public InvokingInformation InvokingInfo { get; private set; }
 
-        public string ServiceName
-        {
-            get;
-        }
         public InvokeConnect(string serviceName , RegisterServiceLocation location)
         {
-            ServiceName = serviceName;
-            this.ServiceLocation = location;
+            this.InvokingInfo = new InvokingInformation();
+            this.InvokingInfo.ServiceName = serviceName;
+            this.InvokingInfo.ServiceLocation = location;
         }
 
        public void ReConnect(MicroServiceTransaction tran)
         {
             ReConnectCount++;
-               NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.ServiceLocation.Host, this.ServiceLocation.Port, tran.ServiceClientCertificate);
+               NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.InvokingInfo.ServiceLocation.Host, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
         }
 
-        public T Invoke<T>(string method,MicroServiceTransaction tran, params object[] parameter)
+        public T Invoke<T>(string method,MicroServiceTransaction tran, params object[] parameters)
         {
             if(tran == null)
             {
                 throw new ArgumentNullException("tran");
             }
-            var netclient = NetClientPool.CreateClient(tran.ProxyAddress, this.ServiceLocation.Host, this.ServiceLocation.Port, tran.ServiceClientCertificate);
+            this.InvokingInfo.MethodName = method;
+            this.InvokingInfo.Parameters = parameters;
+
+            var netclient = NetClientPool.CreateClient(tran.ProxyAddress, this.InvokingInfo.ServiceLocation.Host, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
             try
             {
                 var cmd = new InvokeCommand()
                 {
                     Header = tran.GetCommandHeader(),
-                    Service = ServiceName,
+                    Service = this.InvokingInfo.ServiceName,
                     Method = method,
-                    Parameters = parameter.Length == 0 ? null :
-                                    parameter.GetStringArrayParameters()
+                    Parameters = parameters.Length == 0 ? null :
+                                    parameters.GetStringArrayParameters()
                 };
 
 
