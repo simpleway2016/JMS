@@ -13,7 +13,20 @@ namespace JMS
     {
         static void Main(string[] args)
         {
-            Thread.Sleep(1000);
+            while (true)
+            {
+                try
+                {
+                    NetClient client = new NetClient("127.0.0.1", 8911);
+                    client.Dispose();
+                    break;
+                }
+                catch (Exception)
+                {
+                    Thread.Sleep(100);
+                }
+            }
+
             var gatewaycert = new System.Security.Cryptography.X509Certificates.X509Certificate2("../../../../pfx/client.pfx", "123456");
 
             ServiceCollection services = new ServiceCollection();

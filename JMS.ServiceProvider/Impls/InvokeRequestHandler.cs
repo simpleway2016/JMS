@@ -118,15 +118,21 @@ namespace JMS.Impls
                     cmd = netclient.ReadServiceObject<InvokeCommand>();
                     if (cmd.Type == InvokeType.CommitTranaction)
                     {
-                        if (transactionDelegate != null && transactionDelegate.CommitAction != null)
-                            transactionDelegate.CommitAction();
+                        var tran = transactionDelegate;
+                        transactionDelegate = null;
+
+                        if (tran != null && tran.CommitAction != null)
+                            tran.CommitAction();
                         netclient.WriteServiceData(new InvokeResult() { Success = true });
                         return;
                     }
                     else if (cmd.Type == InvokeType.RollbackTranaction)
                     {
-                        if (transactionDelegate != null && transactionDelegate.RollbackAction != null)
-                            transactionDelegate.RollbackAction();
+                        var tran = transactionDelegate;
+                        transactionDelegate = null;
+
+                        if (tran != null && tran.RollbackAction != null)
+                            tran.RollbackAction();
                         netclient.WriteServiceData(new InvokeResult() { Success = true });
                         return;
                     }

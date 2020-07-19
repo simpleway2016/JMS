@@ -4,12 +4,14 @@ using JMS.Dtos;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Way.Lib;
 
 namespace Microsoft.AspNetCore.Mvc
 {
@@ -285,9 +287,9 @@ namespace Microsoft.AspNetCore.Mvc
                                     Header = this.GetCommandHeader()
                                 });
                                 var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
-                                if( ret.Success == false && invokeType == InvokeType.CommitTranaction)
+                                if( ret.Success == false)
                                 {
-                                    errors.Add(new TransactionException(connect.InvokingInfo, "事务已被回滚"));
+                                    errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
                                 }
                             }
                             else
@@ -326,8 +328,12 @@ namespace Microsoft.AspNetCore.Mvc
                     }
                 });
 
-                if(errors.Count > 0)
+                if(errors.Count > 0 && invokeType == InvokeType.CommitTranaction)
                 {
+                    var successed = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
+
+                    if(successed.Length > 0)
+                        _logger?.LogError($"事务:{TransactionId}已经成功提交的：${successed.ToJsonString()}");
                     foreach (var err in errors)
                         _logger?.LogError(err, $"事务:{TransactionId}发生错误");
                 }

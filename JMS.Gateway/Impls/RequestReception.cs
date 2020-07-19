@@ -63,6 +63,13 @@ namespace JMS.Impls
             {
 
             }
+            catch (System.IO.IOException ex)
+            {
+                if(ex.HResult != -2146232800)
+                {
+                    _logger?.LogError(ex, ex.Message);
+                }
+            }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, ex.Message);

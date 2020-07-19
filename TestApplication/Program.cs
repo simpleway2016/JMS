@@ -26,7 +26,21 @@ namespace TestApplication
             //var body2 = tokenclient.VerifyForLongs(token);
 
 
-            Thread.Sleep(4000);
+           while(true)
+            {
+                try
+                {
+                    NetClient client = new NetClient("127.0.0.1", 8911);
+                    client.Dispose();
+                    client = new NetClient("127.0.0.1", 8912);
+                    client.Dispose();
+                    break;
+                }
+                catch (Exception)
+                {
+                    Thread.Sleep(100);
+                }              
+            }
 
             var cert = new X509Certificate2("../../../../pfx/client.pfx", "123456");
 

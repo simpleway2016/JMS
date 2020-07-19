@@ -93,19 +93,31 @@ namespace JMS
                 var delegateItem = List[i];
                 if(delegateItem != null && delegateItem.TransactionId == tranId)
                 {
-                    lock (delegateItem)
+                    try
                     {
-                        if (delegateItem.Handled)
-                            return false;
+                        lock (delegateItem)
+                        {
+                            if (delegateItem.Handled)
+                                return false;
 
-                        delegateItem.CommitAction?.Invoke();
-                        delegateItem.Handled = true;                        
+                            delegateItem.CommitAction?.Invoke();
+                            delegateItem.Handled = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, ex.Message);
+                        throw ex;
+                    }
+                    finally
+                    {
+                        lock (List)
+                        {
+                            List.Remove(delegateItem);
+                        }
                     }
 
-                    lock (List)
-                    {
-                        List.Remove(delegateItem);
-                    }
+                   
                     return true;
                 }
             }
@@ -120,19 +132,30 @@ namespace JMS
                 var delegateItem = List[i];
                 if (delegateItem != null && delegateItem.TransactionId == tranId)
                 {
-                    lock (delegateItem)
+                    try
                     {
-                        if (delegateItem.Handled)
-                            return false;
+                        lock (delegateItem)
+                        {
+                            if (delegateItem.Handled)
+                                return false;
 
-                        delegateItem.RollbackAction?.Invoke();
-                        delegateItem.Handled = true;                       
+                            delegateItem.RollbackAction?.Invoke();
+                            delegateItem.Handled = true;
+                        }
                     }
-
-                    lock (List)
+                    catch (Exception ex)
                     {
-                        List.Remove(delegateItem);
+                        _logger?.LogError(ex, ex.Message);
+                        throw ex;
                     }
+                    finally
+                    {
+                        lock (List)
+                        {
+                            List.Remove(delegateItem);
+                        }
+                    }
+                   
                     return true;
                 }
             }
