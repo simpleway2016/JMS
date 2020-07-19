@@ -236,6 +236,7 @@ namespace Microsoft.AspNetCore.Mvc
                 catch (Exception ex)
                 {
                     connect.NetClient.Dispose();
+                    connect.NetClient = null;
                     errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                 }
                 
@@ -243,20 +244,21 @@ namespace Microsoft.AspNetCore.Mvc
 
             if (errors.Count > 0)
             {
-                foreach( var client in _Connects )
+                foreach( var connect in _Connects )
                 {
                     try
                     {
-                        client.NetClient.WriteServiceData(new InvokeCommand()
+                        connect.NetClient.WriteServiceData(new InvokeCommand()
                         {
                             Type = InvokeType.RollbackTranaction,
                             Header = this.GetCommandHeader()
                         });
+                        var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
                     }
                     catch
                     {
                     }
-                    client.NetClient.Dispose();
+                    NetClientPool.AddClientToPool(connect.NetClient);
                 }
                 if(invokeType == InvokeType.CommitTranaction)
                     throw new TransactionException(null, "提交事务时，有连接中断，所有事务将回滚");
@@ -311,14 +313,7 @@ namespace Microsoft.AspNetCore.Mvc
                         }
                     }
 
-                    if (connect.NetClient.HasSocketException == false)
-                    {
-                        NetClientPool.AddClientToPool(connect.NetClient);
-                    }
-                    else
-                    {
-                        connect.NetClient.Dispose();
-                    }
+                    NetClientPool.AddClientToPool(connect.NetClient);
                 });
 
                 if(errors.Count > 0 && invokeType == InvokeType.CommitTranaction)

@@ -77,6 +77,14 @@ namespace JMS
         }
         public static void AddClientToPool(NetClient client)
         {
+            if (client == null)
+                return;
+
+            if(client.HasSocketException)
+            {
+                client.Dispose();
+                return;
+            }
             if (!client.KeepAlive)
             {
                 client.Dispose();
