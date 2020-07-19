@@ -279,22 +279,15 @@ namespace Microsoft.AspNetCore.Mvc
                                 connect.ReConnect(this);
                             }
 
-                            if (errors.Count == 0)
+                            connect.NetClient.WriteServiceData(new InvokeCommand()
                             {
-                                connect.NetClient.WriteServiceData(new InvokeCommand()
-                                {
-                                    Type = invokeType,
-                                    Header = this.GetCommandHeader()
-                                });
-                                var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
-                                if( ret.Success == false)
-                                {
-                                    errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
-                                }
-                            }
-                            else
+                                Type = invokeType,
+                                Header = this.GetCommandHeader()
+                            });
+                            var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
+                            if (ret.Success == false)
                             {
-                                errors.Add(new TransactionException(connect.InvokingInfo, "cancel"));
+                                errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
                             }
                             break;
                         }
