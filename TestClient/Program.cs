@@ -20,25 +20,25 @@ namespace TestClient
             var logger = serviceProvider.GetService<ILogger<MicroServiceTransaction>>();
 
             ///肯定成功的测试
-            //try
-            //{
-            //    using (var tran = new MicroServiceTransaction("192.168.40.131", 7900, null, logger))
-            //    {
-            //        var userInfoService = tran.GetMicroService("UserInfo");
-            //        userInfoService.InvokeAsync("CreateUser", 10, 1);
+            try
+            {
+                using (var tran = new MicroServiceTransaction("192.168.40.131", 7900, null, logger))
+                {
+                    var userInfoService = tran.GetMicroService("UserInfo");
+                    userInfoService.InvokeAsync("CreateUser", 10, 1);
 
-            //        var bankService = tran.GetMicroService("Bank");
-            //        bankService.InvokeAsync("CreateBankAccount", 2, 10, 1);
+                    var bankService = tran.GetMicroService("Bank");
+                    bankService.InvokeAsync("CreateBankAccount", 2, 10, 1);
 
-            //        logger.LogInformation("准备提交事务");
-            //        tran.Commit();
-            //        logger.LogInformation("成功提交事务");
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    logger.LogError(ex, ex.Message);
-            //}
+                    logger.LogInformation("准备提交事务");
+                    tran.Commit();
+                    logger.LogInformation("成功提交事务");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, ex.Message);
+            }
 
             ///肯定出错的测试（异步）
             //try

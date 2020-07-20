@@ -24,6 +24,8 @@ namespace JMS.Impls
         IServiceProviderAllocator _ServiceProviderAllocator;
         LockKeyManager _lockKeyManager;
         GatewayRefereeClient _gatewayReferee;
+
+        bool _closed;
         public MicroServiceReception(ILogger<MicroServiceReception> logger,
             Gateway gateway, 
             LockKeyManager lockKeyManager,
@@ -75,6 +77,9 @@ namespace JMS.Impls
         }
         public void Close()
         {
+            _closed = true;
+            disconnect();
+
             NetClient?.Dispose();
         }
         void checkState()
@@ -107,18 +112,32 @@ namespace JMS.Impls
                         });                       
                     }
                 }
+                catch(System.ObjectDisposedException)
+                {
+                    _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+                    if (_closed == false)
+                    {
+                        disconnect();
+                    }
+                    return;
+                }
                 catch(SocketException)
                 {
                     _Logger?.LogInformation( $"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
-
-                    disconnect();
+                    if (_closed == false)
+                    {
+                        disconnect();
+                    }
                     return;
                 }
                 catch (Exception ex)
                 {
                     _Logger?.LogInformation(ex, $"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
-                  
-                    disconnect();
+
+                    if (_closed == false)
+                    {
+                        disconnect();
+                    }
                     return;
                 }
             }

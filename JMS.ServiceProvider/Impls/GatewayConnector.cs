@@ -208,7 +208,12 @@ namespace JMS.Impls
         public void DisconnectGateway()
         {
             _manualDisconnected = true;
-            _client?.Dispose();
+            if(_client != null && _client.Socket != null)
+            {
+                _client.Socket.Close();
+                _logger?.LogInformation("Socket closed");
+                _client.Dispose();
+            }            
         }
 
 

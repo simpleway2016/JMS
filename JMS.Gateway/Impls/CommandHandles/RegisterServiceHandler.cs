@@ -15,13 +15,11 @@ namespace JMS.Impls.CommandHandles
     {
         IServiceProvider _serviceProvider;
         IConfiguration _configuration;
-        GatewayRefereeClient _gatewayRefereeClient;
 
         public RegisterServiceHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _configuration = serviceProvider.GetService<IConfiguration>();
-            _gatewayRefereeClient = serviceProvider.GetService<GatewayRefereeClient>();
         }
         public CommandType MatchCommandType => CommandType.RegisterSerivce;
 
