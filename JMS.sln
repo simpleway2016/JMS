@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Gateway.Referee", "JMS.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Proxy", "JMS.Proxy\JMS.Proxy.csproj", "{38B4F31C-C377-45FB-9917-0DA069BBD455}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DevTest", "DevTest", "{D5E91F59-EF4D-4D06-81FC-B39B514B80E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,6 +74,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7EB3C44B-8863-47A7-B2BF-27664B282243} = {D5E91F59-EF4D-4D06-81FC-B39B514B80E8}
+		{E4A14EBB-8532-4648-B805-AA7D53C61646} = {D5E91F59-EF4D-4D06-81FC-B39B514B80E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8DD244BC-BF73-4AE3-A9FA-16E8AC1283AF}
