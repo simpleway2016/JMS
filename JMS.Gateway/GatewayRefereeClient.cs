@@ -80,8 +80,8 @@ namespace JMS
                         });
                         var ret = client.ReadServiceObject<InvokeResult<string>>();
 
-
-                        if(ret.Success)
+                        _logger?.LogInformation("与裁判连接成功,裁判返回数据：{0}",ret.Data);
+                        if (ret.Success)
                         {
                             masterAddr = null;
                             if (this.IsMaster == false)
@@ -123,6 +123,7 @@ namespace JMS
                         //连上主网关，直到连接出现问题，再申请成为主网关
                         using (var client = new NetClient(masterAddr))
                         {
+                            _logger?.LogInformation("与主网关连接心跳");
                             client.KeepHeartBeating();
                             Thread.Sleep(100);
                             _logger?.LogInformation("与主网关连接断开");

@@ -9,7 +9,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.DependencyInjection;
 namespace JMS.Gateway
 {
     class Referee
@@ -17,15 +17,16 @@ namespace JMS.Gateway
         public NetAddress MasterIp { get; set; }
         internal ConcurrentDictionary<string,RegisterServiceInfo> MasterGatewayServices { get; }
         ILogger<Referee> _logger;
-        IRequestReception _requestReception;
-        public Referee(ILogger<Referee> logger,IRequestReception requestReception)
+        IServiceProvider _serviceProvider;
+        public Referee(ILogger<Referee> logger,IServiceProvider serviceProvider)
         {
             _logger = logger;
-            _requestReception = requestReception;
+            _serviceProvider = serviceProvider;
             MasterGatewayServices = new ConcurrentDictionary<string, RegisterServiceInfo>();
         }
         public void Run(int port)
         {
+            var reception = _serviceProvider.GetService<IRequestReception>();
             var tcpListener = new TcpListener(IPAddress.Any, port);
             tcpListener.Start();
             _logger?.LogInformation("Gateway referee started, port:{0}", port);
@@ -34,7 +35,7 @@ namespace JMS.Gateway
                 try
                 {
                     var socket = tcpListener.AcceptSocket();
-                    Task.Run(() => _requestReception.Interview(socket));
+                    Task.Run(() => reception.Interview(socket));
                 }
                 catch (Exception ex)
                 {
