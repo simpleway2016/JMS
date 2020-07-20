@@ -1,4 +1,4 @@
-﻿using JMS.Common.Dtos;
+﻿
 using JMS.Dtos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

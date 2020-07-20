@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
-using JMS.Common.Dtos;
+
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using JMS.Net;

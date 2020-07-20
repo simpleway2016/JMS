@@ -1,4 +1,4 @@
-﻿using JMS.Common.Dtos;
+﻿using JMS.Common;
 using System;
 using System.Collections.Generic;
 using System.Net.Security;

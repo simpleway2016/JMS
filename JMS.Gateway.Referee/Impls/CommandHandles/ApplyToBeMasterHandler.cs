@@ -30,7 +30,7 @@ namespace JMS.Gateway.Impls.CommandHandles
             {
                 if (_referee.MasterIp == null || _referee.MasterIp.Equals(ip,port))
                 {
-                    _referee.MasterIp = new Common.Dtos.NetAddress { 
+                    _referee.MasterIp = new NetAddress { 
                         Address = ip,
                         Port = port
                     };

@@ -1,5 +1,5 @@
 ﻿using JMS;
-using JMS.Common.Dtos;
+
 using JMS.Dtos;
 using Microsoft.Extensions.Logging;
 using System;
@@ -152,7 +152,9 @@ namespace Microsoft.AspNetCore.Mvc
         public Dictionary<string,string> GetCommandHeader()
         {
             var header = new Dictionary<string, string>();
-            header["TranId"] = this.TransactionId;
+            if(!string.IsNullOrEmpty(this.TransactionId))
+                header["TranId"] = this.TransactionId;
+
             foreach (var pair in _Header)
             {
                 header[pair.Key] = pair.Value;
@@ -321,9 +323,9 @@ namespace Microsoft.AspNetCore.Mvc
                     var successed = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
 
                     if(successed.Length > 0)
-                        _logger?.LogError($"事务:{TransactionId}已经成功提交的：${successed.ToJsonString()}");
+                        _logger?.LogError($"事务:{TransactionId}已经成功提交，详细请求信息：${successed.ToJsonString()}");
                     foreach (var err in errors)
-                        _logger?.LogError(err, $"事务:{TransactionId}发生错误");
+                        _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
                 }
             }
            

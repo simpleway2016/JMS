@@ -6,7 +6,7 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using JMS;
-using JMS.Common.Dtos;
+
 using JMS.Token;
 using Microsoft.AspNetCore.Mvc;
 using Way.Lib;
@@ -34,6 +34,8 @@ namespace TestApplication
                     client.Dispose();
                     client = new NetClient("127.0.0.1", 8912);
                     client.Dispose();
+
+                    Thread.Sleep(1000);
                     break;
                 }
                 catch (Exception)
@@ -61,8 +63,8 @@ namespace TestApplication
 
                 tran.SetHeader("auth", "123456789");
 
-                var locations = tran.ListMicroService("");//列出所有微服务
-                Console.WriteLine("微服务位置：{0}", locations.ToJsonString());
+                //var locations = tran.ListMicroService("");//列出所有微服务
+                //Console.WriteLine("微服务位置：{0}", locations.ToJsonString());
 
                //var code =  tran.GetMicroService("Controller1").GetServiceClassCode("TestApplication", "Controller1");
 

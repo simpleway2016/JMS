@@ -22,7 +22,7 @@ namespace JMS.Impls.CommandHandles
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
-            if (cmd.Header.ContainsKey("TranId") == false)
+            if (cmd.Header.ContainsKey("TranId") == false || string.IsNullOrEmpty( cmd.Header["TranId"]))
             {
                 cmd.Header["TranId"] = _TransactionIdBuilder.Build();
             }

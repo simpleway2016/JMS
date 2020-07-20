@@ -12,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
 using System.Reflection;
-using JMS.Common.Dtos;
+
 using System.Runtime.InteropServices;
 using JMS.Interfaces.Hardware;
 using JMS.Impls.Haredware;
@@ -42,7 +42,7 @@ namespace JMS
         IRequestReception _RequestReception;
         ScheduleTaskManager _scheduleTaskManager;
         MapFileManager _mapFileManager;
-        bool _registerMyServicesed = false;
+
         Action<IServiceProvider> _onServiceProviderBuilded;
         public MicroServiceHost(ServiceCollection services)
         {
@@ -50,6 +50,8 @@ namespace JMS
             _services = services;
             _scheduleTaskManager = new ScheduleTaskManager(this);
             _mapFileManager = new MapFileManager(this);
+
+            registerServices();
         }
 
         internal void DisconnectGateway()
@@ -97,7 +99,7 @@ namespace JMS
         /// <param name="serviceName">服务名称</param>
         public void Register(Type contollerType, string serviceName)
         {
-            registerServices();
+            
 
             _services.AddTransient(contollerType);
             ServiceNames[serviceName] = new ControllerTypeInfo()
@@ -133,10 +135,6 @@ namespace JMS
 
         void registerServices()
         {
-            if (_registerMyServicesed)
-                return;
-            _registerMyServicesed = true;
-
            
             if(RuntimeInformation.IsOSPlatform( OSPlatform.Linux ))
             {
@@ -169,6 +167,8 @@ namespace JMS
 
         public MicroServiceHost Build(int port,NetAddress[] gatewayAddresses)
         {
+            if (gatewayAddresses == null || gatewayAddresses.Length == 0)
+                throw new Exception("Gateway addres is empty");
             AllGatewayAddresses = gatewayAddresses;
             this.ServicePort = port;
             return this;
