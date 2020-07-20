@@ -31,7 +31,7 @@ namespace JMS.Impls.CommandHandles
             {
                 foreach (var key in keys)
                 {
-                    _lockKeyManager.TryLock(key, service);
+                    _lockKeyManager.TryLock(key, service,false);
                 }
                 SystemEventCenter.OnMicroServiceUploadLockedKeyCompleted(service);
                 netclient.WriteServiceData(new InvokeResult

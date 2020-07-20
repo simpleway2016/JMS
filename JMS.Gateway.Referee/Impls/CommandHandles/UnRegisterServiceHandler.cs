@@ -23,7 +23,7 @@ namespace JMS.Impls.CommandHandles
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
-            var service = cmd.Content.FromJson<RegisterServiceInfo>();
+            var location = cmd.Content.FromJson<RegisterServiceLocation>();
             if (((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString() != _referee.MasterIp.Address)
             {
                 netclient.WriteServiceData(new InvokeResult
@@ -33,7 +33,7 @@ namespace JMS.Impls.CommandHandles
                 return;
             }
 
-            _referee.MasterGatewayServices.TryRemove(service.ServiceId , out RegisterServiceInfo original);
+            _referee.MasterGatewayServices.TryRemove($"{location.Host}:{location.Port}" , out RegisterServiceLocation original);
 
             netclient.WriteServiceData(new InvokeResult { 
                 Success = true

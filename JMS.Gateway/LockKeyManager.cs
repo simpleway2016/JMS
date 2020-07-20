@@ -121,9 +121,9 @@ namespace JMS
             }
         }
 
-        public bool TryLock(string key, RegisterServiceInfo locker)
+        public bool TryLock(string key, RegisterServiceInfo locker,bool checkReady = true)
         {
-            if (IsReady == false)
+            if (checkReady && IsReady == false)
                 throw new Exception("lock key is not ready");
 
             KeyObject keyObj = null;

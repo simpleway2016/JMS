@@ -18,7 +18,7 @@ namespace JMS
         NetAddress _refereeAddress;
         ILogger<GatewayRefereeClient> _logger;
         LockKeyManager _lockKeyManager;
-        ConcurrentDictionary<string, RegisterServiceInfo> _waitServiceList;
+        ConcurrentDictionary<string, RegisterServiceLocation> _waitServiceList;
         Gateway _gateway;
         /// <summary>
         /// 记录当前网关是否是master
@@ -47,7 +47,7 @@ namespace JMS
 
         private void SystemEventCenter_MicroServiceUploadLockedKeyCompleted(object sender, RegisterServiceInfo e)
         {
-            _waitServiceList?.TryRemove(e.ServiceId,out RegisterServiceInfo o);
+            _waitServiceList?.TryRemove($"{e.Host}:{e.Port}",out RegisterServiceLocation o);
         }
 
 
@@ -87,14 +87,19 @@ namespace JMS
                             if (this.IsMaster == false)
                             {
                                 _logger?.LogInformation("成为主网关");
-                                _waitServiceList = ret.Data.FromJson<ConcurrentDictionary<string, RegisterServiceInfo>>();
+                                _waitServiceList = ret.Data.FromJson<ConcurrentDictionary<string, RegisterServiceLocation>>();
                                 this.IsMaster = true;
 
                                 //等待所有微服务上传locked key
                                 for (int i = 0; i < 10 && _waitServiceList.Count > 0; i++)
+                                {
+                                    _logger?.LogInformation("还有{0}个微服务没有报到" , _waitServiceList.Count);
                                     Thread.Sleep(1000);
+                                }
                                 _lockKeyManager.IsReady = true;
 
+                                if(_waitServiceList.Count > 0)
+                                    _logger?.LogInformation("还有{0}个微服务没有报到，但被忽略了。", _waitServiceList.Count);
                                 _logger?.LogInformation("lockKeyManager就绪");
                             }
 
@@ -151,7 +156,10 @@ namespace JMS
                 client.WriteServiceData(new GatewayCommand
                 {
                     Type = CommandType.RegisterSerivce,
-                    Content = service.ToJsonString()
+                    Content = new RegisterServiceLocation { 
+                        Host = service.Host,
+                        Port = service.Port
+                    }.ToJsonString()
                 });
                 var cmd = client.ReadServiceObject<InvokeResult>();
                 if (cmd.Success == false)
@@ -173,7 +181,11 @@ namespace JMS
                         client.WriteServiceData(new GatewayCommand
                         {
                             Type = CommandType.UnRegisterSerivce,
-                            Content = service.ToJsonString()
+                            Content = new RegisterServiceLocation
+                            {
+                                Host = service.Host,
+                                Port = service.Port
+                            }.ToJsonString()
                         });
                         var cmd = client.ReadServiceObject<InvokeResult>();
                     }

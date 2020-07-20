@@ -16,6 +16,12 @@ namespace JMS
         }
         public string Address { get; set; }
         public int Port { get; set; }
+       
+        public override bool Equals(object obj)
+        {
+            NetAddress compaire = (NetAddress)obj;
+            return this.Equals(compaire.Address , compaire.Port);
+        }
         public bool Equals(string ip ,int port)
         {
             return Address == ip && Port == port;

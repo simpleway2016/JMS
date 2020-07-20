@@ -42,10 +42,16 @@ namespace JMS.Gateway.Impls.CommandHandles
                 }
             }
 
+            var data = success ? _referee.MasterGatewayServices.ToJsonString() : _referee.MasterIp.ToJsonString();
+            if(success)
+            {
+                _referee.MasterGatewayServices.Clear();
+            }
+
             netclient.WriteServiceData(new InvokeResult
             {
                 Success = success,
-                Data = success ? _referee.MasterGatewayServices.ToJsonString() : _referee.MasterIp.ToJsonString()
+                Data = data
             });
 
             if (success)

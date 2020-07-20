@@ -9,21 +9,22 @@ using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net;
 using JMS.Gateway;
+using System.Collections.Concurrent;
 
 namespace JMS.Impls.CommandHandles
 {
-    class RegisterServiceHandler : ICommandHandler
+    class SetAllServicesHandler : ICommandHandler
     {
         Referee _referee;
-        public RegisterServiceHandler(IServiceProvider serviceProvider)
+        public SetAllServicesHandler(IServiceProvider serviceProvider)
         {
             _referee = serviceProvider.GetService<Referee>();
         }
-        public CommandType MatchCommandType => CommandType.RegisterSerivce;
+        public CommandType MatchCommandType => CommandType.SetAllServices;
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
-            var location = cmd.Content.FromJson<RegisterServiceLocation>();
+            var arr = cmd.Content.FromJson<RegisterServiceLocation[]>();
             if (((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString() != _referee.MasterIp.Address)
             {
                 netclient.WriteServiceData(new InvokeResult
@@ -33,7 +34,10 @@ namespace JMS.Impls.CommandHandles
                 return;
             }
 
-            _referee.MasterGatewayServices[$"{location.Host}:{location.Port}"] = location;
+            foreach( var location in arr)
+            {
+                _referee.MasterGatewayServices[$"{location.Host}:{location.Port}"] = location;
+            }            
 
             netclient.WriteServiceData(new InvokeResult { 
                 Success = true

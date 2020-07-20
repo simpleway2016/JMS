@@ -35,5 +35,17 @@ namespace TestBankService
             tranDelegate.RollbackAction = () => _logger.LogInformation("事务回滚了");
             return userid;
         }
+
+        public void LockKey(string key)
+        {
+            if (this.TryLock(key, false) == false)
+            {
+                throw new Exception("锁失败");
+            }
+        }
+        public void UnLockKey(string key)
+        {
+            this.UnLock(key);
+        }
     }
 }

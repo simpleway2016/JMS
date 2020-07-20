@@ -15,14 +15,14 @@ namespace JMS.Gateway
     class Referee
     {
         public NetAddress MasterIp { get; set; }
-        internal ConcurrentDictionary<string,RegisterServiceInfo> MasterGatewayServices { get; }
+        internal ConcurrentDictionary<string,RegisterServiceLocation> MasterGatewayServices { get;  }
         ILogger<Referee> _logger;
         IServiceProvider _serviceProvider;
         public Referee(ILogger<Referee> logger,IServiceProvider serviceProvider)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
-            MasterGatewayServices = new ConcurrentDictionary<string, RegisterServiceInfo>();
+            MasterGatewayServices = new ConcurrentDictionary<string, RegisterServiceLocation>();
         }
         public void Run(int port)
         {

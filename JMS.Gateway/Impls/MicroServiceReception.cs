@@ -71,6 +71,9 @@ namespace JMS.Impls
             }
             SystemEventCenter.OnMicroServiceOnffline(this.ServiceInfo);
 
+            _gatewayReferee.RemoveMicroService(this.ServiceInfo);
+
+
             Task.Run(() => {
                 _ServiceProviderAllocator.ServiceInfoChanged(_Gateway.GetAllServiceProviders());
             });

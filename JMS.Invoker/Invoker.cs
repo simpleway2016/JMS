@@ -37,6 +37,9 @@ namespace JMS
                 });
                 var serviceLocation = netclient.ReadServiceObject<RegisterServiceLocation>();
 
+                if (serviceLocation.Host == "not master")
+                    throw new MissMasterGatewayException("");
+
                 if (string.IsNullOrEmpty(ServiceTransaction.TransactionId))
                     ServiceTransaction.TransactionId = serviceLocation.TransactionId;
 

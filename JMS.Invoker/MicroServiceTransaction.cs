@@ -3,6 +3,7 @@
 using JMS.Dtos;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -36,8 +37,12 @@ namespace Microsoft.AspNetCore.Mvc
             }
         }
         bool _finished = false;
-        public NetAddress GatewayAddress { get; }
+
+        static Way.Lib.Collections.ConcurrentList<NetAddress> HistoryMasterAddressList = new Way.Lib.Collections.ConcurrentList<NetAddress>();
+
+        public NetAddress GatewayAddress { get; private set; }
         public NetAddress ProxyAddress { get; }
+        NetAddress[] _allGateways;
 
         Dictionary<string, string> _Header = new Dictionary<string, string>();
         public X509Certificate2 GatewayClientCertificate { get;private set; }
@@ -73,58 +78,12 @@ namespace Microsoft.AspNetCore.Mvc
         {
             _logger = logger;
             this.ProxyAddress = proxyAddress;
-            //先找到master网关
-            NetAddress masterAddress = null;
-            if (gatewayAddresses.Length == 1)
-            {
-                masterAddress = gatewayAddresses[0];
-            }
-            else
-            {
-                ManualResetEvent waitobj = new ManualResetEvent(false);
-                int errCount = 0;
-                for (int i = 0; i < gatewayAddresses.Length; i++)
-                {
-                    var addr = gatewayAddresses[i];
-                    Task.Run(() =>
-                    {
-                        try
-                        {
-                            using (var client = new ProxyClient( this.ProxyAddress , addr, gatewayClientCert))
-                            {
-                                client.WriteServiceData(new GatewayCommand
-                                {
-                                    Type = CommandType.FindMaster
-                                });
-                                var ret = client.ReadServiceObject<InvokeResult>();
-                                if (ret.Success == true && masterAddress == null)
-                                {
-                                    masterAddress = addr;
-                                    waitobj.Set();
-                                }
-                                else
-                                {
-                                    throw new Exception();
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            Interlocked.Increment(ref errCount);
-                            if (errCount == gatewayAddresses.Length)
-                                waitobj.Set();
-                        }
-                    });
-                }
-                waitobj.WaitOne();
-                waitobj.Dispose();
-            }
-
-            if (masterAddress == null)
-                throw new MissMasterGatewayException("无法找到主网关");
-            GatewayAddress = masterAddress;
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
+
+            //先找到master网关
+            _allGateways = gatewayAddresses;
+            findMasterGateway();
         }
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
@@ -162,22 +121,120 @@ namespace Microsoft.AspNetCore.Mvc
             return header;
         }
 
+        void findMasterGateway()
+        {
+            if (_allGateways == null || _allGateways.Length == 1)
+            {
+                if(_allGateways != null)
+                    GatewayAddress = _allGateways[0];
+                return;
+            }
+
+            //先从历史主网关选出一个
+            var historyMaster = HistoryMasterAddressList.FirstOrDefault(m => _allGateways.Any(g => g.Equals(m)));
+            if(historyMaster != null)
+            {
+                GatewayAddress = historyMaster;
+                return;
+            }
+
+            NetAddress masterAddress = null;
+            ManualResetEvent waitobj = new ManualResetEvent(false);
+            int errCount = 0;
+            for (int i = 0; i < _allGateways.Length; i++)
+            {
+                var addr = _allGateways[i];
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        using (var client = new ProxyClient(this.ProxyAddress, addr, GatewayClientCertificate))
+                        {
+                            client.WriteServiceData(new GatewayCommand
+                            {
+                                Type = CommandType.FindMaster
+                            });
+                            var ret = client.ReadServiceObject<InvokeResult>();
+                            if (ret.Success == true && masterAddress == null)
+                            {
+                                masterAddress = addr;
+                                waitobj.Set();
+                            }
+                            else
+                            {
+                                throw new Exception();
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        Interlocked.Increment(ref errCount);
+                        if (errCount == _allGateways.Length)
+                            waitobj.Set();
+                    }
+                });
+            }
+            waitobj.WaitOne();
+            waitobj.Dispose();
+
+            if (masterAddress == null)
+                throw new MissMasterGatewayException("无法找到主网关");
+            GatewayAddress = masterAddress;
+
+            if(HistoryMasterAddressList.Any(m=>m.Equals(GatewayAddress)) == false)
+                HistoryMasterAddressList.Add(GatewayAddress);
+        }
+
         public T GetMicroService<T>() where T : IImplInvoker
         {
             var classType = typeof(T);
-            
-            var invoker = new Invoker(this, classType.GetCustomAttribute<InvokerInfoAttribute>().ServiceName);
-            if (invoker.Init())
-                return (T)Activator.CreateInstance(classType, new object[] { invoker });
+            for(int i = 0; i < 2; i ++)
+            {
+                try
+                {
+                    var invoker = new Invoker(this, classType.GetCustomAttribute<InvokerInfoAttribute>().ServiceName);
+                    if (invoker.Init())
+                        return (T)Activator.CreateInstance(classType, new object[] { invoker });
+                }
+                catch (MissMasterGatewayException)
+                {
+                    if (i == 1)
+                        throw;
+                    else
+                    {
+                        if (GatewayAddress != null)
+                            HistoryMasterAddressList.Remove(GatewayAddress);
+                    }
+                    findMasterGateway();
+                }
+            }
             return default(T);
         }
 
 
         public IMicroService GetMicroService( string serviceName)
         {
-            var invoker = new Invoker(this, serviceName);
-            if (invoker.Init())
-                return invoker;
+            for (int i = 0; i < 2; i++)
+            {
+                try
+                {
+                    var invoker = new Invoker(this, serviceName);
+                    if (invoker.Init())
+                        return invoker;
+                }
+                catch (MissMasterGatewayException)
+                {
+                    if (i == 1)
+                        throw;
+                    else
+                    {
+                        if (GatewayAddress != null)
+                            HistoryMasterAddressList.Remove(GatewayAddress);
+                    }
+                    findMasterGateway();
+                }
+            }
+           
             return null;
         }
 

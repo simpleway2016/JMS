@@ -65,8 +65,8 @@ namespace JMS.Impls
             }
 
             _microServiceHost.MasterGatewayAddress = null;
-          
 
+            bool logError = true;
             while (_microServiceHost.MasterGatewayAddress == null)
             {
                 int errCount = 0;
@@ -103,7 +103,8 @@ namespace JMS.Impls
                             if (errCount == _microServiceHost.AllGatewayAddresses.Length)
                                 waitobj.Set();
 
-                            _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
+                            if(logError)
+                                _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
                         }
                     });
                 }
@@ -115,6 +116,7 @@ namespace JMS.Impls
                     _logger?.LogInformation("找到主网关{0}:{1}", _microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
                     break;
                 }
+                logError = false;
                 Thread.Sleep(1000);
             }
            

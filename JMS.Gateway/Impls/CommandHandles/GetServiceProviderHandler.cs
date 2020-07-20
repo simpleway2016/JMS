@@ -13,10 +13,12 @@ namespace JMS.Impls.CommandHandles
     {
         IServiceProvider _serviceProvider;
         TransactionIdBuilder _TransactionIdBuilder;
+        GatewayRefereeClient _gatewayRefereeClient;
         public GetServiceProviderHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _TransactionIdBuilder = serviceProvider.GetService<TransactionIdBuilder>();
+            _gatewayRefereeClient = serviceProvider.GetService<GatewayRefereeClient>();
         }
         public CommandType MatchCommandType => CommandType.GetServiceProvider;
 
@@ -31,9 +33,21 @@ namespace JMS.Impls.CommandHandles
             requestBody.ClientAddress = ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString();
             try
             {
-                var location = _serviceProvider.GetService<IServiceProviderAllocator>().Alloc(requestBody);
-                location.TransactionId = cmd.Header["TranId"];
-                netclient.WriteServiceData(location);
+                if (_gatewayRefereeClient.IsMaster == false)
+                {
+                    netclient.WriteServiceData(new RegisterServiceLocation
+                    {
+                        Host = "not master",
+                        Port = 0
+                    });
+                }
+                else
+                {
+
+                    var location = _serviceProvider.GetService<IServiceProviderAllocator>().Alloc(requestBody);
+                    location.TransactionId = cmd.Header["TranId"];
+                    netclient.WriteServiceData(location);
+                }
             }
             catch
             {
