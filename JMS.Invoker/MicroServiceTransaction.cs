@@ -200,15 +200,26 @@ namespace Microsoft.AspNetCore.Mvc
 
         void waitTasks()
         {
-            Task.WaitAll(_Tasks.ToArray());
+            try
+            {
+                Task.WaitAll(_Tasks.ToArray());
+            }
+            catch (Exception)
+            {
+                _Tasks.Clear();
+                throw;
+            }
+           
         }
 
         public void Commit()
         {
             if (_finished)
                 return;
-            _finished = true;
+            
             var errors = endResponse(InvokeType.CommitTranaction);
+            _finished = true;
+
             if (errors.Count > 0)
                 throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
         }
