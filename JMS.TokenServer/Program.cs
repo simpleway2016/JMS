@@ -96,13 +96,16 @@ namespace JMS.TokenServer
             try
             {
                 client = new Way.Lib.NetStream(socket);
+                client.ReadTimeout = 0;
                 if (ServerCert != null)
                 {
                     var sslts = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
                     sslts.AuthenticateAsServer(ServerCert, true, System.Security.Authentication.SslProtocols.Tls, true);
                     client.InnerStream = sslts;
                 }
+                //data里面前面四个字节包含了长度
                 client.Write(data);
+                client.ReadInt();
             }
             catch(SocketException)
             {

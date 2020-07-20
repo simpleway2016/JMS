@@ -6,6 +6,7 @@ using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS.Token
@@ -14,6 +15,7 @@ namespace JMS.Token
     {
       
         static string[] Keys;
+        static object LockObj = new object();
         X509Certificate2 _cert;
         /// <summary>
         /// 
@@ -26,16 +28,34 @@ namespace JMS.Token
             _cert = cert;
             if(Keys == null)
             {
-                NetStream client = new NetStream(serverAddress, serverPort);
-                if(_cert != null)
+                lock(LockObj)
                 {
-                    SslStream sslStream = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
-                    X509CertificateCollection certs = new X509CertificateCollection();
-                    certs.Add(cert);
-                    sslStream.AuthenticateAsClient("SslSocket", certs, System.Security.Authentication.SslProtocols.Tls, true);
-                    client.InnerStream = sslStream;
-                }
-                Keys = Encoding.UTF8.GetString( client.ReceiveDatas(client.ReadInt())).FromJson<string[]>();
+                    if (Keys != null)
+                        return;
+
+                    NetStream client = new NetStream(serverAddress, serverPort);
+                    if (_cert != null)
+                    {
+                        SslStream sslStream = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
+                        X509CertificateCollection certs = new X509CertificateCollection();
+                        certs.Add(cert);
+                        sslStream.AuthenticateAsClient("SslSocket", certs, System.Security.Authentication.SslProtocols.Tls, true);
+                        client.InnerStream = sslStream;
+                    }
+                    var len = client.ReadInt();
+                    Keys = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
+                    Task.Run(() => {
+                        try
+                        {
+                            client.ReadTimeout = 0;
+                            client.ReadInt();
+                        }
+                        catch (Exception)
+                        {
+                            Keys = null;
+                        }
+                    });
+                }               
             }
         }
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
