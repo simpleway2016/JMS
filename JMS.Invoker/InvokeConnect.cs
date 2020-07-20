@@ -68,7 +68,7 @@ namespace JMS
                 var result = netclient.ReadServiceObject<InvokeResult<T>>();
                 if (result.Success == false)
                 {
-                    throw new RemoteException(result.Error);
+                    throw new RemoteException( tran.TransactionId, result.Error);
                 }
                 NetClient = netclient;
 
