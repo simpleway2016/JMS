@@ -204,10 +204,15 @@ namespace Microsoft.AspNetCore.Mvc
             {
                 Task.WaitAll(_Tasks.ToArray());
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                var err = ex;
+                if(err.InnerException != null)
+                {
+                    err = err.InnerException;
+                }
                 _Tasks.Clear();
-                throw;
+                throw err;
             }
            
         }

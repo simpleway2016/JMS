@@ -17,6 +17,8 @@ namespace TestBankService
         }
         public long CreateBankAccount(TransactionDelegate tranDelegate,long userid , int seconds,double sucessRate)
         {
+            if (userid == 0)
+                throw new Exception("用户id无效");
             for(int i = 0; i < seconds; i ++)
             {                
                 _logger?.LogInformation("正在创建银行账号,{0}%", i * 10);
