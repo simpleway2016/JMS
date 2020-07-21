@@ -172,7 +172,7 @@ namespace JMS
 
             if (_cache.TryGetValue(key, out KeyObject keyObj)  )
             {
-                if (keyObj.Locker == service.ServiceId)
+                if (service == null || keyObj.Locker == service.ServiceId)
                 {
                     _cache.TryRemove(key, out keyObj);
                 }

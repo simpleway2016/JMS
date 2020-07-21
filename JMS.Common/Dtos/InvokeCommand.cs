@@ -13,7 +13,12 @@ namespace JMS.Dtos
         /// 获取访问服务的c#代码类
         /// </summary>
         GenerateInvokeCode = 3,
-        HealthyCheck=4
+        HealthyCheck=4,
+        GetAllLockedKeys = 5,
+        /// <summary>
+        /// 强制unlock key
+        /// </summary>
+        UnlockKeyAnyway = 6
     }
     public class InvokeCommand
     {

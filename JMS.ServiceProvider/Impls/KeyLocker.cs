@@ -150,5 +150,57 @@ namespace JMS.Impls
                 }
             }
         }
+
+        public void UnLockAnyway(string key)
+        {
+            if (_microServiceHost.MasterGatewayAddress == null)
+                throw new MissMasterGatewayException("未连接上主网关");
+
+            var transactionId = "";
+            RemovingKeyDict.TryAdd(key, transactionId);
+            DateTime startime = DateTime.Now;
+            while (true)
+            {
+                try
+                {
+                    //如果连接网关失败
+                    using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
+                    {
+                        netclient.WriteServiceData(new GatewayCommand
+                        {
+                            Type = CommandType.LockKey,
+                            Content = new LockKeyInfo
+                            {
+                                Key = key,
+                                MicroServiceId = "$$$",//表示强制释放
+                                IsUnlock = true
+                            }.ToJsonString()
+                        });
+
+                        var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+                        if (!ret.Success && ret.Data != null)
+                            throw new Exception(ret.Data);
+                    }
+                    LockedKeyDict.TryRemove(key, out transactionId);
+                    RemovingKeyDict.TryRemove(key, out transactionId);
+                    break;
+                }
+                catch (Exception)
+                {
+                    //如果发生错误，可以不断重试，直到超时为止
+                    if ((DateTime.Now - startime).TotalMilliseconds > _gatewayKeyTimeout)
+                    {
+                        //如果已经连不上网关，网关会在10秒内释放这个key
+                        LockedKeyDict.TryRemove(key, out transactionId);
+                        RemovingKeyDict.TryRemove(key, out transactionId);
+                        throw;
+                    }
+                    else
+                    {
+                        Thread.Sleep(1000);
+                    }
+                }
+            }
+        }
     }
 }

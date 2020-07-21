@@ -22,7 +22,7 @@ namespace JMS
         }
         public string GetName()
         {
-            return "lock result: " + this.TryLock("testkey", false);
+            return "lock result: " + this.TryLock("testkey");
         }
     }
 }

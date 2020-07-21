@@ -85,6 +85,12 @@ namespace Microsoft.AspNetCore.Mvc
             _allGateways = gatewayAddresses;
             findMasterGateway();
         }
+
+        /// <summary>
+        /// 枚举当前微服务列表
+        /// </summary>
+        /// <param name="serviceName">服务名称，空表示所有服务</param>
+        /// <returns></returns>
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
             using (var netclient = new ProxyClient( this.ProxyAddress, GatewayAddress, GatewayClientCertificate))
@@ -98,6 +104,41 @@ namespace Microsoft.AspNetCore.Mvc
                 var serviceLocations = netclient.ReadServiceObject<RegisterServiceRunningInfo[]>();
                
                 return serviceLocations;
+            }
+        }
+        /// <summary>
+        /// 强行要求微服务释放锁定的key（慎用）
+        /// </summary>
+        /// <param name="serviceAddress"></param>
+        /// <param name="key"></param>
+        public void UnLockKeyAnyway(NetAddress serviceAddress,string key)
+        {
+            using (var netclient = new ProxyClient(this.ProxyAddress, serviceAddress, ServiceClientCertificate))
+            {
+                netclient.WriteServiceData(new InvokeCommand()
+                {
+                    Type = InvokeType.UnlockKeyAnyway,
+                    Method = key
+                });
+                netclient.ReadServiceObject<InvokeResult>();
+            }
+        }
+
+        /// <summary>
+        /// 获取指定微服务器当前锁定的key
+        /// </summary>
+        /// <param name="serviceAddress"></param>
+        /// <returns></returns>
+        public string[] GetLockedKeys(NetAddress serviceAddress)
+        {
+            using (var netclient = new ProxyClient(this.ProxyAddress, serviceAddress, ServiceClientCertificate))
+            {
+                netclient.WriteServiceData(new InvokeCommand()
+                {
+                    Type = InvokeType.GetAllLockedKeys,
+                });
+                var ret = netclient.ReadServiceObject<InvokeResult<string[]>>();
+                return ret.Data;
             }
         }
 

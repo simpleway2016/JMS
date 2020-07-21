@@ -159,6 +159,8 @@ namespace JMS
             _services.AddSingleton<InvokeRequestHandler>();
             _services.AddSingleton<GenerateInvokeCodeRequestHandler>();
             _services.AddSingleton<CommitRequestHandler>();
+            _services.AddSingleton<GetAllLockedKeysHandler>();
+            _services.AddSingleton<UnLockedKeyAnywayHandler>();
             _services.AddSingleton<RollbackRequestHandler>();
             _services.AddSingleton<ProcessExitHandler>();
             _services.AddSingleton<MicroServiceHost>(this);

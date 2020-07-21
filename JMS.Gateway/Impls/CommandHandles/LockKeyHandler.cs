@@ -26,7 +26,27 @@ namespace JMS.Impls.CommandHandles
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             var info = cmd.Content.FromJson<LockKeyInfo>();
+            if(info.IsUnlock && info.MicroServiceId == "$$$")
+            {
+                //强制释放
+                _lockKeyManager.UnLock(info.Key, null);
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = true
+                });
+                return;
+            }
+
             var service = _gateway.GetServiceById(info.MicroServiceId);
+            if(service == null)
+            {
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = false,
+                    Data = $"找不到注册的服务{info.MicroServiceId}"
+                });
+                return;
+            }
 
             try
             {
