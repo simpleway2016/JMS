@@ -23,13 +23,14 @@ namespace TestClient
             //////////测试多个网关
             try
             {
-                var gateways = new NetAddress[] { 
+              
+                for (int i = 0; i < 6; i++)
+                {
+                    var gateways = new NetAddress[] {
                     new NetAddress("192.168.40.131", 7900),
                     new NetAddress("192.168.40.132", 8900),
                 };
 
-                for (int i = 0; i < 6; i++)
-                {
                     using (var tran = new MicroServiceTransaction(gateways, null, logger))
                     {
                         var bankService = tran.GetMicroService<BankService>();

@@ -203,7 +203,7 @@ namespace Microsoft.AspNetCore.Mvc
                     else
                     {
                         if (GatewayAddress != null)
-                            HistoryMasterAddressList.Remove(GatewayAddress);
+                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m=>m == GatewayAddress));
                     }
                     findMasterGateway();
                 }
@@ -229,7 +229,7 @@ namespace Microsoft.AspNetCore.Mvc
                     else
                     {
                         if (GatewayAddress != null)
-                            HistoryMasterAddressList.Remove(GatewayAddress);
+                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
                     }
                     findMasterGateway();
                 }

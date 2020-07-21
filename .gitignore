@@ -338,3 +338,7 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/Publish/TokenServer.zip
+/Publish/Gateway.zip
+/Publish/GatewayReferee.zip
+/Publish/Proxy.zip
