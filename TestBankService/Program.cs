@@ -10,6 +10,7 @@ namespace TestBankService
     {
         static void Main(string[] args)
         {
+            var port = 7902;
             var builder = new ConfigurationBuilder();
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
             var configuration = builder.Build();
@@ -26,7 +27,7 @@ namespace TestBankService
 
             var msp = new MicroServiceHost(services);
             msp.Register<BankController>("Bank");
-            msp.Build(7902, gateways)
+            msp.Build(port, gateways)
                 .Run();
         }
     }
