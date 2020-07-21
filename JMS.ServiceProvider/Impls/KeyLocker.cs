@@ -38,7 +38,7 @@ namespace JMS.Impls
             this.LockedKeyDict = new ConcurrentDictionary<string, string>();
             RemovingKeyDict = new ConcurrentDictionary<string, string>();
         }
-        public bool TryLock(string transactionId, string key, bool waitToSuccess)
+        public bool TryLock(string transactionId, string key)
         {
             if (_microServiceHost.MasterGatewayAddress == null)
                 throw new MissMasterGatewayException("未连接上主网关");
@@ -54,8 +54,6 @@ namespace JMS.Impls
                     {
                         using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
                         {
-                            if (waitToSuccess)
-                                netclient.ReadTimeout = 0;
 
                             netclient.WriteServiceData(new GatewayCommand
                             {
@@ -64,7 +62,6 @@ namespace JMS.Impls
                                 {
                                     Key = key,
                                     MicroServiceId = _microServiceHost.Id,
-                                    WaitToSuccess = waitToSuccess
                                 }.ToJsonString()
                             });
 
@@ -91,10 +88,7 @@ namespace JMS.Impls
                 }
                 else
                 {
-                    if (waitToSuccess == false)
-                        break;
-                    else
-                        Thread.Sleep(10);
+                    break;
                 }
             }
             return false;

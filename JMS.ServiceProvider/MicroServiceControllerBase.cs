@@ -65,11 +65,10 @@ public class MicroServiceControllerBase
     /// 申请锁住指定的key
     /// </summary>
     /// <param name="key"></param>
-    /// <param name="waitToSuccess">一直等到成功为止</param>
     /// <returns>是否成功</returns>
-    public bool TryLock(string key,bool waitToSuccess)
+    public bool TryLock(string key)
     {
-        return _keyLocker.TryLock( this.Header["TranId"], key , waitToSuccess);
+        return _keyLocker.TryLock( this.Header["TranId"], key);
     }
 
     public void UnLock(string key)

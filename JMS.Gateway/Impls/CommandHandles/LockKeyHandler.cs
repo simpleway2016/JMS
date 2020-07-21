@@ -48,22 +48,11 @@ namespace JMS.Impls.CommandHandles
                         Data = _lockKeyManager.KeyTimeout
                     });
                 }
-                else if (!info.WaitToSuccess)
+                else
                 {
                     netclient.WriteServiceData(new InvokeResult
                     {
                         Success = false
-                    });
-                }
-                else
-                {
-                    while (!_lockKeyManager.TryLock(info.Key, service))
-                        Thread.Sleep(100);
-
-                    netclient.WriteServiceData(new InvokeResult
-                    {
-                        Success = true,
-                        Data = _lockKeyManager.KeyTimeout
                     });
                 }
             }
