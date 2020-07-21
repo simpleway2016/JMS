@@ -62,7 +62,7 @@ public class MicroServiceControllerBase
     }
 
     /// <summary>
-    /// 申请锁住指定的key
+    /// 申请锁住指定的key，使用完务必保证调用UnLock释放锁定的key
     /// </summary>
     /// <param name="key"></param>
     /// <returns>是否成功</returns>
@@ -70,7 +70,10 @@ public class MicroServiceControllerBase
     {
         return _keyLocker.TryLock( this.Header["TranId"], key);
     }
-
+    /// <summary>
+    /// 释放锁定的key
+    /// </summary>
+    /// <param name="key"></param>
     public void UnLock(string key)
     {
         _keyLocker.UnLock(this.Header["TranId"], key);
