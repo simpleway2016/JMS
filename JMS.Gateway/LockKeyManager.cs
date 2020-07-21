@@ -170,8 +170,7 @@ namespace JMS
             if (IsReady == false)
                 throw new Exception("lock key is not ready");
 
-            KeyObject keyObj = null;
-            if (_cache.TryGetValue(key, out keyObj)  )
+            if (_cache.TryGetValue(key, out KeyObject keyObj)  )
             {
                 if (keyObj.Locker == service.ServiceId)
                 {
