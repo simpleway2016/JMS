@@ -38,7 +38,7 @@ namespace TestBankService
 
         public void LockKey(string key)
         {
-            if (this.TryLock(key, false) == false)
+            if (this.TryLock(key) == false)
             {
                 throw new Exception("锁失败");
             }
