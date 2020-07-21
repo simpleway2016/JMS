@@ -131,7 +131,7 @@ namespace Microsoft.AspNetCore.Mvc
             }
 
             //先从历史主网关选出一个
-            var historyMaster = HistoryMasterAddressList.FirstOrDefault(m => _allGateways.Any(g => g.Equals(m)));
+            var historyMaster = HistoryMasterAddressList.FirstOrDefault(m => _allGateways.Any(g => g==m));
             if(historyMaster != null)
             {
                 GatewayAddress = historyMaster;
@@ -181,7 +181,7 @@ namespace Microsoft.AspNetCore.Mvc
                 throw new MissMasterGatewayException("无法找到主网关");
             GatewayAddress = masterAddress;
 
-            if(HistoryMasterAddressList.Any(m=>m.Equals(GatewayAddress)) == false)
+            if(HistoryMasterAddressList.Any(m=>m== GatewayAddress) == false)
                 HistoryMasterAddressList.Add(GatewayAddress);
         }
 

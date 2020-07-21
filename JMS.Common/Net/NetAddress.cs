@@ -26,5 +26,25 @@ namespace JMS
         {
             return Address == ip && Port == port;
         }
+
+        public static bool operator ==(NetAddress a, NetAddress b)
+        {
+            if ((object)a == null && (object)b == null)
+                return true;
+            else if ((object)a == null || (object)b == null)
+                return false;
+
+            return a.Equals(b.Address, b.Port);
+        }
+
+        public static bool operator !=(NetAddress a, NetAddress b)
+        {
+            if ((object)a == null && (object)b == null)
+                return false;
+            else if ((object)a == null || (object)b == null)
+                return true;
+
+            return !a.Equals(b.Address, b.Port);
+        }
     }
 }
