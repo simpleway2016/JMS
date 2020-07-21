@@ -9,15 +9,18 @@ using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net;
 using JMS.Gateway;
+using Microsoft.Extensions.Logging;
 
 namespace JMS.Impls.CommandHandles
 {
     class RegisterServiceHandler : ICommandHandler
     {
         Referee _referee;
+        ILogger<RegisterServiceHandler> _logger;
         public RegisterServiceHandler(IServiceProvider serviceProvider)
         {
             _referee = serviceProvider.GetService<Referee>();
+            _logger = serviceProvider.GetService<ILogger<RegisterServiceHandler>>();
         }
         public CommandType MatchCommandType => CommandType.RegisterSerivce;
 
@@ -33,6 +36,7 @@ namespace JMS.Impls.CommandHandles
                 return;
             }
 
+            _logger?.LogInformation($"{location.Host}:{location.Port} 服务注册");
             _referee.MasterGatewayServices[$"{location.Host}:{location.Port}"] = location;
 
             netclient.WriteServiceData(new InvokeResult { 

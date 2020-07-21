@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+using Way.Lib;
 
 namespace JMS.Gateway
 {
@@ -31,6 +32,12 @@ namespace JMS.Gateway
                     netclient.WriteServiceData(new InvokeResult { 
                         Success = true
                     });
+                }
+                catch(SocketException)
+                {
+                    _logger?.LogInformation("主网关{0}断开", _referee.MasterIp?.ToJsonString());
+                    _referee.MasterIp = null;
+                    return;
                 }
                 catch (Exception ex)
                 {

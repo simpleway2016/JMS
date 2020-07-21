@@ -278,7 +278,15 @@ namespace Microsoft.AspNetCore.Mvc
         {
             if (_finished)
                 return;
-            
+
+            if (_Connects.Count == 0)
+            {                
+                waitTasks();
+                _Tasks.Clear();
+                _finished = true;
+                return;
+            }
+
             var errors = endResponse(InvokeType.CommitTranaction);
             _finished = true;
 
@@ -416,7 +424,13 @@ namespace Microsoft.AspNetCore.Mvc
                 return;
             _finished = true;
 
-           var errors = endResponse(InvokeType.RollbackTranaction);
+            if (_Connects.Count == 0)
+            {
+                waitTasks();
+                _Tasks.Clear();
+                return;
+            }
+                var errors = endResponse(InvokeType.RollbackTranaction);
             if (errors.Count > 0)
                 throw new TransactionArrayException(errors, "rollback transaction error");
         }

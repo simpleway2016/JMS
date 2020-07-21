@@ -50,9 +50,11 @@ namespace JMS.Impls
                 var ret = netclient.ReadServiceObject<InvokeResult<string>>();
                 if (ret.Success)
                 {
+                    
                     lock (LockedKeys)
                     {
-                        LockedKeys.Add(key);
+                        if (LockedKeys.Contains(key) == false)
+                            LockedKeys.Add(key);
                     }
                 }
                 else if (ret.Data != null)

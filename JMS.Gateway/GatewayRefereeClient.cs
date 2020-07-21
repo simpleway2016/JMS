@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -47,7 +48,8 @@ namespace JMS
 
         private void SystemEventCenter_MicroServiceUploadLockedKeyCompleted(object sender, RegisterServiceInfo e)
         {
-            _waitServiceList?.TryRemove($"{e.Host}:{e.Port}",out RegisterServiceLocation o);
+            _logger?.LogInformation($"{e.Host}:{e.Port} UploadLockedKeyCompleted");
+               _waitServiceList?.TryRemove($"{e.Host}:{e.Port}",out RegisterServiceLocation o);
         }
 
 
@@ -93,7 +95,7 @@ namespace JMS
                                 //等待所有微服务上传locked key
                                 for (int i = 0; i < 10 && _waitServiceList.Count > 0; i++)
                                 {
-                                    _logger?.LogInformation("还有{0}个微服务没有报到" , _waitServiceList.Count);
+                                    _logger?.LogInformation("还有{0}个微服务没有报到 {1}" , _waitServiceList.Count , _waitServiceList.Keys.ToArray().ToJsonString());
                                     Thread.Sleep(1000);
                                 }
                                 _lockKeyManager.IsReady = true;
@@ -101,6 +103,7 @@ namespace JMS
                                 if(_waitServiceList.Count > 0)
                                     _logger?.LogInformation("还有{0}个微服务没有报到，但被忽略了。", _waitServiceList.Count);
                                 _logger?.LogInformation("lockKeyManager就绪");
+                                _logger?.LogDebug("锁记录：{0}", _lockKeyManager.GetCaches().ToJsonString());
                             }
 
                             client.KeepHeartBeating();

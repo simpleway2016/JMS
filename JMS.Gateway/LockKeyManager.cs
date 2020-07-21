@@ -4,6 +4,7 @@ using JMS.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -32,6 +33,11 @@ namespace JMS
             SystemEventCenter.MicroServiceOnline += SystemEventCenter_MicroServiceOnline;
 
             new Thread(checkTimeout).Start();
+        }
+
+        internal KeyObject[] GetCaches()
+        {
+           return _cache.Values.ToArray();
         }
 
         private void SystemEventCenter_MicroServiceOnline(object sender, Dtos.RegisterServiceInfo e)

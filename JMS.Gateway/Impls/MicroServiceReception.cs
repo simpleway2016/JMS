@@ -42,10 +42,10 @@ namespace JMS.Impls
         {
             this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
+            ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
 
             _gatewayReferee.AddMicroService(ServiceInfo);
 
-            ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
             NetClient.WriteServiceData(new InvokeResult{ 
                 Success = true
             });
