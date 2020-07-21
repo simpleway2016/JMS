@@ -27,6 +27,7 @@ namespace TestUserInfoService
             });
 
             var msp = new MicroServiceHost(services);
+            //注册支持的服务类型
             msp.Register<UserInfoController>("UserInfo");
             msp.Build(7901, gateways)
                 .Run();
