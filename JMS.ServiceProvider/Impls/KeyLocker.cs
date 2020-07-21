@@ -44,53 +44,50 @@ namespace JMS.Impls
                 throw new MissMasterGatewayException("未连接上主网关");
             if (string.IsNullOrEmpty(transactionId))
                 throw new Exception("tranid is empty");
-            while (true)
+
+            LockedKeyDict.TryGetValue(key, out string lockerTranId);
+            if (lockerTranId == transactionId)
+                return true;
+
+            if (LockedKeyDict.TryAdd(key, transactionId))
             {
-
-                LockedKeyDict.TryGetValue(key, out string curtranid);
-                if (curtranid == transactionId || LockedKeyDict.TryAdd(key, transactionId))
+                try
                 {
-                    try
+                    using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
                     {
-                        using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
+
+                        netclient.WriteServiceData(new GatewayCommand
                         {
-
-                            netclient.WriteServiceData(new GatewayCommand
+                            Type = CommandType.LockKey,
+                            Content = new LockKeyInfo
                             {
-                                Type = CommandType.LockKey,
-                                Content = new LockKeyInfo
-                                {
-                                    Key = key,
-                                    MicroServiceId = _microServiceHost.Id,
-                                }.ToJsonString()
-                            });
+                                Key = key,
+                                MicroServiceId = _microServiceHost.Id,
+                            }.ToJsonString()
+                        });
 
-                            var ret = netclient.ReadServiceObject<InvokeResult<string>>();
-                            if (ret.Success == false)
-                            {
-                                LockedKeyDict.TryRemove(key, out transactionId);
-                            }
-                            else if ( ret.Success == false && ret.Data != null)
-                                throw new Exception(ret.Data);
-
-                            //记录网关的超时时间
-                            if (ret.Success)
-                                _gatewayKeyTimeout = Convert.ToInt32(ret.Data);
-
-                            return ret.Success;
+                        var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+                        if (ret.Success == false)
+                        {
+                            LockedKeyDict.TryRemove(key, out transactionId);
                         }
-                    }
-                    catch (Exception)
-                    {
-                        LockedKeyDict.TryRemove(key, out transactionId);
-                        throw;
+                        else if (ret.Success == false && ret.Data != null)
+                            throw new Exception(ret.Data);
+
+                        //记录网关的超时时间
+                        if (ret.Success)
+                            _gatewayKeyTimeout = Convert.ToInt32(ret.Data);
+
+                        return ret.Success;
                     }
                 }
-                else
+                catch (Exception)
                 {
-                    break;
+                    LockedKeyDict.TryRemove(key, out transactionId);
+                    throw;
                 }
             }
+
             return false;
         }
 
@@ -101,9 +98,9 @@ namespace JMS.Impls
             if (string.IsNullOrEmpty(transactionId))
                 throw new Exception("tranid is empty");
 
-            if (LockedKeyDict.TryGetValue(key, out string tranid))
+            if (LockedKeyDict.TryGetValue(key, out string locker))
             {
-                if (tranid == transactionId)
+                if (locker == transactionId)
                 {
                     RemovingKeyDict.TryAdd(key, transactionId);
                     DateTime startime = DateTime.Now;
