@@ -163,7 +163,7 @@ namespace JMS.Impls
                         Header = new Dictionary<string, string> {
                                     { "ServiceId",_microServiceHost.Id}
                                 },
-                        Content = _keyLocker.LockedKeys.ToJsonString()
+                        Content = _keyLocker.GetLockedKeys().ToJsonString()
                     });
                     client.ReadServiceObject<InvokeResult>();
                 }

@@ -21,6 +21,8 @@ namespace JMS
         int _timeout;
         ILogger<LockKeyManager> _logger;
         internal bool IsReady;
+
+        public int KeyTimeout => _timeout;
         public LockKeyManager(Gateway gateway,IConfiguration configuration,ILogger<LockKeyManager> logger)
         {
             _timeout = configuration.GetValue<int>("UnLockKeyTimeout");

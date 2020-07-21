@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TestClient
 {
@@ -23,19 +24,19 @@ namespace TestClient
             //////////测试多个网关
             try
             {
-              
+
                 for (int i = 0; i < 6; i++)
                 {
                     var gateways = new NetAddress[] {
-                    new NetAddress("192.168.40.131", 7900),
-                    new NetAddress("192.168.40.132", 8900),
-                };
+                        new NetAddress("192.168.40.131", 7900),
+                        new NetAddress("192.168.40.132", 8900),
+                    };
 
                     using (var tran = new MicroServiceTransaction(gateways, null, logger))
                     {
                         var bankService = tran.GetMicroService<BankService>();
                         bankService.LockKey("bankService_key1");
-
+                        bankService.UnLockKey("bankService_key1");
                     }
                 }
             }

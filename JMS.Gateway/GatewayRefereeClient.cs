@@ -128,6 +128,7 @@ namespace JMS
 
                     if(masterAddr != null)
                     {
+                        _logger?.LogInformation("准备和主网关连接{0}",masterAddr.ToJsonString());
                         //连上主网关，直到连接出现问题，再申请成为主网关
                         using (var client = new NetClient(masterAddr))
                         {

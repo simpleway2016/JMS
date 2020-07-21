@@ -69,12 +69,12 @@ public class MicroServiceControllerBase
     /// <returns>是否成功</returns>
     public bool TryLock(string key,bool waitToSuccess)
     {
-        return _keyLocker.TryLock(key , waitToSuccess);
+        return _keyLocker.TryLock( this.Header["TranId"], key , waitToSuccess);
     }
 
     public void UnLock(string key)
     {
-        _keyLocker.UnLock(key);
+        _keyLocker.UnLock(this.Header["TranId"], key);
     }
 
     public virtual void InvokeError(string actionName, object[] parameters,Exception error)

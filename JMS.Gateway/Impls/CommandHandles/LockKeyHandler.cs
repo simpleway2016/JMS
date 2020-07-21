@@ -44,7 +44,8 @@ namespace JMS.Impls.CommandHandles
                 {
                     netclient.WriteServiceData(new InvokeResult
                     {
-                        Success = true
+                        Success = true,
+                        Data = _lockKeyManager.KeyTimeout
                     });
                 }
                 else if (!info.WaitToSuccess)
@@ -61,7 +62,8 @@ namespace JMS.Impls.CommandHandles
 
                     netclient.WriteServiceData(new InvokeResult
                     {
-                        Success = true
+                        Success = true,
+                        Data = _lockKeyManager.KeyTimeout
                     });
                 }
             }
