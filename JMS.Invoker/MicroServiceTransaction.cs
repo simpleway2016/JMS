@@ -287,14 +287,14 @@ namespace Microsoft.AspNetCore.Mvc
                 return;
             }
 
-            var errors = endResponse(InvokeType.CommitTranaction);
+            var errors = endRequest(InvokeType.CommitTranaction);
             _finished = true;
 
             if (errors.Count > 0)
                 throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
         }
 
-        List<TransactionException> endResponse(InvokeType invokeType)
+        List<TransactionException> endRequest(InvokeType invokeType)
         {
             waitTasks();
 
@@ -430,7 +430,7 @@ namespace Microsoft.AspNetCore.Mvc
                 _Tasks.Clear();
                 return;
             }
-                var errors = endResponse(InvokeType.RollbackTranaction);
+                var errors = endRequest(InvokeType.RollbackTranaction);
             if (errors.Count > 0)
                 throw new TransactionArrayException(errors, "rollback transaction error");
         }
