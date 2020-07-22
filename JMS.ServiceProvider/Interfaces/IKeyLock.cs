@@ -13,13 +13,14 @@ namespace JMS.Interfaces
         /// <param name="key"></param>
         /// <returns>是否成功</returns>
         bool TryLock(string transactionId, string key);
-        void UnLock(string transactionId, string key);
+        bool TryUnLock(string transactionId, string key);
         /// <summary>
         /// 强制释放锁定的key（慎用）
         /// </summary>
         /// <param name="key"></param>
         void UnLockAnyway(string key);
         string[] GetLockedKeys();
+        void RemoveKeyFromLocal(string key);
         
     }
 }

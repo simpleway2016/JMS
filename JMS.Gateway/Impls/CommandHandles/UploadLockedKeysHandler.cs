@@ -29,14 +29,19 @@ namespace JMS.Impls.CommandHandles
             var service = _gateway.GetServiceById(cmd.Header["ServiceId"]);
             if (service != null && service.Host == ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString())
             {
+                List<string> failed = new List<string>();
                 foreach (var key in keys)
                 {
-                    _lockKeyManager.TryLock(key, service,false);
+                    if( _lockKeyManager.TryLock(key, service,false) == false)
+                    {
+                        failed.Add(key);
+                    }
                 }
                 SystemEventCenter.OnMicroServiceUploadLockedKeyCompleted(service);
                 netclient.WriteServiceData(new InvokeResult
                 {
-                    Success = true
+                    Success = true,
+                    Data = failed.ToArray()
                 });
             }
             else

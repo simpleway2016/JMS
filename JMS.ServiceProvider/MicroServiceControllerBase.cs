@@ -76,9 +76,9 @@ public class MicroServiceControllerBase
     /// 释放锁定的key
     /// </summary>
     /// <param name="key"></param>
-    public void UnLock(string key)
+    public bool TryUnLock(string key)
     {
-        _keyLocker.UnLock(this.Header["TranId"], key);
+        return _keyLocker.TryUnLock(this.Header["TranId"], key);
     }
 
     public virtual void InvokeError(string actionName, object[] parameters,Exception error)

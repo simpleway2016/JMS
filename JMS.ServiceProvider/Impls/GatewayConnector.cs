@@ -185,7 +185,15 @@ namespace JMS.Impls
                                 },
                         Content = _keyLocker.GetLockedKeys().ToJsonString()
                     });
-                    client.ReadServiceObject<InvokeResult>();
+                    var cb = client.ReadServiceObject<InvokeResult<string[]>>();
+                    if (cb.Data.Length > 0)
+                    {
+                        _logger?.LogInformation("以下key锁失败,{0}", cb.Data.ToJsonString());
+                        foreach( var key in cb.Data )
+                        {
+                            _keyLocker.RemoveKeyFromLocal(key);
+                        }
+                    }
                 }
 
                 //保持心跳，并且定期发送ClientConnected

@@ -52,10 +52,9 @@ namespace JMS.Impls.CommandHandles
             {
                 if (info.IsUnlock)
                 {
-                    _lockKeyManager.UnLock(info.Key, service);
                     netclient.WriteServiceData(new InvokeResult
                     {
-                        Success = true
+                        Success = _lockKeyManager.UnLock(info.Key, service)
                     });
                     return;
                 }

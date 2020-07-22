@@ -38,6 +38,12 @@ namespace JMS.Impls
             this.LockedKeyDict = new ConcurrentDictionary<string, string>();
             RemovingKeyDict = new ConcurrentDictionary<string, string>();
         }
+
+        public void RemoveKeyFromLocal(string key)
+        {
+            LockedKeyDict.TryRemove(key, out string v);
+            RemovingKeyDict.TryRemove(key, out v);
+        }
         public bool TryLock(string transactionId, string key)
         {
             if (_microServiceHost.MasterGatewayAddress == null)
@@ -91,7 +97,7 @@ namespace JMS.Impls
             return false;
         }
 
-        public void UnLock(string transactionId, string key)
+        public bool TryUnLock(string transactionId, string key)
         {
             if (_microServiceHost.MasterGatewayAddress == null)
                 throw new MissMasterGatewayException("未连接上主网关");
@@ -123,11 +129,14 @@ namespace JMS.Impls
                                 });
 
                                 var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+                                LockedKeyDict.TryRemove(key, out transactionId);
+                                RemovingKeyDict.TryRemove(key, out transactionId);
+
                                 if (!ret.Success && ret.Data != null)
                                     throw new Exception(ret.Data);
+                                return ret.Success;
                             }
-                            LockedKeyDict.TryRemove(key, out transactionId);
-                            RemovingKeyDict.TryRemove(key, out transactionId);
+                           
                             break;
                         }
                         catch (Exception)
@@ -149,6 +158,7 @@ namespace JMS.Impls
                    
                 }
             }
+            return false;
         }
 
         public void UnLockAnyway(string key)

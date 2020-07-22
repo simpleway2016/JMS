@@ -45,7 +45,7 @@ namespace TestBankService
         }
         public void UnLockKey(string key)
         {
-            this.UnLock(key);
+            this.TryUnLock(key);
         }
     }
 }

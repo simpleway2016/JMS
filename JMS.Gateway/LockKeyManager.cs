@@ -165,7 +165,7 @@ namespace JMS
             }
         }
 
-        public void UnLock(string key,RegisterServiceInfo service)
+        public bool UnLock(string key,RegisterServiceInfo service)
         {
             if (IsReady == false)
                 throw new Exception("lock key is not ready");
@@ -174,9 +174,10 @@ namespace JMS
             {
                 if (service == null || keyObj.Locker == service.ServiceId)
                 {
-                    _cache.TryRemove(key, out keyObj);
+                   return _cache.TryRemove(key, out keyObj);
                 }
             }
+            return false;
         }
     }
 
