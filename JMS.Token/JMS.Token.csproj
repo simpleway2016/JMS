@@ -4,6 +4,11 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>JMS.Token</RootNamespace>
     <AssemblyName>JMS.Token</AssemblyName>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Jack.T</Authors>
+    <Company>JMS</Company>
+    <Product>JMS</Product>
+    <Version>1.0.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

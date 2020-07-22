@@ -69,6 +69,7 @@ namespace JMS
             {
                 if(_changingFiles.Contains(path) == false)
                 {
+                    _logger?.LogInformation("{0}更新", path);
                     _changingFiles.Add(path);
                 }
             }

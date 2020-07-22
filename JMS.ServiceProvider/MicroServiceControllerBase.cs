@@ -29,6 +29,8 @@ public class MicroServiceControllerBase
     }
     public TransactionDelegate TransactionControl { set; get; }
 
+    public string TransactionId => this.Header["TranId"];
+
     internal static ThreadLocal<MicroServiceControllerBase> ThreadCurrent = new ThreadLocal<MicroServiceControllerBase>();
     /// <summary>
     /// 与当前请求相关联的Controller对象

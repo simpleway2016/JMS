@@ -108,21 +108,21 @@ namespace JMS.Token
         /// <param name="token"></param>
         /// <param name="key"></param>
         /// <param name="secretKey"></param>
-        /// <returns></returns>
+        /// <returns>验证成功返回字符串信息，失败返回null</returns>
         public string VerifyForString(string token)
         {
            var tokenInfo =  Encoding.UTF8.GetString( Convert.FromBase64String(token)).FromJson<string[]>();
             var signstr = sign(tokenInfo[0]);
             if (signstr == tokenInfo[1])
                 return tokenInfo[0];
-            throw new Exception("Token验证失败");
+            return null;
         }
 
         /// <summary>
         /// 验证token，如果正确，返回long数组
         /// </summary>
         /// <param name="token"></param>
-        /// <returns></returns>
+        /// <returns>验证成功返long数组，失败返回null</returns>
         public long[] VerifyForLongs(string token)
         {
             var data = Convert.FromBase64String(token);
@@ -139,7 +139,7 @@ namespace JMS.Token
             var signstr = sign(ret.ToJsonString());
             if (signstr == input)
                 return ret;
-            throw new Exception("Token验证失败");
+            return null;
         }
 
         static string GetHash(string content)
