@@ -56,19 +56,21 @@ namespace JMS.ExpressionBuilder
             return Expression.Condition(body, left, right);
         }
 
-        static Func<string, MicroServiceControllerBase, object[], MyResult, bool> build()
+        static Func<string, MicroServiceControllerBase, object[], MyResult, bool> build(Type controllerType)
         {
             var p1 = Expression.Parameter(typeof(string), "m");
             var p2 = Expression.Parameter(typeof(MicroServiceControllerBase), "c");
             var p3 = Expression.Parameter(typeof(object[]), "p");
             var p4 = Expression.Parameter(typeof(MyResult), "r");
 
+            var ctrlExp = Expression.Convert(p2, controllerType);
+
             List<Expression> callExps = new List<Expression>();
-            var methods = typeof(MicroServiceControllerBase).GetMethods(BindingFlags.Public | BindingFlags.Instance);
-            methods = methods.Where(m => m.DeclaringType == typeof(MicroServiceControllerBase)).ToArray();
+            var methods = controllerType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            methods = methods.Where(m => m.DeclaringType == controllerType).ToArray();
             foreach (var method in methods)
             {
-                callExps.Add(getMethodCallExpression(method, typeof(MicroServiceControllerBase), p2, p3));
+                callExps.Add(getMethodCallExpression(method, controllerType, ctrlExp, p3));
             }
             var body = mergeMethods(p1, callExps, methods, p4, 0);
 
