@@ -36,13 +36,13 @@ namespace JMS
             this.InvokingInfo.ServiceLocation = location;
         }
 
-       public void ReConnect(MicroServiceTransaction tran)
+       public void ReConnect(JMSClient tran)
         {
             ReConnectCount++;
                NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.InvokingInfo.ServiceLocation.Host, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
         }
 
-        public T Invoke<T>(string method,MicroServiceTransaction tran, params object[] parameters)
+        public T Invoke<T>(string method,JMSClient tran, params object[] parameters)
         {
             if(tran == null)
             {
@@ -106,7 +106,7 @@ namespace JMS
 
 
         }
-        public Task<T> InvokeAsync<T>(string method,  MicroServiceTransaction tran, params object[] parameter)
+        public Task<T> InvokeAsync<T>(string method,  JMSClient tran, params object[] parameter)
         {
             return Task.Run<T>(() => Invoke<T>(method,  tran, parameter));
         }

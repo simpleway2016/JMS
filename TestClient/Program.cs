@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace TestClient
                 loggingBuilder.AddConsole(); // 将日志输出到控制台
             });
             var serviceProvider = services.BuildServiceProvider();
-            var logger = serviceProvider.GetService<ILogger<MicroServiceTransaction>>();
+            var logger = serviceProvider.GetService<ILogger<JMSClient>>();
 
             //////////测试多个网关
             //try
@@ -32,7 +33,7 @@ namespace TestClient
             //            new NetAddress("192.168.40.132", 8900),
             //        };
 
-            //        using (var tran = new MicroServiceTransaction(gateways, null, logger))
+            //        using (var tran = new JMSClient(gateways, null, logger))
             //        {
             //            var bankService = tran.GetMicroService<BankService>();
             //            bankService.CreateBankAccount(99, 0, 1);
@@ -49,7 +50,7 @@ namespace TestClient
             ///肯定成功的测试
             //try
             //{
-            //    using (var tran = new MicroServiceTransaction("192.168.40.131", 7900, null, logger))
+            //    using (var tran = new JMSClient("192.168.40.131", 7900, null, logger))
             //    {
             //        var userInfoService = tran.GetMicroService("UserInfo");
             //        userInfoService.InvokeAsync("CreateUser", 10, 1);
@@ -70,7 +71,7 @@ namespace TestClient
             ///肯定出错的测试（异步）
             //try
             //{
-            //    using (var tran = new MicroServiceTransaction("192.168.40.131", 7900, null, logger))
+            //    using (var tran = new JMSClient("192.168.40.131", 7900, null, logger))
             //    {
             //        var userInfoService = tran.GetMicroService("UserInfo");
             //        userInfoService.InvokeAsync("CreateUser", 3, 1);
@@ -92,7 +93,7 @@ namespace TestClient
             ///肯定出错的测试（同步）
             //try
             //{
-            //    using (var tran = new MicroServiceTransaction("192.168.40.131", 7900, null, logger))
+            //    using (var tran = new JMSClient("192.168.40.131", 7900, null, logger))
             //    {
             //        var userInfoService = tran.GetMicroService("UserInfo");
             //        userInfoService.Invoke("CreateUser", 0, 1);
@@ -114,7 +115,7 @@ namespace TestClient
             ///创建银行账户，提交事务时，会失败，主要测试日志是否详细记录下请求信息
             //try
             //{
-            //    using (var tran = new MicroServiceTransaction("192.168.40.131", 7900, null, logger))
+            //    using (var tran = new JMSClient("192.168.40.131", 7900, null, logger))
             //    {
             //        var userInfoService = tran.GetMicroService("UserInfo");
             //        userInfoService.InvokeAsync("CreateUser", 1, 1);
@@ -136,7 +137,7 @@ namespace TestClient
             ///中断进程，让微服务自己回滚事务
             //try
             //{
-            //    using (var tran = new MicroServiceTransaction("192.168.40.131", 7900, null, logger))
+            //    using (var tran = new JMSClient("192.168.40.131", 7900, null, logger))
             //    {
             //        var userInfoService = tran.GetMicroService("UserInfo");
             //        userInfoService.InvokeAsync("CreateUser", 1, 1);

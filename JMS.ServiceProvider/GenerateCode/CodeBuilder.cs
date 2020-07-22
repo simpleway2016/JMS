@@ -40,7 +40,22 @@ namespace JMS.GenerateCode
             {
                 try
                 {
+                    List<XmlElement> childeles = new List<XmlElement>();
                     foreach( XmlElement ele in commentEle.ChildNodes)
+                    {
+                        childeles.Add(ele);
+                    }
+                    var parameters = methodInfo.GetParameters();
+                    if(parameters.Length > 0 && parameters[0].ParameterType == typeof(TransactionDelegate))
+                    {
+                        var firstParamEle = childeles.FirstOrDefault(m => m.Name == "param");
+                        if (firstParamEle != null && firstParamEle.GetAttribute("name") == parameters[0].Name)
+                        {
+                            childeles.Remove(firstParamEle);
+                        }
+                    }
+
+                    foreach (XmlElement ele in childeles)
                     {
                         codeMethod.Comments.Add(new CodeCommentStatement(ele.OuterXml, true));
                     }

@@ -46,7 +46,7 @@ namespace TestApplication
 
             var cert = new X509Certificate2("../../../../pfx/client.pfx", "123456");
 
-            using (var tran = new MicroServiceTransaction(new NetAddress[] { 
+            using (var tran = new JMSClient(new NetAddress[] { 
                 new NetAddress("localhost", 8911)
             },null,null , cert, cert))
             {

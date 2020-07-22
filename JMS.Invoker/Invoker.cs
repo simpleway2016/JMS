@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Way.Lib;
@@ -10,10 +11,10 @@ namespace JMS
 {
     public class Invoker: IMicroService
     {
-        public MicroServiceTransaction ServiceTransaction { get; }
+        public JMSClient ServiceTransaction { get; }
         string _serviceName;
         RegisterServiceLocation _serviceLocation;
-        public Invoker(MicroServiceTransaction ServiceTransaction, string serviceName)
+        public Invoker(JMSClient ServiceTransaction, string serviceName)
         {
             this.ServiceTransaction = ServiceTransaction;
             _serviceName = serviceName;
@@ -48,6 +49,11 @@ namespace JMS
                 _serviceLocation = serviceLocation;
 
                 NetClientPool.AddClientToPool(netclient);
+            }
+            catch(SocketException ex)
+            {
+                netclient.Dispose();
+                throw new MissMasterGatewayException(ex.Message);
             }
             catch (Exception)
             {

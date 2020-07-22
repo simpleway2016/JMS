@@ -17,9 +17,9 @@ using Way.Lib;
 namespace Microsoft.AspNetCore.Mvc
 {
     /// <summary>
-    /// 微服务事务管理
+    /// 微服务客户端
     /// </summary>
-    public class MicroServiceTransaction : IDisposable
+    public class JMSClient : IDisposable
     {
         List<InvokeConnect> _Connects = new List<InvokeConnect>();
         List<Task> _Tasks = new List<Task>();
@@ -48,7 +48,7 @@ namespace Microsoft.AspNetCore.Mvc
         public X509Certificate2 GatewayClientCertificate { get;private set; }
         public X509Certificate2 ServiceClientCertificate { get; private set; }
 
-        ILogger<MicroServiceTransaction> _logger;
+        ILogger<JMSClient> _logger;
         /// <summary>
         /// 
         /// </summary>
@@ -58,7 +58,7 @@ namespace Microsoft.AspNetCore.Mvc
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public MicroServiceTransaction(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<MicroServiceTransaction> logger = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public JMSClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<JMSClient> logger = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
             GatewayAddress = new NetAddress(gatewayAddress, port);
             GatewayClientCertificate = gatewayClientCert;
@@ -74,7 +74,7 @@ namespace Microsoft.AspNetCore.Mvc
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public MicroServiceTransaction(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<MicroServiceTransaction> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public JMSClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<JMSClient> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
             _logger = logger;
             this.ProxyAddress = proxyAddress;
