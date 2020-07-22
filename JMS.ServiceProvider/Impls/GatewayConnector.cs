@@ -52,7 +52,27 @@ namespace JMS.Impls
         {
             new Thread(connect).Start();
         }
+        public void OnServiceNameListChanged()
+        {
+            if (_microServiceHost.MasterGatewayAddress == null)
+                return;
 
+            using (var client = CreateClient(_microServiceHost.MasterGatewayAddress))
+            {
+                client.WriteServiceData(new GatewayCommand()
+                {
+                    Type = CommandType.ServiceNameListChanged,
+                    Content = new RegisterServiceInfo
+                    {
+                        ServiceNames = _microServiceHost.ServiceNames.Where(m=>m.Value.Enable).Select(m=>m.Key).ToArray(),
+                        Port = _microServiceHost.ServicePort,
+                        MaxThread = Environment.ProcessorCount,
+                        ServiceId = _microServiceHost.Id
+                    }.ToJsonString()
+                });
+                client.ReadServiceObject<InvokeResult>();
+            }
+        }
         /// <summary>
         /// 找出master网关
         /// </summary>
@@ -137,7 +157,7 @@ namespace JMS.Impls
                     Type = CommandType.RegisterSerivce,
                     Content = new RegisterServiceInfo
                     {
-                        ServiceNames = _microServiceHost.ServiceNames.Keys.ToArray(),
+                        ServiceNames = _microServiceHost.ServiceNames.Where(m => m.Value.Enable).Select(m => m.Key).ToArray(),
                         Port = _microServiceHost.ServicePort,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id

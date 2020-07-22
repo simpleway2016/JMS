@@ -103,4 +103,5 @@ class ControllerTypeInfo
 {
     public Type Type;
     public MethodInfo[] Methods;
+    public bool Enable;
 }

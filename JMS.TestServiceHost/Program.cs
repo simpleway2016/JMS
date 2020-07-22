@@ -9,6 +9,29 @@ using System.Threading;
 
 namespace JMS
 {
+    class AutoRun : IScheduleTask
+    {
+        MicroServiceHost _host;
+        public AutoRun(MicroServiceHost microServiceHost)
+        {
+            _host = microServiceHost;
+        }
+
+        int count = 0;
+        public double[] Timers => null;
+
+        public int Interval => 2000;
+
+        public void Run()
+        {
+            count++;
+            if(count == 10)
+            {
+                _host.SetServiceEnable("Controller1" , true);
+            }
+            Console.WriteLine("AutoRunning");
+        }
+    }
     class Program
     {
         static void Main(string[] args)
@@ -65,6 +88,8 @@ namespace JMS
 
             msp.Register<Controller1>("Controller1");
             msp.Register<Controller2>("Service2");
+            msp.SetServiceEnable("Controller1", false);
+            msp.RegisterScheduleTask<AutoRun>();
             msp.Build(8912, gateways)
                 .UseSSL(c =>
                 { //配置ssl

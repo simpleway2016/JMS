@@ -45,6 +45,17 @@ namespace JMS.Impls.CommandHandles
                 {
 
                     var location = _serviceProvider.GetService<IServiceProviderAllocator>().Alloc(requestBody);
+                    if(location == null)
+                    {
+                        netclient.WriteServiceData(new RegisterServiceLocation
+                        {
+                            Host = "",
+                            Port = 0,
+                            TransactionId = cmd.Header["TranId"]
+                        });
+                        return;
+                    }
+
                     location.TransactionId = cmd.Header["TranId"];
                     netclient.WriteServiceData(location);
                 }

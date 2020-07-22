@@ -58,6 +58,8 @@ namespace JMS
             if(matchServices.Where(m => m.CpuUsage < 70).Count() > 0)
                 matchServices = matchServices.Where(m => m.CpuUsage < 70);
 
+            if (matchServices.Count() == 0)
+                return null;
             //查找一个客户占用比较低的机器
             var item = matchServices.OrderBy(m => m.Usage).FirstOrDefault();
             Interlocked.Increment(ref item.RequestQuantity);

@@ -99,18 +99,29 @@ namespace JMS
         /// <param name="serviceName">服务名称</param>
         public void Register(Type contollerType, string serviceName)
         {
-            
-
             _services.AddTransient(contollerType);
             ServiceNames[serviceName] = new ControllerTypeInfo()
             {
                 Type = contollerType,
+                Enable = true,
                 Methods = contollerType.GetTypeInfo().DeclaredMethods.Where(m =>
                     m.IsStatic == false &&
                     m.IsPublic &&
                     m.DeclaringType != typeof(MicroServiceControllerBase)
                     && m.DeclaringType != typeof(object)).ToArray()
             };
+            
+        }
+
+        /// <summary>
+        /// 设置服务可用
+        /// </summary>
+        /// <param name="serviceName"></param>
+        /// <param name="enable"></param>
+        public void SetServiceEnable(string serviceName, bool enable)
+        {
+            ServiceNames[serviceName].Enable = enable;
+            _GatewayConnector?.OnServiceNameListChanged();
         }
 
         /// <summary>

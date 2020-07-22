@@ -13,6 +13,7 @@ using Way.Lib;
 
 namespace TestApplication
 {
+
     class Program
     {
         static void Main(string[] args)
@@ -35,7 +36,6 @@ namespace TestApplication
                     client = new NetClient("127.0.0.1", 8912);
                     client.Dispose();
 
-                    Thread.Sleep(1000);
                     break;
                 }
                 catch (Exception)
@@ -66,9 +66,14 @@ namespace TestApplication
                 //var locations = tran.ListMicroService("");//列出所有微服务
                 //Console.WriteLine("微服务位置：{0}", locations.ToJsonString());
 
-               //var code =  tran.GetMicroService("Controller1").GetServiceClassCode("TestApplication", "Controller1");
+                //var code =  tran.GetMicroService("Controller1").GetServiceClassCode("TestApplication", "Controller1");
 
-                var controller1 = tran.GetMicroService<Controller1>();
+                Controller1 controller1 = null;
+                while (controller1 == null)
+                {
+                    Thread.Sleep(1000);
+                    controller1 = tran.GetMicroService<Controller1>();
+                }
                 var Service2 = tran.GetMicroService("Service2");
 
                 var ret = controller1.Test(123, "Jack.T");

@@ -10,5 +10,6 @@ namespace JMS.Interfaces
         NetClient CreateClient(NetAddress addr);
         void DisconnectGateway();
         void ConnectAsync();
+        void OnServiceNameListChanged();
     }
 }

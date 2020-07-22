@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace JMS.Interfaces
+namespace JMS
 {
     /// <summary>
     /// 后台定时运行的任务
