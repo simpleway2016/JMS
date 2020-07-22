@@ -7,20 +7,21 @@ using System.Linq;
 
 namespace JMS.ExpressionBuilder
 {
+    class ExpressionResult
+    {
+        public object result;
+        public bool setValue(object v)
+        {
+            result = v;
+            return true;
+        }
+    }
     /// <summary>
     /// 测试发现构建表达式委托，在运行一些稍微参数多的方法，并没有比反射快多少
     /// </summary>
     class Helper
     {
-        class MyResult
-        {
-            public object result;
-            public bool setValue(object v)
-            {
-                result = v;
-                return true;
-            }
-        }
+       
 
         static Expression getMethodCallExpression(MethodInfo method, Type controllerType, Expression c, Expression ps)
         {
@@ -45,7 +46,7 @@ namespace JMS.ExpressionBuilder
             var left = methodExps[index];
             Expression body = Expression.Equal(nameExp, Expression.Constant(methods[index].Name));
 
-            left = Expression.Call(resultObjExp, typeof(MyResult).GetMethod("setValue"), left);
+            left = Expression.Call(resultObjExp, typeof(ExpressionResult).GetMethod("setValue"), left);
 
             Expression right = null;
             if (index < methodExps.Count - 1)
@@ -56,18 +57,18 @@ namespace JMS.ExpressionBuilder
             return Expression.Condition(body, left, right);
         }
 
-        static Func<string, object, object[], MyResult, bool> build(Type controllerType)
+        static Func<string, object, object[], ExpressionResult, bool> build(Type controllerType)
         {
             var p1 = Expression.Parameter(typeof(string), "m");
             var p2 = Expression.Parameter(typeof(object), "c");
             var p3 = Expression.Parameter(typeof(object[]), "p");
-            var p4 = Expression.Parameter(typeof(MyResult), "r");
+            var p4 = Expression.Parameter(typeof(ExpressionResult), "r");
 
             var ctrlExp = Expression.Convert(p2, controllerType);
 
             List<Expression> callExps = new List<Expression>();
             var methods = controllerType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
-            methods = methods.Where(m => m.DeclaringType == controllerType).ToArray();
+            methods = methods.Where(m => m.DeclaringType == controllerType && m.ReturnType != typeof(void)).ToArray();
             foreach (var method in methods)
             {
                 callExps.Add(getMethodCallExpression(method, controllerType, ctrlExp, p3));
@@ -76,7 +77,7 @@ namespace JMS.ExpressionBuilder
 
             var ee2 = Expression.Lambda(body, p1, p2, p3, p4);
 
-            var func = (Func<string, object, object[], MyResult, bool>)ee2.Compile();
+            var func = (Func<string, object, object[], ExpressionResult, bool>)ee2.Compile();
             return func;
         }
     }
