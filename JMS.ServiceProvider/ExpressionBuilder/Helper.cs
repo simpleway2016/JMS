@@ -8,7 +8,7 @@ using System.Linq;
 namespace JMS.ExpressionBuilder
 {
     /// <summary>
-    /// 测试发现表达式在运行一些稍微变量多的方法，并没有比反射快多少
+    /// 测试发现构建表达式委托，在运行一些稍微参数多的方法，并没有比反射快多少
     /// </summary>
     class Helper
     {
