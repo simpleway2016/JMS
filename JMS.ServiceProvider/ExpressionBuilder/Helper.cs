@@ -56,10 +56,10 @@ namespace JMS.ExpressionBuilder
             return Expression.Condition(body, left, right);
         }
 
-        static Func<string, MicroServiceControllerBase, object[], MyResult, bool> build(Type controllerType)
+        static Func<string, object, object[], MyResult, bool> build(Type controllerType)
         {
             var p1 = Expression.Parameter(typeof(string), "m");
-            var p2 = Expression.Parameter(typeof(MicroServiceControllerBase), "c");
+            var p2 = Expression.Parameter(typeof(object), "c");
             var p3 = Expression.Parameter(typeof(object[]), "p");
             var p4 = Expression.Parameter(typeof(MyResult), "r");
 
@@ -76,7 +76,7 @@ namespace JMS.ExpressionBuilder
 
             var ee2 = Expression.Lambda(body, p1, p2, p3, p4);
 
-            var func = (Func<string, MicroServiceControllerBase, object[], MyResult, bool>)ee2.Compile();
+            var func = (Func<string, object, object[], MyResult, bool>)ee2.Compile();
             return func;
         }
     }
