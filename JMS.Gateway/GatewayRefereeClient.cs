@@ -93,7 +93,8 @@ namespace JMS
                                 this.IsMaster = true;
 
                                 //等待所有微服务上传locked key
-                                for (int i = 0; i < 10 && _waitServiceList.Count > 0; i++)
+                                var timeout = _lockKeyManager.KeyTimeout / 1000;
+                                for (int i = 0; i < timeout && _waitServiceList.Count > 0; i++)
                                 {
                                     _logger?.LogInformation("还有{0}个微服务没有报到 {1}" , _waitServiceList.Count , _waitServiceList.Keys.ToArray().ToJsonString());
                                     Thread.Sleep(1000);
