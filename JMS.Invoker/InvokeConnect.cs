@@ -44,7 +44,12 @@ namespace JMS
 
         public T Invoke<T>(string method,JMSClient tran, params object[] parameters)
         {
-            if(tran == null)
+            return this.Invoke<T>(method, tran, tran.GetCommandHeader(), parameters);
+        }
+
+        public T Invoke<T>(string method, JMSClient tran,Dictionary<string,string> headers , params object[] parameters)
+        {
+            if (tran == null)
             {
                 throw new ArgumentNullException("tran");
             }
@@ -56,7 +61,7 @@ namespace JMS
             {
                 var cmd = new InvokeCommand()
                 {
-                    Header = tran.GetCommandHeader(),
+                    Header = headers,
                     Service = this.InvokingInfo.ServiceName,
                     Method = method,
                     Parameters = parameters.Length == 0 ? null :
@@ -68,7 +73,7 @@ namespace JMS
                 var result = netclient.ReadServiceObject<InvokeResult<T>>();
                 if (result.Success == false)
                 {
-                    throw new RemoteException( tran.TransactionId, result.Error);
+                    throw new RemoteException(tran.TransactionId, result.Error);
                 }
                 NetClient = netclient;
 
@@ -86,14 +91,14 @@ namespace JMS
                 InvokeResult<string> otherObj = null;
                 try
                 {
-                    otherObj = ex.Source.FromJson<InvokeResult<string>>();                   
+                    otherObj = ex.Source.FromJson<InvokeResult<string>>();
                 }
                 catch
                 {
-                    
+
                 }
 
-                if(otherObj != null)
+                if (otherObj != null)
                     throw new ConvertException(otherObj.Data, $"无法将{otherObj.Data}实例化为{typeof(T).FullName}");
 
                 throw ex;
@@ -108,7 +113,8 @@ namespace JMS
         }
         public Task<T> InvokeAsync<T>(string method,  JMSClient tran, params object[] parameter)
         {
-            return Task.Run<T>(() => Invoke<T>(method,  tran, parameter));
+            var headers = tran.GetCommandHeader();
+            return Task.Run<T>(() => Invoke<T>(method,  tran,headers, parameter));
         }
 
     }

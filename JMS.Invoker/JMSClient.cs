@@ -37,7 +37,7 @@ namespace Microsoft.AspNetCore.Mvc
             }
         }
         /// <summary>
-        /// 是否支持事务，如果为false，微服务端会直接提交事务。默认为true
+        /// 是否支持事务，如果为false，这之后调用的微服务端会直接提交事务。默认为true
         /// </summary>
         public bool SupportTransaction
         {
