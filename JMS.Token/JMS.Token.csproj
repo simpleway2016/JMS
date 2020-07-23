@@ -8,11 +8,11 @@
     <Authors>Jack.T</Authors>
     <Company>JMS</Company>
     <Product>JMS</Product>
-    <Version>1.0.0.1</Version>
+    <Version>1.0.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Way.Lib" Version="2.0.8.1" />
+    <ProjectReference Include="..\JMS.Common\JMS.Common.csproj" />
   </ItemGroup>
 
 </Project>

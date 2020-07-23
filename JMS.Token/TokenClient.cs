@@ -39,7 +39,7 @@ namespace JMS.Token
                         SslStream sslStream = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
                         X509CertificateCollection certs = new X509CertificateCollection();
                         certs.Add(cert);
-                        sslStream.AuthenticateAsClient("SslSocket", certs, System.Security.Authentication.SslProtocols.Tls, true);
+                        sslStream.AuthenticateAsClient("SslSocket", certs, NetClient.SSLProtocols, true);
                         client.InnerStream = sslStream;
                     }
                     var len = client.ReadInt();

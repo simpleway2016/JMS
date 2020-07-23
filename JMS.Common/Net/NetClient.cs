@@ -3,6 +3,7 @@ using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace JMS
 {
     public class NetClient:Way.Lib.NetStream
     {
+        public const SslProtocols SSLProtocols = SslProtocols.Tls12;
         /// <summary>
         /// 启动GZip压缩的起点
         /// </summary>

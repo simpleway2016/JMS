@@ -60,7 +60,7 @@ namespace JMS.Impls
                     if (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     {
                         var sslts = new SslStream(netclient.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
-                        sslts.AuthenticateAsServer(_SSLConfiguration.ServerCertificate, true, System.Security.Authentication.SslProtocols.Tls, true);
+                        sslts.AuthenticateAsServer(_SSLConfiguration.ServerCertificate, true, NetClient.SSLProtocols, true);
                         netclient.InnerStream = sslts;
                     }
 

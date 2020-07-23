@@ -16,7 +16,7 @@ namespace JMS.Net
                 SslStream sslStream = new SslStream(this.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
                 X509CertificateCollection certs = new X509CertificateCollection();
                 certs.Add(sSLConfiguration.GatewayClientCertificate);
-                sslStream.AuthenticateAsClient("SslSocket", certs, System.Security.Authentication.SslProtocols.Tls, true);
+                sslStream.AuthenticateAsClient("SslSocket", certs, NetClient.SSLProtocols, true);
                 this.InnerStream = sslStream;
             }
         }

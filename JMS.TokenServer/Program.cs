@@ -100,7 +100,7 @@ namespace JMS.TokenServer
                 if (ServerCert != null)
                 {
                     var sslts = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
-                    sslts.AuthenticateAsServer(ServerCert, true, System.Security.Authentication.SslProtocols.Tls, true);
+                    sslts.AuthenticateAsServer(ServerCert, true, NetClient.SSLProtocols, true);
                     client.InnerStream = sslts;
                 }
                 //data里面前面四个字节包含了长度
