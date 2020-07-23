@@ -98,6 +98,16 @@ namespace JMS.Impls
                     supportTran = true;
                 }
 
+                if(supportTran && string.IsNullOrEmpty(transactionDelegate.TransactionId))
+                {
+                    //调用端不需要事务支持，所以，直接提交
+                    if(transactionDelegate.CommitAction != null)
+                    {
+                        transactionDelegate.CommitAction();
+                    }
+                    transactionDelegate = null;
+                    supportTran = false;
+                }
 
                 netclient.WriteServiceData(new InvokeResult
                 {

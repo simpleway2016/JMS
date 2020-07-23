@@ -36,6 +36,14 @@ namespace Microsoft.AspNetCore.Mvc
                 }
             }
         }
+        /// <summary>
+        /// 是否支持事务，如果为false，微服务端会直接提交事务。默认为true
+        /// </summary>
+        public bool SupportTransaction
+        {
+            get;
+            set;
+        }
         bool _finished = false;
 
         static Way.Lib.Collections.ConcurrentList<NetAddress> HistoryMasterAddressList = new Way.Lib.Collections.ConcurrentList<NetAddress>();
@@ -60,6 +68,7 @@ namespace Microsoft.AspNetCore.Mvc
         /// <param name="serviceClientCert">与微服务互通的证书</param>
         public JMSClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<JMSClient> logger = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
+            this.SupportTransaction = true;
             GatewayAddress = new NetAddress(gatewayAddress, port);
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
@@ -76,6 +85,7 @@ namespace Microsoft.AspNetCore.Mvc
         /// <param name="serviceClientCert">与微服务互通的证书</param>
         public JMSClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<JMSClient> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
+            this.SupportTransaction = true;
             _logger = logger;
             this.ProxyAddress = proxyAddress;
             GatewayClientCertificate = gatewayClientCert;
@@ -152,8 +162,10 @@ namespace Microsoft.AspNetCore.Mvc
         public Dictionary<string,string> GetCommandHeader()
         {
             var header = new Dictionary<string, string>();
-            if(!string.IsNullOrEmpty(this.TransactionId))
+            if (SupportTransaction && !string.IsNullOrEmpty(this.TransactionId))
                 header["TranId"] = this.TransactionId;
+            else
+                header["TranId"] = "";
 
             foreach (var pair in _Header)
             {
