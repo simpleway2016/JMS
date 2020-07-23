@@ -33,15 +33,8 @@ namespace JMS.Token
                     if (Keys != null)
                         return;
 
-                    NetStream client = new NetStream(serverAddress, serverPort);
-                    if (_cert != null)
-                    {
-                        SslStream sslStream = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
-                        X509CertificateCollection certs = new X509CertificateCollection();
-                        certs.Add(cert);
-                        sslStream.AuthenticateAsClient("SslSocket", certs, NetClient.SSLProtocols, true);
-                        client.InnerStream = sslStream;
-                    }
+                    CertClient client = new CertClient(serverAddress, serverPort , _cert);
+
                     var len = client.ReadInt();
                     Keys = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
                     Task.Run(() => {

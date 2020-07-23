@@ -7,23 +7,10 @@ using System.Text;
 
 namespace JMS.Net
 {
-    class GatewayClient : NetClient
+    class GatewayClient : CertClient
     {
-        public GatewayClient(NetAddress addr,SSLConfiguration sSLConfiguration):base(addr)
+        public GatewayClient(NetAddress addr,SSLConfiguration sSLConfiguration):base(addr , sSLConfiguration != null ? sSLConfiguration.GatewayClientCertificate : null )
         {
-            if (sSLConfiguration != null && sSLConfiguration.GatewayClientCertificate != null)
-            {
-                SslStream sslStream = new SslStream(this.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
-                X509CertificateCollection certs = new X509CertificateCollection();
-                certs.Add(sSLConfiguration.GatewayClientCertificate);
-                sslStream.AuthenticateAsClient("SslSocket", certs, NetClient.SSLProtocols, true);
-                this.InnerStream = sslStream;
-            }
-        }
-
-        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
         }
     }
 }

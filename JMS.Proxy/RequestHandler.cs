@@ -31,7 +31,7 @@ namespace JMS.Proxy
                 if (_proxy.ServerCert != null)
                 {
                     var sslts = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
-                    sslts.AuthenticateAsServer(_proxy.ServerCert, true, NetClient.SSLProtocols, true);
+                    sslts.AuthenticateAsServer(_proxy.ServerCert, true, NetClient.SSLProtocols, false);
                     client.InnerStream = sslts;
                 }
 
