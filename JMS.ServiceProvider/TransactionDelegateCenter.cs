@@ -13,11 +13,13 @@ namespace JMS
     class TransactionDelegateCenter
     {
         ILogger<TransactionDelegateCenter> _logger;
+        ILogger<TransactionDelegate> _loggerTran;
         public List<TransactionDelegate> List { get; set; }
-        public TransactionDelegateCenter(ILogger<TransactionDelegateCenter> logger)
+        public TransactionDelegateCenter(ILogger<TransactionDelegateCenter> logger, ILogger<TransactionDelegate> loggerTran)
         {
             List = new List<TransactionDelegate>();
             _logger = logger;
+            _loggerTran = loggerTran;
             new Thread(checkTimeoutTransaction).Start();
         }
 
@@ -100,7 +102,12 @@ namespace JMS
                             if (delegateItem.Handled)
                                 return false;
 
-                            delegateItem.CommitAction?.Invoke();
+                            if(delegateItem.CommitAction != null)
+                            {
+                                delegateItem.CommitAction();
+                                _loggerTran?.LogInformation("事务{0}提交完毕，请求数据:{1}", delegateItem.TransactionId, delegateItem.RequestCommand.ToJsonString());
+                            }
+                          
                             delegateItem.Handled = true;
                         }
                     }
@@ -139,7 +146,11 @@ namespace JMS
                             if (delegateItem.Handled)
                                 return false;
 
-                            delegateItem.RollbackAction?.Invoke();
+                            if (delegateItem.RollbackAction != null)
+                            {
+                                delegateItem.RollbackAction();
+                                _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", delegateItem.TransactionId, delegateItem.RequestCommand.ToJsonString());
+                            }
                             delegateItem.Handled = true;
                         }
                     }
@@ -182,7 +193,11 @@ namespace JMS
                         {
                             if (delegateItem.Handled == false)
                             {
-                                delegateItem.RollbackAction?.Invoke();
+                                if (delegateItem.RollbackAction != null)
+                                {
+                                    delegateItem.RollbackAction();
+                                    _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", delegateItem.TransactionId, delegateItem.RequestCommand.ToJsonString());
+                                }
                                 delegateItem.Handled = true;
                             }
                         }

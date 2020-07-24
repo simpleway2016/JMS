@@ -16,13 +16,16 @@ namespace JMS.Impls
         MicroServiceHost _MicroServiceProvider;
         TransactionDelegateCenter _transactionDelegateCenter;
         ILogger<InvokeRequestHandler> _logger;
+        ILogger<TransactionDelegate> _loggerTran;
         public InvokeRequestHandler(TransactionDelegateCenter transactionDelegateCenter,
             ILogger<InvokeRequestHandler> logger,
+             ILogger<TransactionDelegate> loggerTran,
             MicroServiceHost microServiceProvider)
         {
             _transactionDelegateCenter = transactionDelegateCenter;
             _MicroServiceProvider = microServiceProvider;
             _logger = logger;
+            _loggerTran = loggerTran;
         }
 
         public InvokeType MatchType => InvokeType.Invoke;
@@ -132,7 +135,10 @@ namespace JMS.Impls
                         transactionDelegate = null;
 
                         if (tran != null && tran.CommitAction != null)
+                        {
                             tran.CommitAction();
+                            _loggerTran?.LogInformation("事务{0}提交完毕，请求数据:{1}", tran.TransactionId, tran.RequestCommand.ToJsonString());
+                        }
                         netclient.WriteServiceData(new InvokeResult() { Success = true });
                         return;
                     }
@@ -142,7 +148,10 @@ namespace JMS.Impls
                         transactionDelegate = null;
 
                         if (tran != null && tran.RollbackAction != null)
+                        {
                             tran.RollbackAction();
+                            _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", tran.TransactionId, tran.RequestCommand.ToJsonString());
+                        }
                         netclient.WriteServiceData(new InvokeResult() { Success = true });
                         return;
                     }
@@ -175,8 +184,11 @@ namespace JMS.Impls
                 {
                     try
                     {
-                        if(transactionDelegate.RollbackAction != null)
+                        if (transactionDelegate.RollbackAction != null)
+                        {
                             transactionDelegate.RollbackAction();
+                            _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", transactionDelegate.TransactionId, transactionDelegate.RequestCommand.ToJsonString());
+                        }
                     }
                     catch (Exception rollex)
                     {
