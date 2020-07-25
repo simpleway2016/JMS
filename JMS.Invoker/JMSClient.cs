@@ -452,12 +452,12 @@ namespace Microsoft.AspNetCore.Mvc
                     NetClientPool.AddClientToPool(connect.NetClient);
                 });
 
-                if(errors.Count > 0 && invokeType == InvokeType.CommitTranaction)
+                if(errors.Count > 0)
                 {
                     var successed = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
 
                     if(successed.Length > 0)
-                        _logger?.LogError($"事务:{TransactionId}已经成功提交，详细请求信息：${successed.ToJsonString()}");
+                        _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction?"提交":"回滚")}，详细请求信息：${successed.ToJsonString()}");
                     foreach (var err in errors)
                         _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
                 }
