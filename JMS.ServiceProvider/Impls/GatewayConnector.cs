@@ -59,23 +59,16 @@ namespace JMS.Impls
 
             using (var client = CreateClient(_microServiceHost.MasterGatewayAddress))
             {
-                var registerinfo = new RegisterServiceInfo
-                {
-                    ServiceNames = _microServiceHost.ServiceNames.Where(m => m.Value.Enable).Select(m => m.Key).ToArray(),
-                    Port = _microServiceHost.ServicePort,
-                    MaxThread = Environment.ProcessorCount,
-                    ServiceId = _microServiceHost.Id
-                };
-
-                if(_microServiceHost.ServiceAddress != null)
-                {
-                    registerinfo.Port = _microServiceHost.ServiceAddress.Port;
-                    registerinfo.Host = _microServiceHost.ServiceAddress.Address;
-                }
                 client.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.ServiceNameListChanged,
-                    Content = registerinfo.ToJsonString()
+                    Content = new RegisterServiceInfo
+                    {
+                        ServiceNames = _microServiceHost.ServiceNames.Where(m=>m.Value.Enable).Select(m=>m.Key).ToArray(),
+                        Port = _microServiceHost.ServicePort,
+                        MaxThread = Environment.ProcessorCount,
+                        ServiceId = _microServiceHost.Id
+                    }.ToJsonString()
                 });
                 client.ReadServiceObject<InvokeResult>();
             }
@@ -158,25 +151,18 @@ namespace JMS.Impls
                 findMasterGateway();
 
                 _client = CreateClient(_microServiceHost.MasterGatewayAddress);
-
-                var registerinfo = new RegisterServiceInfo
-                {
-                    ServiceNames = _microServiceHost.ServiceNames.Where(m => m.Value.Enable).Select(m => m.Key).ToArray(),
-                    Port = _microServiceHost.ServicePort,
-                    MaxThread = Environment.ProcessorCount,
-                    ServiceId = _microServiceHost.Id
-                };
-
-                if (_microServiceHost.ServiceAddress != null)
-                {
-                    registerinfo.Port = _microServiceHost.ServiceAddress.Port;
-                    registerinfo.Host = _microServiceHost.ServiceAddress.Address;
-                }
-
+                
                 _client.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.RegisterSerivce,
-                    Content = registerinfo.ToJsonString()
+                    Content = new RegisterServiceInfo
+                    {
+                        ServiceNames = _microServiceHost.ServiceNames.Where(m => m.Value.Enable).Select(m => m.Key).ToArray(),
+                        Port = _microServiceHost.ServicePort,
+                        ServiceAddress = _microServiceHost.ServiceAddress == null?null: _microServiceHost.ServiceAddress.Address,
+                        MaxThread = Environment.ProcessorCount,
+                        ServiceId = _microServiceHost.Id
+                    }.ToJsonString()
                 });
                 var ret = _client.ReadServiceObject<InvokeResult>();
                 if(ret.Success == false)

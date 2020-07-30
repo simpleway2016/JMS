@@ -39,6 +39,7 @@ namespace JMS.Impls.CommandHandles
             return list.Select(m => new RegisterServiceRunningInfo
             {
                 Host = m.Host,
+                ServiceAddress = m.ServiceAddress,
                 Port = m.Port,
                 ServiceId = m.ServiceId,
                 ServiceNames = m.ServiceNames,
