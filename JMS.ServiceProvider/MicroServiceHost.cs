@@ -38,6 +38,10 @@ namespace JMS
         /// </summary>
         internal int ClientConnected;
         public IServiceProvider ServiceProvider { private set; get; }
+        /// <summary>
+        /// 设置微服务的地址，如果为null，网关会使用微服务的外网ip作为服务地址
+        /// </summary>
+        public NetAddress ServiceAddress { get; set; }
 
         /// <summary>
         /// 依赖注入容器builded事件
