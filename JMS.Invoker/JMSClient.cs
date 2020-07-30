@@ -14,7 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
 
-namespace Microsoft.AspNetCore.Mvc
+namespace JMS
 {
     /// <summary>
     /// 微服务客户端
