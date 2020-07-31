@@ -25,6 +25,11 @@ namespace JMS.Impls
                 using (var client = new NetClient(socket))
                 {
                     var cmd = client.ReadServiceObject<GatewayCommand>();
+                    if (cmd == null)
+                    {
+                        client.Write(Encoding.UTF8.GetBytes("ok"));
+                        return;
+                    }
                     _logger?.LogDebug("收到命令，type:{0} content:{1}", cmd.Type, cmd.Content);
 
                     _manager.AllocHandler(cmd)?.Handle(client, cmd);

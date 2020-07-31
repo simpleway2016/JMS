@@ -67,6 +67,11 @@ namespace JMS.Impls
                     while (true)
                     {
                         var cmd = netclient.ReadServiceObject<InvokeCommand>();
+                        if (cmd == null)
+                        {
+                            netclient.Write(Encoding.UTF8.GetBytes("ok"));
+                            return;
+                        }
                         if (_processExitHandler.ProcessExited)
                             return;
 
