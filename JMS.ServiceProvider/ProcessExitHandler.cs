@@ -44,7 +44,7 @@ namespace JMS
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
             _ProcessExited = true;
-            _logger?.LogInformation("准备断开网关");
+            _logger?.LogInformation("等待IProcessExitHandler任务执行完毕");
             List<Task> tasks = new List<Task>();
             lock(_missions)
             {
@@ -60,7 +60,9 @@ namespace JMS
                 }
                 _missions.Clear();
             }
+            Task.WaitAll(tasks.ToArray());
 
+            _logger?.LogInformation("准备断开网关");
             try
             {
                 var client = new NetClient(_microServiceHost.MasterGatewayAddress);
@@ -87,9 +89,9 @@ namespace JMS
             while (_microServiceHost.ClientConnected > 0)
                 Thread.Sleep(1000);
 
-            _logger?.LogInformation("客户端请求数为零，等待IProcessExitHandler任务执行完毕");
+            _logger?.LogInformation("客户端请求数为零");
 
-            Task.WaitAll(tasks.ToArray());
+           
             Thread.Sleep(1000);
         }
 
