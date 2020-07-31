@@ -19,10 +19,10 @@ namespace JMS.Impls
         Dictionary<InvokeType, IRequestHandler> _cache = new Dictionary<InvokeType, IRequestHandler>();
         MicroServiceHost _MicroServiceProvider;
         ILogger<RequestReception> _logger;
-        ProcessExitHandler _processExitHandler;
+        IProcessExitHandler _processExitHandler;
         SSLConfiguration _SSLConfiguration;
         public RequestReception(ILogger<RequestReception> logger,
-            ProcessExitHandler processExitHandler,
+            IProcessExitHandler processExitHandler,
             MicroServiceHost microServiceProvider)
         {
             _logger = logger;

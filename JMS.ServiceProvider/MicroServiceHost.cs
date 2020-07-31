@@ -183,7 +183,7 @@ namespace JMS
             _services.AddSingleton<GetAllLockedKeysHandler>();
             _services.AddSingleton<UnLockedKeyAnywayHandler>();
             _services.AddSingleton<RollbackRequestHandler>();
-            _services.AddSingleton<ProcessExitHandler>();
+            _services.AddSingleton<IProcessExitHandler,ProcessExitHandler>();
             _services.AddSingleton<MicroServiceHost>(this);
             _services.AddSingleton<TransactionDelegateCenter>();
         }
@@ -242,7 +242,7 @@ namespace JMS
                 });
             }
 
-            using (var processExitHandler = ServiceProvider.GetService<ProcessExitHandler>())
+            using (var processExitHandler = (IProcessExitListener)ServiceProvider.GetService<IProcessExitHandler>())
             {
                 processExitHandler.Listen(this);
 
