@@ -34,7 +34,7 @@ namespace JMS.Token
                         return;
 
                     CertClient client = new CertClient(serverAddress, serverPort , _cert);
-
+                    client.Write(1);
                     var len = client.ReadInt();
                     Keys = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
                     Task.Run(() => {

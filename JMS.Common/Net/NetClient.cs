@@ -118,6 +118,9 @@ namespace JMS
             try
             {
                 var flag = this.ReadInt();
+                if (flag == 1179010630)
+                    return new byte[0];
+
                 var isgzip = (flag & 1) == 1;
                 this.KeepAlive = (flag & 2) == 2;
                 var len = flag >> 2;
