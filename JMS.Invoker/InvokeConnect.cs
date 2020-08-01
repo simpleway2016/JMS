@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -39,7 +38,7 @@ namespace JMS
        public void ReConnect(JMSClient tran)
         {
             ReConnectCount++;
-               NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.InvokingInfo.ServiceLocation.Host, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
+               NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.InvokingInfo.ServiceLocation.ServiceAddress, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
         }
 
         public T Invoke<T>(string method,JMSClient tran, params object[] parameters)
@@ -56,7 +55,7 @@ namespace JMS
             this.InvokingInfo.MethodName = method;
             this.InvokingInfo.Parameters = parameters;
 
-            var netclient = NetClientPool.CreateClient(tran.ProxyAddress, this.InvokingInfo.ServiceLocation.Host, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
+            var netclient = NetClientPool.CreateClient(tran.ProxyAddress, this.InvokingInfo.ServiceLocation.ServiceAddress, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
             try
             {
                 var cmd = new InvokeCommand()

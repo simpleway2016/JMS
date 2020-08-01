@@ -32,6 +32,12 @@ namespace JMS.Proxy
         public void Start()
         {
             var target = _client.ReadServiceObject<NetAddress>();
+            if(target == null)
+            {
+                _client.Write(Encoding.UTF8.GetBytes("ok"));
+                _client.Dispose();
+                return;
+            }
             _logger?.LogDebug("收到转发{0} {1}", target.Address, target.Port);
 
             _targetClient = new CertClient(target, _proxy.ClientCert);

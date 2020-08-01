@@ -43,6 +43,8 @@ namespace JMS.Impls
             this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
+            if (string.IsNullOrEmpty(ServiceInfo.ServiceAddress))
+                ServiceInfo.ServiceAddress = ServiceInfo.Host;
 
             _gatewayReferee.AddMicroService(ServiceInfo);
 

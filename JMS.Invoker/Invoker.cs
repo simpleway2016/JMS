@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -88,7 +87,7 @@ namespace JMS
 
         public string GetServiceClassCode(string nameSpace, string className)
         {
-            using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress ,new NetAddress(_serviceLocation.Host, _serviceLocation.Port) , ServiceTransaction.ServiceClientCertificate))
+            using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress ,new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port) , ServiceTransaction.ServiceClientCertificate))
             {
                 netclient.WriteServiceData(new InvokeCommand()
                 {

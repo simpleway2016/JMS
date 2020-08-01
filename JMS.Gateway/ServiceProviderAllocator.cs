@@ -66,6 +66,7 @@ namespace JMS
             item.Usage = item.RequestQuantity / (decimal)item.ServiceInfo.MaxThread;
             return new RegisterServiceLocation { 
                 Host = item.ServiceInfo.Host,
+                ServiceAddress = item.ServiceInfo.ServiceAddress,
                 Port = item.ServiceInfo.Port
             };
         }

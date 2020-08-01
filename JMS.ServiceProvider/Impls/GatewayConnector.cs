@@ -159,6 +159,7 @@ namespace JMS.Impls
                     {
                         ServiceNames = _microServiceHost.ServiceNames.Where(m => m.Value.Enable).Select(m => m.Key).ToArray(),
                         Port = _microServiceHost.ServicePort,
+                        ServiceAddress = _microServiceHost.ServiceAddress == null?null: _microServiceHost.ServiceAddress.Address,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id
                     }.ToJsonString()

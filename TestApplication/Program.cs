@@ -6,9 +6,7 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using JMS;
-
 using JMS.Token;
-using Microsoft.AspNetCore.Mvc;
 using Way.Lib;
 
 namespace TestApplication

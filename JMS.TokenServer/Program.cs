@@ -103,9 +103,18 @@ namespace JMS.TokenServer
                     sslts.AuthenticateAsServer(ServerCert, true, NetClient.SSLProtocols, false);
                     client.InnerStream = sslts;
                 }
-                //data里面前面四个字节包含了长度
-                client.Write(data);
-                client.ReadInt();
+               
+                var flag = client.ReadInt();
+                if (flag == 0 || flag == 1179010630)
+                {
+                    client.Write(Encoding.UTF8.GetBytes("ok"));
+                }
+                else
+                { 
+                    //data里面前面四个字节包含了长度
+                    client.Write(data);
+                    client.ReadInt();
+                }
             }
             catch(SocketException)
             {

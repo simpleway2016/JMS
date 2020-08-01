@@ -19,10 +19,10 @@ namespace JMS.Impls
         Dictionary<InvokeType, IRequestHandler> _cache = new Dictionary<InvokeType, IRequestHandler>();
         MicroServiceHost _MicroServiceProvider;
         ILogger<RequestReception> _logger;
-        ProcessExitHandler _processExitHandler;
+        IProcessExitHandler _processExitHandler;
         SSLConfiguration _SSLConfiguration;
         public RequestReception(ILogger<RequestReception> logger,
-            ProcessExitHandler processExitHandler,
+            IProcessExitHandler processExitHandler,
             MicroServiceHost microServiceProvider)
         {
             _logger = logger;
@@ -67,6 +67,11 @@ namespace JMS.Impls
                     while (true)
                     {
                         var cmd = netclient.ReadServiceObject<InvokeCommand>();
+                        if (cmd == null)
+                        {
+                            netclient.Write(Encoding.UTF8.GetBytes("ok"));
+                            return;
+                        }
                         if (_processExitHandler.ProcessExited)
                             return;
 
