@@ -29,7 +29,14 @@ public class MicroServiceControllerBase
     }
     public TransactionDelegate TransactionControl { set; get; }
 
-    public string TransactionId => this.Header["TranId"];
+    string _transactionid;
+    public string TransactionId
+    {
+        get
+        {
+            return _transactionid ??= this.Header["TranId"];
+        }
+    }
 
     internal static ThreadLocal<MicroServiceControllerBase> ThreadCurrent = new ThreadLocal<MicroServiceControllerBase>();
     /// <summary>
@@ -70,7 +77,7 @@ public class MicroServiceControllerBase
     /// <returns>是否成功</returns>
     public bool TryLock(string key)
     {
-        return _keyLocker.TryLock( this.Header["TranId"], key);
+        return _keyLocker.TryLock( this.TransactionId, key);
     }
     /// <summary>
     /// 释放锁定的key
@@ -78,7 +85,7 @@ public class MicroServiceControllerBase
     /// <param name="key"></param>
     public bool TryUnLock(string key)
     {
-        return _keyLocker.TryUnLock(this.Header["TranId"], key);
+        return _keyLocker.TryUnLock(this.TransactionId, key);
     }
 
     public virtual void InvokeError(string actionName, object[] parameters,Exception error)

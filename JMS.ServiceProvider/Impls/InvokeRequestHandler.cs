@@ -101,7 +101,7 @@ namespace JMS.Impls
                     supportTran = true;
                 }
 
-                if(supportTran && string.IsNullOrEmpty(transactionDelegate.TransactionId))
+                if(supportTran && cmd.Header.ContainsKey("Tran") && cmd.Header["Tran"] == "0")
                 {
                     //调用端不需要事务支持，所以，直接提交
                     if(transactionDelegate.CommitAction != null)

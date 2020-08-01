@@ -156,16 +156,18 @@ namespace Microsoft.AspNetCore.Mvc
         {
             if (key == "TranId")
                 throw new Exception("key='TranId' is not allow");
+            else if (key == "Tran")
+                throw new Exception("key='Tran' is not allow");
             _Header[key] = value;
         }
 
         public Dictionary<string,string> GetCommandHeader()
         {
             var header = new Dictionary<string, string>();
-            if (SupportTransaction && !string.IsNullOrEmpty(this.TransactionId))
-                header["TranId"] = this.TransactionId;
-            else
-                header["TranId"] = "";
+            header["TranId"] = this.TransactionId;
+
+            if (SupportTransaction == false)
+                header["Tran"] = "0";
 
             foreach (var pair in _Header)
             {

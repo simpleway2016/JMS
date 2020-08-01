@@ -9,7 +9,7 @@ namespace JMS
     {
         public Controller2(ILogger<Controller2> logger)
         {
-            this.TransactionControl = new TransactionDelegate(this.Header["TranId"]) { 
+            this.TransactionControl = new TransactionDelegate(this.TransactionId) { 
                 CommitAction = () => {
                     this.TryUnLock("testkey");
                     logger.LogInformation("unlocked testkey");
