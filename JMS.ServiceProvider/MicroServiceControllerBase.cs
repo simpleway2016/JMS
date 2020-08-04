@@ -20,7 +20,7 @@ public class MicroServiceControllerBase
     {
         get
         {
-            if(_Header == null)
+            if(_Header == null && RequestingCommand.Value != null)
             {
                 _Header = RequestingCommand.Value.Header;
             }
