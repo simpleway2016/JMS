@@ -73,7 +73,7 @@ namespace TestApplication
                     controller1 = tran.GetMicroService<Controller1>();
                 }
                 var Service2 = tran.GetMicroService("Service2");
-
+                var code = tran.GetMicroService("Controller1").GetServiceClassCode("abc", "ad");
                 var ret = controller1.Test(123, "Jack.T");
                 Console.WriteLine("调用结果：{0}", ret);
 

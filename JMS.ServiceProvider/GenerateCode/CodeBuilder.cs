@@ -41,7 +41,7 @@ namespace JMS.GenerateCode
             {
                 try
                 {
-                    methodComment += commentEle.SelectSingleNode("//summary").InnerText.Replace("\r", "").Replace("\n", " ").Trim();
+                    methodComment += commentEle.SelectSingleNode("summary").InnerText.Replace("\r", "").Replace("\n", " ").Trim();
                 }
                 catch
                 {
