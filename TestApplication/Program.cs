@@ -83,7 +83,7 @@ namespace TestApplication
                 task.Wait();
                 Console.WriteLine("异步调用结果：{0}", task.Result);
 
-                Service2.InvokeAsync("GetName");
+                ret =  Service2.Invoke<string>("GetName" , new { Name = "Jack"});
 
                 tran.Commit();
             }

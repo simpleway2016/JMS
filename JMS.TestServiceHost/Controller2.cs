@@ -5,6 +5,10 @@ using System.Text;
 
 namespace JMS
 {
+    class TestObject
+    {
+        public string Name;
+    }
     class Controller2 : MicroServiceControllerBase
     {
         public Controller2(ILogger<Controller2> logger)
@@ -25,9 +29,9 @@ namespace JMS
         /// 获取名称
         /// </summary>
         /// <returns></returns>
-        public string GetName()
+        public string GetName(TestObject t)
         {
-            return "lock result: " + this.TryLock("testkey");
+            return "lock result: " + this.TryLock("testkey") + " name:" + t.Name;
         }
     }
 }
