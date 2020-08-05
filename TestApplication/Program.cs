@@ -48,6 +48,7 @@ namespace TestApplication
                 new NetAddress("localhost", 8911)
             },null,null , cert, cert))
             {
+                tran.Timeout = 0;
                 /////微服务 性能测试
                 //var c1 = new Controller1(tran.GetMicroService("Controller1"));
                 //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
@@ -64,7 +65,7 @@ namespace TestApplication
                 //var locations = tran.ListMicroService("");//列出所有微服务
                 //Console.WriteLine("微服务位置：{0}", locations.ToJsonString());
 
-                //var code =  tran.GetMicroService("Controller1").GetServiceClassCode("TestApplication", "Controller1");
+                var code =  tran.GetMicroService("Service2").GetServiceClassCode("TestApplication", "Controller1");
 
                 Controller1 controller1 = null;
                 while (controller1 == null)

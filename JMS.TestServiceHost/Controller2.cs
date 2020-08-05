@@ -7,7 +7,27 @@ namespace JMS
 {
     class TestObject
     {
-        public string Name;
+        /// <summary>
+        /// 姓名
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 子类型
+        /// </summary>
+        public TestObject Child { get; set; }
+
+        /// <summary>
+        /// 年龄
+        /// </summary>
+        public int Age;
+    }
+    class TestObject2
+    {
+        /// <summary>
+        /// 年龄2
+        /// </summary>
+        public int Age2;
     }
     class Controller2 : MicroServiceControllerBase
     {
@@ -32,6 +52,22 @@ namespace JMS
         public string GetName(TestObject t)
         {
             return "lock result: " + this.TryLock("testkey") + " name:" + t.Name;
+        }
+
+        /// <summary>
+        /// 获取名字2
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="t2"></param>
+        /// <returns></returns>
+        public string GetName2(TestObject[] t, List<TestObject2> t2)
+        {
+            return null;
+        }
+
+        public TestObject2 GetObject2()
+        {
+            return null;
         }
     }
 }

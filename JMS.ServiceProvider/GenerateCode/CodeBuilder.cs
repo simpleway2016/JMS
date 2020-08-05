@@ -94,15 +94,18 @@ namespace JMS.GenerateCode
             }
 
             var codeMethod = CodeHelper.GetCodeMethod(methodInfo, parameters);
+            var originalRetType = codeMethod.ReturnType;
             if(isAsync)
             {
                 codeMethod.Name = methodInfo.Name + "Async";
-                Type returnType = null;
                 if (methodInfo.ReturnType.FullName != "System.Void")
-                    returnType = typeof(Task<>).MakeGenericType(methodInfo.ReturnType);
+                {
+                    codeMethod.ReturnType = new CodeTypeReference();
+                    codeMethod.ReturnType.TypeArguments.Add(originalRetType);
+                    codeMethod.ReturnType.BaseType = "Task";
+                }
                 else
-                    returnType = typeof(Task);
-                codeMethod.ReturnType = new CodeTypeReference(returnType);
+                    codeMethod.ReturnType = new CodeTypeReference( typeof(Task));
             }
 
 
@@ -111,7 +114,7 @@ namespace JMS.GenerateCode
 
             if (methodInfo.ReturnType.FullName != "System.Void")
             {
-                methodRef1.TypeArguments.Add(new CodeTypeReference(methodInfo.ReturnType));                
+                methodRef1.TypeArguments.Add(originalRetType);                
                 CodeMethodReturnStatement returnExp = new CodeMethodReturnStatement(invokeExp);
                 codeMethod.Statements.Add(returnExp);
             }
@@ -134,8 +137,10 @@ namespace JMS.GenerateCode
 
         public string GenerateCode(string nameSpace,string className, string serviceName)
         {
-
+            CodeHelper.CurrentCreatedSubTypes.Value = new Dictionary<Type, string>();
             var controllerTypeInfo = _microServiceProvider.ServiceNames[serviceName];
+            CodeHelper.CurrentControllerType.Value = controllerTypeInfo.Type;
+
             System.Xml.XmlDocument xmldoc = null;
             var xmlpath = $"{Path.GetDirectoryName(controllerTypeInfo.Type.Assembly.Location)}/{Path.GetFileNameWithoutExtension(controllerTypeInfo.Type.Assembly.Location)}.xml";
             if(File.Exists(xmlpath))
@@ -145,7 +150,7 @@ namespace JMS.GenerateCode
             }
             XmlElement memberXmlNodeList = null;
             if(xmldoc != null)
-                memberXmlNodeList = (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
+               CodeHelper.CurrentXmlMembersElement.Value = memberXmlNodeList = (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
 
             var methods = controllerTypeInfo.Methods;
 
@@ -161,8 +166,10 @@ namespace JMS.GenerateCode
             codeNamespace.Imports.Add(new CodeNamespaceImport("System"));
             codeNamespace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
             codeNamespace.Imports.Add(new CodeNamespaceImport("System.Linq"));
+            codeNamespace.Imports.Add(new CodeNamespaceImport("System.Threading.Tasks"));
 
             CodeTypeDeclaration myClass = new CodeTypeDeclaration(className);
+            CodeHelper.CurrentClassCode.Value = myClass;
             myClass.BaseTypes.Add(new CodeTypeReference("IImplInvoker"));
             codeNamespace.Types.Add(myClass);
 
