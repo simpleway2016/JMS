@@ -44,6 +44,23 @@ namespace JMS
             get;
             set;
         }
+
+
+        private int _Timeout = 30000;
+        /// <summary>
+        /// 超时时间，默认30000ms
+        /// </summary>
+        public int Timeout
+        {
+            get => _Timeout;
+            set
+            {
+                if (_Timeout != value)
+                {
+                    _Timeout = value;
+                }
+            }
+        }
         bool _finished = false;
 
         static Way.Lib.Collections.ConcurrentList<NetAddress> HistoryMasterAddressList = new Way.Lib.Collections.ConcurrentList<NetAddress>();
@@ -205,6 +222,7 @@ namespace JMS
                     {
                         using (var client = new ProxyClient(this.ProxyAddress, addr, GatewayClientCertificate))
                         {
+                            client.ReadTimeout = this.Timeout;
                             client.WriteServiceData(new GatewayCommand
                             {
                                 Type = CommandType.FindMaster

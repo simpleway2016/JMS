@@ -38,7 +38,8 @@ namespace JMS
        public void ReConnect(JMSClient tran)
         {
             ReConnectCount++;
-               NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.InvokingInfo.ServiceLocation.ServiceAddress, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
+            NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.InvokingInfo.ServiceLocation.ServiceAddress, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
+            NetClient.ReadTimeout = tran.Timeout;
         }
 
         public T Invoke<T>(string method,JMSClient tran, params object[] parameters)
@@ -58,6 +59,7 @@ namespace JMS
             var netclient = NetClientPool.CreateClient(tran.ProxyAddress, this.InvokingInfo.ServiceLocation.ServiceAddress, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
             try
             {
+                netclient.ReadTimeout = tran.Timeout;
                 var cmd = new InvokeCommand()
                 {
                     Header = headers,

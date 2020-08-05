@@ -24,6 +24,7 @@ namespace JMS
         {
             //获取服务地址
             var netclient = NetClientPool.CreateClient(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate);
+            netclient.ReadTimeout = this.ServiceTransaction.Timeout;
             try
             {
                 netclient.WriteServiceData(new GatewayCommand()
@@ -89,6 +90,7 @@ namespace JMS
         {
             using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress ,new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port) , ServiceTransaction.ServiceClientCertificate))
             {
+                netclient.ReadTimeout = this.ServiceTransaction.Timeout;
                 netclient.WriteServiceData(new InvokeCommand()
                 {
                     Type = InvokeType.GenerateInvokeCode,
