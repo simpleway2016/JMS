@@ -21,11 +21,12 @@ namespace JMS.GenerateCode
             _microServiceProvider = microServiceProvider;
         }
 
-        void AddComment(CodeMemberMethod codeMethod,MethodInfo methodInfo,XmlElement parentEle)
+        string AddComment(CodeMemberMethod codeMethod,MethodInfo methodInfo,XmlElement parentEle)
         {
             if (parentEle == null)
-                return;
+                return "";
 
+            string methodComment = methodInfo.Name + "   ";
             XmlElement commentEle = null;
             foreach( XmlElement node in parentEle.ChildNodes )
             {
@@ -38,6 +39,15 @@ namespace JMS.GenerateCode
 
             if(commentEle != null)
             {
+                try
+                {
+                    methodComment += commentEle.SelectSingleNode("//summary").InnerText.Replace("\r", "").Replace("\n", " ").Trim();
+                }
+                catch
+                {
+
+                }
+
                 try
                 {
                     List<XmlElement> childeles = new List<XmlElement>();
@@ -66,6 +76,7 @@ namespace JMS.GenerateCode
                
             }
 
+            return methodComment;
         }
 
         CodeMemberMethod getMethodCode(MethodInfo methodInfo,bool isAsync)
@@ -162,8 +173,10 @@ namespace JMS.GenerateCode
             foreach (var methodInfo in methods)
             {
                 var methodcode = getMethodCode(methodInfo, false);
-                AddComment(methodcode, methodInfo,memberXmlNodeList);
+                var comment = AddComment(methodcode, methodInfo,memberXmlNodeList);
                 myClass.Members.Add(methodcode);
+
+                codeNamespace.Comments.Add(new CodeCommentStatement(comment));
 
                 methodcode = getMethodCode(methodInfo, true);
                 AddComment(methodcode, methodInfo,memberXmlNodeList);

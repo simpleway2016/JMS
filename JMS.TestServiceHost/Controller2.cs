@@ -20,6 +20,11 @@ namespace JMS
                 }
             };
         }
+
+        /// <summary>
+        /// 获取名称
+        /// </summary>
+        /// <returns></returns>
         public string GetName()
         {
             return "lock result: " + this.TryLock("testkey");

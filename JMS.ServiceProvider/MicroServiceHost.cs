@@ -118,7 +118,7 @@ namespace JMS
                     m.IsStatic == false &&
                     m.IsPublic &&
                     m.DeclaringType != typeof(MicroServiceControllerBase)
-                    && m.DeclaringType != typeof(object)).ToArray()
+                    && m.DeclaringType != typeof(object)).OrderBy(m=>m.Name).ToArray()
             };
             
         }
