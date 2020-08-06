@@ -332,7 +332,21 @@ namespace JMS
         {
             try
             {
-                Task.WaitAll(_Tasks.ToArray());
+                Exception lastErr = null;
+                for(int i = 0; i < _Tasks.Count; i ++)
+                {
+                    try
+                    {
+                        _Tasks[i].Wait();
+                    }
+                    catch (Exception ex)
+                    {
+                        lastErr = ex;
+                    }
+                }
+               
+                if (lastErr != null)
+                    throw lastErr;
             }
             catch (Exception ex)
             {
@@ -341,8 +355,12 @@ namespace JMS
                 {
                     err = err.InnerException;
                 }
-                _Tasks.Clear();
+
                 throw err;
+            }
+            finally
+            {
+                _Tasks.Clear();
             }
            
         }
@@ -355,7 +373,6 @@ namespace JMS
             if (_Connects.Count == 0)
             {                
                 waitTasks();
-                _Tasks.Clear();
                 _finished = true;
                 return;
             }
@@ -500,7 +517,6 @@ namespace JMS
             if (_Connects.Count == 0)
             {
                 waitTasks();
-                _Tasks.Clear();
                 return;
             }
                 var errors = endRequest(InvokeType.RollbackTranaction);
