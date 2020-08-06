@@ -137,8 +137,14 @@ namespace JMS.GenerateCode
             foreach( var pro in properties )
             {
                 CodeMemberProperty codePro = new CodeMemberProperty();
+                CodeMemberField codeField = new CodeMemberField();
+                myClass.Members.Add(codeField);
                 myClass.Members.Add(codePro);
                 codePro.Name = pro.Name;
+                codeField.Name = "_" + codePro.Name;
+                codePro.Attributes = MemberAttributes.Public;
+                codePro.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name)));
+                codePro.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name), new CodeFieldReferenceExpression(null, "value")));
 
                 foreach (XmlElement node in CurrentXmlMembersElement.Value.ChildNodes)
                 {
@@ -156,18 +162,8 @@ namespace JMS.GenerateCode
                 }
 
                 var proType = pro.PropertyType;
-                if (proType.IsValueType == false && proType != typeof(object) && proType != typeof(string)
-                    && CurrentControllerType.Value.Assembly == proType.Assembly)
-                {
-                    //生成这个类代码
-                    string strProType = BuildTypeCode(proType);
-                    codePro.Type = new CodeTypeReference(strProType);
-
-                }
-                else
-                {
-                    codePro.Type = new CodeTypeReference(proType);
-                }
+                codePro.Type = GetTypeCode(proType);
+                codeField.Type = codePro.Type;
             }
 
 
@@ -175,8 +171,14 @@ namespace JMS.GenerateCode
             foreach (var field in fields)
             {
                 CodeMemberProperty codePro = new CodeMemberProperty();
+                CodeMemberField codeField = new CodeMemberField();
+                myClass.Members.Add(codeField);
                 myClass.Members.Add(codePro);
                 codePro.Name = field.Name;
+                codeField.Name = "_" + codePro.Name;
+                codePro.Attributes = MemberAttributes.Public;
+                codePro.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name)));
+                codePro.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name), new CodeFieldReferenceExpression(null, "value")));
 
                 foreach (XmlElement node in CurrentXmlMembersElement.Value.ChildNodes)
                 {
@@ -194,18 +196,8 @@ namespace JMS.GenerateCode
                 }
 
                 var proType = field.FieldType;
-                if (proType.IsValueType == false && proType != typeof(object) && proType != typeof(string)
-                    && CurrentControllerType.Value.Assembly == proType.Assembly)
-                {
-                    //生成这个类代码
-                    string strProType = BuildTypeCode(proType);
-                    codePro.Type = new CodeTypeReference(strProType);
-
-                }
-                else
-                {
-                    codePro.Type = new CodeTypeReference(proType);
-                }
+                codePro.Type = GetTypeCode(proType);
+                codeField.Type = codePro.Type;
             }
 
             CurrentClassCode.Value.Members.Insert(0 , myClass);

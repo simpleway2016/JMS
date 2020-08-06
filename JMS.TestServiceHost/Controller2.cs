@@ -15,7 +15,7 @@ namespace JMS
         /// <summary>
         /// 子类型
         /// </summary>
-        public TestObject Child { get; set; }
+        public TestObject2[] Child { get; set; }
 
         /// <summary>
         /// 年龄
