@@ -121,6 +121,19 @@ namespace JMS.GenerateCode
             CodeTypeDeclaration myClass = new CodeTypeDeclaration(type.Name);
             myClass.Attributes = MemberAttributes.Public;
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            var parentType = type.BaseType;
+            while(parentType != null && parentType != typeof(object))
+            {
+                if (parentType.FullName == "Way.EntityDB.DataItem")
+                {
+                    properties = properties.Where(m => m.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>() != null).ToArray();
+                    break;
+                }
+                else
+                    parentType = parentType.BaseType;
+            }
+
             foreach( var pro in properties )
             {
                 CodeMemberProperty codePro = new CodeMemberProperty();
