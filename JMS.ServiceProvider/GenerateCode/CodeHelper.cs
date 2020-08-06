@@ -13,16 +13,16 @@ namespace JMS.GenerateCode
     class CodeHelper
     {
         public static ThreadLocal<Type> CurrentControllerType = new ThreadLocal<Type>();
-        public static ThreadLocal<Dictionary<Type,string>> CurrentCreatedSubTypes = new ThreadLocal<Dictionary<Type, string>>();
+        public static ThreadLocal<Dictionary<Type, string>> CurrentCreatedSubTypes = new ThreadLocal<Dictionary<Type, string>>();
         public static ThreadLocal<CodeTypeDeclaration> CurrentClassCode = new ThreadLocal<CodeTypeDeclaration>();
         public static ThreadLocal<XmlElement> CurrentXmlMembersElement = new ThreadLocal<XmlElement>();
-        public static CodeMemberMethod GetCodeMethod( MethodInfo method,ParameterInfo[] parameters)
+        public static CodeMemberMethod GetCodeMethod(MethodInfo method, ParameterInfo[] parameters)
         {
             CodeMemberMethod codeMethod = new CodeMemberMethod();
             codeMethod.Attributes = MemberAttributes.Public;
             codeMethod.Name = method.Name;
             codeMethod.ReturnType = GetTypeCode(method.ReturnType);
-            foreach( var p in parameters )
+            foreach (var p in parameters)
             {
                 codeMethod.Parameters.Add(new CodeParameterDeclarationExpression(GetTypeCode(p.ParameterType), p.Name));
 
@@ -33,16 +33,16 @@ namespace JMS.GenerateCode
 
         public static CodeTypeReference GetTypeCode(Type type)
         {
-            if(type.IsArray)
+            if (type.IsArray)
             {
                 CodeTypeReference genRet = new CodeTypeReference();
                 genRet.ArrayRank = type.GetArrayRank();
-                genRet.ArrayElementType = GetTypeCode( type.GetElementType() );
+                genRet.ArrayElementType = GetTypeCode(type.GetElementType());
                 return genRet;
             }
-            else if(type.IsGenericType)
+            else if (type.IsGenericType)
             {
-               Type[] argTypes = type.GetGenericArguments();
+                Type[] argTypes = type.GetGenericArguments();
                 CodeTypeReference[] codeArgTypes = argTypes.Select(m => GetTypeCode(m)).ToArray();
 
                 CodeTypeReference genRet = new CodeTypeReference();
@@ -51,7 +51,14 @@ namespace JMS.GenerateCode
                 return genRet;
             }
 
-            if (type.IsValueType == false && type != typeof(object) && type != typeof(string)
+            if (type.IsEnum
+                   && CurrentControllerType.Value.Assembly == type.Assembly)
+            {
+                //生成这个类代码
+                string strProType = BuildEnumTypeCode(type);
+                return new CodeTypeReference(strProType);
+            }
+            else if (type.IsValueType == false && type != typeof(object) && type != typeof(string)
                     && CurrentControllerType.Value.Assembly == type.Assembly)
             {
                 //生成这个类代码
@@ -63,8 +70,7 @@ namespace JMS.GenerateCode
                 return new CodeTypeReference(type);
             }
         }
-
-        public static string BuildTypeCode(Type type)
+        public static string BuildEnumTypeCode(Type type)
         {
             if (CurrentCreatedSubTypes.Value.ContainsKey(type))
                 return CurrentCreatedSubTypes.Value[type];
@@ -72,6 +78,48 @@ namespace JMS.GenerateCode
             CurrentCreatedSubTypes.Value[type] = type.Name;
 
             CodeTypeDeclaration myClass = new CodeTypeDeclaration(type.Name);
+            myClass.IsEnum = true;
+
+            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static);
+
+            foreach (var field in fields)
+            {
+                CodeMemberField codePro = new CodeMemberField();
+                myClass.Members.Add(codePro);
+                codePro.Name = field.Name;
+
+                foreach (XmlElement node in CurrentXmlMembersElement.Value.ChildNodes)
+                {
+                    if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
+                    {
+                        try
+                        {
+                            codePro.Comments.Add(new CodeCommentStatement(node.SelectSingleNode("summary").OuterXml, true));
+                        }
+                        catch (Exception ex)
+                        {
+                        }
+                        break;
+                    }
+                }
+
+                codePro.InitExpression = new CodePrimitiveExpression((int)field.GetValue(null));
+            }
+
+            CurrentClassCode.Value.Members.Insert(0, myClass);
+
+            return type.Name;
+        }
+        public static string BuildTypeCode(Type type)
+        {
+            if (CurrentCreatedSubTypes.Value.ContainsKey(type))
+                return CurrentCreatedSubTypes.Value[type];
+
+            CurrentCreatedSubTypes.Value[type] = type.Name;
+
+
+            CodeTypeDeclaration myClass = new CodeTypeDeclaration(type.Name);
+            myClass.Attributes = MemberAttributes.Public;
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             foreach( var pro in properties )
             {

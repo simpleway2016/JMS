@@ -29,6 +29,17 @@ namespace JMS
         /// </summary>
         public int Age2;
     }
+     enum MyEnum
+    {
+        /// <summary>
+        /// 普通的
+        /// </summary>
+        Normal = 1,
+        /// <summary>
+        /// 主要的
+        /// </summary>
+        Master = 2
+    }
     class Controller2 : MicroServiceControllerBase
     {
         public Controller2(ILogger<Controller2> logger)
@@ -65,7 +76,12 @@ namespace JMS
             return null;
         }
 
-        public TestObject2 GetObject2()
+        /// <summary>
+        /// 测试2object
+        /// </summary>
+        /// <param name="e1"></param>
+        /// <returns></returns>
+        public TestObject2 GetObject2(Dictionary< MyEnum , TestObject> e1)
         {
             return null;
         }
