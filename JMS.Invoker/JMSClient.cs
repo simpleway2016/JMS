@@ -313,11 +313,12 @@ namespace JMS
 
       
 
-        internal void AddConnect(InvokeConnect   connect)
+        internal void AddConnect(InvokeConnect connect)
         {
             lock(_Connects)
             {
                 _Connects.Add(connect);
+                _finished = false;
             }           
         }
         internal void AddTask(Task task)
@@ -325,6 +326,7 @@ namespace JMS
             lock (_Tasks)
             {
                 _Tasks.Add(task);
+                _finished = false;
             }
         }
 
