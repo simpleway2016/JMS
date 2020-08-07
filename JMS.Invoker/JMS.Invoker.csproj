@@ -10,6 +10,7 @@
     <Authors>Jack.T</Authors>
     <Company>JMS</Company>
     <Product>JMS</Product>
+    <Description>.net core 微服务开发框架 - 应用层客户端依赖库</Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
