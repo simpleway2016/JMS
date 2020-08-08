@@ -61,7 +61,6 @@ namespace JMS
                 }
             }
         }
-        bool _finished = false;
 
         static Way.Lib.Collections.ConcurrentList<NetAddress> HistoryMasterAddressList = new Way.Lib.Collections.ConcurrentList<NetAddress>();
 
@@ -318,7 +317,6 @@ namespace JMS
             lock(_Connects)
             {
                 _Connects.Add(connect);
-                _finished = false;
             }           
         }
         internal void AddTask(Task task)
@@ -326,7 +324,6 @@ namespace JMS
             lock (_Tasks)
             {
                 _Tasks.Add(task);
-                _finished = false;
             }
         }
 
@@ -366,23 +363,14 @@ namespace JMS
             }
            
         }
-
+        /// <summary>
+        /// 提交事务
+        /// </summary>
         public void Commit()
         {
-            if (_finished)
-                return;
-
-            if (_Connects.Count == 0)
-            {                
-                waitTasks();
-                _finished = true;
-                return;
-            }
-
             var errors = endRequest(InvokeType.CommitTranaction);
-            _finished = true;
 
-            if (errors.Count > 0)
+            if (errors != null && errors.Count > 0)
                 throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
         }
 
@@ -390,139 +378,139 @@ namespace JMS
         {
             waitTasks();
 
-            List<TransactionException> errors = new List<TransactionException>(_Connects.Count);
-            //健康检查
-            Parallel.For(0, _Connects.Count, (i) => {
-                var connect = _Connects[i];
-                try
-                {
-                    connect.NetClient.WriteServiceData(new InvokeCommand()
-                    {
-                        Type = InvokeType.HealthyCheck,
-                    });
-                    var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
-                    if(ret.Success == false)
-                    {
-                        //有人不同意提交事务
-                        //把提交更改为回滚
-                        invokeType = InvokeType.RollbackTranaction;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    connect.NetClient.Dispose();
-                    connect.NetClient = null;
-                    errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
-                }
-                
-            });
-
-            if (errors.Count > 0)
+            if (_Connects.Count > 0)
             {
-                foreach( var connect in _Connects )
+                List<TransactionException> errors = new List<TransactionException>(_Connects.Count);
+                //健康检查
+                Parallel.For(0, _Connects.Count, (i) =>
                 {
+                    var connect = _Connects[i];
                     try
                     {
                         connect.NetClient.WriteServiceData(new InvokeCommand()
                         {
-                            Type = InvokeType.RollbackTranaction,
-                            Header = this.GetCommandHeader()
+                            Type = InvokeType.HealthyCheck,
                         });
                         var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
+                        if (ret.Success == false)
+                        {
+                            //有人不同意提交事务
+                            //把提交更改为回滚
+                            invokeType = InvokeType.RollbackTranaction;
+                        }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        connect.NetClient.Dispose();
+                        connect.NetClient = null;
+                        errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                     }
-                    NetClientPool.AddClientToPool(connect.NetClient);
-                }
-                if(invokeType == InvokeType.CommitTranaction)
-                    throw new TransactionException(null, "提交事务时，有连接中断，所有事务将回滚");
-                else
-                    throw new TransactionException(null, "回滚事务时，有连接中断，所有事务将稍后回滚");
-            }
 
-            if (errors.Count == 0)
-            {
-                Parallel.For(0, _Connects.Count, (i) => {
-                    var connect = _Connects[i];
-                    bool reconnect = false;
-                    while (true)
+                });
+
+                if (errors.Count > 0)
+                {
+                    foreach (var connect in _Connects)
                     {
                         try
                         {
-                            if (reconnect)
-                            {
-                                Thread.Sleep(1000);
-                                connect.ReConnect(this);
-                            }
-
                             connect.NetClient.WriteServiceData(new InvokeCommand()
                             {
-                                Type = invokeType,
+                                Type = InvokeType.RollbackTranaction,
                                 Header = this.GetCommandHeader()
                             });
                             var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
-                            if (ret.Success == false)
-                            {
-                                errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
-                            }
-                            break;
                         }
-                        catch (SocketException ex)
+                        catch
                         {
-                            if (connect.ReConnectCount < 10)
+                        }
+                        NetClientPool.AddClientToPool(connect.NetClient);
+                    }
+                    if (invokeType == InvokeType.CommitTranaction)
+                        throw new TransactionException(null, "提交事务时，有连接中断，所有事务将回滚");
+                    else
+                        throw new TransactionException(null, "回滚事务时，有连接中断，所有事务将稍后回滚");
+                }
+
+                if (errors.Count == 0)
+                {
+                    Parallel.For(0, _Connects.Count, (i) =>
+                    {
+                        var connect = _Connects[i];
+                        bool reconnect = false;
+                        while (true)
+                        {
+                            try
                             {
-                                connect.NetClient.Dispose();
-                                reconnect = true;
+                                if (reconnect)
+                                {
+                                    Thread.Sleep(1000);
+                                    connect.ReConnect(this);
+                                }
+
+                                connect.NetClient.WriteServiceData(new InvokeCommand()
+                                {
+                                    Type = invokeType,
+                                    Header = this.GetCommandHeader()
+                                });
+                                var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
+                                if (ret.Success == false)
+                                {
+                                    errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
+                                }
+                                break;
                             }
-                            else
+                            catch (SocketException ex)
+                            {
+                                if (connect.ReConnectCount < 10)
+                                {
+                                    connect.NetClient.Dispose();
+                                    reconnect = true;
+                                }
+                                else
+                                {
+                                    errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
+                                    break;
+                                }
+                            }
+                            catch (Exception ex)
                             {
                                 errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                                 break;
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
-                            break;
-                        }
+
+                        NetClientPool.AddClientToPool(connect.NetClient);
+                    });
+
+                    if (errors.Count > 0)
+                    {
+                        var successed = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
+
+                        if (successed.Length > 0)
+                            _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${successed.ToJsonString()}");
+                        foreach (var err in errors)
+                            _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
                     }
-
-                    NetClientPool.AddClientToPool(connect.NetClient);
-                });
-
-                if(errors.Count > 0)
-                {
-                    var successed = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
-
-                    if(successed.Length > 0)
-                        _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction?"提交":"回滚")}，详细请求信息：${successed.ToJsonString()}");
-                    foreach (var err in errors)
-                        _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
                 }
+
+
+                _Connects.Clear();
+                return errors;
             }
-           
-
-            _Connects.Clear();
-            _Tasks.Clear();
-
-            return errors;
+            else
+            {
+                return null;
+            }           
            
         }
-
+        /// <summary>
+        /// 回滚事务
+        /// </summary>
         public void Rollback()
-        {
-            if (_finished)
-                return;
-            _finished = true;
-
-            if (_Connects.Count == 0)
-            {
-                waitTasks();
-                return;
-            }
-                var errors = endRequest(InvokeType.RollbackTranaction);
-            if (errors.Count > 0)
+        {                
+            var errors = endRequest(InvokeType.RollbackTranaction);
+            if (errors != null && errors.Count > 0)
                 throw new TransactionArrayException(errors, "rollback transaction error");
         }
 
