@@ -3,6 +3,7 @@ using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
@@ -160,25 +161,32 @@ namespace JMS
 
         }
 
-        public  void WriteServiceData(byte[] data)
+        public unsafe void WriteServiceData(byte[] data)
         {
+            //第一位表示gzip，第二位表示keepclient
+            int flag = 0;
+
             if (data.Length > CompressionMinSize)
             {
                 data = GZipHelper.Compress(data);
-                int len = (data.Length << 2) | 1;//第一位表示gzip，第二位表示keepclient
-                if (KeepAlive)
-                    len |= 2;
-                this.Write(len);
-                this.Write(data);
+                flag = 1;
             }
-            else
+
+            if (KeepAlive)
+                flag |= 2;
+
+            byte[] tosend = new byte[data.Length + 4];
+            flag |= (data.Length << 2);
+
+            fixed( byte* ptrData = data )
             {
-                int len = (data.Length << 2);
-                if (KeepAlive)
-                    len |= 2;
-                this.Write(len);
-                this.Write(data);
+                Marshal.Copy(new IntPtr(ptrData), tosend, 4, data.Length);
             }
+
+            byte* ptr = (byte*)&flag;
+            Marshal.Copy(new IntPtr(ptr), tosend, 0, 4);
+
+            this.Write(tosend);
         }
         public  void WriteServiceData(object value)
         {
