@@ -127,7 +127,7 @@ namespace JMS.GenerateCode
             {
                 if (parentType.FullName == "Way.EntityDB.DataItem")
                 {
-                    properties = properties.Where(m => m.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>() != null).ToArray();
+                    properties = properties.Where(m => m.DeclaringType.FullName != "Way.EntityDB.DataItem").ToArray();
                     break;
                 }
                 else
