@@ -99,8 +99,13 @@ namespace JMS
 
                 }
 
+                if (otherObj.Success == false)
+                {
+                    throw new RemoteException(tran.TransactionId, otherObj.Error);
+                }
+
                 if (otherObj != null)
-                    throw new ConvertException(otherObj.Data, $"无法将{otherObj.Data}实例化为{typeof(T).FullName}");
+                    throw new ConvertException(otherObj.Data, $"无法将{ex.Source}里面的Data实例化为{typeof(T).FullName}");
 
                 throw ex;
             }
