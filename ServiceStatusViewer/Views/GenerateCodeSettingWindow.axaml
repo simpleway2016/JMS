@@ -1,0 +1,17 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" SizeToContent="WidthAndHeight"
+        x:Class="ServiceStatusViewer.Views.GenerateCodeSettingWindow"
+        Title="GenerateCodeSettingWindow">
+  <StackPanel Orientation="Vertical">
+    <TextBlock Text="选择服务：" Margin="10"/>
+    <ComboBox Margin="10,0,10,10" SelectedItem="{Binding SelectedServiceName}" Items="{Binding ServiceNames}"></ComboBox>
+    <TextBlock Text="命名空间：" Margin="10"/>
+    <TextBox Margin="10,0,10,10" Text="{Binding NamespaceName}" Width="300"></TextBox>
+    <TextBlock Text="类名：" Margin="10"/>
+    <TextBox Margin="10,0,10,10" Text="{Binding ClassName}"></TextBox>
+    <Button Command="{Binding SaveClick}" Margin="10">确定</Button>
+  </StackPanel>
+</Window>

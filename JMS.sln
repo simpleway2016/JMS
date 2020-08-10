@@ -27,11 +27,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DevTest", "DevTest", "{D5E9
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RunTest", "RunTest", "{77A1A0DA-8537-4318-B8CE-5989D1E05132}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestUserInfoService", "TestUserInfoService\TestUserInfoService.csproj", "{AC5DDB56-A3E0-400E-BCBC-33A0F4AF5356}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestUserInfoService", "TestUserInfoService\TestUserInfoService.csproj", "{AC5DDB56-A3E0-400E-BCBC-33A0F4AF5356}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestBankService", "TestBankService\TestBankService.csproj", "{E1A20713-3394-4170-B0E9-51AB22E1327A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestBankService", "TestBankService\TestBankService.csproj", "{E1A20713-3394-4170-B0E9-51AB22E1327A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestClient", "TestClient\TestClient.csproj", "{503D20D4-1FA1-44D6-AF56-07EA2046860D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestClient", "TestClient\TestClient.csproj", "{503D20D4-1FA1-44D6-AF56-07EA2046860D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServiceStatusViewer", "ServiceStatusViewer\ServiceStatusViewer.csproj", "{ED4A53F8-22CE-4C4A-B7DC-D91AE9444FA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -91,6 +93,10 @@ Global
 		{503D20D4-1FA1-44D6-AF56-07EA2046860D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{503D20D4-1FA1-44D6-AF56-07EA2046860D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{503D20D4-1FA1-44D6-AF56-07EA2046860D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED4A53F8-22CE-4C4A-B7DC-D91AE9444FA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED4A53F8-22CE-4C4A-B7DC-D91AE9444FA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED4A53F8-22CE-4C4A-B7DC-D91AE9444FA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED4A53F8-22CE-4C4A-B7DC-D91AE9444FA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,36 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ServiceStatusViewer.ViewModels;assembly=ServiceStatusViewer"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="ServiceStatusViewer.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="微服务状态浏览器">
+  <Window.Styles>
+    <Style Selector="TextBlock.list[IsEnabled=true]">
+      <Setter Property="Foreground" Value="#000000"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+    </Style>
+    <Style Selector="TextBlock.list[IsEnabled=false]">
+      <Setter Property="Foreground" Value="#cccccc"/>
+    </Style>
+  </Window.Styles>
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+  <StackPanel Orientation="Vertical">
+    <TextBlock Margin="10">在线的服务：</TextBlock>
+    <ListBox Items="{Binding ServiceList}">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <StackPanel Orientation="Horizontal">
+            <Button Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding GetCodeClick}">获取客户端代码</Button>
+            <TextBlock Classes="list" VerticalAlignment="Center" IsEnabled="{Binding IsOnline}" Text="{Binding Text}"/>
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </StackPanel>
+   
+</Window>
