@@ -40,6 +40,7 @@ namespace ServiceStatusViewer.ViewModels
         }
 
         public string Text => this.ToString();
+        public string PerformanceInfo => $"当前连接数：{_data.PerformanceInfo.RequestQuantity} CPU利用率:{(int)(_data.PerformanceInfo.CpuUsage.GetValueOrDefault() )}%";
 
         public IReactiveCommand GetCodeClick => ReactiveCommand.Create(async () => {
             if (_data.ServiceNames.Length == 0)
@@ -169,6 +170,7 @@ namespace ServiceStatusViewer.ViewModels
                     else
                     {
                         this.ServiceList.FirstOrDefault(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port).IsOnline = true;
+                        this.ServiceList.FirstOrDefault(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port).RaisePropertyChanged("PerformanceInfo");
                     }
                 }
 
