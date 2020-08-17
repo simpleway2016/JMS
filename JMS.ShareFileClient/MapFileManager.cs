@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using Microsoft.Extensions.DependencyInjection;
-using JMS.Net;
 using JMS.Dtos;
 using Way.Lib;
 using Org.BouncyCastle.Crypto.Engines;
@@ -12,9 +10,9 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 
-namespace JMS.MapShareFiles
+namespace JMS
 {
-    class MapFileManager
+    public class ShareFileClient
     {
         class MapItem
         {
@@ -23,18 +21,26 @@ namespace JMS.MapShareFiles
         }
 
         Dictionary<string, MapItem> _dict = new Dictionary<string, MapItem>();
-        NetAddress _gatewayAddress;
 
-        MicroServiceHost _microServiceHost;
-        ILogger<MapFileManager> _logger;
-        public MapFileManager(MicroServiceHost microServiceHost)
+        NetAddress _gatewayAddress;
+        X509Certificate2 _gatewayClientCert;
+        ILogger _logger;
+        public ShareFileClient(NetAddress gatewayAddress, ILogger logger = null, X509Certificate2 gatewayClientCert = null)
         {
-            _microServiceHost = microServiceHost;
+
+            this._gatewayAddress = gatewayAddress;
+            this._gatewayClientCert = gatewayClientCert;
+            this._logger = logger;
         }
 
-        public void GetGatewayShareFile(NetAddress gatewayAddr, string filepath, string localFilePath , X509Certificate2 gatewayClientCert)
+        /// <summary>
+        /// 获取网关共享文件，并保存到本地
+        /// </summary>
+        /// <param name="filepath">共享文件路径</param>
+        /// <param name="localFilePath">保存到本地的路径</param>
+        public void GetGatewayShareFile( string filepath, string localFilePath )
         {
-            using (var client = new CertClient(gatewayAddr, gatewayClientCert))
+            using (var client = new CertClient(_gatewayAddress, _gatewayClientCert))
             {
                 client.WriteServiceData(new GatewayCommand
                 {
@@ -52,21 +58,25 @@ namespace JMS.MapShareFiles
                 File.WriteAllBytes(localFilePath, data);
             }
         }
-        public void MapShareFileToLocal( NetAddress gatewayAddress, string shareFilePath, string localFilePath,Action<string, string> callback)
+
+        /// <summary>
+        /// 映射网关上的共享文件到本地
+        /// </summary>
+        /// <param name="shareFilePath">共享文件路径</param>
+        /// <param name="localFilePath">映射本地的路径</param>
+        /// <param name="callback">文件写入本地后，回调委托</param>
+        public void MapShareFileToLocal(string shareFilePath, string localFilePath,Action<string, string> callback)
         {
-            if (_gatewayAddress != null && _gatewayAddress.Equals(gatewayAddress.Address , gatewayAddress.Port) == false)
-            {
-                throw new Exception("不能监测不同网关的文件");
-            }
             _dict[shareFilePath] = new MapItem { 
                 LocalPath = localFilePath,
                 Callback = callback
             };
-
-            _gatewayAddress = gatewayAddress;
         }
 
-        internal void Start()
+        /// <summary>
+        /// 开始监听文件变化
+        /// </summary>
+        public void StartListen()
         {
             if(_dict.Keys.Count > 0)
                 new Thread(connect).Start();
@@ -74,22 +84,11 @@ namespace JMS.MapShareFiles
 
         void connect()
         {
-            SSLConfiguration sSLConfiguration = null;
             while (true)
             {
-               if(_microServiceHost.ServiceProvider == null || _microServiceHost.Id == null)
-                {
-                    Thread.Sleep(1000);
-                    continue;
-                }
-                if (sSLConfiguration == null)
-                {
-                    sSLConfiguration = _microServiceHost.ServiceProvider.GetService<SSLConfiguration>();
-                    _logger = _microServiceHost.ServiceProvider.GetService<ILogger<MapFileManager>>();
-                }
                 try
                 {
-                    using (var client = new GatewayClient( _gatewayAddress , sSLConfiguration))
+                    using (var client = new CertClient( _gatewayAddress , _gatewayClientCert))
                     {
                         client.WriteServiceData(new GatewayCommand { 
                             Type = CommandType.ListenFileChange,

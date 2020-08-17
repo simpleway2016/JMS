@@ -16,7 +16,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using JMS.Interfaces.Hardware;
 using JMS.Impls.Haredware;
-using JMS.MapShareFiles;
 using System.Security.Cryptography.X509Certificates;
 
 namespace JMS
@@ -51,7 +50,6 @@ namespace JMS
         internal ServiceCollection _services;
         IRequestReception _RequestReception;
         ScheduleTaskManager _scheduleTaskManager;
-        MapFileManager _mapFileManager;
 
 
         public MicroServiceHost(ServiceCollection services)
@@ -59,7 +57,6 @@ namespace JMS
             this.Id = Guid.NewGuid().ToString("N");
             _services = services;
             _scheduleTaskManager = new ScheduleTaskManager(this);
-            _mapFileManager = new MapFileManager(this);
 
             registerServices();
         }
@@ -69,28 +66,6 @@ namespace JMS
             _GatewayConnector.DisconnectGateway();
         }
 
-        /// <summary>
-        /// 映射网关上的共享文件到本地
-        /// </summary>
-        /// <param name="gatewayAddress">包含共享文件的网关地址</param>
-        /// <param name="shareFilePath">共享文件路径</param>
-        /// <param name="localFilePath">映射本地的路径</param>
-        /// <param name="callback">文件写入本地后，回调委托</param>
-        public void MapShareFileToLocal( NetAddress gatewayAddress, string shareFilePath , string localFilePath,Action<string,string> callback = null)
-        {
-            _mapFileManager.MapShareFileToLocal(gatewayAddress, shareFilePath, localFilePath, callback);
-        }
-        /// <summary>
-        /// 获取网关共享文件，并保存到本地
-        /// </summary>
-        /// <param name="gatewayAddress">包含共享文件的网关地址</param>
-        /// <param name="filepath">共享文件路径</param>
-        /// <param name="localFilePath">保存到本地的路径</param>
-        /// <param name="gatewayClientCert">网关客户端证书</param>
-        public void GetGatewayShareFile(NetAddress gatewayAddress, string filepath, string localFilePath, X509Certificate2 gatewayClientCert = null)
-        {
-            _mapFileManager.GetGatewayShareFile(gatewayAddress, filepath, localFilePath, gatewayClientCert);
-        }
 
         /// <summary>
         /// 向网关注册服务
@@ -170,7 +145,6 @@ namespace JMS
                 _services.AddSingleton<ICpuInfo, CpuInfoForUnkown>();
             }
             _services.AddSingleton<SSLConfiguration>(new SSLConfiguration());
-            _services.AddSingleton<MapFileManager>(_mapFileManager);
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
             _services.AddSingleton<IKeyLocker, KeyLocker>();
@@ -209,8 +183,6 @@ namespace JMS
             
             _RequestReception = ServiceProvider.GetService<IRequestReception>();
             _scheduleTaskManager.StartTasks();
-
-            _mapFileManager.Start();
 
             var sslConfig = ServiceProvider.GetService<SSLConfiguration>();
 
