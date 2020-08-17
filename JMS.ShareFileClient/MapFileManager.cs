@@ -65,7 +65,7 @@ namespace JMS
         /// <param name="shareFilePath">共享文件路径</param>
         /// <param name="localFilePath">映射本地的路径</param>
         /// <param name="callback">文件写入本地后，回调委托</param>
-        public void MapShareFileToLocal(string shareFilePath, string localFilePath,Action<string, string> callback)
+        public void MapShareFileToLocal(string shareFilePath, string localFilePath,Action<string, string> callback = null)
         {
             _dict[shareFilePath] = new MapItem { 
                 LocalPath = localFilePath,
