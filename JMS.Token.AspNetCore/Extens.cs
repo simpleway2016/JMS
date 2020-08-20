@@ -15,18 +15,18 @@ namespace Microsoft.Extensions.DependencyInjection
         /// 使用JMS.Token作为身份验证
         /// </summary>
         /// <param name="services"></param>
-        /// <param name="authorizationContentType">token的类型</param>
+        /// <param name="tokenContentType">token的类型</param>
         /// <param name="serverAddress">token服务器地址</param>
         /// <param name="serverPort">token服务器端口</param>
         /// <param name="headerName">客户端通过哪个头部传递token</param>
         /// <param name="cert">访问token服务器的证书</param>
-        public static AuthenticationBuilder AddJmsTokenAuthentication(this IServiceCollection services, AuthorizationContentType authorizationContentType, string serverAddress, int serverPort, string headerName = "Authorization", X509Certificate2 cert = null)
+        public static AuthenticationBuilder AddJmsTokenAuthentication(this IServiceCollection services, TokenContentType tokenContentType, string serverAddress, int serverPort, string headerName = "Authorization", X509Certificate2 cert = null)
         {
             MyAuthHandler.HeaderName = headerName;
             MyAuthHandler.ServerAddress = serverAddress;
             MyAuthHandler.ServerPort = serverPort;
             MyAuthHandler.Cert = cert;
-            MyAuthHandler.AuthorizationContentType = authorizationContentType;
+            MyAuthHandler.AuthorizationContentType = tokenContentType;
 
             return services.AddAuthentication(options =>
             {

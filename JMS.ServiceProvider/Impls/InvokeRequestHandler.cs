@@ -40,17 +40,38 @@ namespace JMS.Impls
             {
                 MicroServiceControllerBase.RequestingCommand.Value = cmd;
                 var controllerTypeInfo = _MicroServiceProvider.ServiceNames[cmd.Service];
+
+                object userContent = null;
+                if(controllerTypeInfo.NeedAuthorize)
+                {
+                    var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
+                    if(auth != null)
+                    {
+                        userContent = auth.Authenticate(cmd.Header);
+                    }
+                }
+
                 controller = (MicroServiceControllerBase)_MicroServiceProvider.ServiceProvider.GetService(controllerTypeInfo.Type);
+                controller.UserContent = userContent;
                 controller.NetClient = netclient;
                 controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();
                 _logger?.LogDebug("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters);
-                var method = controllerTypeInfo.Methods.FirstOrDefault(m => m.Name == cmd.Method);
-                if (method == null)
+                var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
+                if (methodInfo == null)
                     throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
+
+                if(methodInfo.NeedAuthorize && userContent == null)
+                {
+                    var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
+                    if (auth != null)
+                    {
+                        userContent = auth.Authenticate(cmd.Header);
+                    }
+                }
 
                 MicroServiceControllerBase.Current = controller;
 
-                var parameterInfos = method.GetParameters();
+                var parameterInfos = methodInfo.Method.GetParameters();
                 object result = null;
 
                 int startPIndex = 0;
@@ -68,7 +89,7 @@ namespace JMS.Impls
                 controller.BeforeAction(cmd.Method, parameters);
                 if (parameterInfos.Length == 0)
                 {
-                    result = method.Invoke(controller, parameters);
+                    result = methodInfo.Method.Invoke(controller, parameters);
                 }
                 else
                 {
@@ -88,7 +109,7 @@ namespace JMS.Impls
                         }
 
                     }
-                    result = method.Invoke(controller, parameters);
+                    result = methodInfo.Method.Invoke(controller, parameters);
                 }
                 controller.AfterAction(cmd.Method, parameters);
 

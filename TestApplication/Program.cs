@@ -76,7 +76,7 @@ namespace TestApplication
                 //sw.Stop();
                 //Console.WriteLine(sw.ElapsedMilliseconds);
 
-                tran.SetHeader("auth", "123456789");
+                tran.SetHeader("auth", "AgABAAAAAAAAAAIAAAAAAAAAMENENENFN0Y5REREMzYwODM2MTY5NTZEMjlDRDcwMjc=");
 
                 //var locations = tran.ListMicroService("");//列出所有微服务
                 //Console.WriteLine("微服务位置：{0}", locations.ToJsonString());

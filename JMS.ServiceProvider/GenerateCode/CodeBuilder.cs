@@ -152,7 +152,7 @@ namespace JMS.GenerateCode
             if(xmldoc != null)
                CodeHelper.CurrentXmlMembersElement.Value = memberXmlNodeList = (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
 
-            var methods = controllerTypeInfo.Methods;
+            var methods = controllerTypeInfo.Methods.Select(m=>m.Method).ToArray();
 
             //https://docs.microsoft.com/zh-cn/dotnet/api/system.codedom.codepropertysetvaluereferenceexpression?view=dotnet-plat-ext-3.1
             CodeCompileUnit unit = new CodeCompileUnit();

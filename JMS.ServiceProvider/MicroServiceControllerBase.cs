@@ -27,6 +27,12 @@ public class MicroServiceControllerBase
             return _Header;
         }
     }
+
+    /// <summary>
+    /// 身份验证后获取的身份信息
+    /// </summary>
+    public object UserContent { get;internal set; }
+
     public TransactionDelegate TransactionControl { set; get; }
 
     string _transactionid;
@@ -111,6 +117,15 @@ public class MicroServiceControllerBase
 class ControllerTypeInfo
 {
     public Type Type;
-    public MethodInfo[] Methods;
+    public TypeMethodInfo[] Methods;
     public bool Enable;
+    /// <summary>
+    /// 是否需要身份验证
+    /// </summary>
+    public bool NeedAuthorize = false;
+}
+class TypeMethodInfo
+{
+    public MethodInfo Method;
+    public bool NeedAuthorize;
 }

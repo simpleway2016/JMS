@@ -5,6 +5,7 @@ using System.Text;
 
 namespace JMS
 {
+    [Authorize]
     public class Controller1: MicroServiceControllerBase
     {
         ILogger<Controller1> _logger;

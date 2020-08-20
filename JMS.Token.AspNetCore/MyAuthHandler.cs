@@ -11,7 +11,7 @@ using Way.Lib;
 
 namespace JMS.Token.AspNetCore
 {
-    public enum AuthorizationContentType
+    public enum TokenContentType
     {
         /// <summary>
         /// long[]类型
@@ -22,7 +22,7 @@ namespace JMS.Token.AspNetCore
         /// </summary>
         String = 2
     }
-    class MyAuthHandler : IAuthenticationHandler
+    class MyAuthHandler : Microsoft.AspNetCore.Authentication.IAuthenticationHandler
     {
         public const string SchemeName = "JMS.Token";
         AuthenticationScheme _scheme;
@@ -31,7 +31,7 @@ namespace JMS.Token.AspNetCore
         public static string ServerAddress;
         public static int ServerPort;
         public static X509Certificate2 Cert;
-        public static AuthorizationContentType AuthorizationContentType;
+        public static TokenContentType AuthorizationContentType;
 
         /// <summary>
         /// 初始化认证
@@ -58,7 +58,7 @@ namespace JMS.Token.AspNetCore
             try
             {
                 string strContent;
-                if (AuthorizationContentType == AuthorizationContentType.Longs)
+                if (AuthorizationContentType == TokenContentType.Longs)
                 {
                     strContent = client.VerifyForLongs(token).ToJsonString();
                 }

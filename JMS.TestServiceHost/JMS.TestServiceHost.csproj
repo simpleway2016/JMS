@@ -22,6 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\JMS.ServiceProvider\JMS.ServiceProvider.csproj" />
+    <ProjectReference Include="..\JMS.Token\JMS.Token.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">

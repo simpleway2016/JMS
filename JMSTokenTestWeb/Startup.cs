@@ -26,7 +26,7 @@ namespace JMSTokenTestWeb
         {
             //string token :WyJhYmMiLCJEQ0FCMEEwMjcyMTQwNDUxRjc2RTg1MjQ1MDUxRERDMCJd
             //longs:AgABAAAAAAAAAAIAAAAAAAAAMENENENFN0Y5REREMzYwODM2MTY5NTZEMjlDRDcwMjc=
-            services.AddJmsTokenAuthentication(JMS.Token.AspNetCore.AuthorizationContentType.Longs, "127.0.0.1", 9911);
+            services.AddJmsTokenAuthentication(JMS.Token.AspNetCore.TokenContentType.Longs, "127.0.0.1", 9911);
             services.AddControllers();
          
         }
