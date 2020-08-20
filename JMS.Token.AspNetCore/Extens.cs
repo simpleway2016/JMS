@@ -20,7 +20,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="serverPort">token服务器端口</param>
         /// <param name="headerName">客户端通过哪个头部传递token</param>
         /// <param name="cert">访问token服务器的证书</param>
-        public static void AddJmsTokenAuthentication(this IServiceCollection services, AuthorizationContentType authorizationContentType, string serverAddress, int serverPort, string headerName = "Authorization", X509Certificate2 cert = null)
+        public static AuthenticationBuilder AddJmsTokenAuthentication(this IServiceCollection services, AuthorizationContentType authorizationContentType, string serverAddress, int serverPort, string headerName = "Authorization", X509Certificate2 cert = null)
         {
             MyAuthHandler.HeaderName = headerName;
             MyAuthHandler.ServerAddress = serverAddress;
@@ -28,7 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
             MyAuthHandler.Cert = cert;
             MyAuthHandler.AuthorizationContentType = authorizationContentType;
 
-            services.AddAuthentication(options =>
+            return services.AddAuthentication(options =>
             {
 
                 options.AddScheme<MyAuthHandler>(MyAuthHandler.SchemeName, "default scheme");
