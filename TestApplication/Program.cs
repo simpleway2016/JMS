@@ -7,16 +7,32 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using JMS;
 using JMS.Token;
+using Newtonsoft.Json;
 using Way.Lib;
 
 namespace TestApplication
 {
+    class TestObject
+    {
+        /// <summary>
+        /// 姓名
+        /// </summary>
+        public string Name { get; set; }
 
+        /// <summary>
+        /// 子类型
+        /// </summary>
+        public TestObject[] Child { get; set; }
+
+        /// <summary>
+        /// 年龄
+        /// </summary>
+        public int Age;
+    }
     class Program
     {
         static void Main(string[] args)
         {
-
             //var tokenclient = new TokenClient("localhost", 9911);
             //var token = tokenclient.BuildForString(new { userid = 12, expire = 12u }.ToJsonString());
             //var body = tokenclient.VerifyForString(token);
@@ -25,7 +41,7 @@ namespace TestApplication
             //var body2 = tokenclient.VerifyForLongs(token);
 
 
-           while(true)
+           while (true)
             {
                 try
                 {
@@ -84,7 +100,7 @@ namespace TestApplication
                 task.Wait();
                 Console.WriteLine("异步调用结果：{0}", task.Result);
 
-                ret =  Service2.Invoke<string>("GetName" , new { Name = "Jack"});
+                ret =  Service2.Invoke<string>("GetName" , new TestObject { Age = 12});
 
                 tran.Commit();
             }

@@ -55,12 +55,7 @@ namespace JMS
                }
             };
             var msp = new MicroServiceHost(services);
-            if (File.Exists("./appsettings.json") == false)
-            {
-                //本地没有appsettings.json，先从网关拉一个
-                msp.GetGatewayShareFile(gateways[0], "test/appsettings.json", "./appsettings.json", gatewaycert);
-            }
-
+          
 
             var builder = new ConfigurationBuilder();
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
@@ -74,11 +69,7 @@ namespace JMS
             });
             services.AddSingleton<IConfiguration>(configuration);
 
-            msp.MapShareFileToLocal(gateways[0] , "test/appsettings.json", "./appsettings.json",(p,p2)=> {
-                Console.WriteLine(p + "回调");
-            });
-            msp.MapShareFileToLocal(gateways[0], "test/appsettings2.json", "./appsettings2.json");
-
+         
 
             msp.Register<Controller1>("Controller1");
             msp.Register<Controller2>("Service2");
