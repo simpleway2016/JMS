@@ -9,11 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace JMSTokenTestWeb.Controllers
 {
-    [Authorize]
+    
     [ApiController]
     [Route("[controller]/[action]")]
     public class WeatherForecastController : ControllerBase
     {
+        [Authorize]
         [HttpGet]
         public string Test()
         {
