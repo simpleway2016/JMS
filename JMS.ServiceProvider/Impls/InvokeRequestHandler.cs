@@ -44,7 +44,7 @@ namespace JMS.Impls
                 controller.NetClient = netclient;
                 controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();
                 _logger?.LogDebug("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters);
-                var method = controllerTypeInfo.Methods.FirstOrDefault(m=>m.Name == cmd.Method);
+                var method = controllerTypeInfo.Methods.FirstOrDefault(m => m.Name == cmd.Method);
                 if (method == null)
                     throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
 
@@ -75,12 +75,12 @@ namespace JMS.Impls
                     for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
                     {
                         string pvalue = cmd.Parameters[index];
+                        if (pvalue == null)
+                            continue;
+
                         try
                         {
-                            if (pvalue != null)
-                            {
-                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
-                            }
+                            parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
                         }
                         catch (Exception)
                         {
@@ -104,10 +104,10 @@ namespace JMS.Impls
                     supportTran = true;
                 }
 
-                if(supportTran && cmd.Header.ContainsKey("Tran") && cmd.Header["Tran"] == "0")
+                if (supportTran && cmd.Header.ContainsKey("Tran") && cmd.Header["Tran"] == "0")
                 {
                     //调用端不需要事务支持，所以，直接提交
-                    if(transactionDelegate.CommitAction != null)
+                    if (transactionDelegate.CommitAction != null)
                     {
                         transactionDelegate.CommitAction();
                     }
@@ -160,7 +160,8 @@ namespace JMS.Impls
                     }
                     else if (cmd.Type == InvokeType.HealthyCheck)
                     {
-                        netclient.WriteServiceData(new InvokeResult { 
+                        netclient.WriteServiceData(new InvokeResult
+                        {
                             Success = transactionDelegate.AgreeCommit
                         });
                     }
@@ -183,7 +184,7 @@ namespace JMS.Impls
             }
             catch (Exception ex)
             {
-                if(transactionDelegate != null )
+                if (transactionDelegate != null)
                 {
                     try
                     {
