@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Jack</Authors>
+    <Description>基于JMS.Token的身份验证
+services.AddJmsTokenAuthentication(JMS.Token.AspNetCore.AuthorizationContentType.String, "127.0.0.1", 9911);
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+如果通过验证，controller中通过下面代码获取token内容：
+this.User.FindFirstValue("Content")</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\JMS.Token.AspNetCore.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JMS.Token\JMS.Token.csproj" />
+  </ItemGroup>
+
+</Project>
