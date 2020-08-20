@@ -77,7 +77,10 @@ namespace JMS.Impls
                         string pvalue = cmd.Parameters[index];
                         try
                         {
-                            parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
+                            if (pvalue != null)
+                            {
+                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
+                            }
                         }
                         catch (Exception)
                         {
