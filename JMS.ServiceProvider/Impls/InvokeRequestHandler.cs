@@ -246,8 +246,8 @@ namespace JMS.Impls
             }
             finally
             {
-                controller?.UnLoad();
                 MicroServiceControllerBase.Current = null;
+                controller?.UnLoad();                
             }
         }
     }
