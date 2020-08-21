@@ -33,9 +33,9 @@ namespace TestApplication
     {
         static void Main(string[] args)
         {
-            //var tokenclient = new TokenClient("localhost", 9911);
-            //var token = tokenclient.BuildStringWithExpire( "123" , DateTime.Now.AddYears(1) );
-            
+            var tokenclient = new TokenClient("localhost", 9911);
+            var token = tokenclient.BuildStringWithExpire( "123" , DateTime.Now.AddYears(1) );
+            token = tokenclient.BuildLongWithExpire(100, DateTime.Now.AddYears(1));
 
             //token = tokenclient.BuildForLongs(new[] { 12u, (long)(DateTime.Now - Convert.ToDateTime("1970-1-1")).TotalSeconds });
             //var body2 = tokenclient.VerifyForLongs(token);

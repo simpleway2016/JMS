@@ -5,7 +5,7 @@ using System.Text;
 
 namespace JMS
 {
-    [Authorize]
+    [JMS.Authorize]
     public class Controller1: MicroServiceControllerBase
     {
         ILogger<Controller1> _logger;
@@ -23,7 +23,7 @@ namespace JMS
             return "abc";
         }
         public void Test2(TransactionDelegate tran)
-        {
+        {            
             tran.CommitAction = () => {
                 _logger.LogInformation("Controller1 Test2 提交事务");
             };
