@@ -61,7 +61,7 @@ namespace JMS
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
             var configuration = builder.Build();
 
-            services.UseJmsTokenAuthentication(AuthorizationContentType.Longs, "127.0.0.1", 9911,"auth");
+            services.UseJmsTokenAuthentication(AuthorizationContentType.String, "127.0.0.1", 9911,"auth");
             services.AddLogging(loggingBuilder =>
             {
                 loggingBuilder.AddConfiguration(configuration.GetSection("Logging"));

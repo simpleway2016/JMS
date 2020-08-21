@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Way.Lib;
 
 namespace JMS
 {
+   
     class AuthenticationHandler : IAuthenticationHandler
     {
         public static string HeaderName;
@@ -25,13 +27,13 @@ namespace JMS
             try
             {
                 
-                if (AuthorizationContentType == AuthorizationContentType.Longs)
+                if (AuthorizationContentType == AuthorizationContentType.Long)
                 {
-                   return client.VerifyForLongs(token);
+                    return client.VerifyLong(token);
                 }
                 else
                 {
-                    return client.VerifyForString(token);
+                    return client.VerifyString(token);
                 }
             }
             catch

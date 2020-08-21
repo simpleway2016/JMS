@@ -6,14 +6,17 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 namespace JMS
 {
+    /// <summary>
+    /// token的数据类型
+    /// </summary>
     public enum AuthorizationContentType
     {
         /// <summary>
-        /// long[]类型
+        /// long类型 + 过期时间
         /// </summary>
-        Longs = 1,
+        Long = 1,
         /// <summary>
-        /// 字符串内容
+        /// string类型 + 过期时间
         /// </summary>
         String = 2
     }

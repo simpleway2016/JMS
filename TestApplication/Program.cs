@@ -34,14 +34,14 @@ namespace TestApplication
         static void Main(string[] args)
         {
             //var tokenclient = new TokenClient("localhost", 9911);
-            //var token = tokenclient.BuildForString(new { userid = 12, expire = 12u }.ToJsonString());
-            //var body = tokenclient.VerifyForString(token);
+            //var token = tokenclient.BuildStringWithExpire( "123" , DateTime.Now.AddYears(1) );
+            
 
             //token = tokenclient.BuildForLongs(new[] { 12u, (long)(DateTime.Now - Convert.ToDateTime("1970-1-1")).TotalSeconds });
             //var body2 = tokenclient.VerifyForLongs(token);
 
 
-           while (true)
+            while (true)
             {
                 try
                 {
@@ -75,8 +75,8 @@ namespace TestApplication
                 //}
                 //sw.Stop();
                 //Console.WriteLine(sw.ElapsedMilliseconds);
-
-                tran.SetHeader("auth", "AgABAAAAAAAAAAIAAAAAAAAAMENENENFN0Y5REREMzYwODM2MTY5NTZEMjlDRDcwMjc=");
+                tran.SetHeader("auth", "WyJ7XCJkXCI6XCIxMjNcIixcImVcIjoxNjI5NTM4ODMxfSIsIkZFREE2MkU2RTg3RTZDNDhBOEI1NkExOURDNEUwQzQ2Il0=");
+                //tran.SetHeader("auth", "AgB7AAAAAAAAAEzJIGEAAAAAOEZEMkUxODk4MjVFOEM5NzdGNjJGMEIyNkFERTBBRkQ=");
 
                 //var locations = tran.ListMicroService("");//列出所有微服务
                 //Console.WriteLine("微服务位置：{0}", locations.ToJsonString());
@@ -93,6 +93,8 @@ namespace TestApplication
 
                 var ret = controller1.Test(123, "Jack.T");
                 Console.WriteLine("调用结果：{0}", ret);
+
+              
 
                 controller1.Test2Async();
 

@@ -14,11 +14,11 @@ namespace JMS.Token.AspNetCore
     public enum TokenContentType
     {
         /// <summary>
-        /// long[]类型
+        /// long类型 + 过期时间
         /// </summary>
-        Longs = 1,
+        Long = 1,
         /// <summary>
-        /// 字符串内容
+        /// string类型 + 过期时间
         /// </summary>
         String = 2
     }
@@ -58,13 +58,13 @@ namespace JMS.Token.AspNetCore
             try
             {
                 string strContent;
-                if (AuthorizationContentType == TokenContentType.Longs)
+                if (AuthorizationContentType == TokenContentType.Long)
                 {
-                    strContent = client.VerifyForLongs(token).ToJsonString();
+                    strContent = client.VerifyLong(token).ToString();
                 }
                 else
                 {
-                    strContent = client.VerifyForString(token);
+                    strContent = client.VerifyString(token);
                 }
                 var ticket = GetAuthTicket(strContent);
                 return Task.FromResult(AuthenticateResult.Success(ticket));

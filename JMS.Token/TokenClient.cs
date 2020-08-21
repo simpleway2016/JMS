@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Security;
+using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -13,7 +14,7 @@ namespace JMS.Token
 {
     public class TokenClient
     {
-      
+
         static string[] Keys;
         static object LockObj = new object();
         X509Certificate2 _cert;
@@ -23,21 +24,22 @@ namespace JMS.Token
         /// <param name="serverAddress">Token服务器地址</param>
         /// <param name="serverPort">Token服务器端口</param>
         /// <param name="cert">与服务器交互的客户端证书</param>
-        public TokenClient(string serverAddress ,int serverPort, X509Certificate2 cert = null)
+        public TokenClient(string serverAddress, int serverPort, X509Certificate2 cert = null)
         {
             _cert = cert;
-            if(Keys == null)
+            if (Keys == null)
             {
-                lock(LockObj)
+                lock (LockObj)
                 {
                     if (Keys != null)
                         return;
 
-                    CertClient client = new CertClient(serverAddress, serverPort , _cert);
+                    CertClient client = new CertClient(serverAddress, serverPort, _cert);
                     client.Write(1);
                     var len = client.ReadInt();
                     Keys = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
-                    Task.Run(() => {
+                    Task.Run(() =>
+                    {
                         try
                         {
                             client.ReadTimeout = 0;
@@ -48,19 +50,56 @@ namespace JMS.Token
                             Keys = null;
                         }
                     });
-                }               
+                }
             }
         }
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="expireTime">过期时间</param>
+        /// <returns></returns>
+        public string BuildLongWithExpire(long data, DateTime expireTime)
+        {
+            return BuildForLongs(new long[] { data, (long)((expireTime - new DateTime(1970, 1, 1)).TotalSeconds) });
+        }
+
+        public string BuildStringWithExpire(string data, DateTime expireTime)
+        {
+            var dict = new StringToken()
+            {
+                d = data,
+                e = (long)((expireTime - new DateTime(1970, 1, 1)).TotalSeconds)
+            };
+
+            return BuildForString(dict.ToJsonString());
+        }
+
+        /// <summary>
+        /// 验证Long类型的token，如果验证失败，抛出异常
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public long VerifyLong(string token)
+        {
+            var data = this.VerifyForLongs(token);
+            var expireTime = new DateTime(1970, 1, 1).AddSeconds(data[1]);
+            if (expireTime < DateTime.Now)
+                throw new AuthenticationException("token expired");
+            return data[0];
+        }
+
         /// <summary>
         /// 根据字符串内容，生成token
         /// </summary>
         /// <param name="body"></param>
         /// <returns></returns>
-        public string BuildForString(string body)
+        string BuildForString(string body)
         {
             var signstr = sign(body);
             var text = new string[] { body, signstr }.ToJsonString();
@@ -68,18 +107,38 @@ namespace JMS.Token
             return Convert.ToBase64String(bs);
         }
 
+        class StringToken
+        {
+            public string d;
+            public long e;
+        }
+
+        /// <summary>
+        /// 验证String类型的token，如果验证失败，抛出异常
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public string VerifyString(string token)
+        {
+            var data = VerifyForString(token).FromJson<StringToken>();
+            var expireTime = new DateTime(1970, 1, 1).AddSeconds(data.e);
+            if (expireTime < DateTime.Now)
+                throw new AuthenticationException("token expired");
+            return data.d;
+        }
+
         /// <summary>
         /// 根据long数组，生成token，常用于存储用户id和过期时间戳
         /// </summary>
         /// <param name="values"></param>
         /// <returns></returns>
-        public string BuildForLongs(long[] values)
+        string BuildForLongs(long[] values)
         {
             var signstr = sign(values.ToJsonString());
             var signbs = Encoding.UTF8.GetBytes(signstr);
             byte[] data = new byte[values.Length * 8 + 2 + signbs.Length];
-            Array.Copy(BitConverter.GetBytes((short)values.Length), data , 2);
-            for (int i = 0; i < values.Length; i ++)
+            Array.Copy(BitConverter.GetBytes((short)values.Length), data, 2);
+            for (int i = 0; i < values.Length; i++)
             {
                 Array.Copy(BitConverter.GetBytes(values[i]), 0, data, i * 8 + 2, 8);
             }
@@ -102,9 +161,9 @@ namespace JMS.Token
         /// <param name="key"></param>
         /// <param name="secretKey"></param>
         /// <returns>验证成功返回字符串信息，失败返回null</returns>
-        public string VerifyForString(string token)
+        string VerifyForString(string token)
         {
-           var tokenInfo =  Encoding.UTF8.GetString( Convert.FromBase64String(token)).FromJson<string[]>();
+            var tokenInfo = Encoding.UTF8.GetString(Convert.FromBase64String(token)).FromJson<string[]>();
             var signstr = sign(tokenInfo[0]);
             if (signstr == tokenInfo[1])
                 return tokenInfo[0];
@@ -116,18 +175,18 @@ namespace JMS.Token
         /// </summary>
         /// <param name="token"></param>
         /// <returns>验证成功返long数组，失败返回null</returns>
-        public long[] VerifyForLongs(string token)
+        long[] VerifyForLongs(string token)
         {
             var data = Convert.FromBase64String(token);
             var arrlen = BitConverter.ToInt16(data);
 
             long[] ret = new long[arrlen];
-            for(int i = 0; i < ret.Length; i ++)
+            for (int i = 0; i < ret.Length; i++)
             {
                 ret[i] = BitConverter.ToInt64(data, 2 + i * 8);
             }
 
-            var input = Encoding.UTF8.GetString(data , 2 + ret.Length*8 , data.Length - 2 - ret.Length * 8);
+            var input = Encoding.UTF8.GetString(data, 2 + ret.Length * 8, data.Length - 2 - ret.Length * 8);
 
             var signstr = sign(ret.ToJsonString());
             if (signstr == input)
