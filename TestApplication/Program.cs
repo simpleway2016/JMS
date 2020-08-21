@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using JMS;
 using JMS.Token;
@@ -33,9 +34,9 @@ namespace TestApplication
     {
         static void Main(string[] args)
         {
-            var tokenclient = new TokenClient("localhost", 9911);
-            var token = tokenclient.BuildStringWithExpire( "123" , DateTime.Now.AddYears(1) );
-            token = tokenclient.BuildLongWithExpire(100, DateTime.Now.AddYears(1));
+            //var tokenclient = new TokenClient("localhost", 9911);
+            //var token = tokenclient.BuildStringWithExpire( "123" , DateTime.Now.AddYears(1) );
+            //var token = tokenclient.BuildLongWithExpire(long.MaxValue / 2, DateTime.Now.AddYears(1));
 
             //token = tokenclient.BuildForLongs(new[] { 12u, (long)(DateTime.Now - Convert.ToDateTime("1970-1-1")).TotalSeconds });
             //var body2 = tokenclient.VerifyForLongs(token);
