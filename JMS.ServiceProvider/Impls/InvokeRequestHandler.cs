@@ -220,15 +220,15 @@ namespace JMS.Impls
                 }
                 try
                 {
-                    controller?.InvokeError(cmd.Method, parameters, ex);
+                    if( controller?.InvokeError(cmd.Method, parameters, ex) == false)
+                    {
+                        _logger?.LogError(ex, ex.Message);
+                    }
                 }
                 catch (ResponseEndException)
                 {
                     return;
                 }
-
-
-                _logger?.LogError(ex, ex.Message);
 
                 while (ex.InnerException != null)
                 {
