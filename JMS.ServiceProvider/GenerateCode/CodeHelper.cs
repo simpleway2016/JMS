@@ -146,7 +146,7 @@ namespace JMS.GenerateCode
                var subTypes = type.Assembly.DefinedTypes.Where(m => m.IsSubclassOf(type)).ToArray();
                 foreach( var subtype in subTypes )
                 {
-                    var subPros = subtype.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where( m=>properties.Any(n=>n.Name == m.Name) == false ).ToArray();
+                    var subPros = subtype.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where( m=> list.Any(n=>n.Name == m.Name) == false ).ToArray();
                     list.AddRange(subPros);
                 }
                 properties = list.ToArray();
