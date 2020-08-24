@@ -87,11 +87,7 @@ namespace JMS.Impls
                 }
 
                 controller.BeforeAction(cmd.Method, parameters);
-                if (parameterInfos.Length == 0)
-                {
-                    result = methodInfo.Method.Invoke(controller, parameters);
-                }
-                else
+                if (parameterInfos.Length > 0)
                 {
                     for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
                     {
@@ -109,8 +105,9 @@ namespace JMS.Impls
                         }
 
                     }
-                    result = methodInfo.Method.Invoke(controller, parameters);
+                    
                 }
+                result = methodInfo.Method.Invoke(controller, parameters);
                 controller.AfterAction(cmd.Method, parameters);
 
                 var supportTran = false;
