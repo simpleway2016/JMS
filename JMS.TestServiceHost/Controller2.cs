@@ -29,6 +29,10 @@ namespace JMS
         /// </summary>
         public int Age2;
     }
+    class TestObjectSub: TestObject2
+    {
+        public string SubName { get; set; }
+    }
      enum MyEnum
     {
         /// <summary>

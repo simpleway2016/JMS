@@ -21,7 +21,7 @@ namespace JMS.GenerateCode
             CodeMemberMethod codeMethod = new CodeMemberMethod();
             codeMethod.Attributes = MemberAttributes.Public;
             codeMethod.Name = method.Name;
-            codeMethod.ReturnType = GetTypeCode(method.ReturnType);
+            codeMethod.ReturnType = GetTypeCode(method.ReturnType , true);
             foreach (var p in parameters)
             {
                 codeMethod.Parameters.Add(new CodeParameterDeclarationExpression(GetTypeCode(p.ParameterType), p.Name));
@@ -31,19 +31,19 @@ namespace JMS.GenerateCode
             return codeMethod;
         }
 
-        public static CodeTypeReference GetTypeCode(Type type)
+        public static CodeTypeReference GetTypeCode(Type type,bool findSubClass = false)
         {
             if (type.IsArray)
             {
                 CodeTypeReference genRet = new CodeTypeReference();
                 genRet.ArrayRank = type.GetArrayRank();
-                genRet.ArrayElementType = GetTypeCode(type.GetElementType());
+                genRet.ArrayElementType = GetTypeCode(type.GetElementType() , findSubClass);
                 return genRet;
             }
             else if (type.IsGenericType)
             {
                 Type[] argTypes = type.GetGenericArguments();
-                CodeTypeReference[] codeArgTypes = argTypes.Select(m => GetTypeCode(m)).ToArray();
+                CodeTypeReference[] codeArgTypes = argTypes.Select(m => GetTypeCode(m , findSubClass)).ToArray();
 
                 CodeTypeReference genRet = new CodeTypeReference();
                 genRet.TypeArguments.AddRange(codeArgTypes);
@@ -62,7 +62,7 @@ namespace JMS.GenerateCode
                     && CurrentControllerType.Value.Assembly == type.Assembly)
             {
                 //生成这个类代码
-                string strProType = BuildTypeCode(type);
+                string strProType = BuildTypeCode(type , findSubClass);
                 return new CodeTypeReference(strProType);
             }
             else
@@ -110,10 +110,28 @@ namespace JMS.GenerateCode
 
             return type.Name;
         }
-        public static string BuildTypeCode(Type type)
+        public static string BuildTypeCode(Type type, bool findSubClass = false)
         {
             if (CurrentCreatedSubTypes.Value.ContainsKey(type))
-                return CurrentCreatedSubTypes.Value[type];
+            {
+                if (findSubClass)
+                {
+                    //删除现有的
+                    CurrentCreatedSubTypes.Value.Remove(type);
+                    foreach( var member in CurrentClassCode.Value.Members  )
+                    {
+                        if(member is CodeTypeDeclaration typedesc && typedesc.Name == type.Name)
+                        {
+                            CurrentClassCode.Value.Members.Remove(typedesc);
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    return CurrentCreatedSubTypes.Value[type];
+                }
+            }
 
             CurrentCreatedSubTypes.Value[type] = type.Name;
 
@@ -121,6 +139,18 @@ namespace JMS.GenerateCode
             CodeTypeDeclaration myClass = new CodeTypeDeclaration(type.Name);
             myClass.Attributes = MemberAttributes.Public;
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            if(findSubClass)
+            {
+                List<PropertyInfo> list = new List<PropertyInfo>(properties);
+                //需要查找继承类
+               var subTypes = type.Assembly.DefinedTypes.Where(m => m.IsSubclassOf(type)).ToArray();
+                foreach( var subtype in subTypes )
+                {
+                    var subPros = subtype.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where( m=>properties.Any(n=>n.Name == m.Name) == false ).ToArray();
+                    list.AddRange(subPros);
+                }
+                properties = list.ToArray();
+            }
 
             var parentType = type.BaseType;
             while(parentType != null && parentType != typeof(object))
