@@ -101,21 +101,21 @@ public class MicroServiceControllerBase
     /// <param name="parameters">传入的参数</param>
     /// <param name="error">异常</param>
     /// <returns>true 表示无需记录错误日志</returns>
-    public virtual bool InvokeError(string actionName, object[] parameters,Exception error)
+    public virtual bool OnInvokeError(string actionName, object[] parameters,Exception error)
     {
         return false;
     }
 
-    public virtual void BeforeAction(string actionName, object[] parameters)
+    public virtual void OnBeforeAction(string actionName, object[] parameters)
     {
 
     }
-    public virtual void AfterAction(string actionName, object[] parameters)
+    public virtual void OnAfterAction(string actionName, object[] parameters)
     {
 
     }
 
-    public virtual void UnLoad()
+    public virtual void OnUnLoad()
     {
 
     }

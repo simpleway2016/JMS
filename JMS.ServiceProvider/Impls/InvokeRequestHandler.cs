@@ -86,7 +86,7 @@ namespace JMS.Impls
                     }
                 }
 
-                controller.BeforeAction(cmd.Method, parameters);
+                controller.OnBeforeAction(cmd.Method, parameters);
                 if (parameterInfos.Length > 0)
                 {
                     for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
@@ -108,7 +108,7 @@ namespace JMS.Impls
                     
                 }
                 result = methodInfo.Method.Invoke(controller, parameters);
-                controller.AfterAction(cmd.Method, parameters);
+                controller.OnAfterAction(cmd.Method, parameters);
 
                 var supportTran = false;
                 if (transactionDelegate != null && (transactionDelegate.CommitAction != null || transactionDelegate.RollbackAction != null))
@@ -220,7 +220,7 @@ namespace JMS.Impls
                 }
                 try
                 {
-                    if( controller?.InvokeError(cmd.Method, parameters, ex) == false)
+                    if( controller?.OnInvokeError(cmd.Method, parameters, ex) == false)
                     {
                         _logger?.LogError(ex, ex.Message);
                     }
@@ -244,7 +244,7 @@ namespace JMS.Impls
             finally
             {
                 MicroServiceControllerBase.Current = null;
-                controller?.UnLoad();                
+                controller?.OnUnLoad();                
             }
         }
     }
