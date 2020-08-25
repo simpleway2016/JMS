@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Security.Authentication;
 using System.Text;
 
 namespace JMS
@@ -59,7 +60,16 @@ namespace JMS
 
         public string ErrTest()
         {
-            throw new Exception("ErrTest异常啦");
+            throw new AuthenticationException("ErrTest异常啦");
+        }
+
+        public override bool OnInvokeError(string actionName, object[] parameters, Exception error)
+        {
+            if( error is AuthenticationException)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

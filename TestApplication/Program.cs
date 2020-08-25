@@ -93,6 +93,7 @@ namespace TestApplication
                     Thread.Sleep(1000);
                     controller1 = tran.GetMicroService<Controller1>();
                 }
+
                 var Service2 = tran.GetMicroService("Service2");
 
                 var ret = controller1.Test(123, "Jack.T");

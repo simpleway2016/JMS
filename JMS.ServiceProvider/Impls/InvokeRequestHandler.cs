@@ -8,6 +8,7 @@ using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using JMS.Dtos;
 using System.Linq;
+using System.Reflection;
 
 namespace JMS.Impls
 {
@@ -202,6 +203,9 @@ namespace JMS.Impls
             }
             catch (Exception ex)
             {
+                if (ex is TargetInvocationException && ex.InnerException != null)
+                    ex = ex.InnerException;
+
                 if (transactionDelegate != null)
                 {
                     try
@@ -218,6 +222,7 @@ namespace JMS.Impls
                     }
                     transactionDelegate = null;
                 }
+
                 try
                 {
                     if( controller?.OnInvokeError(cmd.Method, parameters, ex) == false)
