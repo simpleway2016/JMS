@@ -45,9 +45,12 @@ namespace JMS.ScheduleTask
             {
                 return;
             }
+            
 
             _state = TaskState.Running;
             string taskname = this.Task.GetType().FullName;
+            _logger?.LogInformation("定时任务{0}启动", taskname);
+
             while (_state == TaskState.Running)
             {
                 int sleepTime = 10;
@@ -82,6 +85,7 @@ namespace JMS.ScheduleTask
 
                                 //转换成当天的执行时间点
                                 DateTime time = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd " + h + ":" + m + ":00"));
+
                                 if (DateTime.Now >= time && _lastRunTime < time)
                                 {
                                     _logger?.LogInformation("执行任务：{0}", taskname);
@@ -129,6 +133,7 @@ namespace JMS.ScheduleTask
                 _waitobject.Reset();
             }
             _state = TaskState.Stopped;
+            _logger?.LogInformation("定时任务{0}停止", taskname);
         }
 
         public void Stop()
