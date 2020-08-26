@@ -85,7 +85,7 @@ namespace JMS.ScheduleTask
 
                                 //转换成当天的执行时间点
                                 DateTime time = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd " + h + ":" + m + ":00"));
-                                _logger?.LogInformation(" {0}  {1}", time , _lastRunTime);
+                                //_logger?.LogInformation(" {0}  {1}", time , _lastRunTime);
                                 if (DateTime.Now >= time && _lastRunTime < time)
                                 {                                   
                                     toRun = true;
