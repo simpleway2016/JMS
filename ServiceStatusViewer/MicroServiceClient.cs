@@ -14,7 +14,7 @@ namespace ServiceStatusViewer
         static MicroServiceClient()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            builder.AddJsonFile(Program.SettingFileName, optional: true, reloadOnChange: true);
             Configuration = builder.Build();
             ConfigurationChangeCallback(null);
         }

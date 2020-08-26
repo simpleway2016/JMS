@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ServiceStatusViewer": {
+      "commandName": "Project",
+      "commandLineArgs": "appsettings3.json"
+    }
+  }
+}
