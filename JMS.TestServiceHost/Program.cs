@@ -9,23 +9,7 @@ using System.Threading;
 
 namespace JMS
 {
-    class AutoRun : IScheduleTask
-    {
-        MicroServiceHost _host;
-        public AutoRun(MicroServiceHost microServiceHost)
-        {
-            _host = microServiceHost;
-        }
 
-        public double[] Timers => new[] { 11.29};
-
-        public int Interval => 2000;
-
-        public void Run()
-        {
-            Console.WriteLine("AutoRunning");
-        }
-    }
     class Program
     {
         static void Main(string[] args)
@@ -73,7 +57,7 @@ namespace JMS
 
             msp.Register<Controller1>("Controller1");
             msp.Register<Controller2>("Service2");
-            msp.RegisterScheduleTask<AutoRun>();
+            msp.RegisterScheduleTask<AutoRun1>();
             msp.Build(8912, gateways)
                 .UseSSL(c =>
                 { //配置ssl
