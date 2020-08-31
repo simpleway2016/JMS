@@ -126,6 +126,7 @@ namespace JMS
                 }
                 catch (Exception ex)
                 {
+                    _logger?.LogError(ex, "文件监听异常");
                 }
                 Thread.Sleep(1000);
             }

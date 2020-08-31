@@ -63,6 +63,8 @@ namespace JMS
 
         private void _fw_Changed(object sender, FileSystemEventArgs e)
         {
+            if (e.ChangeType == WatcherChangeTypes.Deleted)
+                return;
            var path =  Path.GetRelativePath(_root, e.FullPath).Replace("\\", "/");            
 
             lock(_changingFiles)

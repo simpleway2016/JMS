@@ -12,6 +12,8 @@ namespace JMS
 
     class Program
     {
+        static ShareFileClient ShareFileClient;
+       static ShareFileClient ShareFileClient2;
         static void Main(string[] args)
         {
             while (true)
@@ -53,11 +55,13 @@ namespace JMS
             });
             services.AddSingleton<IConfiguration>(configuration);
 
-         
+
+            
 
             msp.Register<Controller1>("Controller1");
             msp.Register<Controller2>("Service2");
             msp.RegisterScheduleTask<AutoRun1>();
+            msp.ServiceProviderBuilded += Msp_ServiceProviderBuilded;
             msp.Build(8912, gateways)
                 .UseSSL(c =>
                 { //配置ssl
@@ -65,6 +69,42 @@ namespace JMS
                     c.ServerCertificate = new X509Certificate2("../../../../pfx/service_server.pfx", "123456");
                 })
                 .Run();
+        }
+
+        private static void Msp_ServiceProviderBuilded(object sender, IServiceProvider e)
+        {
+            var gatewaycert = new System.Security.Cryptography.X509Certificates.X509Certificate2("../../../../pfx/client.pfx", "123456");
+            ShareFileClient = new ShareFileClient(new NetAddress
+            {
+                Address = "localhost",
+                Port = 8911
+            }, e.GetService<ILogger<Program>>() , gatewaycert);
+            ShareFileClient.MapShareFileToLocal("FllowOrderSystem/textDict.json", "./textDict.json", null);
+            ShareFileClient.StartListen();
+            try
+            {
+               // ShareFileClient.GetGatewayShareFile("FllowOrderSystem/textDict.json", "./textDict.json");
+            }
+            catch (Exception ex)
+            {
+            }
+
+
+
+            ShareFileClient2 = new ShareFileClient(new NetAddress
+            {
+                Address = "localhost",
+                Port = 8911
+            }, e.GetService<ILogger<Program>>(), gatewaycert);
+            ShareFileClient2.MapShareFileToLocal("FllowOrderSystem/textDict.json", "./textDict2.json", null);
+            ShareFileClient2.StartListen();
+            try
+            {
+                //ShareFileClient2.GetGatewayShareFile("FllowOrderSystem/textDict.json", "./textDict2.json");
+            }
+            catch (Exception ex)
+            {
+            }
         }
     }
 }
