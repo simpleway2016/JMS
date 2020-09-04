@@ -169,8 +169,10 @@ namespace ServiceStatusViewer.ViewModels
                     }
                     else
                     {
-                        this.ServiceList.FirstOrDefault(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port).IsOnline = true;
-                        this.ServiceList.FirstOrDefault(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port).RaisePropertyChanged("PerformanceInfo");
+                        var exititem = this.ServiceList.FirstOrDefault(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port);
+                        exititem.IsOnline = true;
+                        exititem._data = item;
+                        exititem.RaisePropertyChanged("PerformanceInfo");
                     }
                 }
 
