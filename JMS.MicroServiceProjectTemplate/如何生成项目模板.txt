@@ -1,0 +1,5 @@
+﻿点击vs菜单“项目”->“导出模板”，模板名称为：JMS.MicroServiceHost
+其中，自动将模板导入visual studio不要打勾，最后，生成JMS.MicroServiceHost.zip文件
+
+双击source.extension.vsixmanifest，在Assets里面，把现有的条目删除，新建一个ProjectTemplate条目，source为file on filesystem，并选择新生成的JMS.MicroServiceHost.zip文件
+修改source.extension.vsixmanifest版本号，编译本工程，生成vsix文件
