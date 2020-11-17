@@ -59,7 +59,7 @@ namespace JMS.Impls
                 controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();
                 if(_logger != null && _logger.IsEnabled(LogLevel.Trace))
                 {
-                    var str = string.Format("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters);
+                    var str = string.Format("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters.ToJsonString());
                     if(str != LastInvokingMsgString || (DateTime.Now - LastInvokingMsgStringTime).TotalSeconds > 5)
                     {
                         LastInvokingMsgStringTime = DateTime.Now;
