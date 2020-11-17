@@ -30,7 +30,8 @@ namespace JMS.Impls
         }
 
         public InvokeType MatchType => InvokeType.Invoke;
-
+        static string LastInvokingMsgString;
+        static DateTime LastInvokingMsgStringTime = DateTime.Now.AddDays(-1);
         public void Handle(NetClient netclient, InvokeCommand cmd)
         {
             TransactionDelegate transactionDelegate = null;
@@ -56,7 +57,17 @@ namespace JMS.Impls
                 controller.UserContent = userContent;
                 controller.NetClient = netclient;
                 controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();
-                _logger?.LogDebug("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters);
+                if(_logger != null && _logger.IsEnabled(LogLevel.Trace))
+                {
+                    var str = string.Format("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters);
+                    if(str != LastInvokingMsgString || (DateTime.Now - LastInvokingMsgStringTime).TotalSeconds > 5)
+                    {
+                        LastInvokingMsgStringTime = DateTime.Now;
+                        LastInvokingMsgString = str;
+                        _logger?.LogTrace(str);
+                    }                    
+                }
+              
                 var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
                 if (methodInfo == null)
                     throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
