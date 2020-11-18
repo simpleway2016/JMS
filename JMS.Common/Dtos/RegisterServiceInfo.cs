@@ -11,7 +11,7 @@ namespace JMS.Dtos
         public string Host;
         public string ServiceAddress;
         public string TransactionId;
-        public string Descrition;
+        public string Description;
     }
    
     public class RegisterServiceInfo: RegisterServiceLocation

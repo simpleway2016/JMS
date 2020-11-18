@@ -152,7 +152,7 @@ namespace JMS
                     Host = info.Host,
                     Port = info.Port,
                     ServiceAddress = info.ServiceAddress,
-                    Descrition = info.Description
+                    Description = info.Description
                 };
             }
             return ret;
