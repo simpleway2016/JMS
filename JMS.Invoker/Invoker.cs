@@ -13,6 +13,7 @@ namespace JMS
         public JMSClient ServiceTransaction { get; }
         string _serviceName;
         RegisterServiceLocation _serviceLocation;
+        public RegisterServiceLocation ServiceLocation => _serviceLocation;
         public Invoker(JMSClient ServiceTransaction, string serviceName)
         {
             this.ServiceTransaction = ServiceTransaction;
@@ -20,7 +21,8 @@ namespace JMS
 
 
         }
-        public bool Init()
+
+        public bool Init(RegisterServiceLocation registerServiceLocation)
         {
             //获取服务地址
             var netclient = NetClientPool.CreateClient(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate);
@@ -37,6 +39,12 @@ namespace JMS
                     }.ToJsonString()
                 });
                 var serviceLocation = netclient.ReadServiceObject<RegisterServiceLocation>();
+                if (registerServiceLocation != null)
+                {
+                    serviceLocation.Host = registerServiceLocation.Host;
+                    serviceLocation.Port = registerServiceLocation.Port;
+                    serviceLocation.ServiceAddress = registerServiceLocation.ServiceAddress;
+                }
 
                 if (serviceLocation.Host == "not master")
                     throw new MissMasterGatewayException("");
@@ -50,7 +58,7 @@ namespace JMS
 
                 NetClientPool.AddClientToPool(netclient);
             }
-            catch(SocketException ex)
+            catch (SocketException ex)
             {
                 netclient.Dispose();
                 throw new MissMasterGatewayException(ex.Message);
@@ -60,9 +68,14 @@ namespace JMS
                 netclient.Dispose();
                 throw;
             }
-               
-            
+
+
             return true;
+        }
+
+        public bool Init()
+        {
+            return Init(null);
         }
 
         public void Invoke(string method, params object[] parameters)

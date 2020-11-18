@@ -41,6 +41,10 @@ namespace JMS
         /// 设置微服务的地址，如果为null，网关会使用微服务的外网ip作为服务地址
         /// </summary>
         public NetAddress ServiceAddress { get; set; }
+        /// <summary>
+        /// 自定义描述
+        /// </summary>
+        public string Description { get; set; }
 
         /// <summary>
         /// 依赖注入容器builded事件
@@ -110,6 +114,16 @@ namespace JMS
         public void SetServiceEnable(string serviceName, bool enable)
         {
             ServiceNames[serviceName].Enable = enable;
+            _GatewayConnector?.OnServiceNameListChanged();
+        }
+
+        /// <summary>
+        /// 在网关上更新微服务的description
+        /// </summary>
+        /// <param name="description"></param>
+        public void UpdateDescription(string description)
+        {
+            this.Description = description;
             _GatewayConnector?.OnServiceNameListChanged();
         }
 

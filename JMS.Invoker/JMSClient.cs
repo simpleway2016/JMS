@@ -113,7 +113,7 @@ namespace JMS
         }
 
         /// <summary>
-        /// 枚举当前微服务列表
+        /// 获取当前微服务列表
         /// </summary>
         /// <param name="serviceName">服务名称，空表示所有服务</param>
         /// <returns></returns>
@@ -131,6 +131,31 @@ namespace JMS
                
                 return serviceLocations;
             }
+        }
+
+        /// <summary>
+        /// 获取指定某个微服务的地址列表
+        /// </summary>
+        /// <param name="serviceName">服务名称</param>
+        /// <returns></returns>
+        public RegisterServiceLocation[] ListMicroServiceLocations(string serviceName)
+        {
+            if (string.IsNullOrEmpty(serviceName))
+                throw new Exception("serviceName is empty");
+
+            var infos = ListMicroService(serviceName);
+            var ret = new RegisterServiceLocation[infos.Length];
+            for(int i = 0; i < infos.Length; i ++)
+            {
+                var info = infos[i];
+                ret[i] = new RegisterServiceLocation { 
+                    Host = info.Host,
+                    Port = info.Port,
+                    ServiceAddress = info.ServiceAddress,
+                    Descrition = info.Description
+                };
+            }
+            return ret;
         }
         /// <summary>
         /// 强行要求微服务释放锁定的key（慎用）
@@ -257,7 +282,13 @@ namespace JMS
                 HistoryMasterAddressList.Add(GatewayAddress);
         }
 
-        public virtual T GetMicroService<T>() where T : IImplInvoker
+        /// <summary>
+        /// 获取指定微服务
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
+        /// <returns></returns>
+        public virtual T GetMicroService<T>(RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
         {
             var classType = typeof(T);
             for(int i = 0; i < 2; i ++)
@@ -265,7 +296,7 @@ namespace JMS
                 try
                 {
                     var invoker = new Invoker(this, classType.GetCustomAttribute<InvokerInfoAttribute>().ServiceName);
-                    if (invoker.Init())
+                    if (invoker.Init(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
                 catch (MissMasterGatewayException)
@@ -283,15 +314,20 @@ namespace JMS
             return default(T);
         }
 
-
-        public virtual IMicroService GetMicroService( string serviceName)
+        /// <summary>
+        /// 获取指定微服务
+        /// </summary>
+        /// <param name="serviceName"></param>
+        /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
+        /// <returns></returns>
+        public virtual IMicroService GetMicroService( string serviceName,RegisterServiceLocation registerServiceLocation = null)
         {
             for (int i = 0; i < 2; i++)
             {
                 try
                 {
                     var invoker = new Invoker(this, serviceName);
-                    if (invoker.Init())
+                    if (invoker.Init(registerServiceLocation))
                         return invoker;
                 }
                 catch (MissMasterGatewayException)
@@ -309,8 +345,8 @@ namespace JMS
            
             return null;
         }
+              
 
-      
 
         internal void AddConnect(InvokeConnect connect)
         {

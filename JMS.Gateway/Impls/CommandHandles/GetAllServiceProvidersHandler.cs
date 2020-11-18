@@ -43,6 +43,7 @@ namespace JMS.Impls.CommandHandles
                 Port = m.Port,
                 ServiceId = m.ServiceId,
                 ServiceNames = m.ServiceNames,
+                Description = m.Description,
                 MaxThread = m.MaxThread,
                 PerformanceInfo = allocator.GetPerformanceInfo(m)
             }).ToArray();

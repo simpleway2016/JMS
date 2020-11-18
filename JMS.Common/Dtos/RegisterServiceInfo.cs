@@ -11,6 +11,7 @@ namespace JMS.Dtos
         public string Host;
         public string ServiceAddress;
         public string TransactionId;
+        public string Descrition;
     }
    
     public class RegisterServiceInfo: RegisterServiceLocation
@@ -24,7 +25,10 @@ namespace JMS.Dtos
         /// </summary>
         public int MaxThread;
         public string ServiceId;
-
+        /// <summary>
+        /// 微服务的自定义描述
+        /// </summary>
+        public string Description;
     }
 
     public class PerformanceInfo
@@ -53,6 +57,7 @@ namespace JMS.Dtos
         /// </summary>
         public int MaxThread;
         public string ServiceId;
+        public string Description;
         /// <summary>
         /// 当前微服务的负载情况
         /// </summary>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JMS.Dtos;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,6 +8,10 @@ namespace JMS
 {
     public interface IMicroService
     {
+        /// <summary>
+        /// 服务器地址
+        /// </summary>
+        public RegisterServiceLocation ServiceLocation { get; }
         /// <summary>
         /// 获取微服务的客户端c#代码（只在debug模式下有效）
         /// </summary>

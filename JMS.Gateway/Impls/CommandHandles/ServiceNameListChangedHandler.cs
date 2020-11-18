@@ -28,6 +28,7 @@ namespace JMS.Impls.CommandHandles
            if(service != null)
             {
                 service.ServiceNames = info.ServiceNames;
+                service.Description = info.Description;
             }
 
             netclient.WriteServiceData(new InvokeResult { Success = true});
