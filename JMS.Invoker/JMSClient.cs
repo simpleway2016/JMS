@@ -257,7 +257,7 @@ namespace JMS
                 HistoryMasterAddressList.Add(GatewayAddress);
         }
 
-        public T GetMicroService<T>() where T : IImplInvoker
+        public virtual T GetMicroService<T>() where T : IImplInvoker
         {
             var classType = typeof(T);
             for(int i = 0; i < 2; i ++)
@@ -284,7 +284,7 @@ namespace JMS
         }
 
 
-        public IMicroService GetMicroService( string serviceName)
+        public virtual IMicroService GetMicroService( string serviceName)
         {
             for (int i = 0; i < 2; i++)
             {
