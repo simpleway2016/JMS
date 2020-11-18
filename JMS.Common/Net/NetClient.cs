@@ -156,7 +156,7 @@ namespace JMS
             }
             catch (Exception ex)
             {
-                throw new ConvertException(str, $"无法将{str}实例化为{typeof(T).FullName}");
+                throw new ConvertException(str, $"无法将{str}实例化为{typeof(T).FullName}，" + ex.ToString());
             }
 
         }

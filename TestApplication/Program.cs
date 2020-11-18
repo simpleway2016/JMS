@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
@@ -7,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using JMS;
+using JMS.Dtos;
 using JMS.Token;
 using Newtonsoft.Json;
 using Way.Lib;
@@ -34,6 +36,9 @@ namespace TestApplication
     {
         static void Main(string[] args)
         {
+            var text = File.ReadAllText("d:\\test.cs", Encoding.UTF8);
+            var ttt=  text.FromJson<GatewayCommand>();
+            //{"Type":1,"Header":null,"Content":"{\"ServiceNames\":[\"AccountSystem.Service.Account\",\"AccountSystem.Service.Statistics\"],\"MaxThread\":16,\"ServiceId\":\"405d3ff4531941d38646f2d8591d0c6d\",\"Port\":8902,\"Host\":null,\"ServiceAddress\":\"47.52.0.186\",\"TransactionId\":null}"}
             //var tokenclient = new TokenClient("localhost", 9911);
             //var token = tokenclient.BuildStringWithExpire( "123" , DateTime.Now.AddYears(1) );
             //var token = tokenclient.BuildLongWithExpire(long.MaxValue / 2, DateTime.Now.AddYears(1));
