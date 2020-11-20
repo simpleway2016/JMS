@@ -12,7 +12,7 @@ app.UseAuthorization();
 
 如果通过验证，controller中通过下面代码获取token内容：
 this.User.FindFirstValue("Content")</Description>
-    <Version>1.0.0.6</Version>
+    <Version>1.0.0.7</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
