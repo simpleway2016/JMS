@@ -28,6 +28,7 @@ namespace JMS.Token.AspNetCore
         AuthenticationScheme _scheme;
         HttpContext _context;
         public static string HeaderName;
+        public static Func<string, bool> Callback;
         public static string ServerAddress;
         public static int ServerPort;
         public static X509Certificate2 Cert;
@@ -67,6 +68,13 @@ namespace JMS.Token.AspNetCore
                     strContent = client.VerifyString(token);
                 }
                 var ticket = GetAuthTicket(strContent);
+                if(Callback != null)
+                {
+                    if(!Callback(token))
+                    {
+                        return Task.FromResult(AuthenticateResult.Fail(""));
+                    }
+                }
                 return Task.FromResult(AuthenticateResult.Success(ticket));
             }
             catch
