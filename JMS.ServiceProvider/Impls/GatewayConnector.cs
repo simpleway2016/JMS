@@ -54,6 +54,9 @@ namespace JMS.Impls
         }
         public void OnServiceNameListChanged()
         {
+            while (!_ready)
+                Thread.Sleep(1000);
+
             if (_microServiceHost.MasterGatewayAddress == null)
                 return;
 
