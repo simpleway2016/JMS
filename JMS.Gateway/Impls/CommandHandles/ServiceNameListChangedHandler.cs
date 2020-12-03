@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading;
 using JMS.Dtos;
+using System.Threading.Tasks;
 
 namespace JMS.Impls.CommandHandles
 {
@@ -14,10 +15,12 @@ namespace JMS.Impls.CommandHandles
     {
         IServiceProvider _serviceProvider;
         Gateway _gateway;
+        IServiceProviderAllocator _ServiceProviderAllocator;
         public ServiceNameListChangedHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _gateway = serviceProvider.GetService<Gateway>();
+            _ServiceProviderAllocator = serviceProvider.GetService<IServiceProviderAllocator>();
         }
         public CommandType MatchCommandType => CommandType.ServiceNameListChanged;
 
@@ -29,6 +32,11 @@ namespace JMS.Impls.CommandHandles
             {
                 service.ServiceNames = info.ServiceNames;
                 service.Description = info.Description;
+                service.ClientCheckCode = info.ClientCheckCode;
+
+                Task.Run(() => {
+                    _ServiceProviderAllocator.ServiceInfoChanged(_gateway.GetAllServiceProviders());
+                });
             }
 
             netclient.WriteServiceData(new InvokeResult { Success = true});

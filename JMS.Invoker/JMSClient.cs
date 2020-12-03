@@ -286,16 +286,17 @@ namespace JMS
         /// 获取指定微服务
         /// </summary>
         /// <typeparam name="T"></typeparam>
+        /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual T GetMicroService<T>(RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
+        public virtual T GetMicroService<T>(string arg = null , RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
         {
             var classType = typeof(T);
             for(int i = 0; i < 2; i ++)
             {
                 try
                 {
-                    var invoker = new Invoker(this, classType.GetCustomAttribute<InvokerInfoAttribute>().ServiceName);
+                    var invoker = new Invoker(this, classType.GetCustomAttribute<InvokerInfoAttribute>().ServiceName , arg);
                     if (invoker.Init(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
@@ -318,15 +319,16 @@ namespace JMS
         /// 获取指定微服务
         /// </summary>
         /// <param name="serviceName"></param>
+        /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual IMicroService GetMicroService( string serviceName,RegisterServiceLocation registerServiceLocation = null)
+        public virtual IMicroService GetMicroService( string serviceName,string arg = null , RegisterServiceLocation registerServiceLocation = null)
         {
             for (int i = 0; i < 2; i++)
             {
                 try
                 {
-                    var invoker = new Invoker(this, serviceName);
+                    var invoker = new Invoker(this, serviceName, arg);
                     if (invoker.Init(registerServiceLocation))
                         return invoker;
                 }

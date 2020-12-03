@@ -36,16 +36,6 @@ namespace TestApplication
     {
         static void Main(string[] args)
         {
-            var text = File.ReadAllText("d:\\test.cs", Encoding.UTF8);
-            var ttt=  text.FromJson<GatewayCommand>();
-            //{"Type":1,"Header":null,"Content":"{\"ServiceNames\":[\"AccountSystem.Service.Account\",\"AccountSystem.Service.Statistics\"],\"MaxThread\":16,\"ServiceId\":\"405d3ff4531941d38646f2d8591d0c6d\",\"Port\":8902,\"Host\":null,\"ServiceAddress\":\"47.52.0.186\",\"TransactionId\":null}"}
-            //var tokenclient = new TokenClient("localhost", 9911);
-            //var token = tokenclient.BuildStringWithExpire( "123" , DateTime.Now.AddYears(1) );
-            //var token = tokenclient.BuildLongWithExpire(long.MaxValue / 2, DateTime.Now.AddYears(1));
-
-            //token = tokenclient.BuildForLongs(new[] { 12u, (long)(DateTime.Now - Convert.ToDateTime("1970-1-1")).TotalSeconds });
-            //var body2 = tokenclient.VerifyForLongs(token);
-
 
             while (true)
             {
@@ -90,16 +80,15 @@ namespace TestApplication
                 //var c1 = tran.GetMicroService("Service2");
                 //var code22 = c1.GetServiceClassCode("a", "b");
 
-                var code =  tran.GetMicroService("Service2").GetServiceClassCode("TestApplication", "Controller1");
-
+             
                 Controller1 controller1 = null;
                 while (controller1 == null)
                 {
                     Thread.Sleep(1000);
-                    controller1 = tran.GetMicroService<Controller1>();
+                    controller1 = tran.GetMicroService<Controller1>("100");
                 }
 
-                var Service2 = tran.GetMicroService("Service2");
+                var Service2 = tran.GetMicroService("Service2" , "100");
 
                 var ret = controller1.Test(123, "Jack.T");
                 Console.WriteLine("调用结果：{0}", ret);

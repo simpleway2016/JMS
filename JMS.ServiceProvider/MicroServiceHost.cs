@@ -41,10 +41,41 @@ namespace JMS
         /// 设置微服务的地址，如果为null，网关会使用微服务的外网ip作为服务地址
         /// </summary>
         public NetAddress ServiceAddress { get; set; }
+
+        private string _Description;
         /// <summary>
         /// 自定义描述
         /// </summary>
-        public string Description { get; set; }
+        public string Description
+        {
+            get => _Description;
+            set
+            {
+                if (_Description != value)
+                {
+                    _Description = value;
+                    _GatewayConnector?.OnServiceNameListChanged();
+                }
+            }
+        }
+
+        private string _ClientCheckCode;
+        /// <summary>
+        /// 自定义客户端检验代码
+        /// </summary>
+        public string ClientCheckCode
+        {
+            get => _ClientCheckCode;
+            set
+            {
+                if (_ClientCheckCode != value)
+                {
+                    _ClientCheckCode = value;
+                    _GatewayConnector?.OnServiceNameListChanged();
+                }
+            }
+        }
+
 
         /// <summary>
         /// 依赖注入容器builded事件
@@ -117,15 +148,6 @@ namespace JMS
             _GatewayConnector?.OnServiceNameListChanged();
         }
 
-        /// <summary>
-        /// 在网关上更新微服务的description
-        /// </summary>
-        /// <param name="description"></param>
-        public void UpdateDescription(string description)
-        {
-            this.Description = description;
-            _GatewayConnector?.OnServiceNameListChanged();
-        }
 
         /// <summary>
         /// 注册定时任务，任务在MicroServiceHost.Run时，按计划执行

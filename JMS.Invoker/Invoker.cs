@@ -14,11 +14,12 @@ namespace JMS
         string _serviceName;
         RegisterServiceLocation _serviceLocation;
         public RegisterServiceLocation ServiceLocation => _serviceLocation;
-        public Invoker(JMSClient ServiceTransaction, string serviceName)
+        string _arg;
+        public Invoker(JMSClient ServiceTransaction, string serviceName,string arg = null)
         {
             this.ServiceTransaction = ServiceTransaction;
             _serviceName = serviceName;
-
+            _arg = arg;
 
         }
 
@@ -36,6 +37,7 @@ namespace JMS
                     Content = new GetServiceProviderRequest
                     {
                         ServiceName = _serviceName,
+                        Arg = _arg
                     }.ToJsonString()
                 });
                 var serviceLocation = netclient.ReadServiceObject<RegisterServiceLocation>();

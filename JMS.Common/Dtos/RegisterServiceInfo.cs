@@ -29,6 +29,10 @@ namespace JMS.Dtos
         /// 微服务的自定义描述
         /// </summary>
         public string Description;
+        /// <summary>
+        /// 用来是否运行客户端连接的检验代码
+        /// </summary>
+        public string ClientCheckCode;
     }
 
     public class PerformanceInfo

@@ -68,7 +68,8 @@ namespace JMS.Impls
                         Port = _microServiceHost.ServicePort,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
-                        Description = _microServiceHost.Description
+                        Description = _microServiceHost.Description,
+                        ClientCheckCode = _microServiceHost.ClientCheckCode,
                     }.ToJsonString()
                 });
                 client.ReadServiceObject<InvokeResult>();
@@ -163,7 +164,8 @@ namespace JMS.Impls
                         ServiceAddress = _microServiceHost.ServiceAddress == null?null: _microServiceHost.ServiceAddress.Address,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
-                        Description = _microServiceHost.Description
+                        Description = _microServiceHost.Description,
+                        ClientCheckCode = _microServiceHost.ClientCheckCode
                     }.ToJsonString()
                 });
                 var ret = _client.ReadServiceObject<InvokeResult>();

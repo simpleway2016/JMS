@@ -11,6 +11,7 @@ using System.Net.Security;
 using System.Linq;
 using JMS.Common;
 using System.Diagnostics;
+using Natasha.CSharp;
 
 namespace JMS
 {
@@ -61,10 +62,8 @@ namespace JMS
 
             var assembly = Assembly.Load(configuration.GetValue<string>("ServiceProviderAllocator:Assembly"));
             var serviceProviderAllocatorType = assembly.GetType(configuration.GetValue<string>("ServiceProviderAllocator:FullName"));
-            var serviceProviderAllocator = (IServiceProviderAllocator)Activator.CreateInstance(serviceProviderAllocatorType);
 
-
-            services.AddSingleton<IServiceProviderAllocator>(serviceProviderAllocator);
+            services.AddSingleton(typeof(IServiceProviderAllocator), serviceProviderAllocatorType);
             var serviceProvider = services.BuildServiceProvider();
             serviceProvider.GetService<LockKeyManager>();
             serviceProvider.GetService<FileChangeWatcher>();

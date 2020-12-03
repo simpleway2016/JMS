@@ -56,7 +56,18 @@ namespace JMS
             services.AddSingleton<IConfiguration>(configuration);
 
 
-            
+            msp.ClientCheckCode = @"
+            try
+            {
+               var number = Convert.ToInt64(arg);
+                return number > 0;
+            }
+            catch 
+            {
+            }
+            return false;
+
+";
 
             msp.Register<Controller1>("Controller1");
             msp.Register<Controller2>("Service2");

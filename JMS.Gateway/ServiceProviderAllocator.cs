@@ -1,4 +1,6 @@
 ﻿using JMS.Dtos;
+using Microsoft.Extensions.Logging;
+using Natasha.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,15 +14,22 @@ namespace JMS
     /// <summary>
     /// 微服务分配器，轮流分配原则
     /// </summary>
-    class ServiceProviderAllocator: IServiceProviderAllocator
+    class ServiceProviderAllocator : IServiceProviderAllocator
     {
+        ILogger<ServiceProviderAllocator> _logger;
         ServiceProviderCounter[] _serviceInfos;
+
+        public ServiceProviderAllocator(ILogger<ServiceProviderAllocator> logger)
+        {
+            this._logger = logger;
+
+        }
 
         public void ServiceInfoChanged(RegisterServiceInfo[] serviceInfos)
         {
             if (_serviceInfos == null)
             {
-                _serviceInfos = serviceInfos.Select(m => new ServiceProviderCounter()
+                _serviceInfos = serviceInfos.Select(m => new ServiceProviderCounter(_logger)
                 {
                     ServiceInfo = m
                 }).ToArray();
@@ -31,15 +40,15 @@ namespace JMS
 
                 foreach( var info in serviceInfos )
                 {
-                    var item = _serviceInfos.FirstOrDefault(m => m.ServiceInfo.Host == info.Host && m.ServiceInfo.Port == info.Port);
+                    var item = _serviceInfos.FirstOrDefault(m => m.ServiceInfo.Host == info.Host && m.ServiceInfo.ServiceAddress == info.ServiceAddress && m.ServiceInfo.Port == info.Port);
                     if(item != null)
                     {
-                        item.ServiceInfo.ServiceNames = info.ServiceNames;
+                        item.ServiceInfo = info;
                         ret.Add(item);
                     }
                     else
                     {
-                        ret.Add(new ServiceProviderCounter()
+                        ret.Add(new ServiceProviderCounter(_logger)
                         {
                             ServiceInfo = info
                         });
@@ -52,7 +61,7 @@ namespace JMS
        
         public RegisterServiceLocation Alloc(GetServiceProviderRequest request)
         {
-            var matchServices = _serviceInfos.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName));
+            var matchServices = _serviceInfos.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName) && (m.ClientChecker == null || m.ClientChecker.Check(request.Arg)));
 
             //先查找cpu使用率低于70%的
             if(matchServices.Where(m => m.CpuUsage < 70).Count() > 0)
@@ -98,7 +107,100 @@ namespace JMS
 
     class ServiceProviderCounter
     {
-        public RegisterServiceInfo ServiceInfo;
+        ILogger _logger;
+
+        public ServiceProviderCounter(ILogger logger)
+        {
+            this._logger = logger;
+
+        }
+
+        private RegisterServiceInfo _ServiceInfo;
+        public RegisterServiceInfo ServiceInfo
+        {
+            get => _ServiceInfo;
+            set
+            {
+                _ServiceInfo = value;
+
+                if (!string.IsNullOrEmpty(value.ClientCheckCode))
+                {
+                    if (this.ClientChecker != null && this.ClientChecker.ClientCode == value.ClientCheckCode)
+                    {
+
+                    }
+                    else
+                    {
+                        try
+                        {
+                            string text = @"
+using System;
+namespace HelloWorld
+{
+    public class Test : JMS.IClientCheck
+    {
+        public AssemblyCSharpBuilder CodeBuilder { get; set; }
+        public string ClientCode { get; set; }
+        public bool Check(string arg)
+        {
+            " + value.ClientCheckCode + @"
+        }
+    }
+}";
+                           
+                            //根据脚本创建动态类
+                            AssemblyCSharpBuilder oop = new AssemblyCSharpBuilder();
+                            oop.ThrowCompilerError();
+                            oop.ThrowSyntaxError();
+                            oop.Compiler.Domain = DomainManagement.Random;
+                            oop.Add(text);
+
+                            Type type = oop.GetTypeFromShortName("Test");
+
+                            _logger?.LogInformation("客户端检验代码编译通过，代码：{0}", value.ClientCheckCode);
+
+                            if (this.ClientChecker != null)
+                            {
+                                try
+                                {
+                                    this.ClientChecker.CodeBuilder.Domain.Unload();
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger?.LogError(ex, "ClientChecker Unload失败");
+                                }
+                            }
+
+
+                            this.ClientChecker = (IClientCheck)Activator.CreateInstance(type);
+                            this.ClientChecker.ClientCode = value.ClientCheckCode;
+                            this.ClientChecker.CodeBuilder = oop;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "客户端检验代码编译错误，代码：{0}", value.ClientCheckCode);
+                        }
+                    }
+                }
+                else
+                {
+                    if(this.ClientChecker != null)
+                    {
+                        try
+                        {
+                            this.ClientChecker.CodeBuilder.Domain.Unload();
+                        }
+                        catch
+                        {
+                        }                       
+                    }
+                    this.ClientChecker = null;
+                }
+            }
+        }
+
+        public IClientCheck ClientChecker { get; private set; }
+
         /// <summary>
         /// 当前请求数量
         /// </summary>
