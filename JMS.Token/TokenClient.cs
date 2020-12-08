@@ -66,15 +66,20 @@ namespace JMS.Token
         /// <returns></returns>
         public string BuildLongWithExpire(long data, DateTime expireTime)
         {
-            return BuildForLongs(new long[] { data, (long)((expireTime - new DateTime(1970, 1, 1)).TotalSeconds) });
+            long time = (long)(expireTime - new DateTime(1970, 1, 1)).TotalSeconds;
+            time = time * 1000 + new Random().Next(1, 999);
+            return BuildForLongs(new long[] { data, time });
         }
 
         public string BuildStringWithExpire(string data, DateTime expireTime)
         {
+            long time = (long)(expireTime - new DateTime(1970, 1, 1)).TotalSeconds;
+            time = time * 1000 + new Random().Next(1, 999);
+
             var dict = new StringToken()
             {
                 d = data,
-                e = (long)((expireTime - new DateTime(1970, 1, 1)).TotalSeconds)
+                e = time
             };
 
             return BuildForString(dict.ToJsonString());
@@ -88,7 +93,7 @@ namespace JMS.Token
         public long VerifyLong(string token)
         {
             var data = this.VerifyForLongs(token);
-            var expireTime = new DateTime(1970, 1, 1).AddSeconds(data[1]);
+            var expireTime = new DateTime(1970, 1, 1).AddMilliseconds(data[1]);
             if (expireTime < DateTime.Now)
                 throw new AuthenticationException("token expired");
             return data[0];
@@ -121,7 +126,7 @@ namespace JMS.Token
         public string VerifyString(string token)
         {
             var data = VerifyForString(token).FromJson<StringToken>();
-            var expireTime = new DateTime(1970, 1, 1).AddSeconds(data.e);
+            var expireTime = new DateTime(1970, 1, 1).AddMilliseconds(data.e);
             if (expireTime < DateTime.Now)
                 throw new AuthenticationException("token expired");
             return data.d;
