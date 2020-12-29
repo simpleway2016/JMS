@@ -200,6 +200,7 @@ namespace JMS
             _services.AddSingleton<IProcessExitHandler,ProcessExitHandler>();
             _services.AddSingleton<MicroServiceHost>(this);
             _services.AddSingleton<TransactionDelegateCenter>();
+            _services.AddSingleton<SafeTaskFactory>();
         }
 
         public MicroServiceHost Build(int port,NetAddress[] gatewayAddresses)

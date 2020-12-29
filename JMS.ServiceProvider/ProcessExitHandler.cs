@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using JMS.ScheduleTask;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -11,8 +12,9 @@ namespace JMS
     /// <summary>
     /// 关于进程退出时的处理,linux如果要关闭进程，需要使用 "kill -15 进程id" 命令，这样，ProcessExitHandler才能处理
     /// </summary>
-    class ProcessExitHandler :IProcessExitHandler,IProcessExitListener
+    class ProcessExitHandler : IProcessExitHandler, IProcessExitListener
     {
+        SafeTaskFactory _safeTaskFactory;
         public MicroServiceHost _microServiceHost;
         TransactionDelegateCenter _transactionDelegateCenter;
         bool _ProcessExited = false;
@@ -24,8 +26,10 @@ namespace JMS
         public ProcessExitHandler(
             TransactionDelegateCenter transactionDelegateCenter,
             ScheduleTaskManager scheduleTaskManager,
+            SafeTaskFactory safeTaskFactory,
             ILogger<ProcessExitHandler> logger)
         {
+            this._safeTaskFactory = safeTaskFactory;
             _transactionDelegateCenter = transactionDelegateCenter;
             _logger = logger;
             _scheduleTaskManager = scheduleTaskManager;
@@ -83,6 +87,7 @@ namespace JMS
 
             _logger?.LogInformation("停止所有定时任务");
             _scheduleTaskManager.StopTasks();
+            _safeTaskFactory?.WaitAll();
 
             _logger?.LogInformation("等待客户端请求数清零");
             //等待客户连接处理完毕
