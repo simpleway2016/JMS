@@ -27,7 +27,7 @@ namespace JMS
         /// </summary>
         internal int ReConnectCount = 0;
         public InvokingInformation InvokingInfo { get; private set; }
-
+        public InvokeCommand Command { get; private set; }
         public InvokeConnect(string serviceName , RegisterServiceLocation location)
         {
             this.InvokingInfo = new InvokingInformation();
@@ -60,7 +60,7 @@ namespace JMS
             try
             {
                 netclient.ReadTimeout = tran.Timeout;
-                var cmd = new InvokeCommand()
+                this.Command = new InvokeCommand()
                 {
                     Header = headers,
                     Service = this.InvokingInfo.ServiceName,
@@ -70,7 +70,7 @@ namespace JMS
                 };
 
 
-                netclient.WriteServiceData(cmd);
+                netclient.WriteServiceData(this.Command);
                 var result = netclient.ReadServiceObject<InvokeResult<T>>();
                 if (result.Success == false)
                 {
