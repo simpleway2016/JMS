@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -14,10 +15,10 @@ namespace JMS.Token
 {
     public class TokenClient
     {
-
-        static string[] Keys;
+        static Dictionary<(string, int), string[]> ServerKeys = new Dictionary<(string, int), string[]>();
         static object LockObj = new object();
         X509Certificate2 _cert;
+        NetAddress _serverAddr;
         /// <summary>
         /// 
         /// </summary>
@@ -27,32 +28,42 @@ namespace JMS.Token
         public TokenClient(string serverAddress, int serverPort, X509Certificate2 cert = null)
         {
             _cert = cert;
-            if (Keys == null)
+           
+            _serverAddr = new NetAddress(serverAddress, serverPort);
+            var key = (_serverAddr.Address, _serverAddr.Port);
+            if (ServerKeys.ContainsKey(key) == false)
             {
-                lock (LockObj)
-                {
-                    if (Keys != null)
-                        return;
+                getKeyFromServer(key);
+            }
 
-                    CertClient client = new CertClient(serverAddress, serverPort, _cert);
-                    client.Write(1);
-                    var len = client.ReadInt();
-                    Keys = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
-                    Task.Run(() =>
+        }
+
+        void getKeyFromServer((string addr,int port) key)
+        {
+            lock (LockObj)
+            {
+                if (ServerKeys.ContainsKey(key))
+                    return;
+
+                CertClient client = new CertClient(key.addr, key.port, _cert);
+                client.Write(1);
+                var len = client.ReadInt();
+                ServerKeys[key] = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
+                Task.Run(() =>
+                {
+                    try
                     {
-                        try
-                        {
-                            client.ReadTimeout = 0;
-                            client.ReadInt();
-                        }
-                        catch (Exception)
-                        {
-                            Keys = null;
-                        }
-                    });
-                }
+                        client.ReadTimeout = 0;
+                        client.ReadInt();
+                    }
+                    catch (Exception)
+                    {
+                        ServerKeys.Remove(key);
+                    }
+                });
             }
         }
+
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
@@ -106,7 +117,8 @@ namespace JMS.Token
         /// <returns></returns>
         string BuildForString(string body)
         {
-            var signstr = sign(body);
+            var keys = ServerKeys[(_serverAddr.Address,_serverAddr.Port)];
+            var signstr = sign(body , keys);
             var text = new string[] { body, signstr }.ToJsonString();
             var bs = Encoding.UTF8.GetBytes(text);
             return Convert.ToBase64String(bs);
@@ -139,7 +151,8 @@ namespace JMS.Token
         /// <returns></returns>
         string BuildForLongs(long[] values)
         {
-            var signstr = sign(values.ToJsonString());
+            var keys = getKeys();
+            var signstr = sign(values.ToJsonString() , keys);
             var signbs = Encoding.UTF8.GetBytes(signstr);
             byte[] data = new byte[values.Length * 8 + 2 + signbs.Length];
             Array.Copy(BitConverter.GetBytes((short)values.Length), data, 2);
@@ -151,11 +164,11 @@ namespace JMS.Token
             return Convert.ToBase64String(data);
         }
 
-        static string sign(string body)
+        static string sign(string body,string[] keys)
         {
             var str = body;
-            str += Keys[1];
-            str = Way.Lib.AES.Encrypt(str, Keys[0]);
+            str += keys[1];
+            str = Way.Lib.AES.Encrypt(str, keys[0]);
             return GetHash(str);
         }
 
@@ -168,8 +181,9 @@ namespace JMS.Token
         /// <returns>验证成功返回字符串信息，失败返回null</returns>
         string VerifyForString(string token)
         {
+            var keys = getKeys();
             var tokenInfo = Encoding.UTF8.GetString(Convert.FromBase64String(token)).FromJson<string[]>();
-            var signstr = sign(tokenInfo[0]);
+            var signstr = sign(tokenInfo[0] , keys);
             if (signstr == tokenInfo[1])
                 return tokenInfo[0];
             return null;
@@ -192,11 +206,27 @@ namespace JMS.Token
             }
 
             var input = Encoding.UTF8.GetString(data, 2 + ret.Length * 8, data.Length - 2 - ret.Length * 8);
-
-            var signstr = sign(ret.ToJsonString());
+            var keys = getKeys();
+            var signstr = sign(ret.ToJsonString() , keys);
             if (signstr == input)
                 return ret;
             return null;
+        }
+
+        string[] getKeys()
+        {
+            while (true)
+            {
+                var key = (_serverAddr.Address, _serverAddr.Port);
+                if (ServerKeys.TryGetValue(key, out string[] o))
+                {
+                    return o;
+                }
+                else
+                {
+                    getKeyFromServer(key);
+                }
+            }
         }
 
         static string GetHash(string content)
