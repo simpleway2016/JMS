@@ -114,7 +114,7 @@ namespace JMS
                 });
                 var ret = netclient.ReadServiceObject<InvokeResult<string>>();
                 if (!ret.Success)
-                    throw new RemoteException(null,ret.Error);
+                    throw new RemoteException(null,ret.Data);
                 return ret.Data;
             }
         }

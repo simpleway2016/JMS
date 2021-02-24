@@ -58,16 +58,26 @@ namespace JMS.Impls
                 netclient.WriteServiceData(new InvokeResult()
                 {
                     Data = "not support in release",
-                    Success = true
+                    Success = false
                 });
                 return;
             }
-
-            var code = _codeBuilder.GenerateCode(cmd.Parameters[0],cmd.Parameters[1], cmd.Service);
+            string code = null;
+            bool success;
+            try 
+            {
+                code = _codeBuilder.GenerateCode(cmd.Parameters[0], cmd.Parameters[1], cmd.Service);
+                success = true;
+            }
+            catch(Exception ex)
+            {
+                code = ex.ToString();
+                success = false;
+            }
             netclient.WriteServiceData(new InvokeResult()
             {
                 Data = code,
-                Success = true
+                Success = success
             });
         }
     }
