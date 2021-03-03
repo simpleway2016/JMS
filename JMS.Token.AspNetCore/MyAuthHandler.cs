@@ -28,7 +28,7 @@ namespace JMS.Token.AspNetCore
         AuthenticationScheme _scheme;
         HttpContext _context;
         public static string HeaderName;
-        public static Func<string,string, bool> Callback;
+        public static Func<string,string, AuthenticationTicket, bool> Callback;
         public static string ServerAddress;
         public static int ServerPort;
         public static X509Certificate2 Cert;
@@ -70,7 +70,7 @@ namespace JMS.Token.AspNetCore
                 var ticket = GetAuthTicket(strContent);
                 if(Callback != null)
                 {
-                    if(!Callback(token,strContent))
+                    if(!Callback(token,strContent, ticket))
                     {
                         return Task.FromResult(AuthenticateResult.Fail(""));
                     }
@@ -87,8 +87,9 @@ namespace JMS.Token.AspNetCore
         {
             var claimsIdentity = new ClaimsIdentity(new Claim[]
             {
-                new Claim("Content", content)
-            }, "JMS.Token");
+                new Claim("Content", content),
+                new Claim(ClaimTypes.NameIdentifier , content)
+            }, "JMS.Token"); ;
 
             var principal = new ClaimsPrincipal(claimsIdentity);
             return new AuthenticationTicket(principal, _scheme.Name);

@@ -19,9 +19,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="serverAddress">token服务器地址</param>
         /// <param name="serverPort">token服务器端口</param>
         /// <param name="headerName">客户端通过哪个头部传递token</param>
-        /// <param name="authCallback">验证通过后，回调的函数，callback如果返回false，表示验证失败</param>
+        /// <param name="authCallback">验证通过后，回调的函数，callback如果返回false，表示验证失败
+        /// 三个参数分别是 token content ticket
+        /// </param>
         /// <param name="cert">访问token服务器的证书</param>
-        public static AuthenticationBuilder AddJmsTokenAuthentication(this IServiceCollection services, TokenContentType tokenContentType, string serverAddress, int serverPort, string headerName = "Authorization", Func<string,string,bool> authCallback = null, X509Certificate2 cert = null)
+        public static AuthenticationBuilder AddJmsTokenAuthentication(this IServiceCollection services, TokenContentType tokenContentType, string serverAddress, int serverPort, string headerName = "Authorization", Func<string,string, AuthenticationTicket,bool> authCallback = null, X509Certificate2 cert = null)
         {
             MyAuthHandler.HeaderName = headerName;
             MyAuthHandler.ServerAddress = serverAddress;
