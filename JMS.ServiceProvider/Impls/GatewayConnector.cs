@@ -217,6 +217,17 @@ namespace JMS.Impls
                 });
 
                 _logger?.LogError("和网关连接断开");
+                if( _microServiceHost.AutoExitProcess )
+                {
+                    _logger?.LogInformation("和网关连接断开，准备自动关闭进程");
+                    var handler = _microServiceHost.ServiceProvider.GetService<ProcessExitHandler>();
+                    if(handler != null)
+                    {
+                        handler.OnProcessExit();
+                    }
+                    System.Diagnostics.Process.GetCurrentProcess().Kill();
+                    return;
+                }
                 if (!_manualDisconnected)
                 {
                     Thread.Sleep(2000);

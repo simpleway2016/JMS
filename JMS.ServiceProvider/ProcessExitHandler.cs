@@ -45,14 +45,19 @@ namespace JMS
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
         }
 
-        private void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        {
+            OnProcessExit();
+        }
+
+        internal void OnProcessExit()
         {
             _ProcessExited = true;
             _logger?.LogInformation("等待IProcessExitHandler任务执行完毕");
             List<Task> tasks = new List<Task>();
-            lock(_missions)
+            lock (_missions)
             {
-                foreach( var action in _missions )
+                foreach (var action in _missions)
                 {
                     try
                     {
@@ -70,7 +75,8 @@ namespace JMS
             try
             {
                 var client = new NetClient(_microServiceHost.MasterGatewayAddress);
-                client.WriteServiceData(new GatewayCommand { 
+                client.WriteServiceData(new GatewayCommand
+                {
                     Type = CommandType.UnRegisterSerivce,
                     Content = _microServiceHost.Id
                 });
@@ -96,7 +102,7 @@ namespace JMS
 
             _logger?.LogInformation("客户端请求数为零");
 
-           
+
             Thread.Sleep(1000);
         }
 

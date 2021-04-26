@@ -76,6 +76,15 @@ namespace JMS
             }
         }
 
+        /// <summary>
+        /// 当与网关连接断开时，是否自动关闭进程
+        /// 在双击热备的情况下，可以考虑设置此属性为true，因为与网关连接断开后，可能继续运行业务，会与后面启动的备份服务产生冲突
+        /// </summary>
+        public bool AutoExitProcess
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// 依赖注入容器builded事件
