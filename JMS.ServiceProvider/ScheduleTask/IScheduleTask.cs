@@ -21,6 +21,12 @@ namespace JMS
         /// 运行间隔，单位：毫秒 （在Timers为null时，此间隔有效）
         /// </summary>
         int Interval { get; }
+
+        /// <summary>
+        /// 发生异常后，重试间隔，单位：毫秒
+        /// </summary>
+        int RetryInterval { get; }
+
         /// <summary>
         /// 运行任务，此方法会每隔指定的间隔执行一次
         /// </summary>

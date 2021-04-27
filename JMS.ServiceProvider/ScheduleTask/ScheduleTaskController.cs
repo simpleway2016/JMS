@@ -122,12 +122,25 @@ namespace JMS.ScheduleTask
                     {
                         _logger?.LogInformation("执行任务：{0}", taskname);
                         _lastRunTime = DateTime.Now;
-                        this.Task.Run();
+
+                        while (true)
+                        {
+                            try
+                            {
+                                this.Task.Run();
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger?.LogError(ex, "执行任务{0}出错，{1}毫秒后重试", Task.GetType().FullName, this.Task.RetryInterval);
+                                Thread.Sleep(this.Task.RetryInterval);
+                            }                            
+                        }
                     }                   
                 }
                 catch (Exception ex)
                 {
-                    _logger?.LogError(ex, "执行任务{0}出错", Task.GetType().FullName);
+                    _logger?.LogError(ex, "任务{0}安排期间出错", Task.GetType().FullName);
                 }
                 _waitobject.WaitOne(sleepTime);
                 _waitobject.Reset();
