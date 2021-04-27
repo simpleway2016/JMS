@@ -84,7 +84,9 @@ namespace JMS.ScheduleTask
                                 int m = (int)((hour % 1) * 100);//过滤出分钟
 
                                 //转换成当天的执行时间点
-                                DateTime time = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd " + h + ":" + m + ":00"));
+                                DateTime time = Convert.ToDateTime(DateTime.Now.ToString("yyyy-MM-dd"));
+                                time = time.AddHours(h).AddMinutes(m);
+
                                 //_logger?.LogInformation(" {0}  {1}", time , _lastRunTime);
                                 if (DateTime.Now >= time && _lastRunTime < time)
                                 {                                   
