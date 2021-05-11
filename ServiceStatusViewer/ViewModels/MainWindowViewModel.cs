@@ -55,7 +55,10 @@ namespace ServiceStatusViewer.ViewModels
                 {
                     using (var client = new MicroServiceClient())
                     {
-                        var service = client.GetMicroService(model.SelectedServiceName);
+                        var service = client.GetMicroService(model.SelectedServiceName,null ,new JMS.Dtos.RegisterServiceLocation { 
+                            ServiceAddress = this._data.ServiceAddress,
+                            Port = this._data.Port
+                        });
                         var code = service.GetServiceClassCode(model.NamespaceName, model.ClassName);
 
                         var dialog = new SaveFileDialog();

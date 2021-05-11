@@ -11,10 +11,12 @@
     <PackageReference Include="Avalonia" Version="0.9.11" />
     <PackageReference Include="Avalonia.Desktop" Version="0.9.11" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="0.9.11" />
-    <PackageReference Include="JMS.Invoker" Version="1.0.0.18" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.6" />
     <PackageReference Include="Way.EntityDB" Version="3.1.2.11" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">
