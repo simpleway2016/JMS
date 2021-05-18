@@ -87,7 +87,7 @@ namespace JMS
         }
 
         /// <summary>
-        /// 依赖注入容器builded事件
+        /// 依赖注入容器就绪事件
         /// </summary>
         public event EventHandler<IServiceProvider> ServiceProviderBuilded;
 
