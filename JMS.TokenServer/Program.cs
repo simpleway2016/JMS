@@ -56,7 +56,7 @@ namespace JMS.TokenServer
 
             Random random = new Random();
             key = new string[2];
-            key[0] = GetRandomString(16);
+            key[0] = GetRandomString(32);
             key[1] = GetRandomString(random.Next(36 , 66));
 
             var strByte = Encoding.UTF8.GetBytes(key.ToJsonString());
