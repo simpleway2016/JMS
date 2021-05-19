@@ -23,7 +23,22 @@ namespace ServiceStatusViewer.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _SelectedServiceName, value);
-               
+                Task.Run(() => {
+                    try
+                    {
+                        using (var db = new SysDBContext())
+                        {
+                            this.MatchMethods = (from m in db.InvokeHistory
+                                                 where m.ServiceName == value
+                                                 orderby m.MethodName
+                                                 select m.MethodName).ToArray();
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                });
             }
         }
 
@@ -76,6 +91,16 @@ namespace ServiceStatusViewer.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _ParameterString, value);
+            }
+        }
+
+        private string[] _MatchMethods;
+        public string[] MatchMethods
+        {
+            get => _MatchMethods;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _MatchMethods, value);
             }
         }
 

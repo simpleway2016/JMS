@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using ServiceStatusViewer.ViewModels;
 using System;
@@ -11,9 +12,7 @@ namespace ServiceStatusViewer.Views
         public InvokeServiceMethodWindow()
         {
             this.InitializeComponent();
-#if DEBUG
-            this.AttachDevTools();
-#endif
+
         }
 
         private void InitializeComponent()
@@ -26,5 +25,6 @@ namespace ServiceStatusViewer.Views
             base.OnDataContextChanged(e);
             ((InvokeServiceMethodWindowModel)this.DataContext).Window = this;
         }
+
     }
 }

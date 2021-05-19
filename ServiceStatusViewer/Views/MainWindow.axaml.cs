@@ -12,9 +12,6 @@ namespace ServiceStatusViewer.Views
         {
             Instance = this;
             InitializeComponent();
-#if DEBUG
-            this.AttachDevTools();
-#endif
         }
 
         private void InitializeComponent()
