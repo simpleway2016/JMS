@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Text;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace ServiceStatusViewer.ViewModels
@@ -22,6 +23,7 @@ namespace ServiceStatusViewer.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _SelectedServiceName, value);
+               
             }
         }
 
@@ -33,6 +35,37 @@ namespace ServiceStatusViewer.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _MethodName, value);
+
+                Task.Run(() => {
+                    try
+                    {
+                        using (var db = new SysDBContext())
+                        {
+                            var history = db.InvokeHistory.FirstOrDefault(m => m.ServiceName == _SelectedServiceName && m.MethodName == _MethodName);
+                            if(history != null)
+                            {
+                                if (history.Header != null)
+                                    this.Header = System.Text.Encoding.UTF8.GetString(history.Header);
+                                if(history.Parameters != null)
+                                    this.ParameterString = System.Text.Encoding.UTF8.GetString(history.Parameters);
+                            }
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                });
+            }
+        }
+
+        private string _Header;
+        public string Header
+        {
+            get => _Header;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _Header, value);
             }
         }
 
@@ -79,7 +112,51 @@ namespace ServiceStatusViewer.ViewModels
                     if (!string.IsNullOrEmpty(this.ParameterString))
                         parameters = this.ParameterString.FromJson<object[]>();
 
+                    if(!string.IsNullOrEmpty(this.Header?.Trim()))
+                    {
+                        var dict = this.Header.FromJson<Dictionary<string,string>>();
+                        foreach( var pair in dict )
+                        {
+                            client.SetHeader(pair.Key, pair.Value);
+                        }
+                    }
+
                     var ret = service.Invoke<object>(this.MethodName?.Trim(), parameters);
+
+                    if(parameters.Length > 0 || !string.IsNullOrEmpty(this.Header?.Trim()))
+                    {
+                        try
+                        {
+                            using (var db = new SysDBContext())
+                            {
+                                DBModels.InvokeHistory history = db.InvokeHistory.FirstOrDefault(m => m.ServiceName == this.SelectedServiceName && m.MethodName == this.MethodName);
+                                if(history == null)
+                                {
+                                    history = new DBModels.InvokeHistory
+                                    {
+                                        ServiceName = this.SelectedServiceName,
+                                        MethodName = this.MethodName
+                                    };
+                                }                             
+
+                                if(!string.IsNullOrEmpty(this.Header?.Trim()))
+                                {
+                                    history.Header = System.Text.Encoding.UTF8.GetBytes(this.Header.Trim());
+                                }
+
+                                if (parameters.Length > 0)
+                                {
+                                    history.Parameters = System.Text.Encoding.UTF8.GetBytes(this.ParameterString.Trim());
+                                }
+                                db.Update(history);
+                            }
+                        }
+                        catch
+                        {
+
+                        }
+                    }
+
                     if(ret != null)
                         MessageBox.Show(ret.ToJsonString());
                     else
