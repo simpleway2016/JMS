@@ -27,12 +27,14 @@
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="120"/>
+              <ColumnDefinition Width="120"/>
               <ColumnDefinition/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding GetCodeClick}">获取客户端代码</Button>
-            <TextBlock Grid.Column="1" Classes="list" VerticalAlignment="Center" IsEnabled="{Binding IsOnline}" Text="{Binding Text}"/>
-            <TextBlock Grid.Column="2" Text="{Binding PerformanceInfo}" VerticalAlignment="Center" HorizontalAlignment="Right"></TextBlock>
+            <Button Grid.Column="1" Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding InvokeMethodClick}">调用方法</Button>
+            <TextBlock Grid.Column="2" Classes="list" VerticalAlignment="Center" IsEnabled="{Binding IsOnline}" Text="{Binding Text}"/>
+            <TextBlock Grid.Column="3" Text="{Binding PerformanceInfo}" VerticalAlignment="Center" HorizontalAlignment="Right"></TextBlock>
           </Grid>
         </DataTemplate>
       </ListBox.ItemTemplate>

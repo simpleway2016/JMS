@@ -82,6 +82,31 @@ namespace ServiceStatusViewer.ViewModels
             }
         });
 
+        public IReactiveCommand InvokeMethodClick => ReactiveCommand.Create(async () => {
+            if (_data.ServiceNames.Length == 0)
+                return;
+
+            _MainWindowViewModel.IsBusy = true;
+            try
+            {
+                var model = new InvokeServiceMethodWindowModel(this);
+                var window = new InvokeServiceMethodWindow() { DataContext = model };
+                if (await window.ShowDialog<bool>(MainWindow.Instance))
+                {
+                    
+                }
+
+            }
+            catch (Exception ex)
+            {
+                await MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                _MainWindowViewModel.IsBusy = false;
+            }
+        });
+
         public override string ToString()
         {
             return $"{_data.ServiceAddress}:{_data.Port} {(this.IsOnline ? "在线":"离线")} 支持的服务：{string.Join(',' , _data.ServiceNames)}";
