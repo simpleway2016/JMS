@@ -5,15 +5,22 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" SizeToContent="WidthAndHeight"
         x:Class="ServiceStatusViewer.Views.InvokeServiceMethodWindow"
         Title="调用服务方法">
-  <StackPanel Orientation="Vertical">
-    <TextBlock Text="选择服务：" Margin="10"/>
-    <ComboBox Margin="10,0,10,10" SelectedItem="{Binding SelectedServiceName}" Items="{Binding ServiceNames}"></ComboBox>
-    <TextBlock Text="方法名称：" Margin="10"/>
-    <AutoCompleteBox Margin="10,0,10,10" Text="{Binding MethodName}" Items="{Binding MatchMethods}" HorizontalAlignment="Stretch"/>
-    <TextBlock Text="头部JSON：（格式应为json对象形式，如：{ 'auth':'32823293' }）" Margin="10"/>
-    <TextBox Margin="10,0,10,10" AcceptsReturn="True" Height="100" Text="{Binding Header}"></TextBox>
-    <TextBlock Text="参数JSON：（格式应为json数组形式，如：[ 1 , 'name' ]）" Margin="10"/>
-    <TextBox Margin="10,0,10,10" AcceptsReturn="True" Height="200" Text="{Binding ParameterString}"></TextBox>
-    <Button Command="{Binding InvokeClick}" Margin="10">马上执行</Button>
-  </StackPanel>
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="auto"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <StackPanel Orientation="Vertical" Grid.Column="0">
+      <TextBlock Text="选择服务：" Margin="10"/>
+      <ComboBox Margin="10,0,10,10" SelectedItem="{Binding SelectedServiceName}" Items="{Binding ServiceNames}"></ComboBox>
+      <TextBlock Text="方法名称：" Margin="10"/>
+      <AutoCompleteBox Margin="10,0,10,10" Text="{Binding MethodName}" Items="{Binding MatchMethods}" HorizontalAlignment="Stretch"/>
+      <TextBlock Text="头部JSON：（格式应为json对象形式，如：{ 'auth':'32823293' }）" Margin="10"/>
+      <TextBox Margin="10,0,10,10" AcceptsReturn="True" Height="100" Text="{Binding Header}"></TextBox>
+      <TextBlock Text="参数JSON：（格式应为json数组形式，如：[ 1 , 'name' ]）" Margin="10"/>
+      <TextBox Margin="10,0,10,10" AcceptsReturn="True" Height="200" Text="{Binding ParameterString}"></TextBox>
+      <Button Command="{Binding InvokeClick}" Margin="10">马上执行</Button>
+    </StackPanel>
+    <TextBox Name="txtResult" AcceptsReturn="True" Grid.Column="1" Text="{Binding Result}" HorizontalAlignment="Stretch" MinWidth="500"></TextBox>
+  </Grid>
 </Window>

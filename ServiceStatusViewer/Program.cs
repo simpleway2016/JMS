@@ -1,6 +1,8 @@
 ﻿using System;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.ReactiveUI;
 using JMS;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +29,8 @@ namespace ServiceStatusViewer
 
             //网关地址
             Global.GatewayAddresses = Global.Configuration.GetSection("Gateways").Get<NetAddress[]>();
+
+          
 
             BuildAvaloniaApp()
               .StartWithClassicDesktopLifetime(args);

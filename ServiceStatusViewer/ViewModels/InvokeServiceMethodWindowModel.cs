@@ -84,6 +84,16 @@ namespace ServiceStatusViewer.ViewModels
             }
         }
 
+        private string _Result;
+        public string Result
+        {
+            get => _Result;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _Result, value);
+            }
+        }
+
         private string _ParameterString;
         public string ParameterString
         {
@@ -182,11 +192,13 @@ namespace ServiceStatusViewer.ViewModels
                         }
                     }
 
-                    if(ret != null)
-                        MessageBox.Show(ret.ToJsonString());
+                    if (ret != null)
+                    {
+                        this.Result = "执行结果：\r\n" + ret.ToJsonString(true);
+                    }
                     else
                     {
-                        MessageBox.Show("执行完毕！");
+                        this.Result = "执行完毕！";
                     }
                 }
             }
