@@ -73,6 +73,16 @@ namespace ServiceStatusViewer.ViewModels
                 });
             }
         }
+        private string _Cursor;
+        public string Cursor
+        {
+            get => _Cursor;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _Cursor, value);
+            }
+        }
+
 
         private string _Header;
         public string Header
@@ -127,11 +137,15 @@ namespace ServiceStatusViewer.ViewModels
            
         }
 
-        public void Invoke()
+        public async void Invoke()
         {
+            if (this.Window.Cursor != null)
+                return;
+
             if (string.IsNullOrEmpty(this.MethodName?.Trim()))
                 return;
 
+            this.Window.Cursor = Avalonia.Input.Cursor.Parse("Wait");
             try
             {
                 using (var client = new MicroServiceClient())
@@ -156,7 +170,7 @@ namespace ServiceStatusViewer.ViewModels
                         }
                     }
 
-                    var ret = service.Invoke<object>(this.MethodName?.Trim(), parameters);
+                    var ret = await service.InvokeAsync<object>(this.MethodName?.Trim(), parameters);
 
                     if(parameters.Length > 0 || !string.IsNullOrEmpty(this.Header?.Trim()))
                     {
@@ -206,7 +220,10 @@ namespace ServiceStatusViewer.ViewModels
             {
                 MessageBox.Show(ex.Message);
             }
-            
+            finally
+            {
+                this.Window.Cursor = null;
+            }
         }
     }
 }
