@@ -215,6 +215,8 @@ namespace JMS.Impls
                         }.ToJsonString()
                     };
                 });
+                _client.Dispose();
+                _client = null;
 
                 _logger?.LogError("和网关连接断开");
                 if( _microServiceHost.AutoExitProcess )
