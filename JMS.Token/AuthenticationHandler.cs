@@ -11,6 +11,7 @@ namespace JMS
    
     class AuthenticationHandler : IAuthenticationHandler
     {
+        public static Func<string, object, bool> Callback;
         public static string HeaderName;
         public static string ServerAddress;
         public static int ServerPort;
@@ -26,15 +27,24 @@ namespace JMS
 
             try
             {
-                
+                object ret;
                 if (AuthorizationContentType == AuthorizationContentType.Long)
                 {
-                    return client.VerifyLong(token);
+                    ret = client.VerifyLong(token);
                 }
                 else
                 {
-                    return client.VerifyString(token);
+                    ret = client.VerifyString(token);
                 }
+
+                if (Callback != null)
+                {
+                    if (!Callback(token, ret))
+                    {
+                        throw new AuthenticationException("Authentication failed");
+                    }
+                }
+                return ret;
             }
             catch
             {
