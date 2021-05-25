@@ -77,8 +77,6 @@ namespace JMS.Impls
                         {
                             LockedKeyDict.TryRemove(key, out transactionId);
                         }
-                        else if (ret.Success == false && ret.Data != null)
-                            throw new Exception(ret.Data);
 
                         //记录网关的超时时间
                         if (ret.Success)
