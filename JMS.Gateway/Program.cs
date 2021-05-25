@@ -43,6 +43,12 @@ namespace JMS
             }
             datafolder = cmdArg.TryGetValue<string>("DataFolder", datafolder);
 
+            var sharefolder = configuration.GetValue<string>("ShareFolder");
+            if (!System.IO.Directory.Exists(sharefolder))
+            {
+                System.IO.Directory.CreateDirectory(sharefolder);
+            }
+
             ServiceCollection services = new ServiceCollection();
             services.AddLogging(loggingBuilder =>
             {
