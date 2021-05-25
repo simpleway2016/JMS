@@ -8,7 +8,13 @@ namespace JMS.Dtos
     public class RegisterServiceLocation
     {
         public int Port;
+        /// <summary>
+        /// 微服务的ip地址
+        /// </summary>
         public string Host;
+        /// <summary>
+        /// 对外提供微服务的地址
+        /// </summary>
         public string ServiceAddress;
         public string TransactionId;
         public string Description;
