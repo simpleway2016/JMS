@@ -56,8 +56,9 @@ namespace JMS.ScheduleTask
                 int sleepTime = 10;
                 try
                 {
+                    var timers = this.Task.Timers;
                     bool toRun = false;
-                    if (this.Task.Timers != null && this.Task.Timers.Length > 0)
+                    if (timers != null && timers.Length > 0)
                     {
                         //如果是定点执行，可以让Thread.Sleep睡眠长一点
                         sleepTime = 60000;
@@ -75,10 +76,10 @@ namespace JMS.ScheduleTask
 
                     if (!toRun)
                     {
-                        if (this.Task.Timers != null && this.Task.Timers.Length > 0)
+                        if (timers != null && timers.Length > 0)
                         {
                             //每天特定时间执行
-                            foreach (double hour in this.Task.Timers)
+                            foreach (double hour in timers)
                             {
                                 int h = (int)hour;//过滤出哪个小时
                                 int m = (int)((hour % 1) * 100);//过滤出分钟
