@@ -26,7 +26,8 @@ namespace JMS.Dtos
         ListenFileChange = 11,
         GetShareFile = 12,
         SetAllServices = 13,
-        ServiceNameListChanged = 14
+        ServiceNameListChanged = 14,
+        CheckSupportSingletonService = 15
     }
     public class GatewayCommand
     {

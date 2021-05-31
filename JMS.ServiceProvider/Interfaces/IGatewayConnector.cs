@@ -7,6 +7,7 @@ namespace JMS.Interfaces
 {
     interface IGatewayConnector
     {
+        Action OnConnectCompleted { get; set; }
         NetClient CreateClient(NetAddress addr);
         void DisconnectGateway();
         void ConnectAsync();

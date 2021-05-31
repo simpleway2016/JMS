@@ -42,6 +42,23 @@ namespace JMS.Impls
         {
             this.NetClient = netclient;
             ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
+
+            if(ServiceInfo.SingletonService)
+            {
+                lock (_Gateway.OnlineMicroServices)
+                {
+                    if (_Gateway.OnlineMicroServices.Any(m => string.Join(',', m.ServiceInfo.ServiceNames) == string.Join(',', ServiceInfo.ServiceNames)))
+                    {
+                        NetClient.WriteServiceData(new InvokeResult
+                        {
+                            Success = false,
+                            Error = "SingletonService"
+                        });
+                        return;
+                    }
+                }
+            }
+
             ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
             if (string.IsNullOrEmpty(ServiceInfo.ServiceAddress))
                 ServiceInfo.ServiceAddress = ServiceInfo.Host;

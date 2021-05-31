@@ -31,6 +31,12 @@ namespace JMS.Impls
         IKeyLocker _keyLocker;
         SSLConfiguration _SSLConfiguration;
         ICpuInfo _cpuInfo;
+        public Action OnConnectCompleted
+        {
+            get;
+            set;
+        }
+        string _singletonErrorMsg = "相同的服务已经在运行，连接等待中...";
         public GatewayConnector(MicroServiceHost microServiceHost,
             ICpuInfo cpuInfo,
             SSLConfiguration sSLConfiguration,
@@ -73,6 +79,7 @@ namespace JMS.Impls
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
                         ClientCheckCode = _microServiceHost.ClientCheckCode,
+                        SingletonService = _microServiceHost.SingletonService
                     }.ToJsonString()
                 });
                 client.ReadServiceObject<InvokeResult>();
@@ -155,6 +162,30 @@ namespace JMS.Impls
 
                 findMasterGateway();
 
+                if(_microServiceHost.SingletonService)
+                {
+                    try
+                    {
+                        _client = CreateClient(_microServiceHost.MasterGatewayAddress);
+                        _client.WriteServiceData(new GatewayCommand()
+                        {
+                            Type = CommandType.CheckSupportSingletonService
+                        });
+                        if (_client.ReadServiceObject<InvokeResult>().Success == false)
+                        {
+                            throw new Exception("网关不支持SingletonService，请更新网关程序");
+                        }
+                    }
+                    catch
+                    {
+                        throw new Exception("网关不支持SingletonService，请更新网关程序");
+                    }
+                    finally
+                    {
+                        _client.Dispose();
+                    }
+                }
+
                 _client = CreateClient(_microServiceHost.MasterGatewayAddress);
                 
                 _client.WriteServiceData(new GatewayCommand()
@@ -168,14 +199,31 @@ namespace JMS.Impls
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
-                        ClientCheckCode = _microServiceHost.ClientCheckCode
+                        ClientCheckCode = _microServiceHost.ClientCheckCode,
+                        SingletonService = _microServiceHost.SingletonService
                     }.ToJsonString()
                 });
                 var ret = _client.ReadServiceObject<InvokeResult>();
                 if(ret.Success == false)
                 {
                     _client.Dispose();
-                    throw new Exception("网关不允许当前ip作为微服务");
+                    _client = null;
+
+                    if (ret.Error == "not allow")
+                        throw new Exception("网关不允许当前ip作为微服务");
+                    else if (ret.Error == "SingletonService")
+                    {
+                        if(_singletonErrorMsg != null)
+                        {
+                            _logger?.LogInformation(_singletonErrorMsg);
+                            _singletonErrorMsg = null;
+                        }
+                        Thread.Sleep(1000);
+                        this.ConnectAsync();
+                        return;
+                    }
+                    else
+                        throw new Exception("网关不允许连接");
                 }
 
                 _ready = true;
@@ -204,6 +252,8 @@ namespace JMS.Impls
                     }
                 }
 
+                OnConnectCompleted?.Invoke();
+
                 //保持心跳，并且定期发送ClientConnected
                 _client.KeepHeartBeating(() => {
                     return new GatewayCommand
@@ -219,7 +269,7 @@ namespace JMS.Impls
                 _client = null;
 
                 _logger?.LogError("和网关连接断开");
-                if( _microServiceHost.AutoExitProcess )
+                if( _microServiceHost.AutoExitProcess || _microServiceHost.SingletonService )
                 {
                     _logger?.LogInformation("和网关连接断开，准备自动关闭进程");
                     var handler = _microServiceHost.ServiceProvider.GetService<ProcessExitHandler>();

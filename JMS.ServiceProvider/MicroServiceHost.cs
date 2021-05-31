@@ -87,6 +87,15 @@ namespace JMS
         }
 
         /// <summary>
+        /// 是否同一时间只有一个相同的服务器运行（双机热备）
+        /// 当此属性设为true，如果与网关连接断开，会自动退出进程
+        /// </summary>
+        public bool SingletonService
+        {
+            get;
+            set;
+        }
+        /// <summary>
         /// 依赖注入容器就绪事件
         /// </summary>
         public event EventHandler<IServiceProvider> ServiceProviderBuilded;
@@ -229,7 +238,7 @@ namespace JMS
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
 
-            _GatewayConnector.ConnectAsync();
+           
             
             _RequestReception = ServiceProvider.GetService<IRequestReception>();
             _scheduleTaskManager.StartTasks();
@@ -250,19 +259,23 @@ namespace JMS
                     _logger?.LogInformation("Service host use ssl,certificate hash:{0}", sslConfig.ServerCertificate.GetCertHashString());
             }
 
-            if(ServiceProviderBuilded != null)
-            {
-                Task.Run(()=> {
-                    try
-                    {
-                        ServiceProviderBuilded(this,this.ServiceProvider);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogError(ex, ex.Message);
-                    }
-                });
-            }
+            _GatewayConnector.OnConnectCompleted = () => {
+                _GatewayConnector.OnConnectCompleted = null;
+                if (ServiceProviderBuilded != null)
+                {
+                    Task.Run(() => {
+                        try
+                        {
+                            ServiceProviderBuilded(this, this.ServiceProvider);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, ex.Message);
+                        }
+                    });
+                }
+            };
+            _GatewayConnector.ConnectAsync();
 
             using (var processExitHandler = (IProcessExitListener)ServiceProvider.GetService<IProcessExitHandler>())
             {

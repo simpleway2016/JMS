@@ -31,7 +31,8 @@ namespace JMS.Impls.CommandHandles
                 //不允许的ip
                 netclient.WriteServiceData(new InvokeResult
                 {
-                    Success = false
+                    Success = false,
+                    Error = "not allow"
                 });
                 return;
             }

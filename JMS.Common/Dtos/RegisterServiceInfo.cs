@@ -39,6 +39,10 @@ namespace JMS.Dtos
         /// 用来是否运行客户端连接的检验代码
         /// </summary>
         public string ClientCheckCode;
+        /// <summary>
+        /// 是否同一时间只有一个相同的服务器运行（双机热备）
+        /// </summary>
+        public bool SingletonService;
     }
 
     public class PerformanceInfo
