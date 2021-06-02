@@ -12,6 +12,8 @@ namespace JMS
 
         public int Interval => 60000*30;
 
+        public int RetryInterval => 2000;
+
         public AutoRun1(ILogger<AutoRun1> logger)
         {
             this._logger = logger;
