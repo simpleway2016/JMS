@@ -19,6 +19,7 @@ namespace JMS.Token
         static object LockObj = new object();
         X509Certificate2 _cert;
         NetAddress _serverAddr;
+        DisableTokenListener _DisableTokenListener;
         /// <summary>
         /// 
         /// </summary>
@@ -30,6 +31,7 @@ namespace JMS.Token
             _cert = cert;
            
             _serverAddr = new NetAddress(serverAddress, serverPort);
+            _DisableTokenListener = DisableTokenListener.Listen(serverAddress, serverPort, cert);
             var key = (_serverAddr.Address, _serverAddr.Port);
             if (ServerKeys.ContainsKey(key) == false)
             {
@@ -103,7 +105,13 @@ namespace JMS.Token
         /// <returns></returns>
         public long VerifyLong(string token)
         {
+            if (!_DisableTokenListener.CheckToken(token))
+            {
+                throw new AuthenticationException("token is invalid");
+            }
             var data = this.VerifyForLongs(token);
+            if(data == null)
+                throw new AuthenticationException("token is invalid");
             var expireTime = new DateTime(1970, 1, 1).AddMilliseconds(data[1]);
             if (expireTime < DateTime.Now)
                 throw new AuthenticationException("token expired");
@@ -131,13 +139,60 @@ namespace JMS.Token
         }
 
         /// <summary>
+        /// 设置token为失效的
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="utcExpireTime">token原定的过期时间（utc时间）</param>
+        public void SetTokenDisable(string token,DateTime? utcExpireTime)
+        {
+            long expireTime = 0;
+            if(utcExpireTime != null)
+            {
+                expireTime = (long)(utcExpireTime.Value.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalSeconds + 1L;
+            }
+
+            CertClient client = new CertClient(_serverAddr, _cert);
+            try
+            {
+                client.Write(2);
+                client.Write(expireTime);
+                var data = Encoding.UTF8.GetBytes(token);
+                client.Write(data.Length);
+                client.Write(data);
+                try
+                {
+                    client.ReadBoolean();
+                }
+                catch
+                {
+                }
+                _DisableTokenListener.AddDisableToken(token, expireTime);
+            }
+            finally
+            {
+                client.Dispose();
+            }
+        }
+
+        /// <summary>
         /// 验证String类型的token，如果验证失败，抛出异常
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
         public string VerifyString(string token)
         {
-            var data = VerifyForString(token).FromJson<StringToken>();
+            if (!_DisableTokenListener.CheckToken(token))
+            {
+                throw new AuthenticationException("token is invalid");
+            }
+
+            var ret = VerifyForString(token);
+            if (ret == null)
+            {
+                throw new AuthenticationException("token is invalid");
+            }
+            var data = ret.FromJson<StringToken>();
+
             var expireTime = new DateTime(1970, 1, 1).AddMilliseconds(data.e);
             if (expireTime < DateTime.Now)
                 throw new AuthenticationException("token expired");

@@ -46,6 +46,10 @@ namespace JMS
                 }
                 return ret;
             }
+            catch(AuthenticationException e)
+            {
+                throw e;
+            }
             catch
             {
                 throw new AuthenticationException("Authentication failed");

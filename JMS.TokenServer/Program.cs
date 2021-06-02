@@ -20,6 +20,7 @@ namespace JMS.TokenServer
         static byte[] data;
         static X509Certificate2 ServerCert;
         static string[] AcceptCertHash;
+        static ClientManager _ClientManager = new ClientManager();
         static string GetRandomString(int length)
         {
             byte[] b = new byte[4];
@@ -109,11 +110,29 @@ namespace JMS.TokenServer
                 {
                     client.Write(Encoding.UTF8.GetBytes("ok"));
                 }
-                else
+                else if(flag == 1)//get key
                 { 
-                    //data里面前面四个字节包含了长度
+                    //data里面前面四个字节包含了长度,所以不用先Write(数据长度)
                     client.Write(data);
                     client.ReadInt();
+                }
+                else if (flag == 2) //disable token
+                {
+                    var expireTimeLong = client.ReadLong();//utc过期时间
+                    var len = client.ReadInt();                    
+                    var token = System.Text.Encoding.UTF8.GetString( client.ReceiveDatas(len));
+                    _ClientManager.DisableToken(token, expireTimeLong);
+                    client.Write(true);
+                }
+                else if (flag == 998)//for test
+                {
+                    client.Write(4);
+                    client.Write(888);
+                    client.ReadInt();
+                }
+                else if(flag == 999)
+                {
+                     _ClientManager.AddClient(client).Handle();
                 }
             }
             catch(SocketException)
