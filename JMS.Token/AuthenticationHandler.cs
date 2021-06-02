@@ -1,4 +1,5 @@
 ﻿using JMS.Token;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Security.Authentication;
@@ -16,7 +17,12 @@ namespace JMS
         public static string ServerAddress;
         public static int ServerPort;
         public static X509Certificate2 Cert;
-        public static AuthorizationContentType AuthorizationContentType;
+
+        public AuthenticationHandler(ILogger<TokenClient> logger)
+        {
+            TokenClient.Logger = logger;
+        }
+
         public object Authenticate(IDictionary<string, string> headers)
         {
             if (headers.ContainsKey(HeaderName) == false)
@@ -27,15 +33,7 @@ namespace JMS
 
             try
             {
-                object ret;
-                if (AuthorizationContentType == AuthorizationContentType.Long)
-                {
-                    ret = client.VerifyLong(token);
-                }
-                else
-                {
-                    ret = client.VerifyString(token);
-                }
+                object ret = client.Verify(token);
 
                 if (Callback != null)
                 {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -15,18 +16,18 @@ namespace JMS.Token
 {
     public class TokenClient
     {
-        static Dictionary<(string, int), string[]> ServerKeys = new Dictionary<(string, int), string[]>();
-        static object LockObj = new object();
+        internal static ConcurrentDictionary<(string, int), string[]> ServerKeys = new ConcurrentDictionary<(string, int), string[]>();
         X509Certificate2 _cert;
         NetAddress _serverAddr;
         DisableTokenListener _DisableTokenListener;
+        public static ILogger<TokenClient> Logger;
         /// <summary>
         /// 
         /// </summary>
         /// <param name="serverAddress">Token服务器地址</param>
         /// <param name="serverPort">Token服务器端口</param>
         /// <param name="cert">与服务器交互的客户端证书</param>
-        public TokenClient(string serverAddress, int serverPort, X509Certificate2 cert = null)
+        public TokenClient(string serverAddress, int serverPort,X509Certificate2 cert = null)
         {
             _cert = cert;
            
@@ -42,28 +43,11 @@ namespace JMS.Token
 
         void getKeyFromServer((string addr,int port) key)
         {
-            lock (LockObj)
-            {
-                if (ServerKeys.ContainsKey(key))
-                    return;
-
-                CertClient client = new CertClient(key.addr, key.port, _cert);
-                client.Write(1);
-                var len = client.ReadInt();
-                ServerKeys[key] = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        client.ReadTimeout = 0;
-                        client.ReadInt();
-                    }
-                    catch (Exception)
-                    {
-                        ServerKeys.Remove(key);
-                    }
-                });
-            }
+            CertClient client = new CertClient(key.addr, key.port, _cert);
+            client.Write(1);
+            var len = client.ReadInt();
+            var value = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
+            ServerKeys.AddOrUpdate(key, value, (k, old) => value);
         }
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
@@ -71,23 +55,11 @@ namespace JMS.Token
             return true;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="expireTime">过期时间</param>
-        /// <returns></returns>
-        public string BuildLongWithExpire(long data, DateTime expireTime)
-        {
-            long time = (long)(expireTime - new DateTime(1970, 1, 1)).TotalSeconds;
-            time = time * 1000 + new Random().Next(1, 999);
-            return BuildForLongs(new long[] { data, time });
-        }
 
-        public string BuildStringWithExpire(string data, DateTime expireTime)
+        public string Build(string data, DateTime expireTime)
         {
+            expireTime = expireTime.ToUniversalTime();
             long time = (long)(expireTime - new DateTime(1970, 1, 1)).TotalSeconds;
-            time = time * 1000 + new Random().Next(1, 999);
 
             var dict = new StringToken()
             {
@@ -103,19 +75,52 @@ namespace JMS.Token
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public long VerifyLong(string token)
+        long VerifyLong(string token)
+        {
+           
+            var data = this.ParseLongs(token);
+            if(data == null)
+                throw new AuthenticationException("token is invalid");
+            var expireTime = new DateTime(1970, 1, 1).AddSeconds(data[1]);
+            if (expireTime < DateTime.Now.ToUniversalTime())
+                throw new AuthenticationException("token expired");
+            return data[0];
+        }
+
+        /// <summary>
+        /// 验证String类型的token，如果验证失败，抛出异常
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        string VerifyString(string token)
+        {
+
+            var ret = ParseString(token);
+            if (ret == null)
+            {
+                throw new AuthenticationException("token is invalid");
+            }
+            var data = ret.FromJson<StringToken>();
+
+            var expireTime = new DateTime(1970, 1, 1).AddSeconds(data.e);
+            if (expireTime < DateTime.Now.ToUniversalTime())
+                throw new AuthenticationException("token expired");
+            return data.d;
+        }
+
+        /// <summary>
+        /// 验证token
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns>返回token内容</returns>
+        public object Verify(string token)
         {
             if (!_DisableTokenListener.CheckToken(token))
             {
                 throw new AuthenticationException("token is invalid");
             }
-            var data = this.VerifyForLongs(token);
-            if(data == null)
-                throw new AuthenticationException("token is invalid");
-            var expireTime = new DateTime(1970, 1, 1).AddMilliseconds(data[1]);
-            if (expireTime < DateTime.Now)
-                throw new AuthenticationException("token expired");
-            return data[0];
+
+            return VerifyString(token);
         }
 
         /// <summary>
@@ -127,7 +132,7 @@ namespace JMS.Token
         {
             var keys = ServerKeys[(_serverAddr.Address,_serverAddr.Port)];
             var signstr = sign(body , keys);
-            var text = new string[] { body, signstr }.ToJsonString();
+            var text = new string[] { body, signstr }.ToJsonString(false);
             var bs = Encoding.UTF8.GetBytes(text);
             return Convert.ToBase64String(bs);
         }
@@ -142,14 +147,17 @@ namespace JMS.Token
         /// 设置token为失效的
         /// </summary>
         /// <param name="token"></param>
-        /// <param name="utcExpireTime">token原定的过期时间（utc时间）</param>
-        public void SetTokenDisable(string token,DateTime? utcExpireTime)
+        public void SetTokenDisable(string token)
         {
             long expireTime = 0;
-            if(utcExpireTime != null)
+            var ret = ParseString(token);
+            if (ret == null)
             {
-                expireTime = (long)(utcExpireTime.Value.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalSeconds + 1L;
+                return;
             }
+            var tokendata = ret.FromJson<StringToken>();
+
+            expireTime = tokendata.e;
 
             CertClient client = new CertClient(_serverAddr, _cert);
             try
@@ -174,30 +182,7 @@ namespace JMS.Token
             }
         }
 
-        /// <summary>
-        /// 验证String类型的token，如果验证失败，抛出异常
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public string VerifyString(string token)
-        {
-            if (!_DisableTokenListener.CheckToken(token))
-            {
-                throw new AuthenticationException("token is invalid");
-            }
-
-            var ret = VerifyForString(token);
-            if (ret == null)
-            {
-                throw new AuthenticationException("token is invalid");
-            }
-            var data = ret.FromJson<StringToken>();
-
-            var expireTime = new DateTime(1970, 1, 1).AddMilliseconds(data.e);
-            if (expireTime < DateTime.Now)
-                throw new AuthenticationException("token expired");
-            return data.d;
-        }
+      
 
         /// <summary>
         /// 根据long数组，生成token，常用于存储用户id和过期时间戳
@@ -234,7 +219,7 @@ namespace JMS.Token
         /// <param name="key"></param>
         /// <param name="secretKey"></param>
         /// <returns>验证成功返回字符串信息，失败返回null</returns>
-        string VerifyForString(string token)
+        string ParseString(string token)
         {
             var keys = getKeys();
             var tokenInfo = Encoding.UTF8.GetString(Convert.FromBase64String(token)).FromJson<string[]>();
@@ -249,7 +234,7 @@ namespace JMS.Token
         /// </summary>
         /// <param name="token"></param>
         /// <returns>验证成功返long数组，失败返回null</returns>
-        long[] VerifyForLongs(string token)
+        long[] ParseLongs(string token)
         {
             var data = Convert.FromBase64String(token);
             var arrlen = BitConverter.ToInt16(data);

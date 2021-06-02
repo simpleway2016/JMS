@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using Way.Lib;
+using Microsoft.Extensions.Logging;
 
 namespace JMS.Token
 {
@@ -50,18 +52,22 @@ namespace JMS.Token
 
         void Start()
         {
+            bool printedErr = false;
             new Thread(()=> { 
                 while(true)
                 {
                     try
                     {
-                        CertClient client = new CertClient(_serverAddress, _serverPort, _cert);
+                        int len;
+                        CertClient client = null;
                         try
                         {
-                            client.Write(998);
-                            var len = client.ReadInt();
+                            client = new CertClient(_serverAddress, _serverPort, _cert);
+                            client.Write(888);
+                            len = client.ReadInt();
                             if (len != 4)
                             {
+                                TokenClient.Logger?.LogError("Token Server请使用最新版本");
                                 return;
                             }
                             else
@@ -69,18 +75,24 @@ namespace JMS.Token
                                 var data = client.ReadInt();
                                 if (data != 888)
                                 {
+                                    TokenClient.Logger?.LogError("Token Server请使用最新版本");
                                     return;
                                 }
                             }
                         }
                         finally
                         {
-                            client.Dispose();
+                            client?.Dispose();
                         }
-                        
+
 
                         client = new CertClient(_serverAddress,_serverPort, _cert);
                         client.Write(999);
+                        len = client.ReadInt();
+                        var keyvalue = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
+                        TokenClient.ServerKeys.AddOrUpdate((_serverAddress, _serverPort), keyvalue, (k, o) => keyvalue);
+
+                        printedErr = false;
                         client.ReadTimeout = 30000;
                         while(true)
                         {
@@ -88,9 +100,10 @@ namespace JMS.Token
                             if(hasvalue)
                             {
                                 var expireTime = client.ReadLong();
-                                var len = client.ReadInt();
+                                len = client.ReadInt();
                                 var token = Encoding.UTF8.GetString(client.ReceiveDatas(len));
                                 _disableTokens.TryAdd(token, expireTime);
+                                TokenClient.Logger?.LogDebug("Token:{0}被作废", token);
                             }
                             else
                             {
@@ -105,8 +118,13 @@ namespace JMS.Token
                             }
                         }
                     }
-                    catch
+                    catch(Exception ex)
                     {
+                        if (!printedErr)
+                        {
+                            printedErr = true;
+                            TokenClient.Logger?.LogError(ex, "与Token Server通讯发生异常");
+                        }
                         Thread.Sleep(2000);
                     }
                 }

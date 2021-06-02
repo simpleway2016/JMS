@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Authentication;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -11,17 +13,7 @@ using Way.Lib;
 
 namespace JMS.Token.AspNetCore
 {
-    public enum TokenContentType
-    {
-        /// <summary>
-        /// long类型 + 过期时间
-        /// </summary>
-        Long = 1,
-        /// <summary>
-        /// string类型 + 过期时间
-        /// </summary>
-        String = 2
-    }
+
     class MyAuthHandler : Microsoft.AspNetCore.Authentication.IAuthenticationHandler
     {
         public const string SchemeName = "JMS.Token";
@@ -32,7 +24,11 @@ namespace JMS.Token.AspNetCore
         public static string ServerAddress;
         public static int ServerPort;
         public static X509Certificate2 Cert;
-        public static TokenContentType AuthorizationContentType;
+
+        public MyAuthHandler(ILogger<TokenClient> logger)
+        {
+            TokenClient.Logger = logger;
+        }
 
         /// <summary>
         /// 初始化认证
@@ -58,15 +54,7 @@ namespace JMS.Token.AspNetCore
             TokenClient client = new TokenClient(ServerAddress,ServerPort , Cert);
             try
             {
-                string strContent;
-                if (AuthorizationContentType == TokenContentType.Long)
-                {
-                    strContent = client.VerifyLong(token).ToString();
-                }
-                else
-                {
-                    strContent = client.VerifyString(token);
-                }
+                string strContent = client.Verify(token).ToString();
                 var ticket = GetAuthTicket(strContent);
                 if(Callback != null)
                 {
@@ -76,6 +64,10 @@ namespace JMS.Token.AspNetCore
                     }
                 }
                 return Task.FromResult(AuthenticateResult.Success(ticket));
+            }
+            catch(AuthenticationException ex)
+            {
+                return Task.FromResult(AuthenticateResult.Fail(ex.Message));
             }
             catch
             {

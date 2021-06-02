@@ -124,15 +124,17 @@ namespace JMS.TokenServer
                     _ClientManager.DisableToken(token, expireTimeLong);
                     client.Write(true);
                 }
-                else if (flag == 998)//for test
+                else if (flag == 888)//for test
                 {
                     client.Write(4);
                     client.Write(888);
                     client.ReadInt();
                 }
                 else if(flag == 999)
-                {
-                     _ClientManager.AddClient(client).Handle();
+                { 
+                    //data里面前面四个字节包含了长度,所以不用先Write(数据长度)
+                    client.Write(data);
+                    _ClientManager.AddClient(client).Handle();
                 }
             }
             catch(SocketException)
