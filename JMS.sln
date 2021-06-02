@@ -43,10 +43,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMSTokenTestWeb", "JMSToken
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.MicroServiceProjectTemplate", "JMS.MicroServiceProjectTemplate\JMS.MicroServiceProjectTemplate.csproj", "{C766280F-3C76-46A0-9826-76631B94EDB5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TokenTest", "TokenTest", "{0A965C18-77AD-480B-ABD9-B577A5F47CC1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestTokenClient1", "TestTokenServer\TestTokenClient1.csproj", "{431922E6-9954-4943-857C-87DB5F87BD91}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,10 +121,6 @@ Global
 		{C766280F-3C76-46A0-9826-76631B94EDB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C766280F-3C76-46A0-9826-76631B94EDB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C766280F-3C76-46A0-9826-76631B94EDB5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{431922E6-9954-4943-857C-87DB5F87BD91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{431922E6-9954-4943-857C-87DB5F87BD91}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{431922E6-9954-4943-857C-87DB5F87BD91}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{431922E6-9954-4943-857C-87DB5F87BD91}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -140,7 +132,6 @@ Global
 		{E1A20713-3394-4170-B0E9-51AB22E1327A} = {77A1A0DA-8537-4318-B8CE-5989D1E05132}
 		{503D20D4-1FA1-44D6-AF56-07EA2046860D} = {77A1A0DA-8537-4318-B8CE-5989D1E05132}
 		{C1A75AF0-2C3C-4227-8671-053883789B8C} = {77A1A0DA-8537-4318-B8CE-5989D1E05132}
-		{431922E6-9954-4943-857C-87DB5F87BD91} = {0A965C18-77AD-480B-ABD9-B577A5F47CC1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8DD244BC-BF73-4AE3-A9FA-16E8AC1283AF}
