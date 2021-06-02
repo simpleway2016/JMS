@@ -106,7 +106,7 @@ namespace JMS.TokenServer
                 }
                
                 var flag = client.ReadInt();
-                if (flag == 0 || flag == 1179010630)
+                if (flag == 0 || flag == 1179010630)//健康检查
                 {
                     client.Write(Encoding.UTF8.GetBytes("ok"));
                 }
