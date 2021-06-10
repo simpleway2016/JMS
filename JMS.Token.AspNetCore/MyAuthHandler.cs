@@ -20,7 +20,7 @@ namespace JMS.Token.AspNetCore
         AuthenticationScheme _scheme;
         HttpContext _context;
         public static string HeaderName;
-        public static Func<string,string, AuthenticationTicket, bool> Callback;
+        public static Func<AuthenticationParameter, bool> Callback;
         public static string ServerAddress;
         public static int ServerPort;
         public static X509Certificate2 Cert;
@@ -55,22 +55,47 @@ namespace JMS.Token.AspNetCore
             try
             {
                 string strContent = client.Verify(token).ToString();
-                var ticket = GetAuthTicket(strContent);
+                
                 if(Callback != null)
                 {
-                    if(!Callback(token,strContent, ticket))
+                    AuthenticationParameter parameter = new AuthenticationParameter(token);
+                    parameter.Content = strContent;
+                    if (!Callback(parameter))
                     {
                         return Task.FromResult(AuthenticateResult.Fail(""));
                     }
+                    else
+                    {
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content.ToString())));
+                    }
                 }
-                return Task.FromResult(AuthenticateResult.Success(ticket));
+
+                return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(strContent)));
             }
             catch(AuthenticationException ex)
             {
+                if (Callback != null)
+                {
+                    AuthenticationParameter parameter = new AuthenticationParameter(token);
+                    if (Callback(parameter))
+                    {
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content.ToString())));
+                    }
+                }
+
                 return Task.FromResult(AuthenticateResult.Fail(ex.Message));
             }
             catch
             {
+                if (Callback != null)
+                {
+                    AuthenticationParameter parameter = new AuthenticationParameter(token);
+                    if (Callback(parameter))
+                    {
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content.ToString())));
+                    }
+                }
+
                 return Task.FromResult(AuthenticateResult.Fail(""));
             }            
         }

@@ -8,6 +8,7 @@ using System.Text;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+
     public static class Extens
     {
         /// <summary>
@@ -20,7 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="authCallback">验证回调</param>
         /// <param name="cert">访问token服务器的证书</param>
         /// <returns></returns>
-        public static IServiceCollection UseJmsTokenAuthentication(this IServiceCollection services,  string serverAddress, int serverPort, string headerName = "Authorization", Func<string, object,  bool>  authCallback = null, X509Certificate2 cert = null)
+        public static IServiceCollection UseJmsTokenAuthentication(this IServiceCollection services,  string serverAddress, int serverPort, string headerName = "Authorization", Func<AuthenticationParameter,  bool>  authCallback = null, X509Certificate2 cert = null)
         {
             AuthenticationHandler.HeaderName = headerName;
             AuthenticationHandler.ServerAddress = serverAddress;

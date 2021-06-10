@@ -23,7 +23,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// 三个参数分别是 token content ticket
         /// </param>
         /// <param name="cert">访问token服务器的证书</param>
-        public static AuthenticationBuilder AddJmsTokenAuthentication(this IServiceCollection services,  string serverAddress, int serverPort, string headerName = "Authorization", Func<string,string, AuthenticationTicket,bool> authCallback = null, X509Certificate2 cert = null)
+        public static AuthenticationBuilder AddJmsTokenAuthentication(this IServiceCollection services,  string serverAddress, int serverPort, string headerName = "Authorization", Func<AuthenticationParameter, bool> authCallback = null, X509Certificate2 cert = null)
         {
             MyAuthHandler.HeaderName = headerName;
             MyAuthHandler.ServerAddress = serverAddress;
