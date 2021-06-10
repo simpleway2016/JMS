@@ -66,7 +66,7 @@ namespace JMS.Token.AspNetCore
                     }
                     else
                     {
-                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content.ToString())));
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content?.ToString())));
                     }
                 }
 
@@ -79,7 +79,7 @@ namespace JMS.Token.AspNetCore
                     AuthenticationParameter parameter = new AuthenticationParameter(token);
                     if (Callback(parameter))
                     {
-                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content.ToString())));
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content?.ToString())));
                     }
                 }
 
@@ -92,7 +92,7 @@ namespace JMS.Token.AspNetCore
                     AuthenticationParameter parameter = new AuthenticationParameter(token);
                     if (Callback(parameter))
                     {
-                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content.ToString())));
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content?.ToString())));
                     }
                 }
 
@@ -102,7 +102,9 @@ namespace JMS.Token.AspNetCore
 
         AuthenticationTicket GetAuthTicket(string content)
         {
-            var claimsIdentity = new ClaimsIdentity(new Claim[]
+            if (content == null)
+                content = "";
+               var claimsIdentity = new ClaimsIdentity(new Claim[]
             {
                 new Claim("Content", content),
                 new Claim(ClaimTypes.NameIdentifier , content)
