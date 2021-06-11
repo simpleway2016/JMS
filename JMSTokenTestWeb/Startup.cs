@@ -24,7 +24,10 @@ namespace JMSTokenTestWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddJmsTokenAuthentication("127.0.0.1", 9911);
+            services.AddJmsTokenAuthentication("127.0.0.1", 9911 , "Authorization" , p=> {
+                p.Content = "Jack";
+                return true;
+            });
             services.AddControllers();
          
         }
