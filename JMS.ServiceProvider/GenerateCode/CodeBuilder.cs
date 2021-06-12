@@ -148,9 +148,13 @@ namespace JMS.GenerateCode
                 xmldoc = new System.Xml.XmlDocument();
                 xmldoc.Load(xmlpath);
             }
+            else
+            {
+                xmldoc = new XmlDocument();
+                xmldoc.LoadXml(@"<?xml version=""1.0""?><doc><members></members></doc>");
+            }
             XmlElement memberXmlNodeList = null;
-            if(xmldoc != null)
-               CodeHelper.CurrentXmlMembersElement.Value = memberXmlNodeList = (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
+            CodeHelper.CurrentXmlMembersElement.Value = memberXmlNodeList = (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
 
             var methods = controllerTypeInfo.Methods.Select(m=>m.Method).ToArray();
 

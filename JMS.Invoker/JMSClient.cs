@@ -292,11 +292,15 @@ namespace JMS
         public virtual T GetMicroService<T>(string arg = null , RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
         {
             var classType = typeof(T);
-            for(int i = 0; i < 2; i ++)
+            var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
+            if (att == null)
+                throw new Exception($"{classType}不是有效的微服务类型");
+
+            for (int i = 0; i < 2; i ++)
             {
                 try
                 {
-                    var invoker = new Invoker(this, classType.GetCustomAttribute<InvokerInfoAttribute>().ServiceName , arg);
+                    var invoker = new Invoker(this, att.ServiceName , arg);
                     if (invoker.Init(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
@@ -312,7 +316,7 @@ namespace JMS
                     findMasterGateway();
                 }
             }
-            return default(T);
+            throw new MissServiceException($"找不到微服务“{att.ServiceName}”");
         }
 
         /// <summary>
@@ -344,8 +348,8 @@ namespace JMS
                     findMasterGateway();
                 }
             }
-           
-            return null;
+
+            throw new MissServiceException($"找不到微服务“{serviceName}”");
         }
               
 
