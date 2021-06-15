@@ -409,7 +409,7 @@ namespace JMS
         }
 
         /// <summary>
-        /// 提交分布式事务
+        /// 提交分布式事务 (请先使用BeginTransaction启动事务)
         /// </summary>
         public void CommitTransaction()
         {

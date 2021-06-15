@@ -17,7 +17,7 @@ using Way.Lib;
 namespace JMS
 {
     /// <summary>
-    /// 微服务客户端
+    /// JMSClient已经弃用，请使用RemoteClient代替
     /// </summary>
     [Obsolete("使用RemoteClient代替")]
     public class JMSClient : IDisposable,IRemoteClient
