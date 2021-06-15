@@ -8,14 +8,14 @@ using Way.Lib;
 
 namespace JMS
 {
-    public class Invoker: IMicroService
+    class Invoker: IMicroService
     {
-        public JMSClient ServiceTransaction { get; }
+        public IRemoteClient ServiceTransaction { get; }
         string _serviceName;
         RegisterServiceLocation _serviceLocation;
         public RegisterServiceLocation ServiceLocation => _serviceLocation;
         string _arg;
-        public Invoker(JMSClient ServiceTransaction, string serviceName,string arg = null)
+        public Invoker(IRemoteClient ServiceTransaction, string serviceName,string arg = null)
         {
             this.ServiceTransaction = ServiceTransaction;
             _serviceName = serviceName;

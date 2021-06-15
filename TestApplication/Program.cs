@@ -56,10 +56,11 @@ namespace TestApplication
 
             var cert = new X509Certificate2("../../../../pfx/client.pfx", "123456");
 
-            using (var tran = new JMSClient(new NetAddress[] { 
+            using (var tran = new RemoteClient(new NetAddress[] { 
                 new NetAddress("localhost", 8911)
             },null,null , cert, cert))
             {
+                tran.BeginTransaction();
                 tran.Timeout = 0;
                 /////微服务 性能测试
                 //var c1 = new Controller1(tran.GetMicroService("Controller1"));
@@ -103,7 +104,7 @@ namespace TestApplication
 
                 ret =  Service2.Invoke<string>("GetName" , new TestObject { Age = 12});
 
-                tran.Commit();
+                tran.CommitTransaction();
             }
             Console.WriteLine("事务提交");
             Thread.Sleep(20000000);

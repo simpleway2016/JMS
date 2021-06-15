@@ -19,8 +19,7 @@ namespace JMS
     /// <summary>
     /// 微服务客户端
     /// </summary>
-    [Obsolete("使用RemoteClient代替")]
-    public class JMSClient : IDisposable,IRemoteClient
+    public class RemoteClient : IDisposable, IRemoteClient
     {
         List<InvokeConnect> _Connects = new List<InvokeConnect>();
         List<Task> _Tasks = new List<Task>();
@@ -40,11 +39,7 @@ namespace JMS
         /// <summary>
         /// 是否支持事务，如果为false，这之后调用的微服务端会直接提交事务。默认为true
         /// </summary>
-        public bool SupportTransaction
-        {
-            get;
-            set;
-        }
+        private bool _SupportTransaction = false;
 
 
         private int _Timeout = 30000;
@@ -73,7 +68,7 @@ namespace JMS
         public X509Certificate2 GatewayClientCertificate { get;  set; }
         public X509Certificate2 ServiceClientCertificate { get;  set; }
 
-        ILogger<JMSClient> _logger;
+        ILogger<RemoteClient> _logger;
         /// <summary>
         /// 
         /// </summary>
@@ -83,9 +78,8 @@ namespace JMS
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public JMSClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<JMSClient> logger = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public RemoteClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
-            this.SupportTransaction = true;
             GatewayAddress = new NetAddress(gatewayAddress, port);
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
@@ -100,9 +94,8 @@ namespace JMS
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public JMSClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<JMSClient> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public RemoteClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
-            this.SupportTransaction = true;
             _logger = logger;
             this.ProxyAddress = proxyAddress;
             GatewayClientCertificate = gatewayClientCert;
@@ -208,7 +201,7 @@ namespace JMS
             var header = new Dictionary<string, string>();
             header["TranId"] = this.TransactionId;
 
-            if (SupportTransaction == false)
+            if (_SupportTransaction == false)
                 header["Tran"] = "0";
 
             foreach (var pair in _Header)
@@ -406,15 +399,26 @@ namespace JMS
             }
            
         }
+
         /// <summary>
-        /// 提交事务
+        /// 启动分布式事务
         /// </summary>
-        public void Commit()
+        public void BeginTransaction()
+        {
+            _SupportTransaction = true;
+        }
+
+        /// <summary>
+        /// 提交分布式事务
+        /// </summary>
+        public void CommitTransaction()
         {
             var errors = endRequest(InvokeType.CommitTranaction);
 
             if (errors != null && errors.Count > 0)
                 throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
+
+            _SupportTransaction = false;
         }
 
         List<TransactionException> endRequest(InvokeType invokeType)
@@ -548,18 +552,20 @@ namespace JMS
            
         }
         /// <summary>
-        /// 回滚事务
+        /// 回滚分布式事务
         /// </summary>
-        public void Rollback()
+        public void RollbackTransaction()
         {                
             var errors = endRequest(InvokeType.RollbackTranaction);
             if (errors != null && errors.Count > 0)
                 throw new TransactionArrayException(errors, "rollback transaction error");
+
+            _SupportTransaction = false;
         }
 
         public void Dispose()
         {
-            Rollback();
+            RollbackTransaction();
         }
     }
 }

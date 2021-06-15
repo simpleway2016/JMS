@@ -35,19 +35,19 @@ namespace JMS
             this.InvokingInfo.ServiceLocation = location;
         }
 
-       public void ReConnect(JMSClient tran)
+       public void ReConnect(IRemoteClient tran)
         {
             ReConnectCount++;
             NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.InvokingInfo.ServiceLocation.ServiceAddress, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
             NetClient.ReadTimeout = tran.Timeout;
         }
 
-        public T Invoke<T>(string method,JMSClient tran, params object[] parameters)
+        public T Invoke<T>(string method, IRemoteClient tran, params object[] parameters)
         {
             return this.Invoke<T>(method, tran, tran.GetCommandHeader(), parameters);
         }
 
-        public T Invoke<T>(string method, JMSClient tran,Dictionary<string,string> headers , params object[] parameters)
+        public T Invoke<T>(string method, IRemoteClient tran,Dictionary<string,string> headers , params object[] parameters)
         {
             if (tran == null)
             {
@@ -117,7 +117,7 @@ namespace JMS
 
 
         }
-        public Task<T> InvokeAsync<T>(string method,  JMSClient tran, params object[] parameter)
+        public Task<T> InvokeAsync<T>(string method,  IRemoteClient tran, params object[] parameter)
         {
             var headers = tran.GetCommandHeader();
             return Task.Run<T>(() => Invoke<T>(method,  tran,headers, parameter));
