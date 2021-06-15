@@ -277,7 +277,7 @@ namespace JMS
         }
 
         /// <summary>
-        /// 获取指定微服务
+        /// 获取指定微服务，获取不到微服务则抛出异常
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
@@ -285,16 +285,35 @@ namespace JMS
         /// <returns></returns>
         public virtual T GetMicroService<T>(string arg = null , RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
         {
+            var ret = TryGetMicroService<T>(arg , registerServiceLocation);
+            if (ret == null)
+            {
+                var classType = typeof(T);
+                var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
+                throw new MissServiceException($"找不到微服务“{att.ServiceName}”");
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// 获取指定微服务, 获取不到微服务则返回null
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
+        /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
+        /// <returns></returns>
+        public virtual T TryGetMicroService<T>(string arg = null, RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
+        {
             var classType = typeof(T);
             var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
             if (att == null)
                 throw new Exception($"{classType}不是有效的微服务类型");
 
-            for (int i = 0; i < 2; i ++)
+            for (int i = 0; i < 2; i++)
             {
                 try
                 {
-                    var invoker = new Invoker(this, att.ServiceName , arg);
+                    var invoker = new Invoker(this, att.ServiceName, arg);
                     if (invoker.Init(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
@@ -305,22 +324,38 @@ namespace JMS
                     else
                     {
                         if (GatewayAddress != null)
-                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m=>m == GatewayAddress));
+                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
                     }
                     findMasterGateway();
                 }
             }
-            throw new MissServiceException($"找不到微服务“{att.ServiceName}”");
+            return default(T);
         }
 
         /// <summary>
-        /// 获取指定微服务
+        /// 获取指定微服务, 获取不到微服务则抛出异常
         /// </summary>
         /// <param name="serviceName"></param>
         /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
         public virtual IMicroService GetMicroService( string serviceName,string arg = null , RegisterServiceLocation registerServiceLocation = null)
+        {
+            var ret = TryGetMicroService(serviceName, arg, registerServiceLocation);
+            if(ret == null)
+                throw new MissServiceException($"找不到微服务“{serviceName}”");
+
+            return ret;
+        }
+
+        /// <summary>
+        /// 获取指定微服务, 获取不到微服务则返回null
+        /// </summary>
+        /// <param name="serviceName"></param>
+        /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
+        /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
+        /// <returns></returns>
+        public virtual IMicroService TryGetMicroService(string serviceName, string arg = null, RegisterServiceLocation registerServiceLocation = null)
         {
             for (int i = 0; i < 2; i++)
             {
@@ -343,9 +378,8 @@ namespace JMS
                 }
             }
 
-            throw new MissServiceException($"找不到微服务“{serviceName}”");
+            return null;
         }
-              
 
 
         void IRemoteClient.AddConnect(InvokeConnect connect)
