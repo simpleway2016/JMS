@@ -43,6 +43,9 @@ namespace JMS.Token
 
         void getKeyFromServer((string addr,int port) key)
         {
+            if (string.IsNullOrEmpty(_serverAddr.Address))
+                return;
+
             CertClient client = new CertClient(key.addr, key.port, _cert);
             client.Write(1);
             var len = client.ReadInt();
@@ -222,6 +225,9 @@ namespace JMS.Token
         string ParseString(string token)
         {
             var keys = getKeys();
+            if (keys == null)
+                return null;
+
             var tokenInfo = Encoding.UTF8.GetString(Convert.FromBase64String(token)).FromJson<string[]>();
             var signstr = sign(tokenInfo[0] , keys);
             if (signstr == tokenInfo[1])
@@ -255,6 +261,8 @@ namespace JMS.Token
 
         string[] getKeys()
         {
+            if (string.IsNullOrEmpty(_serverAddr.Address))
+                return null;
             while (true)
             {
                 var key = (_serverAddr.Address, _serverAddr.Port);

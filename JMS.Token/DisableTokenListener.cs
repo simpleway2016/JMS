@@ -52,6 +52,9 @@ namespace JMS.Token
 
         void Start()
         {
+            if (string.IsNullOrEmpty(_serverAddress))
+                return;
+
             bool printedErr = false;
             new Thread(()=> { 
                 while(true)
