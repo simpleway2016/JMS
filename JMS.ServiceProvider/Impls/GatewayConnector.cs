@@ -74,7 +74,7 @@ namespace JMS.Impls
                     Content = new RegisterServiceInfo
                     {
                         ServiceNames = _microServiceHost.ServiceNames.Where(m=>m.Value.Enable).Select(m=>m.Key).ToArray(),
-                        Port = _microServiceHost.ServicePort,
+                        Port = (_microServiceHost.ServiceAddress == null || _microServiceHost.ServiceAddress.Port == 0) ? _microServiceHost.ServicePort : _microServiceHost.ServiceAddress.Port,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
@@ -194,7 +194,7 @@ namespace JMS.Impls
                     Content = new RegisterServiceInfo
                     {
                         ServiceNames = _microServiceHost.ServiceNames.Where(m => m.Value.Enable).Select(m => m.Key).ToArray(),
-                        Port = _microServiceHost.ServicePort,
+                        Port = (_microServiceHost.ServiceAddress == null || _microServiceHost.ServiceAddress.Port == 0) ? _microServiceHost.ServicePort : _microServiceHost.ServiceAddress.Port,
                         ServiceAddress = _microServiceHost.ServiceAddress == null?null: _microServiceHost.ServiceAddress.Address,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
