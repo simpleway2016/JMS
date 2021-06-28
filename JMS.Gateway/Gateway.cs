@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using JMS.Impls;
 using JMS.Dtos;
 using System.Security.Cryptography.X509Certificates;
+using System.Reflection;
 
 namespace JMS
 {
@@ -29,6 +30,7 @@ namespace JMS
         public Gateway(ILogger<Gateway> logger)
         {
             _Logger = logger;
+            _Logger.LogInformation($"版本号：{this.GetType().Assembly.GetName().Version}");
             OnlineMicroServices = new List<IMicroServiceReception>();
         }
 

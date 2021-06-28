@@ -59,6 +59,15 @@ namespace JMS
             }
         }
 
+        /// <summary>
+        /// 最多允许多少个请求数。默认值为0，表示无限制。
+        /// </summary>
+        public int MaxRequestCount
+        {
+            get;
+            set;
+        }
+
         private string _ClientCheckCode;
         /// <summary>
         /// 自定义客户端检验代码

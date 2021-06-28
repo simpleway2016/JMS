@@ -199,6 +199,7 @@ namespace JMS.Impls
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
+                        MaxRequestCount = _microServiceHost.MaxRequestCount,
                         ClientCheckCode = _microServiceHost.ClientCheckCode,
                         SingletonService = _microServiceHost.SingletonService
                     }.ToJsonString()

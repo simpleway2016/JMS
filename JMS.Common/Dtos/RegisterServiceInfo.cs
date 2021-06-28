@@ -16,7 +16,13 @@ namespace JMS.Dtos
         /// 对外提供微服务的地址
         /// </summary>
         public string ServiceAddress;
+        /// <summary>
+        /// 
+        /// </summary>
         public string TransactionId;
+        /// <summary>
+        /// 微服务的自定义描述
+        /// </summary>
         public string Description;
     }
    
@@ -30,11 +36,16 @@ namespace JMS.Dtos
         /// 本机最多同时并发几个线程
         /// </summary>
         public int MaxThread;
-        public string ServiceId;
         /// <summary>
-        /// 微服务的自定义描述
+        /// 
         /// </summary>
-        public string Description;
+        public string ServiceId;
+
+        /// <summary>
+        /// 最多允许多少个请求数，0表示无限制。
+        /// 网关版本>=1.1.0.0支持此功能
+        /// </summary>
+        public int MaxRequestCount;
         /// <summary>
         /// 用来是否运行客户端连接的检验代码
         /// </summary>

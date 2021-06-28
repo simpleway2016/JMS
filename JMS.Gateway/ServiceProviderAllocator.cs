@@ -61,7 +61,9 @@ namespace JMS
        
         public RegisterServiceLocation Alloc(GetServiceProviderRequest request)
         {
-            var matchServices = _serviceInfos.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName) && (m.ClientChecker == null || m.ClientChecker.Check(request.Arg)));
+            var matchServices = _serviceInfos.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName) 
+            && (m.ServiceInfo.MaxRequestCount == 0 || m.RequestQuantity < m.ServiceInfo.MaxRequestCount)
+            && (m.ClientChecker == null || m.ClientChecker.Check(request.Arg)));
 
             //先查找cpu使用率低于70%的
             if(matchServices.Where(m => m.CpuUsage < 70).Count() > 0)

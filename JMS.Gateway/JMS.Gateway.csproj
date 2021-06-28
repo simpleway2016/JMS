@@ -5,6 +5,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>JMS</RootNamespace>
     <AssemblyName>JMS.Gateway</AssemblyName>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
