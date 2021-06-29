@@ -135,23 +135,30 @@ namespace JMS.Impls
                 }
 
                 if (supportTran && cmd.Header.ContainsKey("Tran") && cmd.Header["Tran"] == "0")
-                {
-                    //调用端不需要事务支持，所以，直接提交
-                    if (transactionDelegate.CommitAction != null)
-                    {
-                        transactionDelegate.CommitAction();
-                    }
-                    transactionDelegate = null;
+                {               
+                    //调用端不需要事务支持
                     supportTran = false;
                 }
 
-                netclient.WriteServiceData(new InvokeResult
+                var resultdata = Encoding.UTF8.GetBytes(new InvokeResult
                 {
                     Success = true,
                     SupportTransaction = supportTran,
                     Data = result
 
-                });
+                }.ToJsonString());
+
+                if (!supportTran && transactionDelegate != null)
+                {
+                    //不需要事务支持，提交现有事务
+                    if (transactionDelegate.CommitAction != null)
+                    {
+                        transactionDelegate.CommitAction();
+                    }
+                    transactionDelegate = null;
+                }
+
+                netclient.WriteServiceData(resultdata);
 
                 if (!supportTran)
                 {
