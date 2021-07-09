@@ -11,7 +11,7 @@ namespace JMS
 {
     public class NetClientPool
     {
-        const int POOLSIZE = 20;
+        const int POOLSIZE = 5000;
         const int RELEASESECONDS = 5;
         static ConcurrentDictionary<string, NetClientSeat[]> Dict = new ConcurrentDictionary<string, NetClientSeat[]>();
         static NetClientPool()
