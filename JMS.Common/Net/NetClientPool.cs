@@ -11,12 +11,23 @@ namespace JMS
 {
     public class NetClientPool
     {
-        const int POOLSIZE = 5000;
+        static int POOLSIZE = 5000;
         const int RELEASESECONDS = 5;
         static ConcurrentDictionary<string, NetClientSeat[]> Dict = new ConcurrentDictionary<string, NetClientSeat[]>();
         static NetClientPool()
         {
             new Thread(checkTime).Start();
+        }
+
+        /// <summary>
+        /// 设置连接池大小（默认为5000）
+        /// </summary>
+        /// <param name="size"></param>
+        public static void SetConnectionPoolSize(int size)
+        {
+            if (size < 0)
+                throw new Exception("参数错误");
+            POOLSIZE = size;
         }
 
         static void checkTime()
