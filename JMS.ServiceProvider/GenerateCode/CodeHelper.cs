@@ -15,7 +15,7 @@ namespace JMS.GenerateCode
         public static ThreadLocal<Type> CurrentControllerType = new ThreadLocal<Type>();
         public static ThreadLocal<Dictionary<Type, string>> CurrentCreatedSubTypes = new ThreadLocal<Dictionary<Type, string>>();
         public static ThreadLocal<CodeTypeDeclaration> CurrentClassCode = new ThreadLocal<CodeTypeDeclaration>();
-        public static ThreadLocal<XmlElement> CurrentXmlMembersElement = new ThreadLocal<XmlElement>();
+        public static ThreadLocal<XmlNode> CurrentXmlMembersElement = new ThreadLocal<XmlNode>();
         public static CodeMemberMethod GetCodeMethod(MethodInfo method, ParameterInfo[] parameters)
         {
             CodeMemberMethod codeMethod = new CodeMemberMethod();
@@ -88,7 +88,7 @@ namespace JMS.GenerateCode
                 myClass.Members.Add(codePro);
                 codePro.Name = field.Name;
 
-                foreach (XmlElement node in CurrentXmlMembersElement.Value.ChildNodes)
+                foreach (XmlNode node in CurrentXmlMembersElement.Value.ChildNodes)
                 {
                     if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
                     {
@@ -180,7 +180,7 @@ namespace JMS.GenerateCode
 
                     if (CurrentXmlMembersElement.Value != null)
                     {
-                        foreach (XmlElement node in CurrentXmlMembersElement.Value.ChildNodes)
+                        foreach (XmlNode node in CurrentXmlMembersElement.Value.ChildNodes)
                         {
                             if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"P:{pro.DeclaringType.FullName}.{pro.Name}"))
                             {
@@ -215,7 +215,7 @@ namespace JMS.GenerateCode
                     codePro.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name)));
                     codePro.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name), new CodeFieldReferenceExpression(null, "value")));
 
-                    foreach (XmlElement node in CurrentXmlMembersElement.Value.ChildNodes)
+                    foreach (XmlNode node in CurrentXmlMembersElement.Value.ChildNodes)
                     {
                         if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
                         {
