@@ -11,7 +11,7 @@ namespace JMS
         /// <summary>
         /// 服务器地址
         /// </summary>
-        public RegisterServiceLocation ServiceLocation { get; }
+        RegisterServiceLocation ServiceLocation { get; }
         /// <summary>
         /// 获取微服务的客户端c#代码（只在debug模式下有效）
         /// </summary>
