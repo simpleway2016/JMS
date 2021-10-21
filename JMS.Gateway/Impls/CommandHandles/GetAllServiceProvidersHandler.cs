@@ -6,6 +6,7 @@ using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using JMS.Dtos;
+using System.Threading.Tasks;
 
 namespace JMS.Impls.CommandHandles
 {
@@ -23,8 +24,15 @@ namespace JMS.Impls.CommandHandles
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             var locations = this.List(cmd.Content);
-            netclient.WriteServiceData(locations);
-
+            if (cmd.IsHttp)
+            {
+                var contentBytes = Encoding.UTF8.GetBytes(locations.ToJsonString());               
+                netclient.OutputHttpContent(contentBytes);
+            }
+            else
+            {
+                netclient.WriteServiceData(locations);
+            }
         }
 
         public RegisterServiceRunningInfo[] List(string serviceName)

@@ -34,6 +34,7 @@ namespace JMS.Dtos
         public CommandType Type;
         public IDictionary<string, string> Header;
         public string Content;
+        public bool IsHttp;
     }
 
     public class GetServiceProviderRequest

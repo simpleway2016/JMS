@@ -22,11 +22,27 @@ namespace JMS.Impls.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.GetServiceProvider;
 
+        void outputResult(NetClient netclient, GatewayCommand cmd , RegisterServiceLocation location)
+        {
+            if (cmd.IsHttp)
+            {
+                var contentBytes = Encoding.UTF8.GetBytes(location.ToJsonString());
+                netclient.OutputHttpContent(contentBytes);
+            }
+            else
+            {
+                netclient.WriteServiceData(location);
+            }
+        }
+
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
-            if (cmd.Header.ContainsKey("TranId") == false || string.IsNullOrEmpty( cmd.Header["TranId"]))
+            if (cmd.Header != null)
             {
-                cmd.Header["TranId"] = _TransactionIdBuilder.Build();
+                if (cmd.Header.ContainsKey("TranId") == false || string.IsNullOrEmpty(cmd.Header["TranId"]))
+                {
+                    cmd.Header["TranId"] = _TransactionIdBuilder.Build();
+                }
             }
             var requestBody = cmd.Content.FromJson<GetServiceProviderRequest>();
             requestBody.Header = cmd.Header;
@@ -35,7 +51,7 @@ namespace JMS.Impls.CommandHandles
             {
                 if (_gatewayRefereeClient.IsMaster == false)
                 {
-                    netclient.WriteServiceData(new RegisterServiceLocation
+                    outputResult( netclient,cmd, new RegisterServiceLocation
                     {
                         Host = "not master",
                         Port = 0
@@ -47,22 +63,24 @@ namespace JMS.Impls.CommandHandles
                     var location = _serviceProvider.GetService<IServiceProviderAllocator>().Alloc(requestBody);
                     if(location == null)
                     {
-                        netclient.WriteServiceData(new RegisterServiceLocation
+                        outputResult(netclient, cmd, new RegisterServiceLocation
                         {
                             Host = "",
                             Port = 0,
-                            TransactionId = cmd.Header["TranId"]
+                            TransactionId = cmd.Header != null ? cmd.Header["TranId"] : null
                         });
                         return;
                     }
-
-                    location.TransactionId = cmd.Header["TranId"];
-                    netclient.WriteServiceData(location);
+                    if (cmd.Header != null)
+                    {
+                        location.TransactionId = cmd.Header["TranId"];
+                    }
+                    outputResult(netclient, cmd, location);
                 }
             }
             catch
             {
-                netclient.WriteServiceData(new RegisterServiceLocation
+                outputResult(netclient, cmd, new RegisterServiceLocation
                 {
                     Host = "",
                     Port = 0,

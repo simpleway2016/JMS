@@ -109,12 +109,12 @@ namespace JMS
         /// </summary>
         public event EventHandler<IServiceProvider> ServiceProviderBuilded;
 
-        internal ServiceCollection _services;
+        internal IServiceCollection _services;
         IRequestReception _RequestReception;
         ScheduleTaskManager _scheduleTaskManager;
 
 
-        public MicroServiceHost(ServiceCollection services)
+        public MicroServiceHost(IServiceCollection services)
         {
             this.Id = Guid.NewGuid().ToString("N");
             _services = services;
@@ -137,6 +137,21 @@ namespace JMS
         public void Register<T>(string serviceName) where T : MicroServiceControllerBase
         {
             this.Register(typeof(T), serviceName);
+        }
+
+        bool _isWebServer;
+        /// <summary>
+        /// 把当前程序注册为一个web服务器，并且Run时不再启动指定的网络端口
+        /// </summary>
+        /// <param name="webServerUrl">web服务器的根访问路径，如 http://192.168.2.128:8080 </param>
+        public void RegisterWebServer(string webServerUrl)
+        {
+            _isWebServer = true;
+            this.ServiceAddress = new NetAddress(webServerUrl, 0);
+             ServiceNames["WebServer"] = new ControllerTypeInfo()
+            {
+                Enable = true
+            };
         }
 
         /// <summary>
@@ -285,6 +300,9 @@ namespace JMS
                 }
             };
             _GatewayConnector.ConnectAsync();
+
+            if (_isWebServer)
+                return;
 
             using (var processExitHandler = (IProcessExitListener)ServiceProvider.GetService<IProcessExitHandler>())
             {
