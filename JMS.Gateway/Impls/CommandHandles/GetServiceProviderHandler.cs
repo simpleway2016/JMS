@@ -26,8 +26,16 @@ namespace JMS.Impls.CommandHandles
         {
             if (cmd.IsHttp)
             {
-                var contentBytes = Encoding.UTF8.GetBytes(location.ToJsonString());
-                netclient.OutputHttpContent(contentBytes);
+                if (location.Host.Length == 0)
+                {
+                    var contentBytes = Encoding.UTF8.GetBytes("{}");
+                    netclient.OutputHttpContent(contentBytes);
+                }
+                else
+                {
+                    var contentBytes = Encoding.UTF8.GetBytes(location.ToJsonString());
+                    netclient.OutputHttpContent(contentBytes);
+                }
             }
             else
             {
@@ -84,7 +92,7 @@ namespace JMS.Impls.CommandHandles
                 {
                     Host = "",
                     Port = 0,
-                    TransactionId = cmd.Header["TranId"]
+                    TransactionId = cmd.Header != null ? cmd.Header["TranId"] : null
                 });
             }
 

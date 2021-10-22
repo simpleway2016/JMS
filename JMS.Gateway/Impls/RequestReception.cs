@@ -80,7 +80,7 @@ namespace JMS.Impls
                 }
 
                 var httpRequest = questLine.Split(' ')[1];
-                if(httpRequest.StartsWith("/?"))
+                if(httpRequest.StartsWith("/?GetServiceProvider=") || httpRequest.StartsWith("/?GetAllServiceProviders"))
                 {
                     httpRequest = httpRequest.Substring(2);
                     if(httpRequest.Contains("="))
