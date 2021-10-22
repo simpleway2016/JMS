@@ -144,11 +144,12 @@ namespace JMS
         /// 把当前程序注册为一个web服务器，并且Run时不再启动指定的网络端口
         /// </summary>
         /// <param name="webServerUrl">web服务器的根访问路径，如 http://192.168.2.128:8080 </param>
-        public void RegisterWebServer(string webServerUrl)
+        /// <param name="serverName">服务名称，默认为WebServer</param>
+        public void RegisterWebServer(string webServerUrl,string serverName = "WebServer")
         {
             _isWebServer = true;
             this.ServiceAddress = new NetAddress(webServerUrl, 0);
-             ServiceNames["WebServer"] = new ControllerTypeInfo()
+             ServiceNames[serverName] = new ControllerTypeInfo()
             {
                 Enable = true
             };
