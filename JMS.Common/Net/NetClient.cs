@@ -45,7 +45,7 @@ namespace JMS
         /// <param name="contentBytes"></param>
         public void OutputHttpContent(byte[] contentBytes)
         {
-            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nContent-Length: {contentBytes.Length}\r\nConnection: Close\r\n\r\n");
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {contentBytes.Length}\r\nConnection: Close\r\n\r\n");
             this.Write(data);
             this.Write(contentBytes);
 
@@ -62,7 +62,7 @@ namespace JMS
         /// <param name="location"></param>
         public void OutputHttpRedirect(string location)
         {
-            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 302 Found\r\nLocation: {location}\r\nContent-Length: 0\r\nConnection: Close\r\n\r\n");
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 302 Found\r\nLocation: {location}\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nConnection: Close\r\n\r\n");
             this.Write(data);
 
             this.Socket.Shutdown(System.Net.Sockets.SocketShutdown.Send);//表示发送数据完全结束
@@ -74,7 +74,7 @@ namespace JMS
 
         public void OutputHttpNotFund()
         {
-            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 404 NotFund\r\nContent-Length: 0\r\nConnection: Close\r\n\r\n");
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 404 NotFund\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nConnection: Close\r\n\r\n");
             this.Write(data);
 
             this.Socket.Shutdown(System.Net.Sockets.SocketShutdown.Send);//表示发送数据完全结束
