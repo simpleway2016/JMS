@@ -24,7 +24,7 @@ namespace JMS.Token
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="serverAddress">Token服务器地址</param>
+        /// <param name="serverAddress">Token服务器地址,null表示不需要服务器，本地自行验证</param>
         /// <param name="serverPort">Token服务器端口</param>
         /// <param name="cert">与服务器交互的客户端证书</param>
         public TokenClient(string serverAddress, int serverPort,X509Certificate2 cert = null)
@@ -41,15 +41,39 @@ namespace JMS.Token
 
         }
 
+        static string GetRandomString(int length)
+        {
+            byte[] b = new byte[4];
+            new System.Security.Cryptography.RNGCryptoServiceProvider().GetBytes(b);
+            Random r = new Random(BitConverter.ToInt32(b, 0));
+            string s = null, str = "";
+            str += "0123456789";
+            str += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            str += "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+            for (int i = 0; i < length; i++)
+            {
+                s += str.Substring(r.Next(0, str.Length - 1), 1);
+            }
+            return s;
+        }
+
+        static Random _random = new Random();
         void getKeyFromServer((string addr,int port) key)
         {
+            string[] value;
             if (string.IsNullOrEmpty(_serverAddr.Address))
-                return;
-
-            CertClient client = new CertClient(key.addr, key.port, _cert);
-            client.Write(1);
-            var len = client.ReadInt();
-            var value = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
+            {
+                value = new string[2];
+                value[0] = GetRandomString(32);
+                value[1] = GetRandomString(_random.Next(36, 66));
+            }
+            else
+            {
+                CertClient client = new CertClient(key.addr, key.port, _cert);
+                client.Write(1);
+                var len = client.ReadInt();
+                value = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
+            }
             ServerKeys.AddOrUpdate(key, value, (k, old) => value);
         }
 
@@ -261,8 +285,6 @@ namespace JMS.Token
 
         string[] getKeys()
         {
-            if (string.IsNullOrEmpty(_serverAddr.Address))
-                return null;
             while (true)
             {
                 var key = (_serverAddr.Address, _serverAddr.Port);

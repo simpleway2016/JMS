@@ -16,7 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// 使用JMS.Token作为身份验证
         /// </summary>
         /// <param name="services"></param>
-        /// <param name="serverAddress">token服务器地址</param>
+        /// <param name="serverAddress">token服务器地址,null表示不需要服务器，本地自行验证</param>
         /// <param name="serverPort">token服务器端口</param>
         /// <param name="headerName">客户端通过哪个头部传递token</param>
         /// <param name="authCallback">验证通过后，回调的函数，callback如果返回false，表示验证失败
