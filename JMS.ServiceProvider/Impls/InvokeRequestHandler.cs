@@ -176,8 +176,18 @@ namespace JMS.Impls
 
                         if (tran != null && tran.CommitAction != null)
                         {
-                            tran.CommitAction();
-                            _loggerTran?.LogInformation("事务{0}提交完毕，请求数据:{1}", tran.TransactionId, tran.RequestCommand.ToJsonString());
+                            try
+                            {
+                                tran.CommitAction();
+                            }
+                            catch (Exception ex)
+                            {
+                                _loggerTran?.LogInformation("事务{0}提交失败,{1}", ex.Message);
+                                transactionDelegate = null;
+                                throw ex;
+                            }
+                           
+                            _loggerTran?.LogInformation("事务{0}提交完毕", tran.TransactionId);
                         }
                         netclient.WriteServiceData(new InvokeResult() { Success = true });
                         return;
@@ -197,6 +207,8 @@ namespace JMS.Impls
                     }
                     else if (cmd.Type == InvokeType.HealthyCheck)
                     {
+                        var tran = transactionDelegate;
+                        _loggerTran?.LogInformation("准备提交事务{0}，请求数据:{1}", tran.TransactionId, tran.RequestCommand.ToJsonString());
                         netclient.WriteServiceData(new InvokeResult
                         {
                             Success = transactionDelegate.AgreeCommit
