@@ -182,7 +182,7 @@ namespace JMS.Impls
                             }
                             catch (Exception ex)
                             {
-                                _loggerTran?.LogInformation("事务{0}提交失败,{1}", ex.Message);
+                                _loggerTran?.LogInformation("事务{0}提交失败,{1}", tran.TransactionId, ex.Message);
                                 transactionDelegate = null;
                                 throw ex;
                             }
