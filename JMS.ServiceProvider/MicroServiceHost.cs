@@ -17,6 +17,7 @@ using System.Runtime.InteropServices;
 using JMS.Interfaces.Hardware;
 using JMS.Impls.Haredware;
 using System.Security.Cryptography.X509Certificates;
+using JMS.RetryCommit;
 
 namespace JMS
 {
@@ -93,6 +94,22 @@ namespace JMS
         {
             get;
             set;
+        }
+
+        string _RetryCommitPath = "./$$JMS_RetryCommitPath";
+        /// <summary>
+        /// 当提交事务失败后，保存请求数据到哪个目录，默认./$$JMS_RetryCommitPath
+        /// </summary>
+        public string RetryCommitPath
+        {
+            get => _RetryCommitPath;
+            set
+            {
+                if(_RetryCommitPath != value)
+                {
+                    _RetryCommitPath = value;
+                }
+            }
         }
 
         /// <summary>
@@ -227,6 +244,8 @@ namespace JMS
             {
                 _services.AddSingleton<ICpuInfo, CpuInfoForUnkown>();
             }
+            _services.AddSingleton<FaildCommitBuilder>();
+            _services.AddSingleton<RetryCommitMission>();
             _services.AddSingleton<SSLConfiguration>(new SSLConfiguration());
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
@@ -263,8 +282,6 @@ namespace JMS
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
 
-           
-            
             _RequestReception = ServiceProvider.GetService<IRequestReception>();
             _scheduleTaskManager.StartTasks();
 
@@ -286,6 +303,10 @@ namespace JMS
 
             _GatewayConnector.OnConnectCompleted = () => {
                 _GatewayConnector.OnConnectCompleted = null;
+
+                //实例化FaildCommitBuilder，并重复提交失败的事务
+                ServiceProvider.GetService<RetryCommitMission>().OnGatewayConnected();
+
                 if (ServiceProviderBuilded != null)
                 {
                     Task.Run(() => {

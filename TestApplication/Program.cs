@@ -34,9 +34,13 @@ namespace TestApplication
     }
     class Program
     {
+        class Test
+        {
+            public Type Type;
+            public string Value;
+        }
         static void Main(string[] args)
         {
-
             while (true)
             {
                 try
@@ -86,7 +90,7 @@ namespace TestApplication
                 while (controller1 == null)
                 {
                     Thread.Sleep(1000);
-                    controller1 = tran.GetMicroService<Controller1>("100");
+                    controller1 = tran.TryGetMicroService<Controller1>("100");
                 }
 
                 var Service2 = tran.GetMicroService("Service2" , "100");

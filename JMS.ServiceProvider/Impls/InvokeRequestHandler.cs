@@ -9,11 +9,14 @@ using Microsoft.Extensions.DependencyInjection;
 using JMS.Dtos;
 using System.Linq;
 using System.Reflection;
+using JMS.RetryCommit;
+using System.IO;
 
 namespace JMS.Impls
 {
     class InvokeRequestHandler : IRequestHandler
     {
+        FaildCommitBuilder _faildCommitBuilder;
         MicroServiceHost _MicroServiceProvider;
         TransactionDelegateCenter _transactionDelegateCenter;
         ILogger<InvokeRequestHandler> _logger;
@@ -21,8 +24,10 @@ namespace JMS.Impls
         public InvokeRequestHandler(TransactionDelegateCenter transactionDelegateCenter,
             ILogger<InvokeRequestHandler> logger,
              ILogger<TransactionDelegate> loggerTran,
-            MicroServiceHost microServiceProvider)
+            MicroServiceHost microServiceProvider,
+            FaildCommitBuilder faildCommitBuilder)
         {
+            this._faildCommitBuilder = faildCommitBuilder;
             _transactionDelegateCenter = transactionDelegateCenter;
             _MicroServiceProvider = microServiceProvider;
             _logger = logger;
@@ -44,7 +49,7 @@ namespace JMS.Impls
                 var controllerTypeInfo = _MicroServiceProvider.ServiceNames[cmd.Service];
 
                 object userContent = null;
-                if(controllerTypeInfo.NeedAuthorize)
+                if(controllerTypeInfo.NeedAuthorize )
                 {
                     var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
                     if(auth != null)
@@ -165,6 +170,7 @@ namespace JMS.Impls
                     return;
                 }
 
+              
                 netclient.ReadTimeout = 0;
                 while (true)
                 {
@@ -179,13 +185,23 @@ namespace JMS.Impls
                             try
                             {
                                 tran.CommitAction();
+                                if (tran.RetryCommitFilePath != null)
+                                {
+                                    _faildCommitBuilder.CommitSuccess(tran.RetryCommitFilePath);
+                                    tran.RetryCommitFilePath = null;
+                                }
                             }
                             catch (Exception ex)
                             {
+                                if (tran.RetryCommitFilePath != null)
+                                {
+                                    _faildCommitBuilder.CommitFaild(tran.RetryCommitFilePath);
+                                    tran.RetryCommitFilePath = null;
+                                }
                                 _loggerTran?.LogInformation("事务{0}提交失败,{1}", tran.TransactionId, ex.Message);
                                 transactionDelegate = null;
                                 throw ex;
-                            }
+                            }                           
                            
                             _loggerTran?.LogInformation("事务{0}提交完毕", tran.TransactionId);
                         }
@@ -200,6 +216,11 @@ namespace JMS.Impls
                         if (tran != null && tran.RollbackAction != null)
                         {
                             tran.RollbackAction();
+                            if (tran.RetryCommitFilePath != null)
+                            {
+                                _faildCommitBuilder.Rollback(tran.RetryCommitFilePath);
+                                tran.RetryCommitFilePath = null;
+                            }
                             _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", tran.TransactionId, tran.RequestCommand.ToJsonString());
                         }
                         netclient.WriteServiceData(new InvokeResult() { Success = true });
@@ -208,7 +229,11 @@ namespace JMS.Impls
                     else if (cmd.Type == InvokeType.HealthyCheck)
                     {
                         var tran = transactionDelegate;
-                        _loggerTran?.LogInformation("准备提交事务{0}，请求数据:{1}", tran.TransactionId, tran.RequestCommand.ToJsonString());
+                        if (tran.CommitAction != null)
+                        {
+                            tran.RetryCommitFilePath = _faildCommitBuilder.Build(tran.TransactionId, tran.RequestCommand, controller.UserContent);
+                        }
+                        _loggerTran?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", tran.TransactionId, tran.RequestCommand.ToJsonString() , controller.UserContent);
                         netclient.WriteServiceData(new InvokeResult
                         {
                             Success = transactionDelegate.AgreeCommit

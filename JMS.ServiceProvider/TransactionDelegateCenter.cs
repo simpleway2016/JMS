@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JMS.RetryCommit;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,11 +13,13 @@ namespace JMS
     /// </summary>
     class TransactionDelegateCenter
     {
+        FaildCommitBuilder _faildCommitBuilder;
         ILogger<TransactionDelegateCenter> _logger;
         ILogger<TransactionDelegate> _loggerTran;
         public List<TransactionDelegate> List { get; set; }
-        public TransactionDelegateCenter(ILogger<TransactionDelegateCenter> logger, ILogger<TransactionDelegate> loggerTran)
+        public TransactionDelegateCenter(ILogger<TransactionDelegateCenter> logger, ILogger<TransactionDelegate> loggerTran, FaildCommitBuilder faildCommitBuilder)
         {
+            this._faildCommitBuilder = faildCommitBuilder;
             List = new List<TransactionDelegate>();
             _logger = logger;
             _loggerTran = loggerTran;
@@ -43,6 +46,12 @@ namespace JMS
                                     {
                                         delegateItem.RollbackAction?.Invoke();
                                         delegateItem.Handled = true;
+
+                                        if (delegateItem.RetryCommitFilePath != null)
+                                        {
+                                            _faildCommitBuilder.Timeout(delegateItem.RetryCommitFilePath);
+                                            delegateItem.RetryCommitFilePath = null;
+                                        }
                                     }
                                 }
                             }
@@ -105,6 +114,11 @@ namespace JMS
                             if(delegateItem.CommitAction != null)
                             {
                                 delegateItem.CommitAction();
+                                if(delegateItem.RetryCommitFilePath != null)
+                                {
+                                    _faildCommitBuilder.CommitSuccess(delegateItem.RetryCommitFilePath);
+                                    delegateItem.RetryCommitFilePath = null;
+                                }
                                 _loggerTran?.LogInformation("事务{0}提交完毕，请求数据:{1}", delegateItem.TransactionId, delegateItem.RequestCommand.ToJsonString());
                             }
                           
@@ -149,6 +163,11 @@ namespace JMS
                             if (delegateItem.RollbackAction != null)
                             {
                                 delegateItem.RollbackAction();
+                                if (delegateItem.RetryCommitFilePath != null)
+                                {
+                                    _faildCommitBuilder.Rollback(delegateItem.RetryCommitFilePath);
+                                    delegateItem.RetryCommitFilePath = null;
+                                }
                                 _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", delegateItem.TransactionId, delegateItem.RequestCommand.ToJsonString());
                             }
                             delegateItem.Handled = true;
@@ -196,6 +215,11 @@ namespace JMS
                                 if (delegateItem.RollbackAction != null)
                                 {
                                     delegateItem.RollbackAction();
+                                    if (delegateItem.RetryCommitFilePath != null)
+                                    {
+                                        _faildCommitBuilder.Rollback(delegateItem.RetryCommitFilePath);
+                                        delegateItem.RetryCommitFilePath = null;
+                                    }
                                     _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", delegateItem.TransactionId, delegateItem.RequestCommand.ToJsonString());
                                 }
                                 delegateItem.Handled = true;

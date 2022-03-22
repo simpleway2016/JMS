@@ -11,6 +11,7 @@ namespace JMS
     public class TransactionDelegate
     {
         internal InvokeCommand RequestCommand;
+        internal string RetryCommitFilePath;
         public string TransactionId { get; }
         public TransactionDelegate(string tranId)
         {
