@@ -198,6 +198,15 @@ namespace JMS.GenerateCode
             field.Attributes = MemberAttributes.Family;
             myClass.Members.Add(field);
 
+            CodeMemberProperty pro = new CodeMemberProperty();
+            pro.Attributes = MemberAttributes.Public;
+            pro.Type = new CodeTypeReferenceExpression("JMS.IMicroService").Type;
+            pro.Name = "RemoteClient";
+            pro.HasSet = false;
+            pro.HasGet = true;
+            pro.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(null, "_microService")));
+            myClass.Members.Add(pro);
+
             ///将构造方法添加到类中
             CodeConstructor constructor = new CodeConstructor();
             constructor.Attributes = MemberAttributes.Public;

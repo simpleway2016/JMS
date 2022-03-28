@@ -58,11 +58,11 @@ namespace TestApplication
                 }              
             }
 
-            var cert = new X509Certificate2("../../../../pfx/client.pfx", "123456");
+       
 
             using (var tran = new RemoteClient(new NetAddress[] { 
                 new NetAddress("localhost", 8911)
-            },null,null , cert, cert))
+            },null,null , null, null))
             {
                 tran.BeginTransaction();
                 tran.Timeout = 0;
