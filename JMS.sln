@@ -45,6 +45,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.MicroServiceProjectTemp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.MicroServiceProjectTemplate2022", "JMS.MicroServiceProjectTemplate2022\JMS.MicroServiceProjectTemplate2022.csproj", "{1F430D24-B60A-4A0F-AEB6-A9C463D8040F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.IdentityModel.JWT.Authentication", "JMS.IdentityModel.JWT.Authentication\JMS.IdentityModel.JWT.Authentication.csproj", "{61F9EEDB-D019-427E-9066-29853980C2B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -205,6 +207,14 @@ Global
 		{1F430D24-B60A-4A0F-AEB6-A9C463D8040F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1F430D24-B60A-4A0F-AEB6-A9C463D8040F}.Release|x86.ActiveCfg = Release|x86
 		{1F430D24-B60A-4A0F-AEB6-A9C463D8040F}.Release|x86.Build.0 = Release|x86
+		{61F9EEDB-D019-427E-9066-29853980C2B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61F9EEDB-D019-427E-9066-29853980C2B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61F9EEDB-D019-427E-9066-29853980C2B5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{61F9EEDB-D019-427E-9066-29853980C2B5}.Debug|x86.Build.0 = Debug|Any CPU
+		{61F9EEDB-D019-427E-9066-29853980C2B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61F9EEDB-D019-427E-9066-29853980C2B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61F9EEDB-D019-427E-9066-29853980C2B5}.Release|x86.ActiveCfg = Release|Any CPU
+		{61F9EEDB-D019-427E-9066-29853980C2B5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
