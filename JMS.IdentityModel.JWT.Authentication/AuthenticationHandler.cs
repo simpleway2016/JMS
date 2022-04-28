@@ -81,6 +81,10 @@ namespace JMS.IdentityModel.JWT.Authentication
 
         public object Authenticate(IDictionary<string, string> headers)
         {
+            for(int i = 0; i < 8 && rsaSecurityKey == null; i ++)
+            {
+                Thread.Sleep(100);
+            }
             if (headers.ContainsKey(HeaderName) == false)
                 throw new AuthenticationException("Authentication failed");
 
