@@ -90,7 +90,19 @@ namespace JMS.RetryCommit
 
                             try
                             {
-                                usercontent = Newtonsoft.Json.JsonConvert.DeserializeObject(fileContent.UserContentValue, fileContent.UserContentType);
+                                if (fileContent.UserContentType == typeof(System.Security.Claims.ClaimsPrincipal))
+                                {
+                                    
+                                    byte[] bs = fileContent.UserContentValue.FromJson<byte[]>();
+                                    using ( var ms = new System.IO.MemoryStream(bs))
+                                    {
+                                        usercontent = new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
+                                    }
+                                }
+                                else
+                                {
+                                    usercontent = Newtonsoft.Json.JsonConvert.DeserializeObject(fileContent.UserContentValue, fileContent.UserContentType);
+                                }
                             }
                             catch (Exception ex)
                             {

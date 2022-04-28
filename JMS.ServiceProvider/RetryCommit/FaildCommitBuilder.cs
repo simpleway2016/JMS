@@ -34,12 +34,23 @@ namespace JMS.RetryCommit
             if (Directory.Exists(_microServiceHost.RetryCommitPath) == false)
                 Directory.CreateDirectory(_microServiceHost.RetryCommitPath);
 
+            Type userContentType = userContent?.GetType();
+            if (userContent != null && userContent is System.Security.Claims.ClaimsPrincipal claimsPrincipal)
+            {
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    claimsPrincipal.WriteTo(new System.IO.BinaryWriter(ms));
+                    ms.Position = 0;
+                    userContent = ms.ToArray();
+                }
+            }
+
             var filepath = $"{_microServiceHost.RetryCommitPath}/{transactionId}_{DateTime.Now.Ticks}.txt";
             File.WriteAllText(filepath, new RequestInfo
             {
                 Cmd = cmd,
                 TransactionId = transactionId,
-                UserContentType = userContent?.GetType(),
+                UserContentType = userContent == null ? null : userContentType,
                 UserContentValue = userContent?.ToJsonString()
             }.ToJsonString(), Encoding.UTF8);
             return filepath;

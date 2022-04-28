@@ -103,7 +103,8 @@ namespace JMS.IdentityModel.JWT.Authentication
                     ValidateIssuer = false,
                     ValidateLifetime = true,
                 }, out SecurityToken validatedSecurityToken);
-                var ret = vaild.Claims.ToArray();
+                var ret = vaild;
+
                 if (Callback != null)
                 {
                     AuthenticationParameter authParameter = new AuthenticationParameter(token);
