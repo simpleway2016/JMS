@@ -32,14 +32,16 @@ namespace JMS.IdentityModel.JWT.Authentication
     }
     class AuthenticationHandler : IAuthenticationHandler
     {
+        static ILogger<AuthenticationHandler> _logger;
         public static Func<AuthenticationParameter, bool> Callback;
         public static string HeaderName;
         public static string ServerUrl;
         public static int RefreshPublicKeySeconds;
         static RsaSecurityKey rsaSecurityKey;
-        public AuthenticationHandler()
+        public AuthenticationHandler(ILogger<AuthenticationHandler> logger)
         {
-            
+            _logger = logger;
+
         }
 
         internal static void GetPublicKey()
@@ -70,9 +72,9 @@ namespace JMS.IdentityModel.JWT.Authentication
 
                     Thread.Sleep(RefreshPublicKeySeconds*1000);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-
+                    _logger?.LogError(ex, "");
                     Thread.Sleep(1000);
                     continue;
                 }
@@ -111,14 +113,16 @@ namespace JMS.IdentityModel.JWT.Authentication
                     authParameter.Content = ret;
                     if (!Callback(authParameter))
                     {
+                        _logger?.LogDebug("身份验证回调处理不通过");
                         throw new AuthenticationException("Authentication failed");
                     }
                     return authParameter.Content;
                 }
                 return ret;
             }
-            catch (AuthenticationException e)
+            catch (AuthenticationException ex)
             {
+                _logger?.LogDebug("身份验证发生异常:{0}", ex.Message);
                 if (Callback != null)
                 {
                     AuthenticationParameter authParameter = new AuthenticationParameter(token);
@@ -128,10 +132,11 @@ namespace JMS.IdentityModel.JWT.Authentication
                     }                   
                 }
 
-                throw e;
+                throw ex;
             }
-            catch
+            catch(Exception ex)
             {
+                _logger?.LogDebug("身份验证发生异常:{0}",ex.Message);
                 if (Callback != null)
                 {
                     AuthenticationParameter authParameter = new AuthenticationParameter(token);
