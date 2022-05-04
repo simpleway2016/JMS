@@ -39,10 +39,10 @@ namespace JMS.IdentityModel.JWT.Authentication
         static RsaSecurityKey rsaSecurityKey;
         public AuthenticationHandler()
         {
-            new Thread(GetPublicKey).Start();
+            
         }
 
-        void GetPublicKey()
+        internal static void GetPublicKey()
         {
             while(true)
             {
@@ -83,7 +83,7 @@ namespace JMS.IdentityModel.JWT.Authentication
         {
             for(int i = 0; i < 8 && rsaSecurityKey == null; i ++)
             {
-                Thread.Sleep(100);
+                Thread.Sleep(1000);
             }
             if (headers.ContainsKey(HeaderName) == false)
                 throw new AuthenticationException("Authentication failed");

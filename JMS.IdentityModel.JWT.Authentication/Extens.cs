@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -22,11 +23,18 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection UseIdentityServerTokenAuthentication(this IServiceCollection services,  string identityServerUrl,int refreshPublicKeySeconds = 60, string headerName = "Authorization", Func<AuthenticationParameter,  bool>  authCallback = null)
         {
-            AuthenticationHandler.HeaderName = headerName;
-            AuthenticationHandler.ServerUrl = identityServerUrl;
+            AuthenticationHandler.HeaderName = headerName;          
             AuthenticationHandler.RefreshPublicKeySeconds = refreshPublicKeySeconds;
             AuthenticationHandler.Callback = authCallback;
-
+            if (AuthenticationHandler.ServerUrl == null)
+            {
+                AuthenticationHandler.ServerUrl = identityServerUrl;
+                new Thread(AuthenticationHandler.GetPublicKey).Start();
+            }
+            else
+            {
+                AuthenticationHandler.ServerUrl = identityServerUrl;
+            }
             services.AddSingleton<IAuthenticationHandler, AuthenticationHandler>();
 
             return services;

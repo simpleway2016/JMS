@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" SizeToContent="WidthAndHeight"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="450" SizeToContent="WidthAndHeight"
         x:Class="ServiceStatusViewer.Views.InvokeServiceMethodWindow"
         Title="调用服务方法">
   <Grid>
@@ -10,7 +10,7 @@
       <ColumnDefinition Width="auto"/>
       <ColumnDefinition Width="*"/>
     </Grid.ColumnDefinitions>
-    <StackPanel Orientation="Vertical" Grid.Column="0">
+    <StackPanel Orientation="Vertical" Grid.Column="0" Width="500">
       <TextBlock Text="选择服务：" Margin="10"/>
       <ComboBox Margin="10,0,10,10" SelectedItem="{Binding SelectedServiceName}" Items="{Binding ServiceNames}"></ComboBox>
       <TextBlock Text="方法名称：" Margin="10"/>
