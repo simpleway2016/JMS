@@ -93,6 +93,10 @@ namespace JMS.IdentityModel.JWT.Authentication
             var token = headers[HeaderName];
             try
             {
+                if(token.StartsWith("Bearer "))
+                {
+                    token = token.Substring(7);
+                }
                 JsonWebToken exampleJWT = new JsonWebToken(token);
 
                 var jwtTokenHandler = new JwtSecurityTokenHandler();
