@@ -58,8 +58,8 @@ namespace JMS.GenerateCode
                 string strProType = BuildEnumTypeCode(type);
                 return new CodeTypeReference(strProType);
             }
-            else if (type.IsValueType == false && type != typeof(object) && type != typeof(string)
-                    && CurrentControllerType.Value.Assembly == type.Assembly)
+            else if (type.IsPrimitive == false && type != typeof(object) && type != typeof(string)
+                    && (CurrentControllerType.Value == null || CurrentControllerType.Value.Assembly == type.Assembly))
             {
                 //生成这个类代码
                 string strProType = BuildTypeCode(type , findSubClass);
@@ -114,7 +114,7 @@ namespace JMS.GenerateCode
         {
             try
             {
-                if (CurrentCreatedSubTypes.Value.ContainsKey(type))
+                if (CurrentCreatedSubTypes.Value != null & CurrentCreatedSubTypes.Value.ContainsKey(type))
                 {
                     if (findSubClass)
                     {
