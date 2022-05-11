@@ -599,7 +599,10 @@ namespace JMS
 
         public void Dispose()
         {
-            RollbackTransaction();
+            if (_SupportTransaction)
+            {
+                RollbackTransaction();
+            }
         }
     }
 }
