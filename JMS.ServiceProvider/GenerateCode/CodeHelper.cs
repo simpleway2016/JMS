@@ -21,7 +21,7 @@ namespace JMS.GenerateCode
             CodeMemberMethod codeMethod = new CodeMemberMethod();
             codeMethod.Attributes = MemberAttributes.Public;
             codeMethod.Name = method.Name;
-            codeMethod.ReturnType = GetTypeCode(method.ReturnType , true);
+            codeMethod.ReturnType = GetTypeCode(method.ReturnType, true);
             foreach (var p in parameters)
             {
                 codeMethod.Parameters.Add(new CodeParameterDeclarationExpression(GetTypeCode(p.ParameterType), p.Name));
@@ -31,24 +31,32 @@ namespace JMS.GenerateCode
             return codeMethod;
         }
 
-        public static CodeTypeReference GetTypeCode(Type type,bool findSubClass = false)
+        public static CodeTypeReference GetTypeCode(Type type, bool findSubClass = false)
         {
             if (type.IsArray)
             {
                 CodeTypeReference genRet = new CodeTypeReference();
                 genRet.ArrayRank = type.GetArrayRank();
-                genRet.ArrayElementType = GetTypeCode(type.GetElementType() , findSubClass);
+                genRet.ArrayElementType = GetTypeCode(type.GetElementType(), findSubClass);
                 return genRet;
             }
             else if (type.IsGenericType)
             {
                 Type[] argTypes = type.GetGenericArguments();
-                CodeTypeReference[] codeArgTypes = argTypes.Select(m => GetTypeCode(m , findSubClass)).ToArray();
+                CodeTypeReference[] codeArgTypes = argTypes.Select(m => GetTypeCode(m, findSubClass)).ToArray();
 
-                CodeTypeReference genRet = new CodeTypeReference();
-                genRet.TypeArguments.AddRange(codeArgTypes);
-                genRet.BaseType = type.FullName;
-                return genRet;
+                if (type.Assembly == CurrentControllerType.Value.Assembly)
+                {
+                    string strProType = BuildTypeCode(type, findSubClass);
+                    return new CodeTypeReference(strProType);
+                }
+                else
+                {
+                    CodeTypeReference genRet = new CodeTypeReference();
+                    genRet.TypeArguments.AddRange(codeArgTypes);
+                    genRet.BaseType = type.FullName;
+                    return genRet;
+                }
             }
 
             if (type.IsEnum
@@ -62,7 +70,7 @@ namespace JMS.GenerateCode
                     && (CurrentControllerType.Value == null || CurrentControllerType.Value.Assembly == type.Assembly))
             {
                 //生成这个类代码
-                string strProType = BuildTypeCode(type , findSubClass);
+                string strProType = BuildTypeCode(type, findSubClass);
                 return new CodeTypeReference(strProType);
             }
             else
@@ -114,6 +122,25 @@ namespace JMS.GenerateCode
         {
             try
             {
+                var typename = type.Name;
+                if (type.IsGenericType)
+                {
+                    var genericTypes = type.GetGenericArguments();
+
+                    typename = typename.Substring(0, type.Name.Length - 2);
+                    foreach (var gtype in genericTypes)
+                    {
+                        if (CurrentCreatedSubTypes.Value.ContainsKey(gtype))
+                        {
+                            typename += "_" + CurrentCreatedSubTypes.Value[gtype];
+                        }
+                        else
+                        {
+                            typename += "_" + gtype.Name;
+                        }
+                    }
+                }
+
                 if (CurrentCreatedSubTypes.Value != null & CurrentCreatedSubTypes.Value.ContainsKey(type))
                 {
                     if (findSubClass)
@@ -122,7 +149,7 @@ namespace JMS.GenerateCode
                         CurrentCreatedSubTypes.Value.Remove(type);
                         foreach (var member in CurrentClassCode.Value.Members)
                         {
-                            if (member is CodeTypeDeclaration typedesc && typedesc.Name == type.Name)
+                            if (member is CodeTypeDeclaration typedesc && typedesc.Name == typename)
                             {
                                 CurrentClassCode.Value.Members.Remove(typedesc);
                                 break;
@@ -135,10 +162,11 @@ namespace JMS.GenerateCode
                     }
                 }
 
-                CurrentCreatedSubTypes.Value[type] = type.Name;
+               
+                CurrentCreatedSubTypes.Value[type] = typename;
 
 
-                CodeTypeDeclaration myClass = new CodeTypeDeclaration(type.Name);
+                CodeTypeDeclaration myClass = new CodeTypeDeclaration(typename);
                 myClass.Attributes = MemberAttributes.Public;
                 var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                 if (findSubClass)
@@ -237,14 +265,14 @@ namespace JMS.GenerateCode
 
                 CurrentClassCode.Value.Members.Insert(0, myClass);
 
-                return type.Name;
+                return typename;
             }
             catch (Exception)
             {
 
                 throw;
             }
-            
+
         }
     }
 }
