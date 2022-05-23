@@ -188,6 +188,7 @@ namespace JMS
                 Methods = contollerType.GetTypeInfo().DeclaredMethods.Where(m =>
                     m.IsStatic == false &&
                     m.IsPublic &&
+                    m.IsSpecialName == false &&
                     m.DeclaringType != typeof(MicroServiceControllerBase)
                     && m.DeclaringType != typeof(object)).OrderBy(m=>m.Name).Select(m=>new TypeMethodInfo { 
                         Method = m,
