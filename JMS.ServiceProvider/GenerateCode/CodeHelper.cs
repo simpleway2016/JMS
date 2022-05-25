@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -39,6 +40,24 @@ namespace JMS.GenerateCode
                 genRet.ArrayRank = type.GetArrayRank();
                 genRet.ArrayElementType = GetTypeCode(type.GetElementType(), findSubClass);
                 return genRet;
+            }
+            else if (type.GetInterface(typeof(IEnumerable).FullName) != null)
+            {
+                if (type.IsGenericType)
+                {
+                    Type[] argTypes = type.GetGenericArguments();
+                    CodeTypeReference genRet = new CodeTypeReference();
+                    genRet.ArrayRank = 1;
+                    genRet.ArrayElementType = GetTypeCode(argTypes[0], findSubClass);
+                    return genRet;
+                }
+                else
+                {
+                    CodeTypeReference genRet = new CodeTypeReference();
+                    genRet.ArrayRank = 1;
+                    genRet.ArrayElementType = new CodeTypeReference("object");
+                    return genRet;
+                }
             }
             else if (type.IsGenericType)
             {

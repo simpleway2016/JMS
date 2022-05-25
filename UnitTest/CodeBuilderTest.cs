@@ -2,6 +2,7 @@ using JMS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 
 namespace UnitTest
 {
@@ -12,7 +13,7 @@ namespace UnitTest
     public class TestModel<T1,T2>
     {
         public T2 Tag { get; set; }
-        public T1[] Datas { get; set; }
+        public List<T1> Datas { get; set; }
     }
 
     class TestController : MicroServiceControllerBase
