@@ -41,7 +41,7 @@ namespace JMS.GenerateCode
                 genRet.ArrayElementType = GetTypeCode(type.GetElementType(), findSubClass);
                 return genRet;
             }
-            else if (type.GetInterface(typeof(IEnumerable).FullName) != null)
+            else if ( type != typeof(string) && type.GetInterface(typeof(IEnumerable).FullName) != null)
             {
                 if (type.IsGenericType)
                 {
@@ -55,7 +55,7 @@ namespace JMS.GenerateCode
                 {
                     CodeTypeReference genRet = new CodeTypeReference();
                     genRet.ArrayRank = 1;
-                    genRet.ArrayElementType = new CodeTypeReference("object");
+                    genRet.ArrayElementType = new CodeTypeReference(typeof(object));
                     return genRet;
                 }
             }

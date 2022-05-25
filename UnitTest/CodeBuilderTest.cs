@@ -14,11 +14,20 @@ namespace UnitTest
     {
         public T2 Tag { get; set; }
         public List<T1> Datas { get; set; }
+        public List<string> Datas2 { get; set; }
     }
 
     class TestController : MicroServiceControllerBase
     {
         public TestModel<TClass<int>, TClass<double>> Hellow()
+        {
+            return null;
+        }
+        public List<string> Hellow2()
+        {
+            return null;
+        }
+        public System.Collections.ArrayList Hellow3()
         {
             return null;
         }
