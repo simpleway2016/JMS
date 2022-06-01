@@ -172,7 +172,7 @@ namespace ServiceStatusViewer.ViewModels
 
                     var ret = await service.InvokeAsync<object>(this.MethodName?.Trim(), parameters);
 
-                    client.Commit();
+                    client.CommitTransaction();
 
                     if (parameters.Length > 0 || !string.IsNullOrEmpty(this.Header?.Trim()))
                     {

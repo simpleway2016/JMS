@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ServiceStatusViewer
 {
-    public class MicroServiceClient : JMSClient
+    public class MicroServiceClient : RemoteClient
     {
         static NetAddress[] GatewayAddresses;
         static IConfiguration Configuration;
