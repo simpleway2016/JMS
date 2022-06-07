@@ -30,7 +30,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             app.Use((context, next) =>
             {
-                if ( string.Equals( context.Request.Path , "/JmsDoc" , StringComparison.OrdinalIgnoreCase))
+                if (context.Request.Path.Value.EndsWith( "/JmsDoc" , StringComparison.OrdinalIgnoreCase))
                 {
                     try
                     {
@@ -64,7 +64,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         return context.Response.WriteAsync(ex.ToString());
                     }
                 }
-                else if (string.Equals(context.Request.Path , "/JmsDoc/vue.js" , StringComparison.OrdinalIgnoreCase))
+                else if (context.Request.Path.Value.EndsWith("/JmsDoc/vue.js" , StringComparison.OrdinalIgnoreCase))
                 {
                     if (context.Request.Headers.ContainsKey("If-Modified-Since"))
                     {
