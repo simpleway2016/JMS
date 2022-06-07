@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="JmsDoc/vue.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            min-height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        div {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        input {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .flex-shrink-0 {
+            flex-shrink: 0;
+        }
+
+        .flex-shrink-1 {
+            flex-shrink: 1;
+        }
+
+        .display-flex {
+            display: box; /* OLD - Android 4.4- */
+            display: -webkit-box; /* OLD - iOS 6-, Safari 3.1-6 */
+            display: -moz-box; /* OLD - Firefox 19- (buggy but mostly works) */
+            display: -ms-flexbox; /* TWEENER - IE 10 */
+            display: -webkit-flex; /* NEW - Chrome */
+            display: flex; /* NEW, Spec - Opera 12.1, Firefox 20+ */
+        }
+
+        .flex-direction-row {
+            -webkit-box-orient: horizontal;
+            -webkit-flex-direction: row;
+            -moz-flex-direction: row;
+            -ms-flex-direction: row;
+            -o-flex-direction: row;
+            flex-direction: row;
+        }
+
+        .flex-direction-column {
+            -webkit-box-orient: vertical;
+            -webkit-flex-direction: column;
+            -moz-flex-direction: column;
+            -ms-flex-direction: column;
+            -o-flex-direction: column;
+            flex-direction: column;
+        }
+
+        .flex-1 {
+            -webkit-box-flex: 1;
+            -webkit-flex: 1;
+            flex: 1;
+        }
+
+        .flex-0-5 {
+            -webkit-box-flex: 0.5;
+            -webkit-flex: 0.5;
+            flex: 0.5;
+        }
+
+        .flex-0-25 {
+            -webkit-box-flex: 0.25;
+            -webkit-flex: 0.25;
+            flex: 0.25;
+        }
+
+        .justify-content-center {
+            -webkit-box-pack: center;
+            -webkit-justify-content: center;
+            -moz-justify-content: center;
+            -ms-justify-content: center;
+            -o-justify-content: center;
+            justify-content: center;
+        }
+
+        .justify-content-space-between {
+            -webkit-box-pack: space-between;
+            -webkit-justify-content: space-between;
+            -moz-justify-content: space-between;
+            -ms-justify-content: space-between;
+            -o-justify-content: space-between;
+            justify-content: space-between;
+        }
+
+        .justify-content-start {
+            -webkit-box-pack: start;
+            -webkit-justify-content: flex-start;
+            -moz-justify-content: flex-start;
+            -ms-justify-content: flex-start;
+            -o-justify-content: flex-start;
+            justify-content: flex-start;
+        }
+
+        .justify-content-end {
+            -webkit-box-pack: end;
+            -webkit-justify-content: flex-end;
+            -moz-justify-content: flex-end;
+            -ms-justify-content: flex-end;
+            -o-justify-content: flex-end;
+            justify-content: flex-end;
+        }
+
+        .align-items-center {
+            /* 09�� */
+            -webkit-box-align: center;
+            /* 12�� */
+            -webkit-align-items: center;
+            -moz-align-items: center;
+            -ms-align-items: center;
+            -o-align-items: center;
+            align-items: center;
+        }
+
+        .align-items-end {
+            /* 09�� */
+            -webkit-box-align: end;
+            /* 12�� */
+            -webkit-align-items: flex-end;
+            align-items: flex-end;
+        }
+
+        .align-items-start {
+            /* 09�� */
+            -webkit-box-align: start;
+            /* 12�� */
+            -webkit-align-items: flex-start;
+            align-items: flex-start;
+        }
+    </style>
+    <style>
+        .main {
+            width: 100%;
+            height: 100%;
+            background-color: #f9fbfc;
+        }
+
+        .itemContainer {
+            padding: 1rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .funcItem {
+        }
+
+        .title {
+            color: #343d50;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #9d9ea6;
+            cursor: pointer;
+        }
+
+        .subitem {
+            padding-bottom: 3rem;
+        }
+
+        .subtitle {
+            margin-top: 0.5rem;
+            color: #358ccb;
+            font-size: 0.8rem;
+        }
+
+        .subcon {
+            margin-top: 0.5rem;
+            background: #e7e8f1;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.2rem;
+            width: fit-content;
+            color: #333333;
+        }
+
+
+        .leftmenu {
+            background: #d3dde7;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .tableheader {
+            background: #e6e8f3;
+            font-size: 0.8rem;
+            color: #405c77;
+            font-weight: 600;
+        }
+
+            .tableheader td {
+                padding: 0.3rem;
+            }
+
+        .tabletr {
+            font-size: 0.6rem;
+        }
+
+            .tabletr td {
+                padding: 0.3rem;
+            }
+
+        .link {
+            color: #258cd9;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .floatingItem {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: #f9fbfc;
+            box-shadow: rgba(0,0,0,0.4) 0.2rem 0.2rem 0.5rem;
+        }
+
+        .lefttop {
+            color: #4d5970;
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 1rem 2rem;
+        }
+
+        .lefttitle {
+            position: relative;
+            cursor: pointer;
+            color: #4d5970;
+            font-size: 0.8rem;
+            font-weight: 600;
+            height: 3rem;
+            line-height: 3rem;
+            padding: 0 3rem 0 1rem;
+            border-bottom: 1px solid #a3adb8;
+        }
+
+        .actived {
+            color: #4c94d1;
+            background: #f9fbfc;
+        }
+
+        .lefttitle svg {
+            position: absolute;
+            right: 0.7rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main display-flex flex-direction-row" @click.stop="nothing">
+        <div class="leftmenu">
+            <div class="lefttop">接口文档</div>
+            <div class="lefttitle display-flex flex-direction-row align-items-center" :class="{actived:index==selectedControllerIndex}" @click="selectedControllerIndex=index" v-for="controller,index in controllers">
+                <div>{{controller.desc}}</div>
+                <svg viewBox="0 0 100 100" style="width:0.5rem;height:0.5rem;">
+                    <path d="M0 0 L80 50 L0 100" stroke="#5a616c" fill="none" stroke-width="10"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="flex-1 itemContainer">
+            <div class="funcItem" v-for="item in controllers[selectedControllerIndex].items">
+                <div class="title" @click="openClick(item)">{{item.title}} {{item.desc}}</div>
+                <div class="subitem" v-show="item.opened">
+                    <div class="subtitle">{{item.method}} (请求路径url)</div>
+                    <div class="subcon" @click="selectDiv" style="cursor:pointer;">{{item.url}}</div>
+
+                    <div v-if="item.query">
+                        <div class="subtitle">query (search参数)</div>
+                        <div class="subcon" style="background:unset;">
+                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                <tr class="tableheader">
+                                    <td>参数</td>
+                                    <td>类型</td>
+                                    <td>说明</td>
+                                </tr>
+                                <tr class="tabletr" v-for="param,index in item.query">
+                                    <td>{{param.name}}</td>
+                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                    <td>{{param.desc}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div v-if="item.data && item.data.type=='Array' && item.data.items.length">
+                        <div class="subtitle">Request 请求 (向服务器post的数组)</div>
+                        <div class="subcon" style="background:unset;">
+                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                <tr class="tableheader">
+                                    <td>数组索引</td>
+                                    <td>类型</td>
+                                    <td>说明</td>
+                                </tr>
+                                <tr class="tabletr" v-for="param,index in item.data.items">
+                                    <td>{{index}}</td>
+                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                    <td>{{param.desc}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div v-if="item.data && item.data.type=='Object'">
+                        <div class="subtitle">Request 请求 (向服务器post的对象)</div>
+                        <div class="subcon" style="background:unset;">
+                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                <tr class="tableheader">
+                                    <td>参数</td>
+                                    <td>类型</td>
+                                    <td>说明</td>
+                                </tr>
+                                <tr class="tabletr" v-for="param,index in item.data.items">
+                                    <td>{{param.name}}</td>
+                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                    <td>{{param.desc}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div v-if="item.returnData && item.returnData.items && item.returnData.items.length">
+                        <div class="subtitle">Response (服务器回复)</div>
+                        <div class="subcon" style="background:unset;">
+                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                <tr class="tableheader">
+                                    <td>参数</td>
+                                    <td>类型</td>
+                                    <td>说明</td>
+                                </tr>
+                                <tr class="tabletr" v-for="param,index in item.returnData.items">
+                                    <td>{{param.name}}</td>
+                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                    <td>{{param.desc}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div v-else-if="item.returnData && item.returnData.type!='Object'">
+                        <div class="subtitle">Response (服务器回复)</div>
+                        <div class="subcon" style="background:unset;">
+                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                <tr class="tableheader">
+                                    <td>类型</td>
+                                    <td>说明</td>
+                                </tr>
+                                <tr class="tabletr">
+                                    <td v-if="item.returnData.type.indexOf('#')!=0">{{showTypeName(item.returnData.type)}}</td>
+                                    <td class="link" v-else @click.stop="classClick($event,item.returnData.type.substr(1))">{{showTypeName(item.returnData.type)}}</td>
+                                    <td>{{item.returnData.desc}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div id="classDivDemo" style="display:none;" class="floatingItem">
+        <div @click.stop="nothing">
+            <div class="subcon" style="background:unset;">
+                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                    <tr class="tableheader">
+                        <td>参数</td>
+                        <td>类型</td>
+                        <td>说明</td>
+                    </tr>
+                    <tr class="tabletr" v-for="item in members">
+                        <td>{{item.name}}</td>
+                        <td v-if="item.type.indexOf('#')!=0">{{showTypeName(item.type)}}</td>
+                        <td class="link" v-else @click.stop="classClick($event,item.type.substr(1))">{{showTypeName(item.type)}}</td>
+                        <td>{{item.desc}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    var model = {
+        selectedControllerIndex: 0,
+        controllers: $$Controllers$$,
+    };
+
+    var typeArr = $$Types$$;
+</script>
+<script>
+    var demoDivHtml = document.body.querySelector("#classDivDemo").innerHTML;
+
+    function selectText(text) {
+
+        if (document.body.createTextRange) {
+            var range = document.body.createTextRange();
+            range.moveToElementText(text);
+            range.select();
+        } else if (window.getSelection) {
+            var selection = window.getSelection();
+            var range = document.createRange();
+            range.selectNodeContents(text);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            /*if(selection.setBaseAndExtent){
+                selection.setBaseAndExtent(text, 0, text, 1);
+            }*/
+        } else {
+            alert("none");
+        }
+    }
+
+    function showClassInfo(event, typeName, parentVue) {
+        if (typeName.indexOf("[]") > 0) {
+            typeName = typeName.substr(0, typeName.length - 2);
+        }
+        var classType = typeArr.find(m => m.typeName == typeName);
+        if (!classType)
+            return;
+
+        var x = event.clientX;
+        var y = event.clientY;
+        var divEle = document.createElement("DIV");
+        divEle.innerHTML = demoDivHtml;
+        divEle.className = "floatingItem";
+        divEle.style.left = x + "px";
+        divEle.style.top = y + "px";
+        divEle.style.visibility = "hidden";
+        document.body.appendChild(divEle);
+
+
+        var myvueObj = new Vue({
+            el: divEle,
+            data: classType,
+            methods: {
+                nothing: function () {
+                    hideChildren(this);
+                },
+                showTypeName: function (typeName) {
+                    if (typeName.indexOf("#") < 0)
+                        return typeName;
+
+                    if (typeName.indexOf("#") == 0)
+                        typeName = typeName.substr(1);
+
+                    while (typeName.indexOf("+") > 0)
+                        typeName = typeName.replace("+", ".");
+
+                    if (typeName.indexOf(".") > 0) {
+                        return typeName.substr(typeName.lastIndexOf(".") + 1);
+                    }
+                    return typeName;
+                },
+                classClick: function (event, typeName) {
+                    hideChildren(this);
+                    showClassInfo(event, typeName, this);
+                }
+            },
+
+        });
+        parentVue.__childVues.push(myvueObj);
+        myvueObj.__childVues = [];
+
+        divEle = myvueObj.$el;
+
+        var rect = divEle.getBoundingClientRect();
+        if (rect.x + rect.width + 10 > window.innerWidth && window.innerWidth - rect.width - 10 >= 0)
+            divEle.style.left = (window.innerWidth - rect.width - 10) + "px";
+
+        if (rect.y + rect.height + 10 > window.innerHeight && window.innerHeight - rect.height - 10 >= 0)
+            divEle.style.top = (window.innerHeight - rect.height - 10) + "px";
+        divEle.style.visibility = "";
+    }
+
+    function hideChildren(parentVue) {
+        for (var i = 0; i < parentVue.__childVues.length; i++) {
+            var vueObj = parentVue.__childVues[i];
+
+            hideChildren(vueObj);
+
+            var ele = vueObj.$el;
+            vueObj.$destroy();
+            ele.parentElement.removeChild(ele);
+        }
+        parentVue.__childVues = [];
+    }
+
+    var vue;
+
+
+    vue = new Vue({
+        el: document.body.querySelector(".main"),
+        data: model,
+        methods: {
+            nothing: function () {
+                hideChildren(this);
+            },
+            showTypeName: function (typeName) {
+                if (typeName.indexOf("#") < 0)
+                    return typeName;
+
+                if (typeName.indexOf("#") == 0)
+                    typeName = typeName.substr(1);
+
+                while (typeName.indexOf("+") > 0)
+                    typeName = typeName.replace("+", ".");
+
+                if (typeName.indexOf(".") > 0) {
+                    return typeName.substr(typeName.lastIndexOf(".") + 1);
+                }
+                return typeName;
+            },
+            selectDiv: function (event) {
+                selectText(event.srcElement);
+            },
+            openClick: function (item) {
+                if (item.opened) {
+                    item.opened = false;
+                    return;
+                }
+                var controller = model.controllers[model.selectedControllerIndex];
+                controller.items.forEach(m => {
+                    m.opened = item == m;
+                });
+            },
+            classClick: function (event, typeName) {
+                hideChildren(this);
+                showClassInfo(event, typeName, this);
+            }
+        }
+    });
+    vue.__childVues = [];
+</script>
+</html>
