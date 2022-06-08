@@ -12,6 +12,13 @@ namespace JMS.WebApiDocument.Dtos
         public string name { get; set; }
         public string desc { get; set; }
         public List<MethodItemInfo> items { get; set; }
+        public List<ButtonInfo> buttons { get; set; }
+    }
+
+    class ButtonInfo
+    {
+        public string name { get; set; }
+        public string url { get; set; }
     }
 
     class DataTypeInfo
@@ -29,6 +36,7 @@ namespace JMS.WebApiDocument.Dtos
 
     class MethodItemInfo
     {
+        public bool isComment { get; set; }
         public string title { get; set; }
         public string method { get; set; }
         public string desc { get; set; }

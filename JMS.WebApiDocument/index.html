@@ -160,7 +160,7 @@
             color: #343d50;
             font-weight: 600;
             font-size: 1.1rem;
-            padding-bottom: 0.5rem;
+            padding: 0.5rem 0;
             border-bottom: 1px solid #9d9ea6;
             cursor: pointer;
         }
@@ -255,6 +255,15 @@
             position: absolute;
             right: 0.7rem;
         }
+
+        button {
+            background-color: #209aed;
+            border-radius: 0.2rem;
+            padding: 0.3rem 0.6rem;
+            border: 0;
+            color: #fff;
+            margin-right: 0.5rem;
+        }
     </style>
 </head>
 
@@ -270,13 +279,15 @@
             </div>
         </div>
         <div class="flex-1 itemContainer">
+            <div style="text-align:right;"><button @click="btnClick(btnitem)" v-for="btnitem in controllers[selectedControllerIndex].buttons">{{btnitem.name}}</button></div>
             <div class="funcItem" v-for="item in controllers[selectedControllerIndex].items">
+
                 <div class="title" @click="openClick(item)">{{item.title}} {{item.desc}}</div>
                 <div class="subitem" v-show="item.opened">
-                    <div class="subtitle">{{item.method}} (请求路径url)</div>
-                    <div class="subcon" @click="selectDiv" style="cursor:pointer;">{{item.url}}</div>
+                    <div class="subtitle" v-if="!item.isComment">{{item.method}} (请求路径url)</div>
+                    <div class="subcon" v-if="!item.isComment" @click="selectDiv" style="cursor:pointer;">{{item.url}}</div>
 
-                    <div v-if="item.query">
+                    <div v-if="!item.isComment && item.query">
                         <div class="subtitle">query (search参数)</div>
                         <div class="subcon" style="background:unset;">
                             <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
@@ -289,13 +300,13 @@
                                     <td>{{param.name}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td>{{param.desc}}</td>
+                                    <td v-html="lineBreak(param.desc)"></td>
                                 </tr>
                             </table>
                         </div>
                     </div>
 
-                    <div v-if="item.data && item.data.type=='Array' && item.data.items.length">
+                    <div v-if="!item.isComment && item.data && item.data.type=='Array' && item.data.items.length">
                         <div class="subtitle">Request 请求 (向服务器post的数组)</div>
                         <div class="subcon" style="background:unset;">
                             <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
@@ -308,12 +319,12 @@
                                     <td>{{index}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td>{{param.desc}}</td>
+                                    <td v-html="lineBreak(param.desc)"></td>
                                 </tr>
                             </table>
                         </div>
                     </div>
-                    <div v-if="item.data && item.data.type=='Object'">
+                    <div v-if="!item.isComment && item.data && item.data.type=='Object'">
                         <div class="subtitle">Request 请求 (向服务器post的对象)</div>
                         <div class="subcon" style="background:unset;">
                             <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
@@ -326,14 +337,14 @@
                                     <td>{{param.name}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td>{{param.desc}}</td>
+                                    <td v-html="lineBreak(param.desc)"></td>
                                 </tr>
                             </table>
                         </div>
                     </div>
 
                     <div v-if="item.returnData && item.returnData.items && item.returnData.items.length">
-                        <div class="subtitle">Response (服务器回复)</div>
+                        <div class="subtitle" v-if="!item.isComment">Response (服务器回复) {{item.returnData.desc}}</div>
                         <div class="subcon" style="background:unset;">
                             <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
                                 <tr class="tableheader">
@@ -345,13 +356,13 @@
                                     <td>{{param.name}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td>{{param.desc}}</td>
+                                    <td v-html="lineBreak(param.desc)"></td>
                                 </tr>
                             </table>
                         </div>
                     </div>
                     <div v-else-if="item.returnData && item.returnData.type!='Object'">
-                        <div class="subtitle">Response (服务器回复)</div>
+                        <div class="subtitle" v-if="!item.isComment">Response (服务器回复)</div>
                         <div class="subcon" style="background:unset;">
                             <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
                                 <tr class="tableheader">
@@ -361,7 +372,7 @@
                                 <tr class="tabletr">
                                     <td v-if="item.returnData.type.indexOf('#')!=0">{{showTypeName(item.returnData.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,item.returnData.type.substr(1))">{{showTypeName(item.returnData.type)}}</td>
-                                    <td>{{item.returnData.desc}}</td>
+                                    <td v-html="lineBreak(item.returnData.desc)"></td>
                                 </tr>
                             </table>
                         </div>
@@ -385,7 +396,7 @@
                         <td>{{item.name}}</td>
                         <td v-if="item.type.indexOf('#')!=0">{{showTypeName(item.type)}}</td>
                         <td class="link" v-else @click.stop="classClick($event,item.type.substr(1))">{{showTypeName(item.type)}}</td>
-                        <td>{{item.desc}}</td>
+                        <td v-html="lineBreak(item.desc)"></td>
                     </tr>
                 </table>
             </div>
@@ -421,6 +432,12 @@
         } else {
             alert("none");
         }
+    }
+
+    function lineBreak(v) {
+        if (!v)
+            return "";
+        return v.replace(/(\r)?\n/g, '<br />');
     }
 
     function showClassInfo(event, typeName, parentVue) {
@@ -467,6 +484,9 @@
                 classClick: function (event, typeName) {
                     hideChildren(this);
                     showClassInfo(event, typeName, this);
+                },
+                lineBreak: function (v) {
+                    return lineBreak(v);
                 }
             },
 
@@ -526,6 +546,9 @@
             selectDiv: function (event) {
                 selectText(event.srcElement);
             },
+            btnClick: function (btn) {
+                window.open(btn.url);
+            },
             openClick: function (item) {
                 if (item.opened) {
                     item.opened = false;
@@ -539,6 +562,9 @@
             classClick: function (event, typeName) {
                 hideChildren(this);
                 showClassInfo(event, typeName, this);
+            },
+            lineBreak: function (v) {
+                return lineBreak(v);
             }
         }
     });

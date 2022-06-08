@@ -37,9 +37,26 @@ namespace JMS.WebApiDocument
         static void Build(HttpContext context, List<DataTypeInfo> dataTypeInfos , List<ControllerInfo> controllerInfos, Type controllerType, XElement membersEle)
         {
             WebApiDocAttribute attr = controllerType.GetCustomAttribute<WebApiDocAttribute>();
+            var btnAttrs = controllerType.GetCustomAttributes<WebApiDocButtonAttribute>();
+
+           
+
             var route = controllerType.GetCustomAttribute<RouteAttribute>();
             ControllerInfo controllerInfo = new ControllerInfo();
             controllerInfos.Add(controllerInfo);
+
+            if (btnAttrs.Count() > 0)
+            {
+                controllerInfo.buttons = new List<ButtonInfo>();
+                foreach( var btnattr in btnAttrs)
+                {
+                    controllerInfo.buttons.Add(new ButtonInfo() { 
+                        name = btnattr.Name,
+                        url = btnattr.Url,
+                    });
+                }
+            }
+
             controllerInfo.items = new List<MethodItemInfo>();
             controllerInfo.name = controllerType.Name;
             if (controllerInfo.name.EndsWith("Controller"))
@@ -57,6 +74,7 @@ namespace JMS.WebApiDocument
 
                 MethodItemInfo minfo = new MethodItemInfo();
                 controllerInfo.items.Add(minfo);
+                minfo.isComment = method.GetCustomAttribute<IsCommentAttribute>() != null;
                 minfo.title = method.Name;
                 minfo.desc = GetMethodComment(attr.MicroServiceType, method, membersEle);
                 minfo.method = "POST";
@@ -205,7 +223,7 @@ namespace JMS.WebApiDocument
                               m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}<") ||
                               m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}(")).FirstOrDefault();
 
-                string methodComment = commentEle?.Element("summary").Value.Trim().Replace("\r", "").Replace("\n", " ");
+                string methodComment = commentEle?.Element("summary").Value.Trim();
                 return methodComment;
             }
             catch (Exception)
@@ -223,7 +241,7 @@ namespace JMS.WebApiDocument
                               m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}<") ||
                               m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}(")).FirstOrDefault();
 
-                string methodComment = commentEle?.Element("returns").Value.Trim().Replace("\r", "").Replace("\n", " ");
+                string methodComment = commentEle?.Element("returns").Value.Trim();
                 return methodComment;
             }
             catch (Exception)
@@ -259,7 +277,7 @@ namespace JMS.WebApiDocument
                             m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}<") ||
                             m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}(")).FirstOrDefault();
                 var pele = commentEle?.Elements("param").FirstOrDefault(m => m.Attribute("name").Value == parameter.Name);
-                var comment = pele?.Value.Trim().Replace("\r", "").Replace("\n", " ");
+                var comment = pele?.Value.Trim();
                 if (parameter.ParameterType.IsGenericType && parameter.ParameterType.GetGenericTypeDefinition() == typeof(System.Nullable<>))
                 {
                     comment += " （可为null）";

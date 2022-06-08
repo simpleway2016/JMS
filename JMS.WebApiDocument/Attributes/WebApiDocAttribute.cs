@@ -6,27 +6,12 @@ using System.Threading.Tasks;
 
 namespace JMS.WebApiDocument
 {
-    public class WebApiDocAttribute:Attribute
+    /// <summary>
+    /// 标识这个方法只是用来显示某种说明，不需要在文档中展示这个方法的url，request等信息
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method)]
+    public class IsCommentAttribute : Attribute
     {
-        public Type MicroServiceType
-        {
-            get;
-            init;
-        }
-        public string Description
-        {
-            get;
-            init;
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="microServiceType">映射的微服务客户端的类名称</param>
-        /// <param name="desc">名称描述</param>
-        public WebApiDocAttribute(Type microServiceType,string desc)
-        {
-            this.MicroServiceType = microServiceType;
-            this.Description = desc;
-        }
+      
     }
 }
