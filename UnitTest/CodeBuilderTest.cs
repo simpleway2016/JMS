@@ -7,22 +7,24 @@ using System.Collections.Generic;
 
 namespace UnitTest
 {
-    /// <summary>
-    /// 测试枚举
-    /// </summary>
-    public enum Enum1
-    {
-        /// <summary>
-        /// 正常的
-        /// </summary>
-        Normal = 1,
-    }
+   
     public class TClass<T>
     {
         /// <summary>
         /// 测试名称
         /// </summary>
         public T CName { get; set; }
+
+        /// <summary>
+        /// 测试枚举
+        /// </summary>
+        public enum Enum1
+        {
+            /// <summary>
+            /// 正常的
+            /// </summary>
+            Normal = 1,
+        }
     }
     public class TestModel<T1,T2>
     {
@@ -98,7 +100,7 @@ namespace UnitTest
         [TestMethod]
         public void DocumentReaderTest()
         {
-            var doc = DocumentReader.GetTypeDocument(typeof(TestModel<int,double>));
+            var doc = DocumentReader.GetTypeDocument(typeof(TClass<int>.Enum1));
             doc = DocumentReader.GetTypeDocument(typeof(TestController));
         }
     }

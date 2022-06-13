@@ -107,6 +107,8 @@ namespace JMS.AssemblyDocumentReader
             var fullname = type.FullName;
             if (fullname.Contains("["))
                 fullname = fullname.Substring(0, fullname.IndexOf("["));
+            if (fullname.Contains("+"))
+                fullname = fullname.Replace("+", ".");
 
             foreach (XmlNode node in xmldoc.ChildNodes)
             {
@@ -130,12 +132,15 @@ namespace JMS.AssemblyDocumentReader
             XmlNode xmldoc = XmlNodeFactory.GetTypeXmlNode(type);
             if (xmldoc == null)
                 return null;
+
+            var fullname = type.FullName;
+            if (fullname.Contains("["))
+                fullname = fullname.Substring(0, fullname.IndexOf("["));
+            if (fullname.Contains("+"))
+                fullname = fullname.Replace("+", ".");
+
             foreach (XmlNode node in xmldoc.ChildNodes)
             {
-                var fullname = type.FullName;
-                if (fullname.Contains("["))
-                    fullname = fullname.Substring(0, fullname.IndexOf("["));
-
                 if (node.Name == "member" && node.Attributes["name"].InnerText.Equals($"P:{fullname}.{proName}"))
                 {
                     try
@@ -156,12 +161,15 @@ namespace JMS.AssemblyDocumentReader
             XmlNode xmldoc = XmlNodeFactory.GetTypeXmlNode(type);
             if (xmldoc == null)
                 return null;
+
+            var fullname = type.FullName;
+            if (fullname.Contains("["))
+                fullname = fullname.Substring(0, fullname.IndexOf("["));
+            if (fullname.Contains("+"))
+                fullname = fullname.Replace("+", ".");
+
             foreach (XmlNode node in xmldoc.ChildNodes)
             {
-                var fullname = type.FullName;
-                if (fullname.Contains("["))
-                    fullname = fullname.Substring(0, fullname.IndexOf("["));
-
                 if (node.Name == "member" && node.Attributes["name"].InnerText.Equals($"F:{fullname}.{fName}"))
                 {
                     try
@@ -215,6 +223,9 @@ namespace JMS.AssemblyDocumentReader
                 var fullname = type.FullName;
                 if (fullname.Contains("["))
                     fullname = fullname.Substring(0, fullname.IndexOf("["));
+                if (fullname.Contains("+"))
+                    fullname = fullname.Replace("+", ".");
+
 
                 string extenStr = "";
                 if(method.IsGenericMethod)
