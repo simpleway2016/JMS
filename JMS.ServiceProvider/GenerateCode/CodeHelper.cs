@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -16,7 +17,7 @@ namespace JMS.GenerateCode
         public static ThreadLocal<Type> CurrentControllerType = new ThreadLocal<Type>();
         public static ThreadLocal<Dictionary<Type, string>> CurrentCreatedSubTypes = new ThreadLocal<Dictionary<Type, string>>();
         public static ThreadLocal<CodeTypeDeclaration> CurrentClassCode = new ThreadLocal<CodeTypeDeclaration>();
-        public static ThreadLocal<XmlNode> CurrentXmlMembersElement = new ThreadLocal<XmlNode>();
+
         public static CodeMemberMethod GetCodeMethod(MethodInfo method, ParameterInfo[] parameters)
         {
             CodeMemberMethod codeMethod = new CodeMemberMethod();
@@ -30,6 +31,23 @@ namespace JMS.GenerateCode
             }
 
             return codeMethod;
+        }
+
+        public static XmlNode GetTypeXmlNode(Type type)
+        {
+            System.Xml.XmlDocument xmldoc = null;
+            var xmlpath = $"{Path.GetDirectoryName(type.Assembly.Location)}/{Path.GetFileNameWithoutExtension(type.Assembly.Location)}.xml";
+            if (File.Exists(xmlpath))
+            {
+                xmldoc = new System.Xml.XmlDocument();
+                xmldoc.Load(xmlpath);
+            }
+            else
+            {
+                xmldoc = new XmlDocument();
+                xmldoc.LoadXml(@"<?xml version=""1.0""?><doc><members></members></doc>");
+            }
+            return (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
         }
 
         public static CodeTypeReference GetTypeCode(Type type, bool findSubClass = false)
@@ -109,24 +127,29 @@ namespace JMS.GenerateCode
 
             var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static);
 
+            var docNode = CodeHelper.GetTypeXmlNode(type);
+
             foreach (var field in fields)
             {
                 CodeMemberField codePro = new CodeMemberField();
                 myClass.Members.Add(codePro);
                 codePro.Name = field.Name;
 
-                foreach (XmlNode node in CurrentXmlMembersElement.Value.ChildNodes)
+                if (docNode != null)
                 {
-                    if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
+                    foreach (XmlNode node in docNode.ChildNodes)
                     {
-                        try
+                        if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
                         {
-                            codePro.Comments.Add(new CodeCommentStatement(node.SelectSingleNode("summary").OuterXml, true));
+                            try
+                            {
+                                codePro.Comments.Add(new CodeCommentStatement(node.SelectSingleNode("summary").OuterXml, true));
+                            }
+                            catch (Exception ex)
+                            {
+                            }
+                            break;
                         }
-                        catch (Exception ex)
-                        {
-                        }
-                        break;
                     }
                 }
 
@@ -213,6 +236,7 @@ namespace JMS.GenerateCode
                         parentType = parentType.BaseType;
                 }
 
+                var xmldoc = CodeHelper.GetTypeXmlNode(type);
                 foreach (var pro in properties)
                 {
                     CodeMemberProperty codePro = new CodeMemberProperty();
@@ -225,11 +249,15 @@ namespace JMS.GenerateCode
                     codePro.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name)));
                     codePro.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name), new CodeFieldReferenceExpression(null, "value")));
 
-                    if (CurrentXmlMembersElement.Value != null)
+                    if (xmldoc != null)
                     {
-                        foreach (XmlNode node in CurrentXmlMembersElement.Value.ChildNodes)
+                        foreach (XmlNode node in xmldoc.ChildNodes)
                         {
-                            if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"P:{pro.DeclaringType.FullName}.{pro.Name}"))
+                            var fullname = pro.DeclaringType.FullName;
+                            if (fullname.Contains("["))
+                                fullname = fullname.Substring(0, fullname.IndexOf("["));
+
+                            if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"P:{fullname}.{pro.Name}"))
                             {
                                 try
                                 {
@@ -262,18 +290,21 @@ namespace JMS.GenerateCode
                     codePro.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name)));
                     codePro.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name), new CodeFieldReferenceExpression(null, "value")));
 
-                    foreach (XmlNode node in CurrentXmlMembersElement.Value.ChildNodes)
+                    if (xmldoc != null)
                     {
-                        if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
+                        foreach (XmlNode node in xmldoc.ChildNodes)
                         {
-                            try
+                            if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
                             {
-                                codePro.Comments.Add(new CodeCommentStatement(node.SelectSingleNode("summary").OuterXml, true));
+                                try
+                                {
+                                    codePro.Comments.Add(new CodeCommentStatement(node.SelectSingleNode("summary").OuterXml, true));
+                                }
+                                catch (Exception ex)
+                                {
+                                }
+                                break;
                             }
-                            catch (Exception ex)
-                            {
-                            }
-                            break;
                         }
                     }
 

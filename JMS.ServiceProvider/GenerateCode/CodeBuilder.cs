@@ -141,20 +141,7 @@ namespace JMS.GenerateCode
             var controllerTypeInfo = _microServiceProvider.ServiceNames[serviceName];
             CodeHelper.CurrentControllerType.Value = controllerTypeInfo.Type;
 
-            System.Xml.XmlDocument xmldoc = null;
-            var xmlpath = $"{Path.GetDirectoryName(controllerTypeInfo.Type.Assembly.Location)}/{Path.GetFileNameWithoutExtension(controllerTypeInfo.Type.Assembly.Location)}.xml";
-            if(File.Exists(xmlpath))
-            {
-                xmldoc = new System.Xml.XmlDocument();
-                xmldoc.Load(xmlpath);
-            }
-            else
-            {
-                xmldoc = new XmlDocument();
-                xmldoc.LoadXml(@"<?xml version=""1.0""?><doc><members></members></doc>");
-            }
-            XmlElement memberXmlNodeList = null;
-            CodeHelper.CurrentXmlMembersElement.Value = memberXmlNodeList = (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
+            XmlElement memberXmlNodeList = (XmlElement)CodeHelper.GetTypeXmlNode(controllerTypeInfo.Type);
 
             var methods = controllerTypeInfo.Methods.Select(m=>m.Method).ToArray();
 

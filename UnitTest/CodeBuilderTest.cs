@@ -8,11 +8,17 @@ namespace UnitTest
 {
     public class TClass<T>
     {
+        /// <summary>
+        /// ²âÊÔÃû³Æ
+        /// </summary>
         public T CName { get; set; }
     }
     public class TestModel<T1,T2>
     {
         public T2 Tag { get; set; }
+        /// <summary>
+        /// ²âÊÔ¼¯
+        /// </summary>
         public List<T1> Datas { get; set; }
         public List<string> Datas2 { get; set; }
     }
