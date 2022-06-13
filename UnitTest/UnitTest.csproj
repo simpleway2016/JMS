@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AssemblyDocumentReader\JMS.AssemblyDocumentReader.csproj" />
     <ProjectReference Include="..\JMS.ServiceProvider\JMS.ServiceProvider.csproj" />
   </ItemGroup>
 

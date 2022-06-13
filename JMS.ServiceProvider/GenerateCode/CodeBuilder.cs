@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json.Schema;
 using System.Xml;
+using JMS.AssemblyDocumentReader;
 
 namespace JMS.GenerateCode
 {
@@ -20,64 +21,7 @@ namespace JMS.GenerateCode
         {
             _microServiceProvider = microServiceProvider;
         }
-
-        string AddComment(CodeMemberMethod codeMethod,MethodInfo methodInfo,XmlElement parentEle)
-        {
-            if (parentEle == null)
-                return "";
-
-            string methodComment = methodInfo.Name + "   ";
-            XmlElement commentEle = null;
-            foreach( XmlElement node in parentEle.ChildNodes )
-            {
-                if( node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"M:{methodInfo.DeclaringType.FullName}.{methodInfo.Name}"))
-                {
-                    commentEle = node;
-                    break;
-                }
-            }
-
-            if(commentEle != null)
-            {
-                try
-                {
-                    methodComment += commentEle.SelectSingleNode("summary").InnerText.Replace("\r", "").Replace("\n", " ").Trim();
-                }
-                catch
-                {
-
-                }
-
-                try
-                {
-                    List<XmlElement> childeles = new List<XmlElement>();
-                    foreach( XmlElement ele in commentEle.ChildNodes)
-                    {
-                        childeles.Add(ele);
-                    }
-                    var parameters = methodInfo.GetParameters();
-                    if(parameters.Length > 0 && parameters[0].ParameterType == typeof(TransactionDelegate))
-                    {
-                        var firstParamEle = childeles.FirstOrDefault(m => m.Name == "param");
-                        if (firstParamEle != null && firstParamEle.GetAttribute("name") == parameters[0].Name)
-                        {
-                            childeles.Remove(firstParamEle);
-                        }
-                    }
-
-                    foreach (XmlElement ele in childeles)
-                    {
-                        codeMethod.Comments.Add(new CodeCommentStatement(ele.OuterXml, true));
-                    }
-                }
-                catch 
-                {
-                }
-               
-            }
-
-            return methodComment;
-        }
+       
 
         CodeMemberMethod getMethodCode(MethodInfo methodInfo,bool isAsync)
         {
@@ -141,7 +85,7 @@ namespace JMS.GenerateCode
             var controllerTypeInfo = _microServiceProvider.ServiceNames[serviceName];
             CodeHelper.CurrentControllerType.Value = controllerTypeInfo.Type;
 
-            XmlElement memberXmlNodeList = (XmlElement)CodeHelper.GetTypeXmlNode(controllerTypeInfo.Type);
+            var typeDoc = DocumentReader.GetTypeDocument(controllerTypeInfo.Type);
 
             var methods = controllerTypeInfo.Methods.Select(m=>m.Method).ToArray();
 
@@ -170,14 +114,22 @@ namespace JMS.GenerateCode
 
             foreach (var methodInfo in methods)
             {
+                var methodDoc = typeDoc.Methods.FirstOrDefault(m => m.MethodInfo == methodInfo);
+               
                 var methodcode = getMethodCode(methodInfo, false);
-                var comment = AddComment(methodcode, methodInfo,memberXmlNodeList);
+                if (methodDoc != null)
+                {
+                    methodcode.Comments.Add(new CodeCommentStatement(methodDoc.GetXmlComment(), true));
+                }
                 myClass.Members.Add(methodcode);
 
-                codeNamespace.Comments.Add(new CodeCommentStatement(comment));
+                codeNamespace.Comments.Add(new CodeCommentStatement(methodDoc.Name + "   " + methodDoc.Comment));
 
                 methodcode = getMethodCode(methodInfo, true);
-                AddComment(methodcode, methodInfo,memberXmlNodeList);
+                if (methodDoc != null)
+                {
+                    methodcode.Comments.Add(new CodeCommentStatement(methodDoc.GetXmlComment(), true));
+                }
                 myClass.Members.Add(methodcode);
             }
 

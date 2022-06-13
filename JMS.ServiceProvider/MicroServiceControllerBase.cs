@@ -16,6 +16,9 @@ public class MicroServiceControllerBase
 
 
     private IDictionary<string,string> _Header;
+    /// <summary>
+    /// 请求的头
+    /// </summary>
     public IDictionary<string,string> Header
     {
         get
@@ -33,9 +36,15 @@ public class MicroServiceControllerBase
     /// </summary>
     public object UserContent { get;internal set; }
 
+    /// <summary>
+    /// 当前的事务委托器
+    /// </summary>
     public TransactionDelegate TransactionControl { set; get; }
 
     string _transactionid;
+    /// <summary>
+    /// 事务id
+    /// </summary>
     public string TransactionId
     {
         get

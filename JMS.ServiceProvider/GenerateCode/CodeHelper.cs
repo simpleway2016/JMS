@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JMS.AssemblyDocumentReader;
+using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections;
@@ -33,22 +34,6 @@ namespace JMS.GenerateCode
             return codeMethod;
         }
 
-        public static XmlNode GetTypeXmlNode(Type type)
-        {
-            System.Xml.XmlDocument xmldoc = null;
-            var xmlpath = $"{Path.GetDirectoryName(type.Assembly.Location)}/{Path.GetFileNameWithoutExtension(type.Assembly.Location)}.xml";
-            if (File.Exists(xmlpath))
-            {
-                xmldoc = new System.Xml.XmlDocument();
-                xmldoc.Load(xmlpath);
-            }
-            else
-            {
-                xmldoc = new XmlDocument();
-                xmldoc.LoadXml(@"<?xml version=""1.0""?><doc><members></members></doc>");
-            }
-            return (XmlElement)xmldoc.DocumentElement.SelectSingleNode("members");
-        }
 
         public static CodeTypeReference GetTypeCode(Type type, bool findSubClass = false)
         {
@@ -122,33 +107,38 @@ namespace JMS.GenerateCode
 
             CurrentCreatedSubTypes.Value[type] = type.Name;
 
+            var typeDoc = AssemblyDocumentReader.DocumentReader.GetTypeDocument(type);
             CodeTypeDeclaration myClass = new CodeTypeDeclaration(type.Name);
             myClass.IsEnum = true;
-
+            if (typeDoc != null)
+            {
+                myClass.Comments.Add(new CodeCommentStatement(typeDoc.GetXmlComment(), true));
+            }
             var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static);
 
-            var docNode = CodeHelper.GetTypeXmlNode(type);
+          
 
             foreach (var field in fields)
             {
+                if (field.IsSpecialName)
+                    continue;
+
                 CodeMemberField codePro = new CodeMemberField();
                 myClass.Members.Add(codePro);
                 codePro.Name = field.Name;
 
-                if (docNode != null)
+                if (typeDoc != null)
                 {
-                    foreach (XmlNode node in docNode.ChildNodes)
+                    var fieldDoc = typeDoc.Fields.FirstOrDefault(m=>m.Name == field.Name);
+
+                    if(fieldDoc != null)
                     {
-                        if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
+                        try
                         {
-                            try
-                            {
-                                codePro.Comments.Add(new CodeCommentStatement(node.SelectSingleNode("summary").OuterXml, true));
-                            }
-                            catch (Exception ex)
-                            {
-                            }
-                            break;
+                            codePro.Comments.Add(new CodeCommentStatement(fieldDoc.GetXmlComment(), true));
+                        }
+                        catch (Exception ex)
+                        {
                         }
                     }
                 }
@@ -164,6 +154,7 @@ namespace JMS.GenerateCode
         {
             try
             {
+                var typeDoc = DocumentReader.GetTypeDocument(type);
                 var typename = type.Name;
                 if (type.IsGenericType)
                 {
@@ -236,7 +227,7 @@ namespace JMS.GenerateCode
                         parentType = parentType.BaseType;
                 }
 
-                var xmldoc = CodeHelper.GetTypeXmlNode(type);
+              
                 foreach (var pro in properties)
                 {
                     CodeMemberProperty codePro = new CodeMemberProperty();
@@ -249,25 +240,12 @@ namespace JMS.GenerateCode
                     codePro.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name)));
                     codePro.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name), new CodeFieldReferenceExpression(null, "value")));
 
-                    if (xmldoc != null)
+                    if (typeDoc != null)
                     {
-                        foreach (XmlNode node in xmldoc.ChildNodes)
+                        var prodoc = typeDoc.Properties.FirstOrDefault(m => m.Name == pro.Name);
+                        if(prodoc != null)
                         {
-                            var fullname = pro.DeclaringType.FullName;
-                            if (fullname.Contains("["))
-                                fullname = fullname.Substring(0, fullname.IndexOf("["));
-
-                            if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"P:{fullname}.{pro.Name}"))
-                            {
-                                try
-                                {
-                                    codePro.Comments.Add(new CodeCommentStatement(node.SelectSingleNode("summary").OuterXml, true));
-                                }
-                                catch (Exception ex)
-                                {
-                                }
-                                break;
-                            }
+                            codePro.Comments.Add(new CodeCommentStatement(prodoc.GetXmlComment(), true));
                         }
                     }
 
@@ -290,21 +268,12 @@ namespace JMS.GenerateCode
                     codePro.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name)));
                     codePro.SetStatements.Add(new CodeAssignStatement(new CodeFieldReferenceExpression(null, "_" + codePro.Name), new CodeFieldReferenceExpression(null, "value")));
 
-                    if (xmldoc != null)
+                    if (typeDoc != null)
                     {
-                        foreach (XmlNode node in xmldoc.ChildNodes)
+                        var prodoc = typeDoc.Fields.FirstOrDefault(m => m.Name == field.Name);
+                        if (prodoc != null)
                         {
-                            if (node.Name == "member" && node.Attributes["name"].InnerText.StartsWith($"F:{field.DeclaringType.FullName}.{field.Name}"))
-                            {
-                                try
-                                {
-                                    codePro.Comments.Add(new CodeCommentStatement(node.SelectSingleNode("summary").OuterXml, true));
-                                }
-                                catch (Exception ex)
-                                {
-                                }
-                                break;
-                            }
+                            codePro.Comments.Add(new CodeCommentStatement(prodoc.GetXmlComment(), true));
                         }
                     }
 
