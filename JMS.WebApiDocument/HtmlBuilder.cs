@@ -64,49 +64,122 @@ namespace JMS.WebApiDocument
             controllerInfo.desc = attr.Description;
             
 
-            var methods = attr.MicroServiceType.GetMethods().Where(m => m.IsSpecialName == false && m.DeclaringType == attr.MicroServiceType).ToArray();
-            foreach (var method in methods)
+            if(attr.MicroServiceType != null)
             {
-                if (method.ReturnType == typeof(Task))
-                    continue;
-                if (method.ReturnType.IsGenericType && method.ReturnType.BaseType == typeof(Task))
-                    continue;
-
-                MethodItemInfo minfo = new MethodItemInfo();
-                controllerInfo.items.Add(minfo);
-                minfo.isComment = method.GetCustomAttribute<IsCommentAttribute>() != null;
-                minfo.title = method.Name;
-                minfo.desc = GetMethodComment(attr.MicroServiceType, method, membersEle);
-                minfo.method = "POST";
-                minfo.url = route.Template.Replace("[controller]", controllerInfo.name).Replace("{method}", method.Name);
-
-                var parameters = method.GetParameters();
-                minfo.data = new DataBodyInfo();
-                minfo.data.type = "Array";
-                minfo.data.items = new List<ParameterInformation>();
-
-                foreach (var param in parameters)
+                var methods = attr.MicroServiceType.GetMethods().Where(m => m.IsSpecialName == false && m.DeclaringType == attr.MicroServiceType).ToArray();
+                foreach (var method in methods)
                 {
-                    var pinfo = new ParameterInformation();
-                    minfo.data.items.Add(pinfo);
-                    pinfo.name = param.Name;
-                    pinfo.desc = GetParameterComment(attr.MicroServiceType, method, param, membersEle);
-                    pinfo.type = getType(dataTypeInfos , param.ParameterType, membersEle);
-                }
+                    if (method.ReturnType == typeof(Task))
+                        continue;
+                    if (method.ReturnType.IsGenericType && method.ReturnType.BaseType == typeof(Task))
+                        continue;
 
-                if (method.ReturnType != typeof(void))
-                {
-                    minfo.returnData = new DataBodyInfo();
-                    minfo.returnData.type = getType(dataTypeInfos, method.ReturnType, membersEle);
-                    if( minfo.returnData.type.EndsWith("[]") == false)
+                    MethodItemInfo minfo = new MethodItemInfo();
+                    controllerInfo.items.Add(minfo);
+                    minfo.isComment = method.GetCustomAttribute<IsCommentAttribute>() != null;
+                    minfo.title = method.Name;
+                    minfo.desc = GetMethodComment(attr.MicroServiceType, method, membersEle);
+                    minfo.method = "POST";
+                    minfo.url = route.Template.Replace("[controller]", controllerInfo.name).Replace("{method}", method.Name);
+
+                    var parameters = method.GetParameters();
+                    minfo.data = new DataBodyInfo();
+                    minfo.data.type = "Array";
+                    minfo.data.items = new List<ParameterInformation>();
+
+                    foreach (var param in parameters)
                     {
-                        var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == method.ReturnType);
-                        if(typeinfo != null)
+                        var pinfo = new ParameterInformation();
+                        minfo.data.items.Add(pinfo);
+                        pinfo.name = param.Name;
+                        pinfo.desc = GetParameterComment(attr.MicroServiceType, method, param, membersEle);
+                        pinfo.type = getType(dataTypeInfos, param.ParameterType, membersEle);
+                    }
+
+                    if (method.ReturnType != typeof(void))
+                    {
+                        minfo.returnData = new DataBodyInfo();
+                        minfo.returnData.type = getType(dataTypeInfos, method.ReturnType, membersEle);
+                        if (minfo.returnData.type.EndsWith("[]") == false)
                         {
-                            minfo.returnData.items = typeinfo.members;
+                            var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == method.ReturnType);
+                            if (typeinfo != null)
+                            {
+                                minfo.returnData.items = typeinfo.members;
+                            }
+                        }
+                        minfo.returnData.desc = GetMethodReturnComment(attr.MicroServiceType, method, membersEle);
+                    }
+                }
+            }
+            else
+            {
+                var methods = controllerType.GetMethods().Where(m => m.IsSpecialName == false && m.DeclaringType == controllerType).ToArray();
+                foreach (var method in methods)
+                {
+                    var httpGetAttr = method.GetCustomAttribute<HttpGetAttribute>();
+                    var httpPostAttr = method.GetCustomAttribute<HttpPostAttribute>();
+
+                    if (httpGetAttr == null && httpPostAttr == null)
+                        httpGetAttr = new HttpGetAttribute();
+
+                    MethodItemInfo minfo = new MethodItemInfo();
+                    controllerInfo.items.Add(minfo);
+                    minfo.isComment = method.GetCustomAttribute<IsCommentAttribute>() != null;
+                    minfo.title = method.Name;
+                    minfo.desc = GetMethodComment(controllerType, method, membersEle);
+                    minfo.method = httpPostAttr != null ? "POST" :"GET";
+                    minfo.url = route.Template.Replace("[controller]", controllerInfo.name).Replace("[action]", method.Name);
+
+                    minfo.query = new List<ParameterInformation>();
+                    minfo.form = new List<ParameterInformation>();
+
+                    var parameters = method.GetParameters();
+                    minfo.data = new DataBodyInfo();
+                    minfo.data.type = "Object";
+                    minfo.data.items = new List<ParameterInformation>();
+
+                    foreach (var param in parameters)
+                    {
+                        var fromQueryAttr = param.GetCustomAttribute<FromQueryAttribute>();
+                        var fromFromAttr = param.GetCustomAttribute<FromFormAttribute>();
+                        var fromBodyAttr = param.GetCustomAttribute<FromBodyAttribute>();
+
+                        var pinfo = new ParameterInformation();
+                        pinfo.name = param.Name;
+                        pinfo.desc = GetParameterComment(controllerType, method, param, membersEle);
+                        pinfo.type = getType(dataTypeInfos, param.ParameterType, membersEle);
+
+                        if (fromQueryAttr != null || (fromQueryAttr == null && fromFromAttr == null && fromBodyAttr == null))
+                        {
+                            minfo.query.Add(pinfo);
+                        }
+                        else if (fromFromAttr != null)
+                        {
+                            minfo.form.Add(pinfo);
+                        }
+                        else if (fromBodyAttr != null)
+                        {
+                            var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == param.ParameterType);
+                            if (typeinfo != null)
+                                minfo.data.items = typeinfo.members;
                         }
                     }
-                    minfo.returnData.desc = GetMethodReturnComment(attr.MicroServiceType, method, membersEle);
+
+                    if (method.ReturnType != typeof(void))
+                    {
+                        minfo.returnData = new DataBodyInfo();
+                        minfo.returnData.type = getType(dataTypeInfos, method.ReturnType, membersEle);
+                        if (minfo.returnData.type.EndsWith("[]") == false)
+                        {
+                            var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == method.ReturnType);
+                            if (typeinfo != null)
+                            {
+                                minfo.returnData.items = typeinfo.members;
+                            }
+                        }
+                        minfo.returnData.desc = GetMethodReturnComment(controllerType, method, membersEle);
+                    }
                 }
             }
         }

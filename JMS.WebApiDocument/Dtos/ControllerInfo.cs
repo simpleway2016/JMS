@@ -44,6 +44,7 @@ namespace JMS.WebApiDocument.Dtos
         public bool opened { get; set; }
 
         public List<ParameterInformation> query { get; set; }
+        public List<ParameterInformation> form { get; set; }
         public DataBodyInfo data { get; set; }
         public DataBodyInfo returnData { get; set; }
 
