@@ -1,5 +1,6 @@
 ﻿
 using JMS.Dtos;
+using JMS.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -16,11 +17,14 @@ namespace JMS
 {
     class GatewayRefereeClient
     {
+        IConfiguration _configuration;
+        IRegisterServiceManager _registerServiceManager;
         NetAddress _refereeAddress;
         ILogger<GatewayRefereeClient> _logger;
         LockKeyManager _lockKeyManager;
         ConcurrentDictionary<string, RegisterServiceLocation> _waitServiceList;
         Gateway _gateway;
+
         /// <summary>
         /// 记录当前网关是否是master
         /// </summary>
@@ -28,8 +32,11 @@ namespace JMS
         public GatewayRefereeClient(IConfiguration configuration,
             LockKeyManager lockKeyManager,
             Gateway gateway,
+            IRegisterServiceManager registerServiceManager,
             ILogger<GatewayRefereeClient> logger)
         {
+            this._configuration = configuration;
+            this._registerServiceManager = registerServiceManager;
             _refereeAddress = configuration.GetSection("Cluster:Referee").Get<NetAddress>();
             _logger = logger;
             _lockKeyManager = lockKeyManager;
@@ -41,15 +48,31 @@ namespace JMS
                 this.IsMaster = true;
             }
             else
+            {
+                _registerServiceManager.ServiceConnect += _registerServiceManager_ServiceConnect;
+                _registerServiceManager.ServiceDisconnect += _registerServiceManager_ServiceDisconnect;
+
                 new Thread(toBeMaster).Start();
 
+            }
+
             SystemEventCenter.MicroServiceUploadLockedKeyCompleted += SystemEventCenter_MicroServiceUploadLockedKeyCompleted;
+        }
+
+        private void _registerServiceManager_ServiceDisconnect(object sender, RegisterServiceInfo e)
+        {
+            RemoveMicroService(e);
+        }
+
+        private void _registerServiceManager_ServiceConnect(object sender, RegisterServiceInfo e)
+        {
+            AddMicroService(e);
         }
 
         private void SystemEventCenter_MicroServiceUploadLockedKeyCompleted(object sender, RegisterServiceInfo e)
         {
             _logger?.LogInformation($"{e.Host}:{e.Port} UploadLockedKeyCompleted");
-               _waitServiceList?.TryRemove($"{e.Host}:{e.Port}",out RegisterServiceLocation o);
+            _waitServiceList?.TryRemove($"{e.Host}:{e.Port}", out RegisterServiceLocation o);
         }
 
 
@@ -65,8 +88,8 @@ namespace JMS
 
 
             NetAddress masterAddr = null;
-            while(true)
-            {              
+            while (true)
+            {
                 try
                 {
                     if (!this.IsMaster)
@@ -76,13 +99,14 @@ namespace JMS
 
                     using (var client = new NetClient(_refereeAddress))
                     {
-                        client.WriteServiceData(new GatewayCommand { 
+                        client.WriteServiceData(new GatewayCommand
+                        {
                             Type = CommandType.ApplyToBeMaster,
                             Content = _gateway.Port.ToString()
                         });
                         var ret = client.ReadServiceObject<InvokeResult<string>>();
 
-                        _logger?.LogInformation("与裁判连接成功,裁判返回数据：{0}",ret.Data);
+                        _logger?.LogInformation("与裁判连接成功,裁判返回数据：{0}", ret.Data);
                         if (ret.Success)
                         {
                             masterAddr = null;
@@ -96,12 +120,12 @@ namespace JMS
                                 var timeout = _lockKeyManager.KeyTimeout / 1000;
                                 for (int i = 0; i < timeout && _waitServiceList.Count > 0; i++)
                                 {
-                                    _logger?.LogInformation("还有{0}个微服务没有报到 {1}" , _waitServiceList.Count , _waitServiceList.Keys.ToArray().ToJsonString());
+                                    _logger?.LogInformation("还有{0}个微服务没有报到 {1}", _waitServiceList.Count, _waitServiceList.Keys.ToArray().ToJsonString());
                                     Thread.Sleep(1000);
                                 }
                                 _lockKeyManager.IsReady = true;
 
-                                if(_waitServiceList.Count > 0)
+                                if (_waitServiceList.Count > 0)
                                     _logger?.LogInformation("还有{0}个微服务没有报到，但被忽略了。", _waitServiceList.Count);
                                 _logger?.LogInformation("lockKeyManager就绪");
                                 _logger?.LogDebug("锁记录：{0}", _lockKeyManager.GetCaches().ToJsonString());
@@ -112,24 +136,22 @@ namespace JMS
                         }
                         else
                         {
-                            if(this.IsMaster)
+                            if (this.IsMaster)
                             {
                                 this.IsMaster = false;
                                 _lockKeyManager.IsReady = false;
                                 //不是主网关，需要断开所有微服务
-                                var allservices = _gateway.OnlineMicroServices.ToArray();
-                                foreach(var s in allservices)
-                                    s.Close();
+                                _registerServiceManager.DisconnectAllServices();
                             }
                             //另一个网关成为主网关
                             masterAddr = ret.Data.FromJson<NetAddress>();
-                           
+
                         }
                     }
 
-                    if(masterAddr != null)
+                    if (masterAddr != null)
                     {
-                        _logger?.LogInformation("准备和主网关连接{0}",masterAddr.ToJsonString());
+                        _logger?.LogInformation("准备和主网关连接{0}", masterAddr.ToJsonString());
                         //连上主网关，直到连接出现问题，再申请成为主网关
                         using (var client = new NetClient(masterAddr))
                         {
@@ -140,7 +162,7 @@ namespace JMS
                         }
                     }
                 }
-                catch(SocketException)
+                catch (SocketException)
                 {
                     Thread.Sleep(2000);
                 }
@@ -152,7 +174,7 @@ namespace JMS
             }
         }
 
-        public void AddMicroService(RegisterServiceInfo service)
+        void AddMicroService(RegisterServiceInfo service)
         {
             if (_refereeAddress == null)
                 return;
@@ -161,7 +183,8 @@ namespace JMS
                 client.WriteServiceData(new GatewayCommand
                 {
                     Type = CommandType.RegisterSerivce,
-                    Content = new RegisterServiceLocation { 
+                    Content = new RegisterServiceLocation
+                    {
                         Host = service.Host,
                         Port = service.Port
                     }.ToJsonString()
@@ -172,7 +195,7 @@ namespace JMS
             }
         }
 
-        public void RemoveMicroService(RegisterServiceInfo service)
+        void RemoveMicroService(RegisterServiceInfo service)
         {
             if (_refereeAddress == null)
                 return;

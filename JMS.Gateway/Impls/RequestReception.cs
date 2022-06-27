@@ -11,6 +11,7 @@ using System.Text;
 using System.Web;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
+using JMS.Impls.CommandHandles;
 
 namespace JMS.Impls
 {
@@ -19,7 +20,7 @@ namespace JMS.Impls
         ILogger<RequestReception> _logger;
         ICommandHandlerManager _manager;
         Gateway _gateway;
-        public RequestReception(ILogger<RequestReception> logger, 
+        public RequestReception(ILogger<RequestReception> logger,
             Gateway gateway,
             ICommandHandlerManager manager)
         {
@@ -48,79 +49,7 @@ namespace JMS.Impls
             var text = Encoding.UTF8.GetString(data);
             if( text == "GET" || text == "POS")
             {
-                List<byte> buffer = null;
-                data = new byte[1024];
-                string questLine = null;
-
-                while (true)
-                {
-                    readed = client.Socket.Receive(data , data.Length , SocketFlags.None);
-                    if (readed <= 0)
-                        return null;
-                 
-                    if (data.Any(m => m == 10))
-                    {
-                        if( buffer != null )
-                        {
-                            buffer.AddRange(data);
-                            data = buffer.ToArray();
-                        }
-                        questLine = Encoding.UTF8.GetString(data);
-                        questLine = questLine.Substring(0, questLine.IndexOf("\r"));
-                        break;
-                    }
-                    else
-                    {
-                        if(buffer == null)
-                        {
-                            buffer = new List<byte>();
-                        }                       
-                        buffer.AddRange(data);
-                    }
-                }
-
-                var httpRequest = questLine.Split(' ')[1];
-                if(httpRequest.StartsWith("/?GetServiceProvider=") || httpRequest.StartsWith("/?GetAllServiceProviders"))
-                {
-                    httpRequest = httpRequest.Substring(2);
-                    if(httpRequest.Contains("="))
-                    {
-                        var arr = httpRequest.Split('=');
-                        return new GatewayCommand
-                        {
-                            Type = (CommandType)Enum.Parse(typeof(CommandType), arr[0]),
-                            Content = HttpUtility.UrlDecode( arr[1] , Encoding.UTF8),
-                            IsHttp = true
-                        };
-                    }
-                    else
-                    {
-                        return new GatewayCommand {
-                            Type = (CommandType)Enum.Parse(typeof(CommandType), httpRequest),
-                            IsHttp = true
-                        };
-                    }
-                }
-                else
-                {
-                    //重定向
-                    var location = _gateway.ServiceProvider.GetService<IServiceProviderAllocator>().Alloc(new GetServiceProviderRequest { 
-                        ServiceName = "WebServer"
-                    });
-                    if (location != null && !string.IsNullOrEmpty(location.ServiceAddress))
-                    {
-                        var serverAddr = location.ServiceAddress;
-                        if (serverAddr.EndsWith("/"))
-                            serverAddr = serverAddr.Substring(0, serverAddr.Length);                        
-
-                        client.OutputHttpRedirect($"{serverAddr}{httpRequest}");
-                    }
-                    else
-                    {
-                        client.OutputHttpNotFund();
-                    }
-                }
-                return null;
+                return new GatewayCommand { Type = CommandType.HttpRequest };
             }
             else
             {

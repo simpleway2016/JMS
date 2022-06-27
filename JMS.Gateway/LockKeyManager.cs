@@ -15,6 +15,7 @@ namespace JMS
 {
     class LockKeyManager
     {
+        IRegisterServiceManager _registerServiceManager;
         System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject> _cache;
         Gateway _gateway;
         IConfiguration _configuration;
@@ -23,26 +24,49 @@ namespace JMS
         internal bool IsReady;
 
         public int KeyTimeout => _timeout;
-        public LockKeyManager(Gateway gateway,IConfiguration configuration,ILogger<LockKeyManager> logger)
+        public LockKeyManager(Gateway gateway, IConfiguration configuration, IRegisterServiceManager registerServiceManager, ILogger<LockKeyManager> logger)
         {
+            this._registerServiceManager = registerServiceManager;
             _timeout = configuration.GetValue<int>("UnLockKeyTimeout");
             _cache = new System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject>();
             _gateway = gateway;
             _configuration = configuration;
             _logger = logger;
 
-            SystemEventCenter.MicroServiceOnffline += SystemEventCenter_MicroServiceOnffline;
-            SystemEventCenter.MicroServiceOnline += SystemEventCenter_MicroServiceOnline;
+            _registerServiceManager.ServiceConnect += _registerServiceManager_ServiceConnect;
+            _registerServiceManager.ServiceDisconnect += _registerServiceManager_ServiceDisconnect;
 
             new Thread(checkTimeout).Start();
         }
 
-        internal KeyObject[] GetCaches()
+        private void _registerServiceManager_ServiceDisconnect(object sender, RegisterServiceInfo e)
         {
-           return _cache.Values.ToArray();
+            //把这个微服务的lockkey设置下线时间
+            while (true)
+            {
+                try
+                {
+                    foreach (var pair in _cache)
+                    {
+                        var obj = pair.Value;
+                        if (obj.Locker == e.ServiceId)
+                        {
+                            obj.RemoveTime = DateTime.Now.AddMilliseconds(_timeout);
+                        }
+
+                    }
+                    break;
+                }
+                catch (Exception)
+                {
+                    Thread.Sleep(0);
+                    continue;
+                }
+
+            }
         }
 
-        private void SystemEventCenter_MicroServiceOnline(object sender, Dtos.RegisterServiceInfo e)
+        private void _registerServiceManager_ServiceConnect(object sender, RegisterServiceInfo e)
         {
             while (true)
             {
@@ -68,31 +92,9 @@ namespace JMS
             }
         }
 
-        private void SystemEventCenter_MicroServiceOnffline(object sender, Dtos.RegisterServiceInfo e)
+        internal KeyObject[] GetCaches()
         {
-            //把这个微服务的lockkey设置下线时间
-            while (true)
-            {
-                try
-                {
-                    foreach (var pair in _cache)
-                    {
-                        var obj = pair.Value;
-                        if (obj.Locker == e.ServiceId)
-                        {
-                            obj.RemoveTime = DateTime.Now.AddMilliseconds(_timeout);
-                        }
-
-                    }
-                    break;
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(0);
-                    continue;
-                }
-                
-            }
+           return _cache.Values.ToArray();
         }
 
         /// <summary>

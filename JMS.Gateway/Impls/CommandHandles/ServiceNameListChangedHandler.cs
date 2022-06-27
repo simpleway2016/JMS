@@ -16,10 +16,12 @@ namespace JMS.Impls.CommandHandles
         IServiceProvider _serviceProvider;
         Gateway _gateway;
         IServiceProviderAllocator _ServiceProviderAllocator;
+        IRegisterServiceManager _RegisterServiceManager;
         public ServiceNameListChangedHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _gateway = serviceProvider.GetService<Gateway>();
+            _RegisterServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
             _ServiceProviderAllocator = serviceProvider.GetService<IServiceProviderAllocator>();
         }
         public CommandType MatchCommandType => CommandType.ServiceNameListChanged;
@@ -27,16 +29,14 @@ namespace JMS.Impls.CommandHandles
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             var info = cmd.Content.FromJson<RegisterServiceInfo>();
-           var service =  _gateway.GetServiceById(info.ServiceId);
+           var service = _RegisterServiceManager.GetServiceById(info.ServiceId);
            if(service != null)
             {
                 service.ServiceNames = info.ServiceNames;
                 service.Description = info.Description;
                 service.ClientCheckCode = info.ClientCheckCode;
 
-                Task.Run(() => {
-                    _ServiceProviderAllocator.ServiceInfoChanged(_gateway.GetAllServiceProviders());
-                });
+               
             }
 
             netclient.WriteServiceData(new InvokeResult { Success = true});

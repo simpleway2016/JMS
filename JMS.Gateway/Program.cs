@@ -58,6 +58,7 @@ namespace JMS
             services.AddSingleton<IConfiguration>(configuration);
             services.AddSingleton<GatewayRefereeClient>();
             services.AddSingleton<IRequestReception,RequestReception>();
+            services.AddSingleton<IRegisterServiceManager, RegisterServiceManager>();
             services.AddSingleton<ICommandHandlerManager, CommandHandlerManager>();
             services.AddSingleton<Gateway>();
             services.AddSingleton<LockKeyManager>();

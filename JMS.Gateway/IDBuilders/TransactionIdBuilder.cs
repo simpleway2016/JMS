@@ -21,7 +21,7 @@ namespace JMS
             _filepath = $"{datafolder}/TransactionIdBuilder.txt";
             if (File.Exists(_filepath))
             {
-                CurrentId = Convert.ToInt32(File.ReadAllText(_filepath, Encoding.UTF8)) + 1000;
+                CurrentId = Convert.ToInt32(File.ReadAllText(_filepath, Encoding.UTF8));
             }
             new Thread(saveToFile).Start();
         }
@@ -44,7 +44,7 @@ namespace JMS
         {
             var ret = Interlocked.Increment(ref CurrentId).ToString();
             _waitObject.Set();
-            return ret;
+            return $"{DateTime.Now.Ticks}-{ret}";
         }
     }
 }

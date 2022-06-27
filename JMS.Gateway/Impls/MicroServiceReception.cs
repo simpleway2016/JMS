@@ -14,8 +14,9 @@ using Way.Lib;
 
 namespace JMS.Impls
 {
-    class MicroServiceReception: IMicroServiceReception
+    class MicroServiceReception : IMicroServiceReception
     {
+        IRegisterServiceManager _registerServiceManager;
         ILogger<MicroServiceReception> _Logger;
         Gateway _Gateway;
         NetClient NetClient;
@@ -23,20 +24,19 @@ namespace JMS.Impls
 
         IServiceProviderAllocator _ServiceProviderAllocator;
         LockKeyManager _lockKeyManager;
-        GatewayRefereeClient _gatewayReferee;
 
         bool _closed;
         public MicroServiceReception(ILogger<MicroServiceReception> logger,
-            Gateway gateway, 
+            Gateway gateway,
             LockKeyManager lockKeyManager,
-            GatewayRefereeClient gatewayReferee,
+            IRegisterServiceManager registerServiceManager,
             IServiceProviderAllocator serviceProviderAllocator)
-        {           
+        {
+            this._registerServiceManager = registerServiceManager;
             _Gateway = gateway;
             _ServiceProviderAllocator = serviceProviderAllocator;
-               _Logger = logger;
+            _Logger = logger;
             _lockKeyManager = lockKeyManager;
-            _gatewayReferee = gatewayReferee;
         }
         public void HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
         {
@@ -45,17 +45,14 @@ namespace JMS.Impls
 
             if(ServiceInfo.SingletonService)
             {
-                lock (_Gateway.OnlineMicroServices)
+                if (_registerServiceManager.GetAllRegisterServices().Any(m => string.Join(',', m.ServiceNames) == string.Join(',', ServiceInfo.ServiceNames)))
                 {
-                    if (_Gateway.OnlineMicroServices.Any(m => string.Join(',', m.ServiceInfo.ServiceNames) == string.Join(',', ServiceInfo.ServiceNames)))
+                    NetClient.WriteServiceData(new InvokeResult
                     {
-                        NetClient.WriteServiceData(new InvokeResult
-                        {
-                            Success = false,
-                            Error = "SingletonService"
-                        });
-                        return;
-                    }
+                        Success = false,
+                        Error = "SingletonService"
+                    });
+                    return;
                 }
             }
 
@@ -63,20 +60,12 @@ namespace JMS.Impls
             if (string.IsNullOrEmpty(ServiceInfo.ServiceAddress))
                 ServiceInfo.ServiceAddress = ServiceInfo.Host;
 
-            _gatewayReferee.AddMicroService(ServiceInfo);
 
             NetClient.WriteServiceData(new InvokeResult{ 
                 Success = true
             });
-            lock(_Gateway.OnlineMicroServices)
-            {
-                _Gateway.OnlineMicroServices.Add(this);                
-            }
-            SystemEventCenter.OnMicroServiceOnline(this.ServiceInfo);
+            _registerServiceManager.AddRegisterService(this);
 
-            Task.Run(() => {
-                _ServiceProviderAllocator.ServiceInfoChanged(_Gateway.GetAllServiceProviders());
-            });
             _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}注册");
 
             checkState();
@@ -84,18 +73,8 @@ namespace JMS.Impls
 
         void disconnect()
         {
-            lock (_Gateway.OnlineMicroServices)
-            {
-                _Gateway.OnlineMicroServices.Remove(this);
-            }
-            SystemEventCenter.OnMicroServiceOnffline(this.ServiceInfo);
+            _registerServiceManager.RemoveRegisterService(ServiceInfo);
 
-            _gatewayReferee.RemoveMicroService(this.ServiceInfo);
-
-
-            Task.Run(() => {
-                _ServiceProviderAllocator.ServiceInfoChanged(_Gateway.GetAllServiceProviders());
-            });
         }
         public void Close()
         {
@@ -126,7 +105,8 @@ namespace JMS.Impls
                             try
                             {
                                 var hardwareInfo = command.Content.FromJson<PerformanceInfo>();
-                                _ServiceProviderAllocator.SetServicePerformanceInfo(this.ServiceInfo, hardwareInfo);
+                                Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity.GetValueOrDefault());
+                                ServiceInfo.CpuUsage = hardwareInfo.CpuUsage.GetValueOrDefault();
                             }
                             catch
                             {

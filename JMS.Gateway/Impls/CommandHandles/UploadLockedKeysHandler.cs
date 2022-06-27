@@ -16,17 +16,19 @@ namespace JMS.Impls.CommandHandles
         IServiceProvider _serviceProvider;
         LockKeyManager _lockKeyManager;
         Gateway _gateway;
+        IRegisterServiceManager _registerServiceManager;
         public UploadLockedKeysHandler(IServiceProvider serviceProvider)
         {
             _lockKeyManager = serviceProvider.GetService<LockKeyManager>();
             _gateway = serviceProvider.GetService<Gateway>();
+            _registerServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
         }
         public CommandType MatchCommandType => CommandType.UploadLockKeys;
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
             var keys = cmd.Content.FromJson<string[]>();
-            var service = _gateway.GetServiceById(cmd.Header["ServiceId"]);
+            var service = _registerServiceManager.GetServiceById(cmd.Header["ServiceId"]);
             if (service != null && service.Host == ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString())
             {
                 List<string> failed = new List<string>();

@@ -15,11 +15,13 @@ namespace JMS.Impls.CommandHandles
         IServiceProvider _serviceProvider;
         LockKeyManager _lockKeyManager;
         Gateway _gateway;
+        IRegisterServiceManager _registerServiceManager;
         public LockKeyHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _lockKeyManager = serviceProvider.GetService<LockKeyManager>();
             _gateway = serviceProvider.GetService<Gateway>();
+            _registerServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
         }
         public CommandType MatchCommandType => CommandType.LockKey;
 
@@ -37,7 +39,7 @@ namespace JMS.Impls.CommandHandles
                 return;
             }
 
-            var service = _gateway.GetServiceById(info.MicroServiceId);
+            var service = _registerServiceManager.GetServiceById(info.MicroServiceId);
             if(service == null)
             {
                 netclient.WriteServiceData(new InvokeResult

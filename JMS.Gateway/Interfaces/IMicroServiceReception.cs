@@ -5,7 +5,7 @@ using System.Text;
 
 namespace JMS.Interfaces
 {
-    interface IMicroServiceReception
+    public interface IMicroServiceReception
     {
         RegisterServiceInfo ServiceInfo { get; set; }
         void HealthyCheck(NetClient netclient, GatewayCommand registerCmd);

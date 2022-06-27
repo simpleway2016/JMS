@@ -12,6 +12,7 @@ using JMS.Impls;
 using JMS.Dtos;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
+using System.Linq;
 
 namespace JMS
 {
@@ -24,32 +25,14 @@ namespace JMS
         public X509Certificate2 ServerCert { get; set; }
         public string[] AcceptCertHash { get; set; }
         internal IServiceProvider ServiceProvider { get; set; }
-        public List<IMicroServiceReception> OnlineMicroServices { get; set; }
-
 
         public Gateway(ILogger<Gateway> logger)
         {
             _Logger = logger;
             _Logger.LogInformation($"版本号：{this.GetType().Assembly.GetName().Version}");
-            OnlineMicroServices = new List<IMicroServiceReception>();
         }
 
-        public RegisterServiceInfo GetServiceById(string id)
-        {
-            try
-            {
-                for (int i = 0; i < OnlineMicroServices.Count; i++)
-                {
-                    if (OnlineMicroServices[i].ServiceInfo.ServiceId == id)
-                        return OnlineMicroServices[i].ServiceInfo;
-                }
-            }
-            catch
-            {
-                
-            }
-            return null;
-        }
+
         public void Run(int port)
         {
             NatashaInitializer.InitializeAndPreheating();
@@ -80,18 +63,5 @@ namespace JMS
             }
         }
 
-        public RegisterServiceInfo[] GetAllServiceProviders()
-        {
-            List<RegisterServiceInfo> ret = new List<RegisterServiceInfo>();
-            for(int i = 0; i < OnlineMicroServices.Count; i ++)
-            {
-                var client = OnlineMicroServices[i];
-                if(client != null && ret.Contains(client.ServiceInfo) == false)
-                {
-                    ret.Add(client.ServiceInfo);
-                }
-            }
-            return ret.ToArray();
-        }
     }
 }

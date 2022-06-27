@@ -15,13 +15,13 @@ namespace JMS.Impls.CommandHandles
     {
         IServiceProvider _serviceProvider;
         IConfiguration _configuration;
-        Gateway _gateway;
+        IRegisterServiceManager _registerServiceManager;
 
         public UnRegisterServiceHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _configuration = serviceProvider.GetService<IConfiguration>();
-            _gateway = serviceProvider.GetService<Gateway>();
+            _registerServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
         }
         public CommandType MatchCommandType => CommandType.UnRegisterSerivce;
 
@@ -29,21 +29,7 @@ namespace JMS.Impls.CommandHandles
         {
             var serviceid = cmd.Content;
 
-           for(int i = 0; i < _gateway.OnlineMicroServices.Count; i ++)
-            {
-                try
-                {
-                    if (_gateway.OnlineMicroServices[i].ServiceInfo.ServiceId == serviceid)
-                    {
-                        _gateway.OnlineMicroServices[i].Close();
-                        break;
-                    }
-                }
-                catch 
-                {
- 
-                }
-            }
+            _registerServiceManager.DisconnectService(serviceid);
 
             netclient.WriteServiceData(new InvokeResult { Success = true});
         }

@@ -46,6 +46,17 @@ namespace JMS.Dtos
         /// 网关版本>=1.1.0.0支持此功能
         /// </summary>
         public int MaxRequestCount;
+
+
+        /// <summary>
+        /// 当前请求数量
+        /// </summary>
+        public int RequestQuantity;
+        /// <summary>
+        /// cpu使用率
+        /// </summary>
+        public double CpuUsage;
+
         /// <summary>
         /// 用来是否运行客户端连接的检验代码
         /// </summary>

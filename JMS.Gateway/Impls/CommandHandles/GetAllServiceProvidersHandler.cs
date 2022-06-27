@@ -14,10 +14,12 @@ namespace JMS.Impls.CommandHandles
     {
         IServiceProvider _serviceProvider;
         Gateway _Gateway;
+        IRegisterServiceManager _RegisterServiceManager;
         public GetAllServiceProvidersHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _Gateway = serviceProvider.GetService<Gateway>();
+            _RegisterServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
         }
         public CommandType MatchCommandType => CommandType.GetAllServiceProviders;
 
@@ -37,13 +39,12 @@ namespace JMS.Impls.CommandHandles
 
         public RegisterServiceRunningInfo[] List(string serviceName)
         {
-            var list = _Gateway.GetAllServiceProviders().AsQueryable();
+            var list = _RegisterServiceManager.GetAllRegisterServices();
             if (!string.IsNullOrEmpty(serviceName))
             {
                 list = list.Where(m => m.ServiceNames.Contains(serviceName));
             }
 
-            var allocator = _serviceProvider.GetService<IServiceProviderAllocator>();
             return list.Select(m => new RegisterServiceRunningInfo
             {
                 Host = m.Host,
@@ -53,7 +54,11 @@ namespace JMS.Impls.CommandHandles
                 ServiceNames = m.ServiceNames,
                 Description = m.Description,
                 MaxThread = m.MaxThread,
-                PerformanceInfo = allocator.GetPerformanceInfo(m)
+                PerformanceInfo = new PerformanceInfo
+                {
+                    RequestQuantity = m.RequestQuantity,
+                    CpuUsage = m.CpuUsage
+                }
             }).ToArray();
         }
     }
