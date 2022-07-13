@@ -57,6 +57,7 @@ namespace JMS
             });
             services.AddSingleton<IConfiguration>(configuration);
             services.AddSingleton<GatewayRefereeClient>();
+            services.AddSingleton<TransactionStatusManager>();
             services.AddSingleton<IRequestReception,RequestReception>();
             services.AddSingleton<IRegisterServiceManager, RegisterServiceManager>();
             services.AddSingleton<ICommandHandlerManager, CommandHandlerManager>();
@@ -74,6 +75,7 @@ namespace JMS
             var serviceProvider = services.BuildServiceProvider();
             serviceProvider.GetService<LockKeyManager>();
             serviceProvider.GetService<FileChangeWatcher>();
+            serviceProvider.GetService<TransactionStatusManager>();
 
             //启动GatewayRefereeClient，申请成为主网关
             serviceProvider.GetService<GatewayRefereeClient>();

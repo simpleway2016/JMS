@@ -19,7 +19,7 @@ namespace TestClient
                 loggingBuilder.AddConsole(); // 将日志输出到控制台
             });
             var serviceProvider = services.BuildServiceProvider();
-            var logger = serviceProvider.GetService<ILogger<JMSClient>>();
+            var logger = serviceProvider.GetService<ILogger<JMS.RemoteClient>>();
 
             //////////测试多个网关
             //try

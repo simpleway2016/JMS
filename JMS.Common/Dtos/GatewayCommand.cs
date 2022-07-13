@@ -28,7 +28,10 @@ namespace JMS.Dtos
         SetAllServices = 13,
         ServiceNameListChanged = 14,
         CheckSupportSingletonService = 15,
-        HttpRequest = 16
+        HttpRequest = 16,
+        ReportTransactionStatus = 17,
+        GetTransactionStatus = 18,
+        RemoveTransactionStatus = 19,
     }
     public class GatewayCommand
     {

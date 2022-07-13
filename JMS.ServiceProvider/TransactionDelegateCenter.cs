@@ -9,7 +9,7 @@ using Way.Lib;
 namespace JMS
 {
     /// <summary>
-    /// 管理不能自我管理的事务
+    /// 这个类即将不用了
     /// </summary>
     class TransactionDelegateCenter
     {

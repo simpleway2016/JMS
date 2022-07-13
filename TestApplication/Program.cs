@@ -45,9 +45,7 @@ namespace TestApplication
             {
                 try
                 {
-                    NetClient client = new NetClient("127.0.0.1", 8911);
-                    client.Dispose();
-                    client = new NetClient("127.0.0.1", 8912);
+                    var client = new NetClient("127.0.0.1", 8913);
                     client.Dispose();
 
                     break;
@@ -61,7 +59,7 @@ namespace TestApplication
        
 
             using (var tran = new RemoteClient(new NetAddress[] { 
-                new NetAddress("localhost", 8911)
+                new NetAddress("localhost", 8912)
             },null,null , null, null))
             {
                 tran.BeginTransaction();

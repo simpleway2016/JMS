@@ -443,16 +443,98 @@ namespace JMS
         }
 
         /// <summary>
+        /// 报告网关事务已成功
+        /// </summary>
+        /// <param name="tranid"></param>
+        /// <exception cref="MissMasterGatewayException"></exception>
+        void ReportTransactionSuccess(string tranid)
+        {
+            var netclient = NetClientPool.CreateClient(this.ProxyAddress, this.GatewayAddress, this.GatewayClientCertificate);
+            netclient.ReadTimeout = this.Timeout;
+            try
+            {
+                netclient.WriteServiceData(new GatewayCommand()
+                {
+                    Type = CommandType.ReportTransactionStatus,
+                    Content = tranid
+                });
+                byte[] data = new byte[4];
+                int readed = netclient.Socket.Receive(data, 4, SocketFlags.Peek);
+                if (readed == 0)
+                {
+                    //网关不支持此命令
+                    netclient.Dispose();
+                    return;
+                }
+                else
+                {
+                    netclient.ReadServiceObject<InvokeResult>();
+                }
+                NetClientPool.AddClientToPool(netclient);
+            }
+            catch (SocketException ex)
+            {
+                netclient.Dispose();
+                throw;
+            }
+            catch (Exception)
+            {
+                netclient.Dispose();
+                throw;
+            }
+        }
+
+        void ReportTransactionRemoved(string tranid)
+        {
+            var netclient = NetClientPool.CreateClient(this.ProxyAddress, this.GatewayAddress, this.GatewayClientCertificate);
+            netclient.ReadTimeout = this.Timeout;
+            try
+            {
+                netclient.WriteServiceData(new GatewayCommand()
+                {
+                    Type = CommandType.RemoveTransactionStatus,
+                    Content = tranid
+                });
+                byte[] data = new byte[4];
+                int readed = netclient.Socket.Receive(data, 4, SocketFlags.Peek);
+                if (readed == 0)
+                {
+                    //网关不支持此命令
+                    netclient.Dispose();
+                    return;
+                }
+                else
+                {
+                    netclient.ReadServiceObject<InvokeResult>();
+                }
+                NetClientPool.AddClientToPool(netclient);
+            }
+            catch (SocketException ex)
+            {
+                netclient.Dispose();
+                throw;
+            }
+            catch (Exception)
+            {
+                netclient.Dispose();
+                throw;
+            }
+        }
+
+        /// <summary>
         /// 提交分布式事务 (请先使用BeginTransaction启动事务)
         /// </summary>
         public void CommitTransaction()
         {
-            var errors = endRequest(InvokeType.CommitTranaction);
+            if (_SupportTransaction)
+            {
+                var errors = endRequest(InvokeType.CommitTranaction);
 
-            if (errors != null && errors.Count > 0)
-                throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
+                if (errors != null && errors.Count > 0)
+                    throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
 
-            _SupportTransaction = false;
+                _SupportTransaction = false;
+            }
         }
 
         List<TransactionException> endRequest(InvokeType invokeType)
@@ -515,6 +597,10 @@ namespace JMS
 
                 if (errors.Count == 0)
                 {
+                    if(invokeType == InvokeType.CommitTranaction)
+                    {
+                        this.ReportTransactionSuccess(this.TransactionId);
+                    }
                     Parallel.For(0, _Connects.Count, (i) =>
                     {
                         var connect = _Connects[i];
@@ -573,6 +659,15 @@ namespace JMS
                         foreach (var err in errors)
                             _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
                     }
+                    else
+                    {
+                        if (invokeType == InvokeType.CommitTranaction)
+                        {
+                            Task.Run(() => {
+                                this.ReportTransactionRemoved(this.TransactionId);
+                            });
+                        }
+                    }
                 }
 
 
@@ -589,12 +684,15 @@ namespace JMS
         /// 回滚分布式事务
         /// </summary>
         public void RollbackTransaction()
-        {                
-            var errors = endRequest(InvokeType.RollbackTranaction);
-            if (errors != null && errors.Count > 0)
-                throw new TransactionArrayException(errors, "rollback transaction error");
+        {
+            if (_SupportTransaction)
+            {
+                var errors = endRequest(InvokeType.RollbackTranaction);
+                if (errors != null && errors.Count > 0)
+                    throw new TransactionArrayException(errors, "rollback transaction error");
 
-            _SupportTransaction = false;
+                _SupportTransaction = false;
+            }
         }
 
         public void Dispose()

@@ -23,6 +23,7 @@ namespace JMS.RetryCommit
             this._microServiceHost = microServiceHost;
 
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -31,29 +32,37 @@ namespace JMS.RetryCommit
         /// <param name="userContent">身份信息对象</param>
         public string Build(string transactionId, InvokeCommand cmd, object userContent)
         {
-            if (Directory.Exists(_microServiceHost.RetryCommitPath) == false)
-                Directory.CreateDirectory(_microServiceHost.RetryCommitPath);
-
-            Type userContentType = userContent?.GetType();
-            if (userContent != null && userContent is System.Security.Claims.ClaimsPrincipal claimsPrincipal)
+            try
             {
-                using (var ms = new System.IO.MemoryStream())
+                if (Directory.Exists(_microServiceHost.RetryCommitPath) == false)
+                    Directory.CreateDirectory(_microServiceHost.RetryCommitPath);
+
+                Type userContentType = userContent?.GetType();
+                if (userContent != null && userContent is System.Security.Claims.ClaimsPrincipal claimsPrincipal)
                 {
-                    claimsPrincipal.WriteTo(new System.IO.BinaryWriter(ms));
-                    ms.Position = 0;
-                    userContent = ms.ToArray();
+                    using (var ms = new System.IO.MemoryStream())
+                    {
+                        claimsPrincipal.WriteTo(new System.IO.BinaryWriter(ms));
+                        ms.Position = 0;
+                        userContent = ms.ToArray();
+                    }
                 }
-            }
 
-            var filepath = $"{_microServiceHost.RetryCommitPath}/{transactionId}_{DateTime.Now.Ticks}.txt";
-            File.WriteAllText(filepath, new RequestInfo
+                var filepath = $"{_microServiceHost.RetryCommitPath}/{transactionId}_{Guid.NewGuid().ToString("N")}.txt";
+                File.WriteAllText(filepath, new RequestInfo
+                {
+                    Cmd = cmd,
+                    TransactionId = transactionId,
+                    UserContentType = userContent == null ? null : userContentType,
+                    UserContentValue = userContent?.ToJsonString()
+                }.ToJsonString(), Encoding.UTF8);
+                return filepath;
+            }
+            catch (Exception ex)
             {
-                Cmd = cmd,
-                TransactionId = transactionId,
-                UserContentType = userContent == null ? null : userContentType,
-                UserContentValue = userContent?.ToJsonString()
-            }.ToJsonString(), Encoding.UTF8);
-            return filepath;
+                _loggerTran.LogError(ex, "FaildCommitBuilder");
+                return null;
+            }
         }
 
         public void CommitSuccess(string filepath)
@@ -92,14 +101,15 @@ namespace JMS.RetryCommit
         }
         public void Timeout(string filepath)
         {
-            try
-            {
-                File.Move(filepath, filepath + ".timeout");
-            }
-            catch (Exception ex)
-            {
-                _loggerTran?.LogError("移动RetryCommitFilePath失败，{0} {1}", filepath, ex.Message);
-            }
+            _retryCommitMission.RetryFile(filepath);
+            //try
+            //{
+            //    File.Move(filepath, filepath + ".timeout");
+            //}
+            //catch (Exception ex)
+            //{
+            //    _loggerTran?.LogError("移动RetryCommitFilePath失败，{0} {1}", filepath, ex.Message);
+            //}
         }
         internal class RequestInfo
         {

@@ -33,6 +33,7 @@ namespace JMS
             LockKeyManager lockKeyManager,
             Gateway gateway,
             IRegisterServiceManager registerServiceManager,
+            TransactionStatusManager transactionStatusManager,
             ILogger<GatewayRefereeClient> logger)
         {
             this._configuration = configuration;
@@ -51,12 +52,61 @@ namespace JMS
             {
                 _registerServiceManager.ServiceConnect += _registerServiceManager_ServiceConnect;
                 _registerServiceManager.ServiceDisconnect += _registerServiceManager_ServiceDisconnect;
-
+                transactionStatusManager.TransactionSuccess += TransactionStatusManager_TransactionSuccess;
+                transactionStatusManager.TransactionRemove += TransactionStatusManager_TransactionRemove;
                 new Thread(toBeMaster).Start();
 
             }
 
             SystemEventCenter.MicroServiceUploadLockedKeyCompleted += SystemEventCenter_MicroServiceUploadLockedKeyCompleted;
+        }
+
+        private void TransactionStatusManager_TransactionRemove(object sender, string tranid)
+        {
+            if (_refereeAddress == null)
+                return;
+
+            Task.Run(() => {
+                try
+                {
+                    using (NetClient client = new NetClient(_refereeAddress))
+                    {
+                        client.WriteServiceData(new GatewayCommand
+                        {
+                            Type = CommandType.RemoveTransactionStatus,
+                            Content = tranid
+                        });
+                        var cmd = client.ReadServiceObject<InvokeResult>();
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            });
+        }
+
+        private void TransactionStatusManager_TransactionSuccess(object sender, string tranid)
+        {
+            if (_refereeAddress == null)
+                return;
+
+            Task.Run(() => {
+                try
+                {
+                    using (NetClient client = new NetClient(_refereeAddress))
+                    {
+                        client.WriteServiceData(new GatewayCommand
+                        {
+                            Type = CommandType.ReportTransactionStatus,
+                            Content = tranid
+                        });
+                        var cmd = client.ReadServiceObject<InvokeResult>();
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            });
         }
 
         private void _registerServiceManager_ServiceDisconnect(object sender, RegisterServiceInfo e)

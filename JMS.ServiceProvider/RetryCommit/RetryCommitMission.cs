@@ -17,12 +17,13 @@ namespace JMS.RetryCommit
     {
         MicroServiceHost _microServiceHost;
         ILogger<TransactionDelegate> _loggerTran;
+        IGatewayConnector _gatewayConnector;
         public RetryCommitMission(MicroServiceHost microServiceHost, ILogger<TransactionDelegate> loggerTran)
         {
             this._microServiceHost = microServiceHost;
             this._loggerTran = loggerTran;
 
-           
+            _gatewayConnector = _microServiceHost.ServiceProvider.GetService<IGatewayConnector>();
         }
 
         internal void OnGatewayConnected()
@@ -75,63 +76,75 @@ namespace JMS.RetryCommit
 
         void handleFiles(string[] files)
         {
+           
             if (files.Length > 0)
             {
                 foreach (var file in files)
                 {
+                    RetryFile(file);
+                }
+            }
+        }
+
+        public void RetryFile(string file)
+        {
+            try
+            {
+                object usercontent = null;
+                var fileContent = File.ReadAllText(file, Encoding.UTF8).FromJson<RequestInfo>();
+
+                if(_gatewayConnector.CheckTransaction(fileContent.TransactionId) == false)
+                {
+                    File.Move(file, file + ".faild");
+                    return;
+                }
+
+                _loggerTran?.LogInformation("尝试重新提交事务{0}-{1}", fileContent.TransactionId, fileContent.Cmd.Method);
+
+                if (fileContent.UserContentValue != null)
+                {
+
                     try
                     {
-                        object usercontent = null;
-                        var fileContent = File.ReadAllText(file, Encoding.UTF8).FromJson<RequestInfo>();
-                        _loggerTran?.LogInformation("尝试重新提交事务{0}-{1}", fileContent.TransactionId , fileContent.Cmd.Method);
-
-                        if (fileContent.UserContentValue != null)
+                        if (fileContent.UserContentType == typeof(System.Security.Claims.ClaimsPrincipal))
                         {
 
-                            try
+                            byte[] bs = fileContent.UserContentValue.FromJson<byte[]>();
+                            using (var ms = new System.IO.MemoryStream(bs))
                             {
-                                if (fileContent.UserContentType == typeof(System.Security.Claims.ClaimsPrincipal))
-                                {
-                                    
-                                    byte[] bs = fileContent.UserContentValue.FromJson<byte[]>();
-                                    using ( var ms = new System.IO.MemoryStream(bs))
-                                    {
-                                        usercontent = new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
-                                    }
-                                }
-                                else
-                                {
-                                    usercontent = Newtonsoft.Json.JsonConvert.DeserializeObject(fileContent.UserContentValue, fileContent.UserContentType);
-                                }
+                                usercontent = new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
                             }
-                            catch (Exception ex)
-                            {
-                                _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", fileContent.TransactionId, ex.Message);
-                                File.Move(file, file + ".faild");
-                            }
-
-
                         }
-
-                        retry(fileContent.Cmd, usercontent);
-                        _loggerTran?.LogInformation("成功提交事务{0} 请求数据：{1}", fileContent.TransactionId,fileContent.Cmd.ToJsonString());
-
-                        try
+                        else
                         {
-                            File.Delete(file);
-                        }
-                        catch (Exception ex)
-                        {
-                            _loggerTran?.LogError("文件{0}删除失败,{1}", file, ex.Message);
+                            usercontent = Newtonsoft.Json.JsonConvert.DeserializeObject(fileContent.UserContentValue, fileContent.UserContentType);
                         }
                     }
                     catch (Exception ex)
                     {
-                        _loggerTran?.LogError("RetryCommitMission处理事务id为{0}时发生未知错误,{1}", ex.Message);
+                        _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", fileContent.TransactionId, ex.Message);
                         File.Move(file, file + ".faild");
                     }
 
+
                 }
+
+                retry(fileContent.Cmd, usercontent);
+                _loggerTran?.LogInformation("成功提交事务{0} 请求数据：{1}", fileContent.TransactionId, fileContent.Cmd.ToJsonString());
+
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex)
+                {
+                    _loggerTran?.LogError("文件{0}删除失败,{1}", file, ex.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggerTran?.LogError("RetryCommitMission处理事务id为{0}时发生未知错误,{1}", ex.Message);
+                File.Move(file, file + ".faild");
             }
         }
 

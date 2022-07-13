@@ -16,27 +16,12 @@ namespace JMS
        static ShareFileClient ShareFileClient2;
         static void Main(string[] args)
         {
-            while (true)
-            {
-                try
-                {
-                    NetClient client = new NetClient("127.0.0.1", 8911);
-                    client.Dispose();
-                    break;
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(100);
-                }
-            }
-
-         
             ServiceCollection services = new ServiceCollection();
 
             var gateways = new NetAddress[] {
                new NetAddress{
                     Address = "localhost",
-                    Port = 8911
+                    Port = 8912
                }
             };
             var msp = new MicroServiceHost(services);
@@ -72,7 +57,7 @@ namespace JMS
             msp.Register<Controller2>("Service2");
             msp.RegisterScheduleTask<AutoRun1>();
             msp.ServiceProviderBuilded += Msp_ServiceProviderBuilded;
-            msp.Build(8912, gateways)
+            msp.Build(8913, gateways)
                 .Run();
         }
 
