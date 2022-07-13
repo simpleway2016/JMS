@@ -11,6 +11,7 @@ using System.Linq;
 using System.Reflection;
 using JMS.RetryCommit;
 using System.IO;
+using System.Threading;
 
 namespace JMS.Impls
 {
@@ -248,13 +249,26 @@ namespace JMS.Impls
             {
                 if (transactionDelegate != null)
                 {
+                    Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
                     if (_gatewayConnector.CheckTransaction(transactionDelegate.TransactionId))
                     {
                         transactionDelegate.CommitAction();
+
+                        if (transactionDelegate.RetryCommitFilePath != null)
+                        {
+                            _faildCommitBuilder.Rollback(transactionDelegate.RetryCommitFilePath);
+                            transactionDelegate.RetryCommitFilePath = null;
+                        }
                     }
                     else
                     {
                         transactionDelegate.RollbackAction();
+
+                        if (transactionDelegate.RetryCommitFilePath != null)
+                        {
+                            _faildCommitBuilder.Rollback(transactionDelegate.RetryCommitFilePath);
+                            transactionDelegate.RetryCommitFilePath = null;
+                        }
                     }
                     transactionDelegate = null;
                 }
