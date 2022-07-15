@@ -1,4 +1,4 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Applications;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using JMS.Impls;
+using JMS.Domains;
 using JMS.Dtos;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;

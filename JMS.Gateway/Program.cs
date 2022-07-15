@@ -3,8 +3,7 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
-using JMS.Interfaces;
-using JMS.Impls;
+using JMS.Domains;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
@@ -12,6 +11,8 @@ using System.Linq;
 using JMS.Common;
 using System.Diagnostics;
 using Natasha.CSharp;
+using JMS.Applications;
+using JMS.Infrastructures;
 
 namespace JMS
 {
@@ -60,7 +61,7 @@ namespace JMS
             services.AddSingleton<TransactionStatusManager>();
             services.AddSingleton<IRequestReception,RequestReception>();
             services.AddSingleton<IRegisterServiceManager, RegisterServiceManager>();
-            services.AddSingleton<ICommandHandlerManager, CommandHandlerManager>();
+            services.AddSingleton<ICommandHandlerRoute, CommandHandlerRoute>();
             services.AddSingleton<Gateway>();
             services.AddSingleton<LockKeyManager>();
             services.AddTransient<IMicroServiceReception,MicroServiceReception>();
