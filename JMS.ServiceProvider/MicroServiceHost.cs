@@ -21,6 +21,7 @@ using JMS.RetryCommit;
 using JMS.Applications;
 using JMS.Domains;
 using JMS.Infrastructures;
+using System.Collections.Concurrent;
 
 namespace JMS
 {
@@ -29,11 +30,12 @@ namespace JMS
         public string Id { get; private set; }
         ILogger<MicroServiceHost> _logger;
         IGatewayConnector _GatewayConnector;
+        ControllerFactory _ControllerFactory;
         internal IGatewayConnector GatewayConnector => _GatewayConnector;
         public NetAddress MasterGatewayAddress { internal set; get; }
         public NetAddress[] AllGatewayAddresses { get; private set; }
 
-        internal Dictionary<string, ControllerTypeInfo> ServiceNames = new Dictionary<string, ControllerTypeInfo>();
+        internal List<string> ServiceNames = new List<string>();
         internal int ServicePort;
 
         /// <summary>
@@ -139,6 +141,7 @@ namespace JMS
             this.Id = Guid.NewGuid().ToString("N");
             _services = services;
             _scheduleTaskManager = new ScheduleTaskManager(this);
+            _ControllerFactory = new ControllerFactory(this);
 
             registerServices();
         }
@@ -169,10 +172,7 @@ namespace JMS
         {
             _isWebServer = true;
             this.ServiceAddress = new NetAddress(webServerUrl, 0);
-             ServiceNames[serverName] = new ControllerTypeInfo()
-            {
-                Enable = true
-            };
+            _ControllerFactory.RegisterWebServer(serverName);
         }
 
         /// <summary>
@@ -182,23 +182,13 @@ namespace JMS
         /// <param name="serviceName">服务名称</param>
         public void Register(Type contollerType, string serviceName)
         {
-            _services.AddTransient(contollerType);
-            ServiceNames[serviceName] = new ControllerTypeInfo()
+            if(ServiceNames.Contains(serviceName) == false)
             {
-                Type = contollerType,
-                Enable = true,
-                NeedAuthorize = contollerType.GetCustomAttribute<AuthorizeAttribute>() != null,
-                Methods = contollerType.GetTypeInfo().DeclaredMethods.Where(m =>
-                    m.IsStatic == false &&
-                    m.IsPublic &&
-                    m.IsSpecialName == false &&
-                    m.DeclaringType != typeof(MicroServiceControllerBase)
-                    && m.DeclaringType != typeof(object)).OrderBy(m=>m.Name).Select(m=>new TypeMethodInfo { 
-                        Method = m,
-                        NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
-                    }).ToArray()
-            };
-            
+                ServiceNames.Add(serviceName);
+            }
+
+            _services.AddTransient(contollerType);
+            _ControllerFactory.RegisterController(contollerType, serviceName);
         }
 
         /// <summary>
@@ -208,7 +198,7 @@ namespace JMS
         /// <param name="enable"></param>
         public void SetServiceEnable(string serviceName, bool enable)
         {
-            ServiceNames[serviceName].Enable = enable;
+            _ControllerFactory.SetControllerEnable(serviceName, enable);
             _GatewayConnector?.OnServiceInfoChanged();
         }
 
@@ -267,6 +257,9 @@ namespace JMS
             _services.AddSingleton<MicroServiceHost>(this);
             _services.AddSingleton<TransactionDelegateCenter>();
             _services.AddSingleton<SafeTaskFactory>();
+
+           
+            _services.AddSingleton<ControllerFactory>(_ControllerFactory);
         }
 
         public MicroServiceHost Build(int port,NetAddress[] gatewayAddresses)

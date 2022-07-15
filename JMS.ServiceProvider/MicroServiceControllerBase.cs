@@ -132,6 +132,7 @@ public class MicroServiceControllerBase
 
 class ControllerTypeInfo
 {
+    public string ServiceName;
     public Type Type;
     public TypeMethodInfo[] Methods;
     public bool Enable;

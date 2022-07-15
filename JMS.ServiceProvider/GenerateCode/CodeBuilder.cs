@@ -12,15 +12,18 @@ using Newtonsoft.Json.Schema;
 using System.Xml;
 using JMS.AssemblyDocumentReader;
 using JMS.Infrastructures;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace JMS.GenerateCode
 {
     class CodeBuilder : ICodeBuilder
     {
         MicroServiceHost _microServiceProvider;
+        ControllerFactory _controllerFactory;
         public CodeBuilder(MicroServiceHost microServiceProvider)
         {
             _microServiceProvider = microServiceProvider;
+            _controllerFactory = _microServiceProvider.ServiceProvider.GetService<ControllerFactory>();
         }
        
 
@@ -83,7 +86,7 @@ namespace JMS.GenerateCode
         public string GenerateCode(string nameSpace,string className, string serviceName)
         {
             CodeHelper.CurrentCreatedSubTypes.Value = new Dictionary<Type, string>();
-            var controllerTypeInfo = _microServiceProvider.ServiceNames[serviceName];
+            var controllerTypeInfo = _controllerFactory.GetControllerType(serviceName);
             CodeHelper.CurrentControllerType.Value = controllerTypeInfo.Type;
 
             var typeDoc = DocumentReader.GetTypeDocument(controllerTypeInfo.Type);

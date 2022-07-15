@@ -17,6 +17,7 @@ namespace JMS.Applications
 {
     class InvokeRequestHandler : IRequestHandler
     {
+        ControllerFactory _controllerFactory;
         IGatewayConnector _gatewayConnector;
         FaildCommitBuilder _faildCommitBuilder;
         MicroServiceHost _MicroServiceProvider;
@@ -28,8 +29,10 @@ namespace JMS.Applications
              ILogger<TransactionDelegate> loggerTran,
             MicroServiceHost microServiceProvider,
             IGatewayConnector gatewayConnector,
+            ControllerFactory controllerFactory,
             FaildCommitBuilder faildCommitBuilder)
         {
+            this._controllerFactory = controllerFactory;
             this._gatewayConnector = gatewayConnector;
             this._faildCommitBuilder = faildCommitBuilder;
             _transactionDelegateCenter = transactionDelegateCenter;
@@ -50,7 +53,7 @@ namespace JMS.Applications
             try
             {
                 MicroServiceControllerBase.RequestingCommand.Value = cmd;
-                var controllerTypeInfo = _MicroServiceProvider.ServiceNames[cmd.Service];
+                var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
                 object userContent = null;
                 if (controllerTypeInfo.NeedAuthorize)
@@ -62,7 +65,7 @@ namespace JMS.Applications
                     }
                 }
 
-                controller = (MicroServiceControllerBase)_MicroServiceProvider.ServiceProvider.GetService(controllerTypeInfo.Type);
+                controller = _controllerFactory.CreateController(controllerTypeInfo);
                 controller.UserContent = userContent;
                 controller.NetClient = netclient;
                 controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();

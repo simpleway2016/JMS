@@ -23,6 +23,7 @@ namespace JMS.Domains
     /// </summary>
     class GatewayConnector : IGatewayConnector
     {
+        ControllerFactory _controllerFactory;
         NetClient _client;
         ILogger<GatewayConnector> _logger;
         MicroServiceHost _microServiceHost;
@@ -40,15 +41,17 @@ namespace JMS.Domains
         public GatewayConnector(MicroServiceHost microServiceHost,
             ICpuInfo cpuInfo,
             SSLConfiguration sSLConfiguration,
-            ILogger<GatewayConnector> logger,IKeyLocker keyLocker)
+            ControllerFactory controllerFactory,
+            ILogger<GatewayConnector> logger, IKeyLocker keyLocker)
         {
+            this._controllerFactory = controllerFactory;
             _microServiceHost = microServiceHost;
             _logger = logger;
             _keyLocker = keyLocker;
             _cpuInfo = cpuInfo;
             _SSLConfiguration = sSLConfiguration;
         }
-       
+
         public NetClient CreateClient(NetAddress addr)
         {
             return new GatewayClient(addr, _SSLConfiguration);
@@ -94,7 +97,7 @@ namespace JMS.Domains
                     Type = CommandType.ServiceNameListChanged,
                     Content = new RegisterServiceInfo
                     {
-                        ServiceNames = _microServiceHost.ServiceNames.Where(m=>m.Value.Enable).Select(m=>m.Key).ToArray(),
+                        ServiceNames = _controllerFactory.GetAllControllers().Where(m=>m.Enable).Select(m=>m.ServiceName).ToArray(),
                         Port = (_microServiceHost.ServiceAddress == null || _microServiceHost.ServiceAddress.Port == 0) ? _microServiceHost.ServicePort : _microServiceHost.ServiceAddress.Port,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
@@ -214,7 +217,7 @@ namespace JMS.Domains
                     Type = CommandType.RegisterSerivce,
                     Content = new RegisterServiceInfo
                     {
-                        ServiceNames = _microServiceHost.ServiceNames.Where(m => m.Value.Enable).Select(m => m.Key).ToArray(),
+                        ServiceNames = _controllerFactory.GetAllControllers().Where(m => m.Enable).Select(m => m.ServiceName).ToArray(),
                         Port = (_microServiceHost.ServiceAddress == null || _microServiceHost.ServiceAddress.Port == 0) ? _microServiceHost.ServicePort : _microServiceHost.ServiceAddress.Port,
                         ServiceAddress = _microServiceHost.ServiceAddress == null?null: _microServiceHost.ServiceAddress.Address,
                         MaxThread = Environment.ProcessorCount,

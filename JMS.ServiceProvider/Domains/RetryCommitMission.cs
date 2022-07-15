@@ -15,11 +15,13 @@ namespace JMS.RetryCommit
 {
     internal class RetryCommitMission
     {
+        ControllerFactory _controllerFactory;
         MicroServiceHost _microServiceHost;
         ILogger<TransactionDelegate> _loggerTran;
         IGatewayConnector _gatewayConnector;
-        public RetryCommitMission(MicroServiceHost microServiceHost, ILogger<TransactionDelegate> loggerTran)
+        public RetryCommitMission(MicroServiceHost microServiceHost, ControllerFactory controllerFactory, ILogger<TransactionDelegate> loggerTran)
         {
+            this._controllerFactory = controllerFactory;
             this._microServiceHost = microServiceHost;
             this._loggerTran = loggerTran;
 
@@ -158,9 +160,9 @@ namespace JMS.RetryCommit
             try
             {
                 MicroServiceControllerBase.RequestingCommand.Value = cmd;
-                var controllerTypeInfo = _microServiceHost.ServiceNames[cmd.Service];
+                var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
-                controller = (MicroServiceControllerBase)_microServiceHost.ServiceProvider.GetService(controllerTypeInfo.Type);
+                controller = _controllerFactory.CreateController(controllerTypeInfo);
                 controller.UserContent = userContent;
                 controller._keyLocker = _microServiceHost.ServiceProvider.GetService<IKeyLocker>();
 
