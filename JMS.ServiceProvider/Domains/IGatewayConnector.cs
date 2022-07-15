@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace JMS.Interfaces
+namespace JMS.Domains
 {
     interface IGatewayConnector
     {
@@ -11,7 +11,7 @@ namespace JMS.Interfaces
         NetClient CreateClient(NetAddress addr);
         void DisconnectGateway();
         void ConnectAsync();
-        void OnServiceNameListChanged();
+        void OnServiceInfoChanged();
         /// <summary>
         /// 检查事务是否已成功
         /// </summary>

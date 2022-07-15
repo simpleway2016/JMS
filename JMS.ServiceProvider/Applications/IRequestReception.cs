@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
-namespace JMS.Interfaces
+namespace JMS.Applications
 {
     interface IRequestReception
     {

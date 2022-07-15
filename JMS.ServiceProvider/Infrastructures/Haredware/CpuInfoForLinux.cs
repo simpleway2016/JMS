@@ -1,4 +1,4 @@
-﻿using JMS.Interfaces.Hardware;
+﻿using JMS.Infrastructures.Hardware;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,7 +7,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 
-namespace JMS.Impls.Haredware
+namespace JMS.Infrastructures.Haredware
 {
     class CpuInfoForLinux : ICpuInfo
     {

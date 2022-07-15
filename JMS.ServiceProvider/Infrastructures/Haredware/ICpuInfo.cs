@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace JMS.Interfaces.Hardware
+namespace JMS.Infrastructures.Hardware
 {
     interface ICpuInfo
     {

@@ -1,6 +1,6 @@
 ﻿using JMS.GenerateCode;
-using JMS.Impls;
-using JMS.Interfaces;
+using JMS.Applications;
+using JMS.Domains;
 using JMS.ScheduleTask;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,10 +14,13 @@ using Way.Lib;
 using System.Reflection;
 
 using System.Runtime.InteropServices;
-using JMS.Interfaces.Hardware;
-using JMS.Impls.Haredware;
+using JMS.Infrastructures.Hardware;
+using JMS.Infrastructures.Haredware;
 using System.Security.Cryptography.X509Certificates;
 using JMS.RetryCommit;
+using JMS.Applications;
+using JMS.Domains;
+using JMS.Infrastructures;
 
 namespace JMS
 {
@@ -55,7 +58,7 @@ namespace JMS
                 if (_Description != value)
                 {
                     _Description = value;
-                    _GatewayConnector?.OnServiceNameListChanged();
+                    _GatewayConnector?.OnServiceInfoChanged();
                 }
             }
         }
@@ -81,7 +84,7 @@ namespace JMS
                 if (_ClientCheckCode != value)
                 {
                     _ClientCheckCode = value;
-                    _GatewayConnector?.OnServiceNameListChanged();
+                    _GatewayConnector?.OnServiceInfoChanged();
                 }
             }
         }
@@ -206,7 +209,7 @@ namespace JMS
         public void SetServiceEnable(string serviceName, bool enable)
         {
             ServiceNames[serviceName].Enable = enable;
-            _GatewayConnector?.OnServiceNameListChanged();
+            _GatewayConnector?.OnServiceInfoChanged();
         }
 
 

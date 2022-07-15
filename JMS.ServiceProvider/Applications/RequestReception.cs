@@ -1,4 +1,4 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Domains;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using JMS.Dtos;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 
-namespace JMS.Impls
+namespace JMS.Applications
 {
     class RequestReception : IRequestReception
     {

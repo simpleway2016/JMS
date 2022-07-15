@@ -1,11 +1,11 @@
-﻿using JMS.Interfaces.Hardware;
+﻿using JMS.Infrastructures.Hardware;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 
-namespace JMS.Impls.Haredware
+namespace JMS.Infrastructures.Haredware
 {
     class CpuInfoForWin : ICpuInfo
     {

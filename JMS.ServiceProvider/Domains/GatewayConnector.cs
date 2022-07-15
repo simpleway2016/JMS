@@ -1,5 +1,5 @@
 ﻿using JMS.Dtos;
-using JMS.Interfaces;
+using JMS.Domains;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -13,10 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using JMS.Net;
-using JMS.Interfaces.Hardware;
+using JMS.Infrastructures.Hardware;
+using JMS.Infrastructures;
 
-namespace JMS.Impls
+namespace JMS.Domains
 {
     /// <summary>
     /// 连接主网关，和维持主网关的心跳
@@ -79,7 +79,7 @@ namespace JMS.Impls
         {
             new Thread(connect).Start();
         }
-        public void OnServiceNameListChanged()
+        public void OnServiceInfoChanged()
         {
             while (!_ready)
                 Thread.Sleep(1000);

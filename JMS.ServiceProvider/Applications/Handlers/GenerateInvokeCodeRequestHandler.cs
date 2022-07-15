@@ -1,5 +1,5 @@
 ﻿using JMS.Dtos;
-using JMS.Interfaces;
+using JMS.Domains;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,8 +7,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Way.Lib;
+using JMS.Infrastructures;
+using JMS.GenerateCode;
 
-namespace JMS.Impls
+namespace JMS.Applications
 {
     class GenerateInvokeCodeRequestHandler : IRequestHandler
     {

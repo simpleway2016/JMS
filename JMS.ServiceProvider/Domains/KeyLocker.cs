@@ -1,4 +1,4 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Domains;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Net.Sockets;
 
-namespace JMS.Impls
+namespace JMS.Domains
 {
     class KeyLocker : IKeyLocker
     {

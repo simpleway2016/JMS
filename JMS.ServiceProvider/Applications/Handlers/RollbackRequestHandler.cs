@@ -1,11 +1,11 @@
 ﻿using JMS.Dtos;
-using JMS.Interfaces;
+using JMS.Domains;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
 
-namespace JMS.Impls
+namespace JMS.Applications
 {
     class RollbackRequestHandler : IRequestHandler
     {

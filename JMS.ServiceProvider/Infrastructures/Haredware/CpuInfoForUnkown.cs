@@ -1,9 +1,9 @@
-﻿using JMS.Interfaces.Hardware;
+﻿using JMS.Infrastructures.Hardware;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace JMS.Impls.Haredware
+namespace JMS.Infrastructures.Haredware
 {
     class CpuInfoForUnkown : ICpuInfo
     {

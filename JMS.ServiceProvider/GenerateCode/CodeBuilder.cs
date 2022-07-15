@@ -1,4 +1,4 @@
-﻿using JMS.Interfaces;
+﻿using JMS.Domains;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,6 +11,7 @@ using System.IO;
 using Newtonsoft.Json.Schema;
 using System.Xml;
 using JMS.AssemblyDocumentReader;
+using JMS.Infrastructures;
 
 namespace JMS.GenerateCode
 {

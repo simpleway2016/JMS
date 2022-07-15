@@ -1,6 +1,6 @@
 ﻿using JMS;
 using JMS.Dtos;
-using JMS.Interfaces;
+using JMS.Domains;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
