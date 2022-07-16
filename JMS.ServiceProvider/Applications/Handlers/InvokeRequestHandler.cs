@@ -21,11 +21,9 @@ namespace JMS.Applications
         IGatewayConnector _gatewayConnector;
         FaildCommitBuilder _faildCommitBuilder;
         MicroServiceHost _MicroServiceProvider;
-        TransactionDelegateCenter _transactionDelegateCenter;
         ILogger<InvokeRequestHandler> _logger;
         ILogger<TransactionDelegate> _loggerTran;
-        public InvokeRequestHandler(TransactionDelegateCenter transactionDelegateCenter,
-            ILogger<InvokeRequestHandler> logger,
+        public InvokeRequestHandler(ILogger<InvokeRequestHandler> logger,
              ILogger<TransactionDelegate> loggerTran,
             MicroServiceHost microServiceProvider,
             IGatewayConnector gatewayConnector,
@@ -35,7 +33,6 @@ namespace JMS.Applications
             this._controllerFactory = controllerFactory;
             this._gatewayConnector = gatewayConnector;
             this._faildCommitBuilder = faildCommitBuilder;
-            _transactionDelegateCenter = transactionDelegateCenter;
             _MicroServiceProvider = microServiceProvider;
             _logger = logger;
             _loggerTran = loggerTran;
@@ -46,6 +43,7 @@ namespace JMS.Applications
         static DateTime LastInvokingMsgStringTime = DateTime.Now.AddDays(-1);
         public void Handle(NetClient netclient, InvokeCommand cmd)
         {
+            var originalTimeout = netclient.ReadTimeout;
             TransactionDelegate transactionDelegate = null;
             MicroServiceControllerBase controller = null;
             object[] parameters = null;
@@ -176,110 +174,17 @@ namespace JMS.Applications
                 {
                     return;
                 }
-
-
-                netclient.ReadTimeout = 0;
-                while (true)
+                             
+                if(transactionDelegate != null)
                 {
-                    cmd = netclient.ReadServiceObject<InvokeCommand>();
-                    if (cmd.Type == InvokeType.CommitTranaction)
-                    {
-                        var tran = transactionDelegate;
-                        transactionDelegate = null;
-
-                        if (tran != null && tran.CommitAction != null)
-                        {
-                            try
-                            {
-                                tran.CommitAction();
-                                if (tran.RetryCommitFilePath != null)
-                                {
-                                    _faildCommitBuilder.CommitSuccess(tran.RetryCommitFilePath);
-                                    tran.RetryCommitFilePath = null;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                if (tran.RetryCommitFilePath != null)
-                                {
-                                    _faildCommitBuilder.CommitFaild(tran.RetryCommitFilePath);
-                                    tran.RetryCommitFilePath = null;
-                                }
-                                _loggerTran?.LogInformation("事务{0}提交失败,{1}", tran.TransactionId, ex.Message);
-                                transactionDelegate = null;
-                                throw ex;
-                            }
-
-                            _loggerTran?.LogInformation("事务{0}提交完毕", tran.TransactionId);
-                        }
-                        netclient.WriteServiceData(new InvokeResult() { Success = true });
-                        return;
-                    }
-                    else if (cmd.Type == InvokeType.RollbackTranaction)
-                    {
-                        var tran = transactionDelegate;
-                        transactionDelegate = null;
-
-                        if (tran != null && tran.RollbackAction != null)
-                        {
-                            tran.RollbackAction();
-                            if (tran.RetryCommitFilePath != null)
-                            {
-                                _faildCommitBuilder.Rollback(tran.RetryCommitFilePath);
-                                tran.RetryCommitFilePath = null;
-                            }
-                            _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", tran.TransactionId, tran.RequestCommand.ToJsonString());
-                        }
-                        netclient.WriteServiceData(new InvokeResult() { Success = true });
-                        return;
-                    }
-                    else if (cmd.Type == InvokeType.HealthyCheck)
-                    {
-                        var tran = transactionDelegate;
-                        if (tran.CommitAction != null)
-                        {
-                            tran.RetryCommitFilePath = _faildCommitBuilder.Build(tran.TransactionId, tran.RequestCommand, controller.UserContent);
-                        }
-                        _loggerTran?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", tran.TransactionId, tran.RequestCommand.ToJsonString(), controller.UserContent);
-                        netclient.WriteServiceData(new InvokeResult
-                        {
-                            Success = transactionDelegate.AgreeCommit
-                        });
-                    }
-                }
-            }
-            catch (SocketException)
-            {
-                if (transactionDelegate != null)
-                {
-                    Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
-                    if (_gatewayConnector.CheckTransaction(transactionDelegate.TransactionId))
-                    {
-                        transactionDelegate.CommitAction();
-
-                        if (transactionDelegate.RetryCommitFilePath != null)
-                        {
-                            _faildCommitBuilder.Rollback(transactionDelegate.RetryCommitFilePath);
-                            transactionDelegate.RetryCommitFilePath = null;
-                        }
-                    }
-                    else
-                    {
-                        transactionDelegate.RollbackAction();
-
-                        if (transactionDelegate.RetryCommitFilePath != null)
-                        {
-                            _faildCommitBuilder.Rollback(transactionDelegate.RetryCommitFilePath);
-                            transactionDelegate.RetryCommitFilePath = null;
-                        }
-                    }
+                    netclient.ReadTimeout = 0;
+                    transactionDelegate.UserContent = controller.UserContent;
+                    transactionDelegate.WaitForCommand(_gatewayConnector, _faildCommitBuilder, netclient,_loggerTran);
                     transactionDelegate = null;
                 }
-                return;
             }
             catch (ResponseEndException)
             {
-                return;
             }
             catch (Exception ex)
             {
@@ -328,6 +233,7 @@ namespace JMS.Applications
             }
             finally
             {
+                netclient.ReadTimeout = originalTimeout;
                 MicroServiceControllerBase.Current = null;
                 controller?.OnUnLoad();
             }

@@ -16,7 +16,6 @@ namespace JMS
     {
         SafeTaskFactory _safeTaskFactory;
         public MicroServiceHost _microServiceHost;
-        TransactionDelegateCenter _transactionDelegateCenter;
         bool _ProcessExited = false;
         public bool ProcessExited => _ProcessExited;
 
@@ -24,13 +23,11 @@ namespace JMS
         ScheduleTaskManager _scheduleTaskManager;
         List<Action> _missions = new List<Action>();
         public ProcessExitHandler(
-            TransactionDelegateCenter transactionDelegateCenter,
             ScheduleTaskManager scheduleTaskManager,
             SafeTaskFactory safeTaskFactory,
             ILogger<ProcessExitHandler> logger)
         {
             this._safeTaskFactory = safeTaskFactory;
-            _transactionDelegateCenter = transactionDelegateCenter;
             _logger = logger;
             _scheduleTaskManager = scheduleTaskManager;
         }
@@ -87,9 +84,6 @@ namespace JMS
                 _logger?.LogError(ex, ex.Message);
             }
 
-            _logger?.LogInformation("等待事务托管中心事务清零");
-            while (_transactionDelegateCenter.List.Count > 0)
-                Thread.Sleep(1000);
 
             _logger?.LogInformation("停止所有定时任务");
             _scheduleTaskManager.StopTasks();

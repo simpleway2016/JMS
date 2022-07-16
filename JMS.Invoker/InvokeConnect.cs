@@ -22,10 +22,7 @@ namespace JMS
     {
        
         internal NetClient NetClient;
-        /// <summary>
-        /// 重连次数
-        /// </summary>
-        internal int ReConnectCount = 0;
+
         public InvokingInformation InvokingInfo { get; private set; }
         public InvokeCommand Command { get; private set; }
         public InvokeConnect(string serviceName , RegisterServiceLocation location)
@@ -35,12 +32,6 @@ namespace JMS
             this.InvokingInfo.ServiceLocation = location;
         }
 
-       public void ReConnect(IRemoteClient tran)
-        {
-            ReConnectCount++;
-            NetClient = NetClientPool.CreateClient( tran.ProxyAddress, this.InvokingInfo.ServiceLocation.ServiceAddress, this.InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
-            NetClient.ReadTimeout = tran.Timeout;
-        }
 
         public T Invoke<T>(string method, IRemoteClient tran, params object[] parameters)
         {

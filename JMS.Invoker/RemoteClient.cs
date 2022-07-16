@@ -604,47 +604,23 @@ namespace JMS
                     Parallel.For(0, _Connects.Count, (i) =>
                     {
                         var connect = _Connects[i];
-                        bool reconnect = false;
-                        while (true)
+                        try
                         {
-                            try
+                            connect.NetClient.WriteServiceData(new InvokeCommand()
                             {
-                                if (reconnect)
-                                {
-                                    Thread.Sleep(1000);
-                                    connect.ReConnect(this);
-                                }
-
-                                connect.NetClient.WriteServiceData(new InvokeCommand()
-                                {
-                                    Type = invokeType,
-                                    Header = this.GetCommandHeader()
-                                });
-                                var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
-                                if (ret.Success == false)
-                                {
-                                    errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
-                                }
-                                break;
-                            }
-                            catch (SocketException ex)
+                                Type = invokeType,
+                                Header = this.GetCommandHeader()
+                            });
+                            var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
+                            if (ret.Success == false)
                             {
-                                if (connect.ReConnectCount < 10)
-                                {
-                                    connect.NetClient.Dispose();
-                                    reconnect = true;
-                                }
-                                else
-                                {
-                                    errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
-                                    break;
-                                }
+                                errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
                             }
-                            catch (Exception ex)
-                            {
-                                errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
-                                break;
-                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
+                            return;
                         }
 
                         NetClientPool.AddClientToPool(connect.NetClient);

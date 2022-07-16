@@ -24,7 +24,7 @@ namespace JMS
             return "abc";
         }
         public void Test2(TransactionDelegate tran)
-        {            
+        {
             tran.CommitAction = () => {
                 _logger.LogInformation("Controller1 Test2 提交事务");
             };
