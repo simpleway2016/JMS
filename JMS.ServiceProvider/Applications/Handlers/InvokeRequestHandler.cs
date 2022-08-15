@@ -236,6 +236,7 @@ namespace JMS.Applications
                 netclient.ReadTimeout = originalTimeout;
                 MicroServiceControllerBase.Current = null;
                 controller?.OnUnLoad();
+                MicroServiceControllerBase.RequestingCommand.Value = null;
             }
         }
     }
