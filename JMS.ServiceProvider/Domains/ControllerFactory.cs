@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,18 +80,18 @@ namespace JMS.Domains
         /// 创建controller
         /// </summary>
         /// <returns></returns>
-        public MicroServiceControllerBase CreateController(string serviceName)
+        public MicroServiceControllerBase CreateController(IServiceScope serviceScope, string serviceName)
         {
             if (_controllerDict.TryGetValue(serviceName, out ControllerTypeInfo o))
             {
-                return (MicroServiceControllerBase)_microServiceHost.ServiceProvider.GetService(o.Type);
+                return (MicroServiceControllerBase)serviceScope.ServiceProvider.GetService(o.Type);
             }
             throw new Exception($"服务{serviceName}不存在");
         }
 
-        public MicroServiceControllerBase CreateController(ControllerTypeInfo o)
+        public MicroServiceControllerBase CreateController( IServiceScope serviceScope, ControllerTypeInfo o)
         {
-            return (MicroServiceControllerBase)_microServiceHost.ServiceProvider.GetService(o.Type);
+            return (MicroServiceControllerBase)serviceScope.ServiceProvider.GetService(o.Type);
         }
     }
 }

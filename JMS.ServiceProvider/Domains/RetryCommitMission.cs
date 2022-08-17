@@ -157,75 +157,78 @@ namespace JMS.RetryCommit
             MicroServiceControllerBase controller = null;
             object[] parameters = null;
 
-            try
+            using (IServiceScope serviceScope = _microServiceHost.ServiceProvider.CreateScope())
             {
-                MicroServiceControllerBase.RequestingCommand.Value = cmd;
-                var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
-
-                controller = _controllerFactory.CreateController(controllerTypeInfo);
-                controller.UserContent = userContent;
-                controller._keyLocker = _microServiceHost.ServiceProvider.GetService<IKeyLocker>();
-
-
-                var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
-                if (methodInfo == null)
-                    throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
-
-
-                MicroServiceControllerBase.Current = controller;
-
-                var parameterInfos = methodInfo.Method.GetParameters();
-                object result = null;
-
-                int startPIndex = 0;
-                if (parameterInfos.Length > 0)
+                try
                 {
-                    parameters = new object[parameterInfos.Length];
-                    if (parameterInfos[0].ParameterType == typeof(TransactionDelegate))
+                    MicroServiceControllerBase.RequestingCommand.Value = cmd;
+                    var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
+
+                    controller = _controllerFactory.CreateController(serviceScope, controllerTypeInfo);
+                    controller.UserContent = userContent;
+                    controller._keyLocker = _microServiceHost.ServiceProvider.GetService<IKeyLocker>();
+
+
+                    var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
+                    if (methodInfo == null)
+                        throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
+
+
+                    MicroServiceControllerBase.Current = controller;
+
+                    var parameterInfos = methodInfo.Method.GetParameters();
+                    object result = null;
+
+                    int startPIndex = 0;
+                    if (parameterInfos.Length > 0)
                     {
-                        startPIndex = 1;
-                        parameters[0] = transactionDelegate = new TransactionDelegate(cmd.Header["TranId"]);
+                        parameters = new object[parameterInfos.Length];
+                        if (parameterInfos[0].ParameterType == typeof(TransactionDelegate))
+                        {
+                            startPIndex = 1;
+                            parameters[0] = transactionDelegate = new TransactionDelegate(cmd.Header["TranId"]);
+                            transactionDelegate.RequestCommand = cmd;
+                        }
+                    }
+
+                    controller.OnBeforeAction(cmd.Method, parameters);
+                    if (parameterInfos.Length > 0)
+                    {
+                        for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
+                        {
+                            string pvalue = cmd.Parameters[index];
+                            if (pvalue == null)
+                                continue;
+
+                            parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
+
+                        }
+
+                    }
+                    result = methodInfo.Method.Invoke(controller, parameters);
+                    controller.OnAfterAction(cmd.Method, parameters);
+                    if (transactionDelegate != null && (transactionDelegate.CommitAction != null || transactionDelegate.RollbackAction != null))
+                    {
+                    }
+                    else if (controller.TransactionControl != null && (controller.TransactionControl.CommitAction != null || controller.TransactionControl.RollbackAction != null))
+                    {
+                        transactionDelegate = controller.TransactionControl;
                         transactionDelegate.RequestCommand = cmd;
                     }
-                }
 
-                controller.OnBeforeAction(cmd.Method, parameters);
-                if (parameterInfos.Length > 0)
-                {
-                    for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
+                    if (transactionDelegate != null && transactionDelegate.CommitAction != null)
                     {
-                        string pvalue = cmd.Parameters[index];
-                        if (pvalue == null)
-                            continue;
-
-                        parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
-
+                        transactionDelegate.CommitAction();
                     }
+                    transactionDelegate = null;
 
                 }
-                result = methodInfo.Method.Invoke(controller, parameters);
-                controller.OnAfterAction(cmd.Method, parameters);
-                if (transactionDelegate != null && (transactionDelegate.CommitAction != null || transactionDelegate.RollbackAction != null))
+                finally
                 {
+                    MicroServiceControllerBase.Current = null;
+                    controller?.OnUnLoad();
+                    MicroServiceControllerBase.RequestingCommand.Value = null;
                 }
-                else if (controller.TransactionControl != null && (controller.TransactionControl.CommitAction != null || controller.TransactionControl.RollbackAction != null))
-                {
-                    transactionDelegate = controller.TransactionControl;
-                    transactionDelegate.RequestCommand = cmd;
-                }
-
-                if (transactionDelegate != null && transactionDelegate.CommitAction != null)
-                {
-                    transactionDelegate.CommitAction();
-                }
-                transactionDelegate = null;
-
-            }
-            finally
-            {
-                MicroServiceControllerBase.Current = null;
-                controller?.OnUnLoad();
-                MicroServiceControllerBase.RequestingCommand.Value = null;
             }
         }
     }
