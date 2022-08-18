@@ -223,7 +223,7 @@ namespace UnitTest
         }
 
 
-        [TestMethod]
+        //[TestMethod]
         public void Performance()
         {
             StartGateway();
