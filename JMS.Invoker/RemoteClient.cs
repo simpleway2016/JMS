@@ -677,6 +677,13 @@ namespace JMS
             {
                 RollbackTransaction();
             }
+            else
+            {
+                if (_Tasks.Count > 0)
+                {
+                    waitTasks();
+                }
+            }
         }
     }
 }

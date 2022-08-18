@@ -63,6 +63,7 @@ namespace JMS
                 Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
                 if (gatewayConnector.CheckTransaction(this.TransactionId))
                 {
+                    //网关告知事务已成功，需要提交事务
                     this.CommitAction();
 
                     if (this.RetryCommitFilePath != null)
@@ -73,6 +74,7 @@ namespace JMS
                 }
                 else
                 {
+                    //网关告知事务识别，需要回滚事务
                     this.RollbackAction();
 
                     if (this.RetryCommitFilePath != null)

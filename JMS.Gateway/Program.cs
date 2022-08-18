@@ -16,7 +16,7 @@ using JMS.Infrastructures;
 
 namespace JMS
 {
-    class Program
+    public class GatewayProgram
     {
         static void Main(string[] args)
         {
@@ -37,13 +37,12 @@ namespace JMS
             CommandArgParser cmdArg = new CommandArgParser(args);
             port = cmdArg.TryGetValue<int>("port", port);
 
-            var datafolder = configuration.GetValue<string>("DataFolder");
-            if (!System.IO.Directory.Exists(datafolder))
-            {
-                System.IO.Directory.CreateDirectory(datafolder);
-            }
-            datafolder = cmdArg.TryGetValue<string>("DataFolder", datafolder);
+            Run(configuration,port);
+        }
 
+        public static void Run(IConfiguration configuration,int port)
+        {
+           
             var sharefolder = configuration.GetValue<string>("ShareFolder");
             if (!System.IO.Directory.Exists(sharefolder))
             {
@@ -59,12 +58,12 @@ namespace JMS
             services.AddSingleton<IConfiguration>(configuration);
             services.AddSingleton<GatewayRefereeClient>();
             services.AddSingleton<TransactionStatusManager>();
-            services.AddSingleton<IRequestReception,RequestReception>();
+            services.AddSingleton<IRequestReception, RequestReception>();
             services.AddSingleton<IRegisterServiceManager, RegisterServiceManager>();
             services.AddSingleton<ICommandHandlerRoute, CommandHandlerRoute>();
             services.AddSingleton<Gateway>();
             services.AddSingleton<LockKeyManager>();
-            services.AddTransient<IMicroServiceReception,MicroServiceReception>();
+            services.AddTransient<IMicroServiceReception, MicroServiceReception>();
             services.AddSingleton<TransactionIdBuilder>();
             services.AddSingleton<FileChangeWatcher>();
             services.AddTransient<ListenFileChangeReception>();
@@ -85,7 +84,7 @@ namespace JMS
 
             //SSL
             var certPath = configuration.GetValue<string>("SSL:Cert");
-            if(!string.IsNullOrEmpty(certPath))
+            if (!string.IsNullOrEmpty(certPath))
             {
                 gateway.ServerCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, configuration.GetValue<string>("SSL:Password"));
                 gateway.AcceptCertHash = configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
