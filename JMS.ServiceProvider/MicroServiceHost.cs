@@ -25,8 +25,10 @@ using System.Collections.Concurrent;
 
 namespace JMS
 {
-    public class MicroServiceHost
+    public class MicroServiceHost:IDisposable
     {
+        bool _disposed;
+        TcpListener _tcpListener;
         public string Id { get; private set; }
         ILogger<MicroServiceHost> _logger;
         IGatewayConnector _GatewayConnector;
@@ -36,7 +38,6 @@ namespace JMS
         public NetAddress[] AllGatewayAddresses { get; private set; }
 
         internal List<string> ServiceNames = new List<string>();
-        internal int ServicePort;
 
         /// <summary>
         /// 当前处理中的请求数
@@ -47,6 +48,7 @@ namespace JMS
         /// 设置微服务的地址，如果为null，网关会使用微服务的外网ip作为服务地址
         /// </summary>
         public NetAddress ServiceAddress { get; set; }
+        public int ServicePort { get; private set; }
 
         private string _Description;
         /// <summary>
@@ -281,8 +283,8 @@ namespace JMS
 
             var sslConfig = ServiceProvider.GetService<SSLConfiguration>();
 
-            TcpListener listener = new TcpListener(ServicePort);
-            listener.Start();
+            _tcpListener = new TcpListener(ServicePort);
+            _tcpListener.Start();
             _logger?.LogInformation("Service host started , port:{0}",ServicePort);
             _logger?.LogInformation("Gateways:" + AllGatewayAddresses.ToJsonString());
 
@@ -326,7 +328,7 @@ namespace JMS
 
                 while (true)
                 {
-                    var socket = listener.AcceptSocket();
+                    var socket = _tcpListener.AcceptSocket();
                     if (processExitHandler.ProcessExited)
                         break;
 
@@ -335,8 +337,14 @@ namespace JMS
             }
         }
 
-
-      
-
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _disposed = true;
+                _tcpListener.Stop();
+                _GatewayConnector.DisconnectGateway();
+            }
+        }
     }
 }

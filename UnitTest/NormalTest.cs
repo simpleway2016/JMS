@@ -20,6 +20,7 @@ namespace UnitTest
     {
         int _gateWayPort = 9800;
         int _UserInfoServicePort = 9801;
+        int _CrashServicePort = 9802;
         bool _userInfoServiceReady = false;
         public void StartGateway()
         {
@@ -74,10 +75,40 @@ namespace UnitTest
 
                 services.AddScoped<UserInfoDbContext>();
                 var msp = new MicroServiceHost(services);
-
+                msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + _UserInfoServicePort;
                 msp.Register<TestUserInfoController>("UserInfoService");
                 msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
                 msp.Build(_UserInfoServicePort, gateways)
+                    .Run();
+            });
+        }
+
+        public void StartCrashServiceHost(int port)
+        {
+            Task.Run(() =>
+            {
+
+                WaitGatewayReady();
+                ServiceCollection services = new ServiceCollection();
+
+                var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+                services.AddLogging(loggingBuilder =>
+                {
+                    loggingBuilder.AddConsole(); // 将日志输出到控制台
+                });
+
+                services.AddScoped<UserInfoDbContext>();
+                var msp = new MicroServiceHost(services);
+                msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + port;
+                msp.Register<TestCrashController>("CrashService");
+                msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
+                msp.Build(port, gateways)
                     .Run();
             });
         }
@@ -91,6 +122,7 @@ namespace UnitTest
         [TestMethod]
         public void Commit()
         {
+            UserInfoDbContext.Reset();
             StartGateway();
             StartUserInfoServiceHost();
 
@@ -119,7 +151,6 @@ namespace UnitTest
                 serviceClient.InvokeAsync("SetFather", "Tom");
                 serviceClient.InvokeAsync("SetMather", "Lucy");
 
-                Thread.Sleep(2000);
                 client.CommitTransaction();
             }
 
@@ -135,6 +166,7 @@ namespace UnitTest
         [TestMethod]
         public void Rollback()
         {
+            UserInfoDbContext.Reset();
             StartGateway();
             StartUserInfoServiceHost();
 
@@ -162,12 +194,7 @@ namespace UnitTest
                 serviceClient.Invoke("SetAge", 28);
                 serviceClient.InvokeAsync("SetFather", "Tom");
                 serviceClient.InvokeAsync("SetMather", "Lucy");
-
-                Thread.Sleep(2000);
                 client.RollbackTransaction();
-
-               
-
 
             }
 
@@ -185,6 +212,7 @@ namespace UnitTest
         [TestMethod]
         public void NoTransaction()
         {
+            UserInfoDbContext.Reset();
             StartGateway();
             StartUserInfoServiceHost();
 
@@ -219,6 +247,66 @@ namespace UnitTest
                 UserInfoDbContext.FinallyAge != 28 ||
                 UserInfoDbContext.FinallyFather != "Tom" ||
                 UserInfoDbContext.FinallyMather != "Lucy")
+                throw new Exception("结果不正确");
+        }
+
+        /// <summary>
+        /// 测试提交时，有个服务宕机
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        [TestMethod]
+        public void TestCrash()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+            StartCrashServiceHost(_CrashServicePort);
+
+            //等待网关就绪
+            WaitGatewayReady();
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
+                }
+
+                var crashService = client.TryGetMicroService("CrashService");
+                while (crashService == null)
+                {
+                    Thread.Sleep(10);
+                    crashService = client.TryGetMicroService("CrashService");
+                }
+
+                client.BeginTransaction();
+
+                serviceClient.Invoke("SetUserName", "Jack");
+                crashService.Invoke("SetText", "abc");
+                try
+                {
+                    client.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+
+                    Debug.WriteLine(ex.Message);
+                }
+               
+            }
+
+            Thread.Sleep(7000);//等待7秒，失败的事务
+
+            if (UserInfoDbContext.FinallyUserName != "Jack" || TestCrashController.FinallyText != "abc")
                 throw new Exception("结果不正确");
         }
 

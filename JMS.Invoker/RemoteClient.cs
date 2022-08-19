@@ -535,6 +535,7 @@ namespace JMS
 
                 _SupportTransaction = false;
             }
+            buildNewTranId();
         }
 
         List<TransactionException> endRequest(InvokeType invokeType)
@@ -669,6 +670,13 @@ namespace JMS
 
                 _SupportTransaction = false;
             }
+            buildNewTranId();
+        }
+
+        void buildNewTranId()
+        {
+            if(!string.IsNullOrEmpty(this.TransactionId))
+                this.TransactionId = $"R{DateTime.Now.Ticks}-{this.TransactionId.Split('-')[1]}";
         }
 
         public void Dispose()
@@ -684,6 +692,7 @@ namespace JMS
                     waitTasks();
                 }
             }
+            buildNewTranId();
         }
     }
 }

@@ -26,6 +26,14 @@ namespace UnitTest.ServiceHosts
             Debug.WriteLine("UserInfoDbContext实例化");
         }
 
+        public static void Reset()
+        {
+            FinallyUserName = null;
+            FinallyAge = 0;
+            FinallyFather = null;
+            FinallyMather = null;
+        }
+
         public void BeginTransaction()
         {
             if (_disposed)
