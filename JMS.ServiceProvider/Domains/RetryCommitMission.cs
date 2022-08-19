@@ -92,6 +92,9 @@ namespace JMS.RetryCommit
         {
             try
             {
+                File.Move(file, file + ".trying");
+                file = file + ".trying";
+
                 object usercontent = null;
                 var fileContent = File.ReadAllText(file, Encoding.UTF8).FromJson<RequestInfo>();
 
