@@ -310,49 +310,5 @@ namespace UnitTest
                 throw new Exception("结果不正确");
         }
 
-
-        //[TestMethod]
-        public void Performance()
-        {
-            StartGateway();
-            StartUserInfoServiceHost();
-
-            //等待网关就绪
-            WaitGatewayReady();
-
-            var gateways = new NetAddress[] {
-                   new NetAddress{
-                        Address = "localhost",
-                        Port = _gateWayPort
-                   }
-                };
-
-            while (true)
-            {
-                using (var client = new RemoteClient(gateways))
-                {
-                    var serviceClient = client.TryGetMicroService("UserInfoService");
-                    while (serviceClient == null)
-                    {
-                        Thread.Sleep(10);
-                        serviceClient = client.TryGetMicroService("UserInfoService");
-                    }
-
-                    client.BeginTransaction();
-                    serviceClient.Invoke("SetUserName", "Jack");
-                    serviceClient.Invoke("SetUserName", "Jack2");
-                    serviceClient.InvokeAsync("SetUserName", "Jack3");
-                    serviceClient.InvokeAsync("SetUserName", "Jack4");
-                    client.CommitTransaction();
-
-                    Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName}");
-
-                    if (UserInfoDbContext.FinallyUserName.StartsWith("Jack") == false)
-                        throw new Exception("结果不正确");
-
-                    UserInfoDbContext.FinallyUserName = null;
-                }
-            }
-        }
     }
 }

@@ -91,7 +91,9 @@ namespace JMS.Domains
 
         public MicroServiceControllerBase CreateController( IServiceScope serviceScope, ControllerTypeInfo o)
         {
-            return (MicroServiceControllerBase)serviceScope.ServiceProvider.GetService(o.Type);
+            var ctrl = (MicroServiceControllerBase)serviceScope.ServiceProvider.GetService(o.Type);
+            ctrl.ServiceProvider = serviceScope.ServiceProvider;
+            return ctrl;
         }
     }
 }

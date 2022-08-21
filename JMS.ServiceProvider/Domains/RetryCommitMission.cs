@@ -230,6 +230,7 @@ namespace JMS.RetryCommit
                 {
                     MicroServiceControllerBase.Current = null;
                     controller?.OnUnLoad();
+                    controller.ServiceProvider = null;
                     MicroServiceControllerBase.RequestingCommand.Value = null;
                 }
             }

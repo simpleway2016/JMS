@@ -41,6 +41,11 @@ public class MicroServiceControllerBase
     /// </summary>
     public TransactionDelegate TransactionControl { set; get; }
 
+    /// <summary>
+    /// Controller的依赖注入服务提供者
+    /// </summary>
+    public IServiceProvider ServiceProvider { get; internal set; }
+
     string _transactionid;
     /// <summary>
     /// 事务id

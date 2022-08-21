@@ -189,7 +189,7 @@ namespace JMS
                 ServiceNames.Add(serviceName);
             }
 
-            _services.AddTransient(contollerType);
+            _services.AddScoped(contollerType);
             _ControllerFactory.RegisterController(contollerType, serviceName);
         }
 
