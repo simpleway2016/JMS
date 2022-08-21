@@ -10,22 +10,32 @@ using Way.Lib;
 
 public class MicroServiceControllerBase
 {
+    internal class ThreadLocalObject
+    {
+        public InvokeCommand Command;
+        public IServiceProvider ServiceProvider;
+        internal ThreadLocalObject(InvokeCommand command, IServiceProvider serviceProvider)
+        {
+            Command = command;
+            ServiceProvider = serviceProvider;
+        }
+    }
     internal IKeyLocker _keyLocker;
     internal NetClient NetClient;
-    internal static ThreadLocal<InvokeCommand> RequestingCommand = new ThreadLocal<InvokeCommand>();
+    internal static ThreadLocal<ThreadLocalObject> RequestingObject = new ThreadLocal<ThreadLocalObject>();
 
 
-    private IDictionary<string,string> _Header;
+    private IDictionary<string, string> _Header;
     /// <summary>
     /// 请求的头
     /// </summary>
-    public IDictionary<string,string> Header
+    public IDictionary<string, string> Header
     {
         get
         {
-            if(_Header == null && RequestingCommand.Value != null)
+            if (_Header == null && RequestingObject.Value != null)
             {
-                _Header = RequestingCommand.Value.Header;
+                _Header = RequestingObject.Value.Command.Header;
             }
             return _Header;
         }
@@ -34,17 +44,28 @@ public class MicroServiceControllerBase
     /// <summary>
     /// 身份验证后获取的身份信息
     /// </summary>
-    public object UserContent { get;internal set; }
+    public object UserContent { get; internal set; }
 
     /// <summary>
     /// 当前的事务委托器
     /// </summary>
     public TransactionDelegate TransactionControl { set; get; }
 
+    IServiceProvider _ServiceProvider;
     /// <summary>
     /// Controller的依赖注入服务提供者
     /// </summary>
-    public IServiceProvider ServiceProvider { get; internal set; }
+    public IServiceProvider ServiceProvider
+    {
+        get
+        {
+            if (_ServiceProvider == null && RequestingObject.Value != null)
+            {
+                _ServiceProvider = RequestingObject.Value.ServiceProvider;
+            }
+            return _ServiceProvider;
+        }
+    }
 
     string _transactionid;
     /// <summary>
@@ -97,7 +118,7 @@ public class MicroServiceControllerBase
     /// <returns>是否成功</returns>
     public bool TryLock(string key)
     {
-        return _keyLocker.TryLock( this.TransactionId, key);
+        return _keyLocker.TryLock(this.TransactionId, key);
     }
     /// <summary>
     /// 释放锁定的key
@@ -115,7 +136,7 @@ public class MicroServiceControllerBase
     /// <param name="parameters">传入的参数</param>
     /// <param name="error">异常</param>
     /// <returns>true 表示无需记录错误日志</returns>
-    public virtual bool OnInvokeError(string actionName, object[] parameters,Exception error)
+    public virtual bool OnInvokeError(string actionName, object[] parameters, Exception error)
     {
         return false;
     }

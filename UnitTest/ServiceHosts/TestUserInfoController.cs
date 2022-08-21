@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,8 @@ namespace UnitTest.ServiceHosts
         public TestUserInfoController(UserInfoDbContext userInfoDbContext)
         {
             this._userInfoDbContext = userInfoDbContext;
-
+            if (this.ServiceProvider.GetService<UserInfoDbContext>() != userInfoDbContext)
+                throw new Exception("作用域对象出错");
         }
 
         public void SetUserName(string name)

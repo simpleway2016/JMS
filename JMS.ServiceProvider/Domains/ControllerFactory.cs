@@ -18,7 +18,7 @@ namespace JMS.Domains
 
         }
 
-        public void SetControllerEnable(string serviceName,bool enable)
+        public void SetControllerEnable(string serviceName, bool enable)
         {
             _controllerDict[serviceName].Enable = enable;
         }
@@ -65,8 +65,9 @@ namespace JMS.Domains
         /// 获取controller类型信息
         /// </summary>
         /// <returns></returns>
-        public ControllerTypeInfo GetControllerType(string serviceName) { 
-            if(_controllerDict.TryGetValue(serviceName,out ControllerTypeInfo o))
+        public ControllerTypeInfo GetControllerType(string serviceName)
+        {
+            if (_controllerDict.TryGetValue(serviceName, out ControllerTypeInfo o))
             {
                 return o;
             }
@@ -89,11 +90,9 @@ namespace JMS.Domains
             throw new Exception($"服务{serviceName}不存在");
         }
 
-        public MicroServiceControllerBase CreateController( IServiceScope serviceScope, ControllerTypeInfo o)
+        public MicroServiceControllerBase CreateController(IServiceScope serviceScope, ControllerTypeInfo o)
         {
-            var ctrl = (MicroServiceControllerBase)serviceScope.ServiceProvider.GetService(o.Type);
-            ctrl.ServiceProvider = serviceScope.ServiceProvider;
-            return ctrl;
+            return (MicroServiceControllerBase)serviceScope.ServiceProvider.GetService(o.Type);
         }
     }
 }

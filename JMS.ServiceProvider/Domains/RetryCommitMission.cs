@@ -164,7 +164,7 @@ namespace JMS.RetryCommit
             {
                 try
                 {
-                    MicroServiceControllerBase.RequestingCommand.Value = cmd;
+                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.ThreadLocalObject(cmd,serviceScope.ServiceProvider);
                     var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
                     controller = _controllerFactory.CreateController(serviceScope, controllerTypeInfo);
@@ -230,8 +230,7 @@ namespace JMS.RetryCommit
                 {
                     MicroServiceControllerBase.Current = null;
                     controller?.OnUnLoad();
-                    controller.ServiceProvider = null;
-                    MicroServiceControllerBase.RequestingCommand.Value = null;
+                    MicroServiceControllerBase.RequestingObject.Value = null;
                 }
             }
         }
