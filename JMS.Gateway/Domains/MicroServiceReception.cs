@@ -86,7 +86,7 @@ namespace JMS.Domains
         void checkState()
         {
             NetClient.ReadTimeout = 30000;
-            while(true)
+            while(!_closed)
             {
                 try
                 {

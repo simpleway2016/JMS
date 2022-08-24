@@ -15,13 +15,13 @@ namespace JMS.Applications.CommandHandles
     {
         IServiceProvider _serviceProvider;
         IConfiguration _configuration;
-        GatewayRefereeClient _gatewayRefereeClient;
+        ClusterGatewayConnector _gatewayRefereeClient;
 
         public FindMasterHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _configuration = serviceProvider.GetService<IConfiguration>();
-            _gatewayRefereeClient = serviceProvider.GetService<GatewayRefereeClient>();
+            _gatewayRefereeClient = serviceProvider.GetService<ClusterGatewayConnector>();
         }
         public CommandType MatchCommandType => CommandType.FindMaster;
 

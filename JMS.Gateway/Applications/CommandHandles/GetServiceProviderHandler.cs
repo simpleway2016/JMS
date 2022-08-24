@@ -13,12 +13,12 @@ namespace JMS.Applications.CommandHandles
     {
         IServiceProvider _serviceProvider;
         TransactionIdBuilder _TransactionIdBuilder;
-        GatewayRefereeClient _gatewayRefereeClient;
+        ClusterGatewayConnector _gatewayRefereeClient;
         public GetServiceProviderHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _TransactionIdBuilder = serviceProvider.GetService<TransactionIdBuilder>();
-            _gatewayRefereeClient = serviceProvider.GetService<GatewayRefereeClient>();
+            _gatewayRefereeClient = serviceProvider.GetService<ClusterGatewayConnector>();
         }
         public CommandType MatchCommandType => CommandType.GetServiceProvider;
 

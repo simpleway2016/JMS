@@ -125,47 +125,30 @@ namespace JMS.Domains
             bool logError = true;
             while (_microServiceHost.MasterGatewayAddress == null)
             {
-                int errCount = 0;
-                ManualResetEvent waitobj = new ManualResetEvent(false);
-                for (int i = 0; i < _microServiceHost.AllGatewayAddresses.Length; i ++)
-                {
+                Parallel.For(0, _microServiceHost.AllGatewayAddresses.Length, i => {
                     var addr = _microServiceHost.AllGatewayAddresses[i];
-                    Task.Run(() => {
-                        try
+                    try
+                    {                      
+                        using (var client = CreateClient(addr))
                         {
-                            using (var client = CreateClient(addr))
+                            client.WriteServiceData(new GatewayCommand
                             {
-                                client.WriteServiceData(new GatewayCommand
-                                {
-                                    Type = CommandType.FindMaster
-                                });
-                                var ret = client.ReadServiceObject<InvokeResult>();
-                                if (ret.Success == true && _microServiceHost.MasterGatewayAddress == null)
-                                {
-                                    _microServiceHost.MasterGatewayAddress = addr;
-                                    waitobj.Set();
-                                }
-                                else
-                                {
-                                    Interlocked.Increment(ref errCount);
-                                    if (errCount == _microServiceHost.AllGatewayAddresses.Length)
-                                        waitobj.Set();
-                                }
+                                Type = CommandType.FindMaster
+                            });
+                            var ret = client.ReadServiceObject<InvokeResult>();
+                            if (ret.Success == true && _microServiceHost.MasterGatewayAddress == null)
+                            {
+                                _microServiceHost.MasterGatewayAddress = addr;
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            Interlocked.Increment(ref errCount);
-                            if (errCount == _microServiceHost.AllGatewayAddresses.Length)
-                                waitobj.Set();
+                    }
+                    catch (Exception ex)
+                    {
+                        if (logError)
+                            _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
+                    }
+                });
 
-                            if(logError)
-                                _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
-                        }
-                    });
-                }
-                waitobj.WaitOne();
-                waitobj.Dispose();
 
                 if (_microServiceHost.MasterGatewayAddress != null)
                 {
@@ -256,23 +239,26 @@ namespace JMS.Domains
 
 
                 //上传已经lock的key
-                using (var client = CreateClient(_microServiceHost.MasterGatewayAddress))
+                if (_keyLocker.GetLockedKeys().Length > 0)
                 {
-                    client.WriteServiceData(new GatewayCommand
+                    using (var client = CreateClient(_microServiceHost.MasterGatewayAddress))
                     {
-                        Type = CommandType.UploadLockKeys,
-                        Header = new Dictionary<string, string> {
+                        client.WriteServiceData(new GatewayCommand
+                        {
+                            Type = CommandType.UploadLockKeys,
+                            Header = new Dictionary<string, string> {
                                     { "ServiceId",_microServiceHost.Id}
                                 },
-                        Content = _keyLocker.GetLockedKeys().ToJsonString()
-                    });
-                    var cb = client.ReadServiceObject<InvokeResult<string[]>>();
-                    if (cb.Data.Length > 0)
-                    {
-                        _logger?.LogInformation("以下key锁失败,{0}", cb.Data.ToJsonString());
-                        foreach( var key in cb.Data )
+                            Content = _keyLocker.GetLockedKeys().ToJsonString()
+                        });
+                        var cb = client.ReadServiceObject<InvokeResult<string[]>>();
+                        if (cb.Data.Length > 0)
                         {
-                            _keyLocker.RemoveKeyFromLocal(key);
+                            _logger?.LogInformation("以下key锁失败,{0}", cb.Data.ToJsonString());
+                            foreach (var key in cb.Data)
+                            {
+                                _keyLocker.RemoveKeyFromLocal(key);
+                            }
                         }
                     }
                 }

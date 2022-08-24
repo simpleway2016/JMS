@@ -37,16 +37,22 @@ namespace JMS
             CommandArgParser cmdArg = new CommandArgParser(args);
             port = cmdArg.TryGetValue<int>("port", port);
 
-            Run(configuration,port);
+            Run(configuration,port,out Gateway gatewayInstance);
         }
 
-        public static void Run(IConfiguration configuration,int port)
+        public static void Run(IConfiguration configuration,int port,out Gateway gatewayInstance)
         {
            
             var sharefolder = configuration.GetValue<string>("ShareFolder");
             if (!System.IO.Directory.Exists(sharefolder))
             {
                 System.IO.Directory.CreateDirectory(sharefolder);
+            }
+
+            var datafolder = configuration.GetValue<string>("DataFolder");
+            if (!System.IO.Directory.Exists(datafolder))
+            {
+                System.IO.Directory.CreateDirectory(datafolder);
             }
 
             ServiceCollection services = new ServiceCollection();
@@ -56,7 +62,7 @@ namespace JMS
                 loggingBuilder.AddConsole(); // 将日志输出到控制台
             });
             services.AddSingleton<IConfiguration>(configuration);
-            services.AddSingleton<GatewayRefereeClient>();
+            services.AddSingleton<ClusterGatewayConnector>();
             services.AddSingleton<TransactionStatusManager>();
             services.AddSingleton<IRequestReception, RequestReception>();
             services.AddSingleton<IRegisterServiceManager, RegisterServiceManager>();
@@ -77,8 +83,7 @@ namespace JMS
             serviceProvider.GetService<FileChangeWatcher>();
             serviceProvider.GetService<TransactionStatusManager>();
 
-            //启动GatewayRefereeClient，申请成为主网关
-            serviceProvider.GetService<GatewayRefereeClient>();
+           
 
             var gateway = serviceProvider.GetService<Gateway>();
 
@@ -91,6 +96,7 @@ namespace JMS
             }
 
             gateway.ServiceProvider = serviceProvider;
+            gatewayInstance = gateway;
             gateway.Run(port);
         }
 

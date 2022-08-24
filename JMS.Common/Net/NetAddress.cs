@@ -16,7 +16,12 @@ namespace JMS
         }
         public string Address { get; set; }
         public int Port { get; set; }
-       
+
+        public override string ToString()
+        {
+            return $"{Address}:{Port}";
+        }
+
         public override bool Equals(object obj)
         {
             NetAddress compaire = (NetAddress)obj;

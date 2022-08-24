@@ -30,7 +30,7 @@ namespace UnitTest
                 builder.AddJsonFile("appsettings-gateway.json", optional: true, reloadOnChange: true);
                 var configuration = builder.Build();
 
-                JMS.GatewayProgram.Run(configuration, _gateWayPort);
+                JMS.GatewayProgram.Run(configuration, _gateWayPort, out Gateway g);
             });
         }
 

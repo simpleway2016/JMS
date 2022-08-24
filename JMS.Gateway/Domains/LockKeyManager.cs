@@ -9,10 +9,11 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Way.Lib.ECC;
 
 namespace JMS.Domains
 {
-    class LockKeyManager
+    public class LockKeyManager
     {
         IRegisterServiceManager _registerServiceManager;
         System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject> _cache;
@@ -20,7 +21,9 @@ namespace JMS.Domains
         IConfiguration _configuration;
         int _timeout;
         ILogger<LockKeyManager> _logger;
-        internal bool IsReady;
+
+        public event EventHandler<KeyObject> LockKey;
+        public event EventHandler<KeyObject> UnlockKey;
 
         public int KeyTimeout => _timeout;
         public LockKeyManager(Gateway gateway, IConfiguration configuration, IRegisterServiceManager registerServiceManager, ILogger<LockKeyManager> logger)
@@ -36,6 +39,43 @@ namespace JMS.Domains
             _registerServiceManager.ServiceDisconnect += _registerServiceManager_ServiceDisconnect;
 
             new Thread(checkTimeout).Start();
+        }
+
+        public KeyObject[] GetAllKeys()
+        {
+            return _cache.Values.ToArray();
+        }
+
+        public void AddKey(string key,string locker)
+        {
+            if (_cache.TryGetValue(key, out KeyObject keyObj) == false)
+            {
+                keyObj = new KeyObject()
+                {
+                    Key = key,
+                    Locker = locker,
+            };
+
+                _cache.TryAdd(key, keyObj);
+            }
+        }
+
+        public void RemoveKey(string key)
+        {
+            _cache.TryRemove(key,out KeyObject o);
+        }
+
+        /// <summary>
+        /// 重置所有key过期时间
+        /// </summary>
+        public void ResetAllKeyExpireTime()
+        {
+            _logger?.LogDebug("设置所有lock对象的有效期");
+            foreach (var pair in _cache)
+            {
+                var obj = pair.Value;
+                obj.RemoveTime = DateTime.Now.AddMilliseconds(_timeout);
+            }
         }
 
         private void _registerServiceManager_ServiceDisconnect(object sender, RegisterServiceInfo e)
@@ -93,7 +133,7 @@ namespace JMS.Domains
 
         internal KeyObject[] GetCaches()
         {
-           return _cache.Values.ToArray();
+            return _cache.Values.ToArray();
         }
 
         /// <summary>
@@ -101,22 +141,28 @@ namespace JMS.Domains
         /// </summary>
         private void checkTimeout()
         {
-            while(true)
+            while (!_gateway.Disposed)
             {
                 try
                 {
                     foreach (var pair in _cache)
                     {
                         var obj = pair.Value;
-                        if (obj.Locker != null)
+                        if (obj.Locker != null && !_gateway.Disposed)
                         {
                             if (obj.RemoveTime != null && DateTime.Now >= obj.RemoveTime.GetValueOrDefault())
                             {
-                                _cache.TryRemove(obj.Key, out obj);
-                                _logger?.LogInformation($"key:{obj.Key}超时被unlock");
+                                if (_cache.TryRemove(obj.Key, out obj))
+                                {
+                                    if (UnlockKey != null)
+                                    {
+                                        UnlockKey(this, obj);
+                                    }
+                                    _logger?.LogInformation($"key:{obj.Key}超时被unlock");
+                                }
                             }
                         }
-                       
+
                     }
                 }
                 catch (Exception ex)
@@ -130,22 +176,26 @@ namespace JMS.Domains
             }
         }
 
-        public bool TryLock(string key, RegisterServiceInfo locker,bool checkReady = true)
+        public bool TryLock(string key, RegisterServiceInfo locker)
         {
-            if (checkReady && IsReady == false)
-                throw new Exception("lock key is not ready");
-
             KeyObject keyObj = null;
             while (true)
             {
                 if (_cache.TryGetValue(key, out keyObj) == false)
                 {
-                    if (_cache.TryAdd(key, new KeyObject()
+                    KeyObject newKey = new KeyObject()
                     {
                         Key = key,
                         Locker = locker.ServiceId
-                    }))
+                    };
+
+                    if (_cache.TryAdd(key, newKey))
                     {
+                        if (LockKey != null)
+                        {
+                            LockKey(this, newKey);
+                        }
+
                         return true;
                     }
                     else
@@ -155,9 +205,13 @@ namespace JMS.Domains
                 }
                 else
                 {
-                    if(keyObj.Locker == locker.ServiceId)
+                    if (keyObj.Locker == locker.ServiceId)
                     {
                         keyObj.RemoveTime = null;
+                        if (LockKey != null)
+                        {
+                            LockKey(this, keyObj);
+                        }
                         return true;
                     }
                     else
@@ -166,23 +220,28 @@ namespace JMS.Domains
             }
         }
 
-        public bool UnLock(string key,RegisterServiceInfo service)
+        public bool UnLock(string key, RegisterServiceInfo service)
         {
-            if (IsReady == false)
-                throw new Exception("lock key is not ready");
-
-            if (_cache.TryGetValue(key, out KeyObject keyObj)  )
+            if (_cache.TryGetValue(key, out KeyObject keyObj))
             {
                 if (service == null || keyObj.Locker == service.ServiceId)
                 {
-                   return _cache.TryRemove(key, out keyObj);
+                    if (_cache.TryRemove(key, out keyObj))
+                    {
+                        if (UnlockKey != null)
+                        {
+                            UnlockKey(this, keyObj);
+                        }
+                        return true;
+                    }
+                    return false;
                 }
             }
             return false;
         }
     }
 
-    class KeyObject
+    public class KeyObject
     {
         public string Key;
         public string Locker;

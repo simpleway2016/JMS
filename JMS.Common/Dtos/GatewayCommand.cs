@@ -32,6 +32,9 @@ namespace JMS.Dtos
         ReportTransactionStatus = 17,
         GetTransactionStatus = 18,
         RemoveTransactionStatus = 19,
+        BeGatewayMaster = 20,
+        AddLockKey = 21,
+        RemoveLockKey = 22,
     }
     public class GatewayCommand
     {

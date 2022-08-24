@@ -1,4 +1,5 @@
 ﻿using JMS;
+using JMS.Domains;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,9 +20,15 @@ namespace UnitTest
     public class NormalTest
     {
         int _gateWayPort = 9800;
+        int _clusterGateWayPort1 = 10001;
+        int _clusterGateWayPort2 = 10002;
         int _UserInfoServicePort = 9801;
         int _CrashServicePort = 9802;
+        int _UserInfoServicePort_forcluster = 9803;
         bool _userInfoServiceReady = false;
+
+        Gateway _clusterGateway1;
+        Gateway _clusterGateway2;
         public void StartGateway()
         {
             Task.Run(() =>
@@ -30,18 +37,42 @@ namespace UnitTest
                 builder.AddJsonFile("appsettings-gateway.json", optional: true, reloadOnChange: true);
                 var configuration = builder.Build();
 
-                JMS.GatewayProgram.Run(configuration, _gateWayPort);
+                JMS.GatewayProgram.Run(configuration, _gateWayPort,out Gateway g);
             });
         }
 
-        void WaitGatewayReady()
+        public void StartGateway_Cluster1()
+        {
+            Task.Run(() =>
+            {
+                var builder = new ConfigurationBuilder();
+                builder.AddJsonFile("appsettings-gateway - cluster1.json", optional: true, reloadOnChange: true);
+                var configuration = builder.Build();
+
+                JMS.GatewayProgram.Run(configuration, _clusterGateWayPort1, out _clusterGateway1);
+            });
+        }
+
+        public void StartGateway_Cluster2()
+        {
+            Task.Run(() =>
+            {
+                var builder = new ConfigurationBuilder();
+                builder.AddJsonFile("appsettings-gateway - cluster2.json", optional: true, reloadOnChange: true);
+                var configuration = builder.Build();
+
+                JMS.GatewayProgram.Run(configuration, _clusterGateWayPort2, out _clusterGateway2);
+            });
+        }
+
+        void WaitGatewayReady(int port)
         {
             //等待网关就绪
             while (true)
             {
                 try
                 {
-                    var client = new NetClient("127.0.0.1", _gateWayPort);
+                    var client = new NetClient("127.0.0.1", port);
                     client.Dispose();
 
                     break;
@@ -58,7 +89,7 @@ namespace UnitTest
             Task.Run(() =>
             {
 
-                WaitGatewayReady();
+                WaitGatewayReady(_gateWayPort);
                 ServiceCollection services = new ServiceCollection();
 
                 var gateways = new NetAddress[] {
@@ -83,12 +114,49 @@ namespace UnitTest
             });
         }
 
+
+        public void StartUserInfoServiceHost_ForClusterGateways()
+        {
+            Task.Run(() =>
+            {
+
+                WaitGatewayReady(_clusterGateWayPort1);
+                WaitGatewayReady(_clusterGateWayPort2);
+
+                ServiceCollection services = new ServiceCollection();
+
+                var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _clusterGateWayPort1
+                   },
+                    new NetAddress{
+                        Address = "localhost",
+                        Port = _clusterGateWayPort2
+                   }
+                };
+
+                services.AddLogging(loggingBuilder =>
+                {
+                    loggingBuilder.AddConsole(); // 将日志输出到控制台
+                });
+
+                services.AddScoped<UserInfoDbContext>();
+                var msp = new MicroServiceHost(services);
+                msp.RetryCommitPath = "./$$JMS_RetryCommitPath_Cluster_" + _UserInfoServicePort_forcluster;
+                msp.Register<TestUserInfoController>("UserInfoService");
+                msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
+                msp.Build(_UserInfoServicePort_forcluster, gateways)
+                    .Run();
+            });
+        }
+
         public void StartCrashServiceHost(int port)
         {
             Task.Run(() =>
             {
 
-                WaitGatewayReady();
+                WaitGatewayReady(_gateWayPort);
                 ServiceCollection services = new ServiceCollection();
 
                 var gateways = new NetAddress[] {
@@ -127,7 +195,7 @@ namespace UnitTest
             StartUserInfoServiceHost();
 
             //等待网关就绪
-            WaitGatewayReady();
+            WaitGatewayReady(_gateWayPort);
 
             var gateways = new NetAddress[] {
                    new NetAddress{
@@ -171,7 +239,7 @@ namespace UnitTest
             StartUserInfoServiceHost();
 
             //等待网关就绪
-            WaitGatewayReady();
+            WaitGatewayReady(_gateWayPort);
 
             var gateways = new NetAddress[] {
                    new NetAddress{
@@ -217,7 +285,7 @@ namespace UnitTest
             StartUserInfoServiceHost();
 
             //等待网关就绪
-            WaitGatewayReady();
+            WaitGatewayReady(_gateWayPort);
 
             var gateways = new NetAddress[] {
                    new NetAddress{
@@ -263,7 +331,7 @@ namespace UnitTest
             StartCrashServiceHost(_CrashServicePort);
 
             //等待网关就绪
-            WaitGatewayReady();
+            WaitGatewayReady(_gateWayPort);
 
             var gateways = new NetAddress[] {
                    new NetAddress{
@@ -310,5 +378,93 @@ namespace UnitTest
                 throw new Exception("结果不正确");
         }
 
+        /// <summary>
+        /// 测试网关集群
+        /// </summary>
+        [TestMethod]
+        public void TestGatewayCluster()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway_Cluster1();
+            StartGateway_Cluster2();
+
+            //等待网关就绪
+            WaitGatewayReady(_clusterGateWayPort1);
+            WaitGatewayReady(_clusterGateWayPort2);
+
+            StartUserInfoServiceHost_ForClusterGateways();
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _clusterGateWayPort1
+                   },new NetAddress{
+                        Address = "localhost",
+                        Port = _clusterGateWayPort2
+                   }
+                };
+
+            var serviceProvider1 =(IServiceProvider) _clusterGateway1.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(_clusterGateway1);
+            var clusterGatewayConnector1 = serviceProvider1.GetService<ClusterGatewayConnector>();
+
+            var serviceProvider2 = (IServiceProvider)_clusterGateway2.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(_clusterGateway2);
+            var clusterGatewayConnector2 = serviceProvider2.GetService<ClusterGatewayConnector>();
+
+            Debug.WriteLine("等待决出主网关");
+            while (clusterGatewayConnector1.IsMaster == false && clusterGatewayConnector2.IsMaster == false)
+            {
+                Thread.Sleep(100);
+            }
+
+            var masterGateway = clusterGatewayConnector1.IsMaster ? _clusterGateway1 : _clusterGateway2;
+            var lockManager = (clusterGatewayConnector1.IsMaster ? serviceProvider1 : serviceProvider2).GetService<LockKeyManager>();
+
+            using (var client = new RemoteClient(gateways))
+            {
+                Debug.WriteLine("查找服务");
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
+                }
+                Debug.WriteLine("查找服务完毕");
+
+                serviceClient.Invoke("LockName", "abc");
+
+                if(lockManager.GetAllKeys().Any(k=>k.Key == "abc") == false)
+                {
+                    throw new Exception("找不到lock key");
+                }
+            }
+
+            var slaveGateway = clusterGatewayConnector1.IsMaster ? _clusterGateway2 : _clusterGateway1;
+            var slaveLockManager = (clusterGatewayConnector1.IsMaster ? serviceProvider2 : serviceProvider1).GetService<LockKeyManager>();
+            while(slaveLockManager.GetAllKeys().Any(k => k.Key == "abc") == false)
+            {
+                Thread.Sleep(1000);
+            }
+
+            //关闭主网关
+            masterGateway.Dispose();
+
+            var serviceProvider = (IServiceProvider)slaveGateway.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(slaveGateway);
+            var clusterGatewayConnector = serviceProvider.GetService<ClusterGatewayConnector>();
+
+            //等待从网关成为主网关
+            while(clusterGatewayConnector.IsMaster == false)
+            {
+                Thread.Sleep(100);
+            }
+
+            while(slaveLockManager.GetAllKeys().Any(m=>m.RemoveTime != null))
+            {
+                Thread.Sleep(100);
+            }
+            if (slaveLockManager.GetAllKeys().Length == 0)
+            {
+                throw new Exception("lock key数量不对");
+            }
+        }
     }
 }

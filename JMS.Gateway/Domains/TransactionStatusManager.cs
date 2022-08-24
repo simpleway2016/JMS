@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace JMS.Domains
 {
-    internal class TransactionStatusManager
+    public class TransactionStatusManager
     {
         Jack.Storage.MemoryList.StorageContext<TransactionStatusDataItem> _dataContext;
         public event EventHandler<string> TransactionSuccess;

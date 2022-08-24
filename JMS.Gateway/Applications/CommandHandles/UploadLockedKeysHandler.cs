@@ -34,7 +34,7 @@ namespace JMS.Applications.CommandHandles
                 List<string> failed = new List<string>();
                 foreach (var key in keys)
                 {
-                    if( _lockKeyManager.TryLock(key, service,false) == false)
+                    if( _lockKeyManager.TryLock(key, service) == false)
                     {
                         failed.Add(key);
                     }
