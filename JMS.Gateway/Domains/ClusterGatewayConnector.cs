@@ -214,7 +214,7 @@ namespace JMS.Domains
             catch (Exception ex)
             {
                 _logger.LogError(ex, "");
-                this.BeMaster();
+                this.BeMaster(1);
             }
         }
 
