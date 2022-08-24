@@ -55,6 +55,10 @@ namespace JMS.Domains
 
                 new Thread(checkKeyChangeQueue).Start();
             }
+            else
+            {
+                this.IsMaster = true;
+            }
         }
 
         private void _lockKeyManager_UnlockKey(object sender, KeyObject e)
@@ -124,14 +128,13 @@ namespace JMS.Domains
         /// <summary>
         /// 申请成为master
         /// </summary>
-        internal void BeMaster()
-        {
-            
+        internal void BeMaster(int tryCount = 3)
+        {            
             if (_otherGatewayAddress != null)
             {
                 Task.Run(() =>
                 {
-                    for (int i = 0; i < 3; i++)
+                    for (int i = 0; i < tryCount; i++)
                     {
                         try
                         {
@@ -140,16 +143,18 @@ namespace JMS.Domains
                                 client.WriteServiceData(new GatewayCommand
                                 {
                                     Type = CommandType.BeGatewayMaster,
-                                    Content = _gateway.Id
+                                    Content = new BeMasterContent { Id = _gateway.Id , IsMaster = this.IsMaster }.ToJsonString()
                                 });
                                 var cmd = client.ReadServiceObject<InvokeResult>();
                                 if (cmd.Success)
                                 {
-                                    //在没成为主网关前，将所有lockey设置一个有效期，成为主网关，等微服务提交所有lock key，会取消这个有效期
-                                    _lockKeyManager.ResetAllKeyExpireTime();
-
-                                    _logger.LogInformation($"网关{_otherGatewayAddress}同意我成为主网关");                                    
-                                    this.IsMaster = true;
+                                    _logger.LogInformation($"网关{_otherGatewayAddress}同意我成为主网关");
+                                    if (this.IsMaster == false)
+                                    {
+                                        //在没成为主网关前，将所有lockey设置一个有效期，成为主网关，等微服务提交所有lock key，会取消这个有效期
+                                        _lockKeyManager.ResetAllKeyExpireTime();                                      
+                                        this.IsMaster = true;
+                                    }
                                 }
                                 else
                                 {
@@ -166,24 +171,23 @@ namespace JMS.Domains
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "");
+                            //_logger.LogError(ex, "");
                         }
                     }
 
-                    _logger.LogInformation($"与网关{_otherGatewayAddress}连接失败，我自己成为master");
+                    if (this.IsMaster == false)
+                    {
+                        _logger.LogInformation($"与网关{_otherGatewayAddress}连接失败，我自己成为master");
 
-                    //在没成为主网关前，将所有lockey设置一个有效期，成为主网关，等微服务提交所有lock key，会取消这个有效期
-                    _lockKeyManager.ResetAllKeyExpireTime();
+                        //在没成为主网关前，将所有lockey设置一个有效期，成为主网关，等微服务提交所有lock key，会取消这个有效期
+                        _lockKeyManager.ResetAllKeyExpireTime();
 
-                    //3次网络访问失败，自己当master
-                    this.IsMaster = true;
+                        //3次网络访问失败，自己当master
+                        this.IsMaster = true;
+                    }
                     Thread.Sleep(3000);
-                    this.BeMaster();
+                    this.BeMaster(1);
                 });
-            }
-            else
-            {
-                this.IsMaster = true;
             }
         }
 
@@ -205,7 +209,7 @@ namespace JMS.Domains
                     Thread.Sleep(100);
                     _logger?.LogInformation("与主网关连接断开");
                 }
-                this.BeMaster();
+                this.BeMaster(1);
             }
             catch (Exception ex)
             {
@@ -216,20 +220,32 @@ namespace JMS.Domains
 
         internal void SomeoneWantToBeMaster(NetClient netclient,GatewayCommand cmd)
         {
-            if(this.IsMaster)
+            BeMasterContent beMasterContent = cmd.Content.FromJson<BeMasterContent>();
+            if (this.IsMaster && beMasterContent.IsMaster == false)
             {
+                _logger.LogInformation($"拒绝{beMasterContent.Id}成为master");
                 netclient.WriteServiceData(new InvokeResult
                 {
                     Success = false
                 });
                 return;
             }
+            else if(this.IsMaster == false && beMasterContent.IsMaster)
+            {
+                _logger.LogInformation($"同意{beMasterContent.Id}成为master");
+
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = true
+                });
+                return;
+            }
 
           
-            var ret = string.Compare(_gateway.Id , cmd.Content);
+            var ret = string.Compare(_gateway.Id , beMasterContent.Id);
             if(ret > 0)
             {
-                _logger.LogInformation($"同意{netclient.RemoteEndPoint.ToString()}成为master");
+                _logger.LogInformation($"同意{beMasterContent.Id}成为master");
 
                 netclient.WriteServiceData(new InvokeResult
                 {
@@ -238,7 +254,7 @@ namespace JMS.Domains
             }
             else
             {
-                _logger.LogInformation($"拒绝{netclient.RemoteEndPoint.ToString()}成为master");
+                _logger.LogInformation($"拒绝{beMasterContent.Id}成为master");
 
                 netclient.WriteServiceData(new InvokeResult
                 {
@@ -298,5 +314,11 @@ namespace JMS.Domains
         }
 
      
+    }
+
+    class BeMasterContent
+    {
+        public string Id { get; set; }
+        public bool IsMaster { get; set; }
     }
 }
