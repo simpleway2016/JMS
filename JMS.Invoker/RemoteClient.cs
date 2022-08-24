@@ -229,44 +229,30 @@ namespace JMS
             }
 
             NetAddress masterAddress = null;
-            ManualResetEvent waitobj = new ManualResetEvent(false);
-            int errCount = 0;
-            for (int i = 0; i < _allGateways.Length; i++)
-            {
-                var addr = _allGateways[i];
-                Task.Run(() =>
+
+            Parallel.For(0, _allGateways.Length, i => {               
+                try
                 {
-                    try
+                    var addr = _allGateways[i];
+                    using (var client = new ProxyClient(this.ProxyAddress, addr, GatewayClientCertificate))
                     {
-                        using (var client = new ProxyClient(this.ProxyAddress, addr, GatewayClientCertificate))
+                        client.ReadTimeout = this.Timeout;
+                        client.WriteServiceData(new GatewayCommand
                         {
-                            client.ReadTimeout = this.Timeout;
-                            client.WriteServiceData(new GatewayCommand
-                            {
-                                Type = CommandType.FindMaster
-                            });
-                            var ret = client.ReadServiceObject<InvokeResult>();
-                            if (ret.Success == true && masterAddress == null)
-                            {
-                                masterAddress = addr;
-                                waitobj.Set();
-                            }
-                            else
-                            {
-                                throw new Exception();
-                            }
+                            Type = CommandType.FindMaster
+                        });
+                        var ret = client.ReadServiceObject<InvokeResult>();
+                        if (ret.Success == true && masterAddress == null)
+                        {
+                            masterAddress = addr;
                         }
                     }
-                    catch
-                    {
-                        Interlocked.Increment(ref errCount);
-                        if (errCount == _allGateways.Length)
-                            waitobj.Set();
-                    }
-                });
-            }
-            waitobj.WaitOne();
-            waitobj.Dispose();
+                }
+                catch
+                {
+                }
+            });
+
 
             if (masterAddress == null)
                 throw new MissMasterGatewayException("无法找到主网关");
