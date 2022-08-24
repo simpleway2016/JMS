@@ -122,33 +122,43 @@ namespace JMS.Domains
 
             _microServiceHost.MasterGatewayAddress = null;
 
+           
+
             bool logError = true;
             while (_microServiceHost.MasterGatewayAddress == null)
             {
-                Parallel.For(0, _microServiceHost.AllGatewayAddresses.Length, i => {
-                    var addr = _microServiceHost.AllGatewayAddresses[i];
-                    try
-                    {                      
-                        using (var client = CreateClient(addr))
+                ManualResetEvent waitObj = new ManualResetEvent(false);
+                Task.Run(() => {
+                    Parallel.For(0, _microServiceHost.AllGatewayAddresses.Length, i => {
+                        var addr = _microServiceHost.AllGatewayAddresses[i];
+                        try
                         {
-                            client.WriteServiceData(new GatewayCommand
+                            using (var client = CreateClient(addr))
                             {
-                                Type = CommandType.FindMaster
-                            });
-                            var ret = client.ReadServiceObject<InvokeResult>();
-                            if (ret.Success == true && _microServiceHost.MasterGatewayAddress == null)
-                            {
-                                _microServiceHost.MasterGatewayAddress = addr;
+                                client.WriteServiceData(new GatewayCommand
+                                {
+                                    Type = CommandType.FindMaster
+                                });
+                                var ret = client.ReadServiceObject<InvokeResult>();
+                                if (ret.Success == true && _microServiceHost.MasterGatewayAddress == null)
+                                {
+                                    _microServiceHost.MasterGatewayAddress = addr;
+                                    waitObj.Set();
+                                }
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (logError)
-                            _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
-                    }
+                        catch (Exception ex)
+                        {
+                            if (logError)
+                                _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
+                        }
+                    });
+
+                    waitObj.Set();
                 });
 
+                waitObj.WaitOne();
+                waitObj.Dispose();
 
                 if (_microServiceHost.MasterGatewayAddress != null)
                 {
@@ -158,7 +168,8 @@ namespace JMS.Domains
                 logError = false;
                 Thread.Sleep(1000);
             }
-           
+
+
         }
         void connect()
         {

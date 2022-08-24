@@ -230,28 +230,38 @@ namespace JMS
 
             NetAddress masterAddress = null;
 
-            Parallel.For(0, _allGateways.Length, i => {               
-                try
-                {
-                    var addr = _allGateways[i];
-                    using (var client = new ProxyClient(this.ProxyAddress, addr, GatewayClientCertificate))
+            ManualResetEvent waitObj = new ManualResetEvent(false);
+
+            Task.Run(() => {
+                Parallel.For(0, _allGateways.Length, i => {
+                    try
                     {
-                        client.ReadTimeout = this.Timeout;
-                        client.WriteServiceData(new GatewayCommand
+                        var addr = _allGateways[i];
+                        using (var client = new ProxyClient(this.ProxyAddress, addr, GatewayClientCertificate))
                         {
-                            Type = CommandType.FindMaster
-                        });
-                        var ret = client.ReadServiceObject<InvokeResult>();
-                        if (ret.Success == true && masterAddress == null)
-                        {
-                            masterAddress = addr;
+                            client.ReadTimeout = this.Timeout;
+                            client.WriteServiceData(new GatewayCommand
+                            {
+                                Type = CommandType.FindMaster
+                            });
+                            var ret = client.ReadServiceObject<InvokeResult>();
+                            if (ret.Success == true && masterAddress == null)
+                            {
+                                masterAddress = addr;
+                                waitObj.Set();
+                            }
                         }
                     }
-                }
-                catch
-                {
-                }
+                    catch
+                    {
+                    }
+                });
+
+                waitObj.Set();
             });
+
+            waitObj.WaitOne();
+            waitObj.Dispose();
 
 
             if (masterAddress == null)
