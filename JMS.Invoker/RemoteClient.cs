@@ -677,7 +677,16 @@ namespace JMS
         void buildNewTranId()
         {
             if(!string.IsNullOrEmpty(this.TransactionId))
-                this.TransactionId = $"R{DateTime.Now.Ticks}-{this.TransactionId.Split('-')[1]}";
+            {
+                if (this.TransactionId.Contains("-"))
+                {
+                    this.TransactionId = $"R{DateTime.Now.Ticks}-{this.TransactionId.Split('-')[1]}";
+                }
+                else
+                {
+                    this.TransactionId = $"R{DateTime.Now.Ticks}-{this.TransactionId}";
+                }
+            }                
         }
 
         public void Dispose()
