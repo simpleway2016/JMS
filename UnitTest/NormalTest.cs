@@ -430,17 +430,18 @@ namespace UnitTest
                 }
                 Debug.WriteLine("查找服务完毕");
 
-                serviceClient.Invoke("LockName", "abc");
+                serviceClient.Invoke("LockName",  "abc" , "d","e","f" );
 
                 if(lockManager.GetAllKeys().Any(k=>k.Key == "abc") == false)
                 {
                     throw new Exception("找不到lock key");
                 }
+                serviceClient.Invoke("UnlockName", "d");
             }
 
             var slaveGateway = clusterGatewayConnector1.IsMaster ? _clusterGateway2 : _clusterGateway1;
             var slaveLockManager = (clusterGatewayConnector1.IsMaster ? serviceProvider2 : serviceProvider1).GetService<LockKeyManager>();
-            while(slaveLockManager.GetAllKeys().Any(k => k.Key == "abc") == false)
+            while(slaveLockManager.GetAllKeys().Any(k => k.Key == "f") == false)
             {
                 Thread.Sleep(1000);
             }
@@ -461,7 +462,7 @@ namespace UnitTest
             {
                 Thread.Sleep(100);
             }
-            if (slaveLockManager.GetAllKeys().Length == 0)
+            if (slaveLockManager.GetAllKeys().Length != 3)
             {
                 throw new Exception("lock key数量不对");
             }

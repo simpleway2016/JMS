@@ -47,6 +47,7 @@ namespace JMS.Domains
 
             if (_otherGatewayAddress != null)
             {
+                this.IsMaster = configuration.GetSection("Cluster:IsMaster").Get<bool>();
                 transactionStatusManager.TransactionSuccess += OnTransactionSuccess;
                 transactionStatusManager.TransactionRemove += OnTransactionRemove;
 
@@ -87,33 +88,46 @@ namespace JMS.Domains
                 }
                 try
                 {
-                    while(_keyChangeQueue.TryDequeue(out (int action,KeyObject keyObject) item))
+                    if (_keyChangeQueue.Count > 0)
                     {
-                        _logger.LogDebug($"同步{(item.action == 1 ? "add" : "remove")} {item.keyObject.Key}到其他网关");
-
                         using (NetClient client = new CertClient(_otherGatewayAddress, _gateway.ServerCert))
                         {
-                            if (item.action == 1)
+                            while (_keyChangeQueue.TryDequeue(out (int action, KeyObject keyObject) item))
                             {
-                                client.WriteServiceData(new GatewayCommand
-                                {
-                                    Type = CommandType.AddLockKey,
-                                    Content = item.keyObject.ToJsonString()
-                                });
-                            }
-                            else
-                            {
-                                client.WriteServiceData(new GatewayCommand
-                                {
-                                    Type = CommandType.RemoveLockKey,
-                                    Content = item.keyObject.Key
-                                });
-                            }
+                                _logger.LogDebug($"同步{(item.action == 1 ? "add" : "remove")} {item.keyObject.Key}到其他网关");
 
-                            client.ReadServiceObject<InvokeResult>();
+
+                                if (item.action == 1)
+                                {
+                                    client.WriteServiceData(new GatewayCommand
+                                    {
+                                        Type = CommandType.AddLockKey,
+                                        Content = item.keyObject.ToJsonString()
+                                    });
+                                }
+                                else
+                                {
+                                    client.WriteServiceData(new GatewayCommand
+                                    {
+                                        Type = CommandType.RemoveLockKey,
+                                        Content = item.keyObject.Key
+                                    });
+                                }
+
+                            }
+                            client.WriteServiceData(new GatewayCommand
+                            {
+                                Type = CommandType.HealthyCheck
+                            });
+                            try
+                            {
+                                client.ReadServiceObject<InvokeResult>();
+                            }
+                            catch
+                            {
+                            }
                         }
                     }
-
                     wait = true;
                 }
                 catch (Exception ex)
@@ -129,7 +143,7 @@ namespace JMS.Domains
         /// 申请成为master
         /// </summary>
         internal void BeMaster(int tryCount = 3)
-        {            
+        {
             if (_otherGatewayAddress != null)
             {
                 Task.Run(() =>
@@ -138,12 +152,12 @@ namespace JMS.Domains
                     {
                         try
                         {
-                            using (NetClient client = new CertClient(_otherGatewayAddress , _gateway.ServerCert))
+                            using (NetClient client = new CertClient(_otherGatewayAddress, _gateway.ServerCert))
                             {
                                 client.WriteServiceData(new GatewayCommand
                                 {
                                     Type = CommandType.BeGatewayMaster,
-                                    Content = new BeMasterContent { Id = _gateway.Id , IsMaster = this.IsMaster }.ToJsonString()
+                                    Content = new BeMasterContent { Id = _gateway.Id, IsMaster = this.IsMaster }.ToJsonString()
                                 });
                                 var cmd = client.ReadServiceObject<InvokeResult>();
                                 if (cmd.Success)
@@ -152,17 +166,21 @@ namespace JMS.Domains
                                     if (this.IsMaster == false)
                                     {
                                         //在没成为主网关前，将所有lockey设置一个有效期，成为主网关，等微服务提交所有lock key，会取消这个有效期
-                                        _lockKeyManager.ResetAllKeyExpireTime();                                      
+                                        _lockKeyManager.ResetAllKeyExpireTime();
                                         this.IsMaster = true;
                                     }
                                 }
                                 else
                                 {
                                     _logger.LogInformation($"网关{_otherGatewayAddress}拒绝我成为主网关");
+
                                     this.IsMaster = false;
 
                                     //不是主网关，需要断开所有微服务
                                     _registerServiceManager.DisconnectAllServices();
+
+                                    //上传所有lock key
+                                    uploadLockKeysToMaster();
 
                                     this.keepAliveWithMaster();
                                 }
@@ -196,6 +214,18 @@ namespace JMS.Domains
             return new CertClient(_otherGatewayAddress, _gateway.ServerCert);
         }
 
+        void uploadLockKeysToMaster()
+        {
+            //上传已经lock的key
+            var keys = _lockKeyManager.GetAllKeys();
+            if (keys.Length > 0)
+            {
+                foreach( var key in keys)
+                {
+                    _lockKeyManager_LockKey(null, key);
+                }
+            }
+        }
 
         void keepAliveWithMaster()
         {
@@ -218,7 +248,7 @@ namespace JMS.Domains
             }
         }
 
-        internal void SomeoneWantToBeMaster(NetClient netclient,GatewayCommand cmd)
+        internal void SomeoneWantToBeMaster(NetClient netclient, GatewayCommand cmd)
         {
             BeMasterContent beMasterContent = cmd.Content.FromJson<BeMasterContent>();
             if (this.IsMaster && beMasterContent.IsMaster == false)
@@ -230,7 +260,7 @@ namespace JMS.Domains
                 });
                 return;
             }
-            else if(this.IsMaster == false && beMasterContent.IsMaster)
+            else if (this.IsMaster == false && beMasterContent.IsMaster)
             {
                 _logger.LogInformation($"同意{beMasterContent.Id}成为master");
 
@@ -241,9 +271,9 @@ namespace JMS.Domains
                 return;
             }
 
-          
-            var ret = string.Compare(_gateway.Id , beMasterContent.Id);
-            if(ret > 0)
+
+            var ret = string.Compare(_gateway.Id, beMasterContent.Id);
+            if (ret > 0)
             {
                 _logger.LogInformation($"同意{beMasterContent.Id}成为master");
 
@@ -268,7 +298,8 @@ namespace JMS.Domains
             if (_otherGatewayAddress == null)
                 return;
 
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 try
                 {
                     using (NetClient client = CreateOtherGatewayClient())
@@ -293,7 +324,8 @@ namespace JMS.Domains
             if (_otherGatewayAddress == null)
                 return;
 
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 try
                 {
                     using (NetClient client = CreateOtherGatewayClient())
@@ -313,7 +345,7 @@ namespace JMS.Domains
             });
         }
 
-     
+
     }
 
     class BeMasterContent

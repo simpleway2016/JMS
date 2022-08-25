@@ -129,6 +129,7 @@ namespace JMS.Domains
             {
                 ManualResetEvent waitObj = new ManualResetEvent(false);
                 Task.Run(() => {
+                    bool exit = false;
                     Parallel.For(0, _microServiceHost.AllGatewayAddresses.Length, i => {
                         var addr = _microServiceHost.AllGatewayAddresses[i];
                         try
@@ -144,6 +145,7 @@ namespace JMS.Domains
                                 {
                                     _microServiceHost.MasterGatewayAddress = addr;
                                     waitObj.Set();
+                                    exit = true;
                                 }
                             }
                         }
@@ -153,6 +155,9 @@ namespace JMS.Domains
                                 _logger?.LogError(ex, "验证网关{0}:{1}报错", addr.Address, addr.Port);
                         }
                     });
+
+                    if (exit)
+                        return;
 
                     waitObj.Set();
                 });

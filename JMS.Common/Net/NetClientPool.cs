@@ -13,7 +13,7 @@ namespace JMS
     {
         static int POOLSIZE = 5000;
         const int RELEASESECONDS = 5;
-        static ConcurrentDictionary<string, NetClientSeat[]> Dict = new ConcurrentDictionary<string, NetClientSeat[]>();
+        static ConcurrentDictionary<(string,int), NetClientSeat[]> Dict = new ConcurrentDictionary<(string, int), NetClientSeat[]>();
         static NetClientPool()
         {
             new Thread(checkTime).Start();
@@ -69,7 +69,7 @@ namespace JMS
         }
         public static NetClient CreateClient(NetAddress proxy, NetAddress addr, X509Certificate2 cert)
         {
-            var key = $"{addr.Address}--{addr.Port}";
+            var key = (addr.Address,addr.Port);
             NetClientSeat[] array;
             if (Dict.TryGetValue(key, out array) == false)
             {
@@ -101,7 +101,7 @@ namespace JMS
                 client.Dispose();
                 return;
             }
-            var key = $"{client.Address}--{client.Port}";
+            var key = (client.Address , client.Port);
             NetClientSeat[] array;
             if (Dict.TryGetValue(key, out array) == false)
             {

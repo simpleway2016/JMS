@@ -233,6 +233,7 @@ namespace JMS
             ManualResetEvent waitObj = new ManualResetEvent(false);
 
             Task.Run(() => {
+                bool exit = false;
                 Parallel.For(0, _allGateways.Length, i => {
                     try
                     {
@@ -249,6 +250,7 @@ namespace JMS
                             {
                                 masterAddress = addr;
                                 waitObj.Set();
+                                exit = true;
                             }
                         }
                     }
@@ -256,6 +258,9 @@ namespace JMS
                     {
                     }
                 });
+
+                if (exit)
+                    return;
 
                 waitObj.Set();
             });

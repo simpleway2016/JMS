@@ -27,8 +27,21 @@ namespace JMS.Applications.CommandHandles
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
-            var keyObject = cmd.Content.FromJson<KeyObject>();
-            _lockKeyManager.AddKey(keyObject.Key, keyObject.Locker);
+            while (true)
+            {
+                if (cmd.Type == CommandType.HealthyCheck)
+                    break;
+                else if (cmd.Type == CommandType.AddLockKey)
+                {
+                    var keyObject = cmd.Content.FromJson<KeyObject>();
+                    _lockKeyManager.AddKey(keyObject.Key, keyObject.Locker);
+                }
+                else if (cmd.Type == CommandType.RemoveLockKey)
+                {
+                    _lockKeyManager.RemoveKey(cmd.Content);
+                }
+                cmd = netclient.ReadServiceObject<GatewayCommand>();
+            }
 
             netclient.WriteServiceData(new InvokeResult
             {

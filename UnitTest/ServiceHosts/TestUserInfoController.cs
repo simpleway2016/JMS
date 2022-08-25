@@ -49,9 +49,17 @@ namespace UnitTest.ServiceHosts
             _userInfoDbContext.Mather = name;
         }
 
-        public void LockName(string name)
+        public void LockName(string name,string a2,string a3,string a4)
         {
             this.TryLock(name);
+            this.TryLock(a2);
+            this.TryLock(a3);
+            this.TryLock(a4);
+        }
+
+        public void UnlockName(string name)
+        {
+            this.TryUnLock(name);
         }
 
         public override void OnAfterAction(string actionName, object[] parameters)
