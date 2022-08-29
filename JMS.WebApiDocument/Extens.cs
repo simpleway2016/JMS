@@ -25,7 +25,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="app"></param>
         /// <param name="xmlpaths">包含注释的xml文档路径</param>
         /// <returns></returns>
-        public static IApplicationBuilder UseJMSWebApiDocument(this IApplicationBuilder app,string[] xmlpaths)
+        public static IApplicationBuilder UseJMSWebApiDocument(this IApplicationBuilder app)
         {
 
             app.Use((context, next) =>
@@ -34,17 +34,31 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     try
                     {
+                        string[] xmlpaths = System.IO.Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*.xml");
                         var membersEle = new XElement("members");
                         foreach (var path in xmlpaths)
                         {
-                            XDocument xdoc = XDocument.Load(path);
-                            System.Xml.Linq.XElement xeRoot = xdoc.Root; //根节点 
-
-
-                            var eleList = xeRoot.Element("members");
-                            foreach (var item in eleList.Elements("member"))
+                            try
                             {
-                                membersEle.Add(item);
+                                var filename = System.IO.Path.GetFileNameWithoutExtension(path);
+                                if (System.IO.File.Exists(filename + ".dll") == false)
+                                    continue;
+
+                                XDocument xdoc = XDocument.Load(path);
+                                System.Xml.Linq.XElement xeRoot = xdoc.Root; //根节点 
+
+
+                                var eleList = xeRoot.Element("members");
+                                if (eleList != null)
+                                {
+                                    foreach (var item in eleList.Elements("member"))
+                                    {
+                                        membersEle.Add(item);
+                                    }
+                                }
+                            }
+                            catch
+                            {
                             }
                         }
 
