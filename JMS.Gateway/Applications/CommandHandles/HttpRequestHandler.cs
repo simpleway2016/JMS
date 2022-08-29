@@ -97,10 +97,14 @@ namespace JMS.Applications.CommandHandles
             }
             else
             {
+                var servieName = httpRequest.Substring(1);
+                servieName = servieName.Substring(0, servieName.IndexOf("/"));
+
+                httpRequest = httpRequest.Substring(servieName.Length + 1);
                 //重定向
                 var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest
                 {
-                    ServiceName = "WebServer"
+                    ServiceName = servieName
                 });
                 if (location != null && !string.IsNullOrEmpty(location.ServiceAddress))
                 {

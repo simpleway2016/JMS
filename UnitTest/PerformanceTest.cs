@@ -162,5 +162,18 @@ namespace UnitTest
                 }
             }
         }
+
+        [TestMethod]
+        public void UrlParse()
+        {
+            var httpRequest = "/userinfo/api/users/getName";
+            var servieName = httpRequest.Substring(1);
+            servieName = servieName.Substring(0, servieName.IndexOf("/"));
+
+            httpRequest = httpRequest.Substring(servieName.Length + 1);
+
+            if (servieName != "userinfo" || httpRequest != "/api/users/getName")
+                throw new Exception("结果错误");
+        }
     }
 }
