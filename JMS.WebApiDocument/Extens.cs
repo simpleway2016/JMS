@@ -34,34 +34,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     try
                     {
-                        string[] xmlpaths = System.IO.Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*.xml");
-                        var membersEle = new XElement("members");
-                        foreach (var path in xmlpaths)
-                        {
-                            try
-                            {
-                                var filename = System.IO.Path.GetFileNameWithoutExtension(path);
-                                if (System.IO.File.Exists(filename + ".dll") == false)
-                                    continue;
-
-                                XDocument xdoc = XDocument.Load(path);
-                                System.Xml.Linq.XElement xeRoot = xdoc.Root; //根节点 
-
-
-                                var eleList = xeRoot.Element("members");
-                                if (eleList != null)
-                                {
-                                    foreach (var item in eleList.Elements("member"))
-                                    {
-                                        membersEle.Add(item);
-                                    }
-                                }
-                            }
-                            catch
-                            {
-                            }
-                        }
-
                         var manager = app.ApplicationServices.GetService<ApplicationPartManager>();
                         List<Type> controllerTypes = new List<Type>();
                         foreach (var part in manager.ApplicationParts)
@@ -71,7 +43,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                 controllerTypes.AddRange(assemblyPart.Types.Where(m => m.GetCustomAttribute<WebApiDocAttribute>() != null).ToArray());
                             }
                         }
-                        return HtmlBuilder.Build(context, controllerTypes, membersEle);
+                        return HtmlBuilder.Build(context, controllerTypes);
                     }
                     catch (Exception ex)
                     {

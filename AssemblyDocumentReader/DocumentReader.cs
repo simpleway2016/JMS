@@ -192,12 +192,13 @@ namespace JMS.AssemblyDocumentReader
                 return ptype.ToString();
             }
             if (ptype.IsGenericType == false)
-                return ptype.FullName;
+                return ptype.FullName.Replace("+",".");
             else
             {
                 StringBuilder buffer = new StringBuilder();
                 var fullname = ptype.FullName;
                 fullname = fullname.Substring(0, fullname.IndexOf("`"));
+                fullname = fullname.Replace("+", ".");
                 var middleStr = ptype.GenericTypeArguments.Select(m => GetParameterTypeString(m)).ToArray();
                 return fullname + "{" + String.Join(",", middleStr) + "}";
             }

@@ -1,4 +1,5 @@
-﻿using JMS.WebApiDocument.Dtos;
+﻿using JMS.AssemblyDocumentReader;
+using JMS.WebApiDocument.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -15,13 +16,13 @@ namespace JMS.WebApiDocument
 {
     public class HtmlBuilder
     {
-        public static Task Build(HttpContext context, List<Type> controllerTypes, XElement membersEle)
+        public static Task Build(HttpContext context, List<Type> controllerTypes)
         {
             List<ControllerInfo> controllerInfos = new List<ControllerInfo>();
             List<DataTypeInfo> dataTypeInfos = new List<DataTypeInfo>();
             foreach (var controllerType in controllerTypes)
             {
-                Build(context, dataTypeInfos, controllerInfos, controllerType, membersEle);
+                Build(context, dataTypeInfos, controllerInfos, controllerType);
             }
 
             using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.index.html"))
@@ -34,7 +35,7 @@ namespace JMS.WebApiDocument
             }
         }
 
-        static void Build(HttpContext context, List<DataTypeInfo> dataTypeInfos , List<ControllerInfo> controllerInfos, Type controllerType, XElement membersEle)
+        static void Build(HttpContext context, List<DataTypeInfo> dataTypeInfos , List<ControllerInfo> controllerInfos, Type controllerType)
         {
             WebApiDocAttribute attr = controllerType.GetCustomAttribute<WebApiDocAttribute>();
             var btnAttrs = controllerType.GetCustomAttributes<WebApiDocButtonAttribute>();
@@ -64,8 +65,10 @@ namespace JMS.WebApiDocument
             controllerInfo.desc = attr.Description;
             
 
+         
             if(attr.MicroServiceType != null)
             {
+           
                 var methods = attr.MicroServiceType.GetMethods().Where(m => m.IsSpecialName == false && m.DeclaringType == attr.MicroServiceType).ToArray();
                 foreach (var method in methods)
                 {
@@ -78,7 +81,7 @@ namespace JMS.WebApiDocument
                     controllerInfo.items.Add(minfo);
                     minfo.isComment = method.GetCustomAttribute<IsCommentAttribute>() != null;
                     minfo.title = method.Name;
-                    minfo.desc = GetMethodComment(attr.MicroServiceType, method, membersEle);
+                    minfo.desc = GetMethodComment(attr.MicroServiceType, method);
                     minfo.method = "POST";
                     minfo.url = route.Template.Replace("[controller]", controllerInfo.name).Replace("{method}", method.Name);
 
@@ -92,14 +95,14 @@ namespace JMS.WebApiDocument
                         var pinfo = new ParameterInformation();
                         minfo.data.items.Add(pinfo);
                         pinfo.name = param.Name;
-                        pinfo.desc = GetParameterComment(attr.MicroServiceType, method, param, membersEle);
-                        pinfo.type = getType(dataTypeInfos, param.ParameterType, membersEle);
+                        pinfo.desc = GetParameterComment(attr.MicroServiceType, method, param);
+                        pinfo.type = getType(dataTypeInfos, param.ParameterType);
                     }
 
                     if (method.ReturnType != typeof(void))
                     {
                         minfo.returnData = new DataBodyInfo();
-                        minfo.returnData.type = getType(dataTypeInfos, method.ReturnType, membersEle);
+                        minfo.returnData.type = getType(dataTypeInfos, method.ReturnType);
                         if (minfo.returnData.type.EndsWith("[]") == false)
                         {
                             var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == method.ReturnType);
@@ -108,7 +111,7 @@ namespace JMS.WebApiDocument
                                 minfo.returnData.items = typeinfo.members;
                             }
                         }
-                        minfo.returnData.desc = GetMethodReturnComment(attr.MicroServiceType, method, membersEle);
+                        minfo.returnData.desc = GetMethodReturnComment(attr.MicroServiceType, method);
                     }
                 }
             }
@@ -127,7 +130,7 @@ namespace JMS.WebApiDocument
                     controllerInfo.items.Add(minfo);
                     minfo.isComment = method.GetCustomAttribute<IsCommentAttribute>() != null;
                     minfo.title = method.Name;
-                    minfo.desc = GetMethodComment(controllerType, method, membersEle);
+                    minfo.desc = GetMethodComment(controllerType, method);
                     minfo.method = httpPostAttr != null ? "POST" :"GET";
                     minfo.url = route.Template.Replace("[controller]", controllerInfo.name).Replace("[action]", method.Name);
 
@@ -147,8 +150,8 @@ namespace JMS.WebApiDocument
 
                         var pinfo = new ParameterInformation();
                         pinfo.name = param.Name;
-                        pinfo.desc = GetParameterComment(controllerType, method, param, membersEle);
-                        pinfo.type = getType(dataTypeInfos, param.ParameterType, membersEle);
+                        pinfo.desc = GetParameterComment(controllerType, method, param);
+                        pinfo.type = getType(dataTypeInfos, param.ParameterType);
 
                         if (fromQueryAttr != null || (fromQueryAttr == null && fromFromAttr == null && fromBodyAttr == null))
                         {
@@ -169,7 +172,7 @@ namespace JMS.WebApiDocument
                     if (method.ReturnType != typeof(void))
                     {
                         minfo.returnData = new DataBodyInfo();
-                        minfo.returnData.type = getType(dataTypeInfos, method.ReturnType, membersEle);
+                        minfo.returnData.type = getType(dataTypeInfos, method.ReturnType);
                         if (minfo.returnData.type.EndsWith("[]") == false)
                         {
                             var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == method.ReturnType);
@@ -178,13 +181,13 @@ namespace JMS.WebApiDocument
                                 minfo.returnData.items = typeinfo.members;
                             }
                         }
-                        minfo.returnData.desc = GetMethodReturnComment(controllerType, method, membersEle);
+                        minfo.returnData.desc = GetMethodReturnComment(controllerType, method);
                     }
                 }
             }
         }
 
-        static string getType(List<DataTypeInfo> dataTypeInfos, Type type, XElement membersEle)
+        static string getType(List<DataTypeInfo> dataTypeInfos, Type type)
         {
             if (type == typeof(object))
             {
@@ -197,7 +200,7 @@ namespace JMS.WebApiDocument
             else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IList)))
             {
                 type = type.GenericTypeArguments[0];
-                return getType(dataTypeInfos , type, membersEle) + "[]";
+                return getType(dataTypeInfos , type) + "[]";
             }
             else if (type.IsArray == false && type.GetInterfaces().Any(m => m == typeof(System.Collections.IList)))
             {
@@ -206,7 +209,7 @@ namespace JMS.WebApiDocument
             else if (type.IsArray == true)
             {
                 type = type.GetElementType();
-                return getType(dataTypeInfos, type, membersEle) + "[]";
+                return getType(dataTypeInfos, type) + "[]";
             }
 
             if (dataTypeInfos.Any(m=>m.type == type))
@@ -230,8 +233,8 @@ namespace JMS.WebApiDocument
                     var pinfo = new ParameterInformation();
                     dataTypeInfo.members.Add(pinfo);
                     pinfo.name = pro.Name;
-                    pinfo.desc = GetPropertyComment(type, pro, membersEle);
-                    pinfo.type = getType(dataTypeInfos, pro.PropertyType, membersEle);
+                    pinfo.desc = GetPropertyComment(type, pro);
+                    pinfo.type = getType(dataTypeInfos, pro.PropertyType);
                 }
                 return "#" + dataTypeInfo.typeName;
             }
@@ -258,7 +261,7 @@ namespace JMS.WebApiDocument
                         pinfo.name = values.GetValue(i)?.ToString();
 
                     }
-                    pinfo.desc = GetEnumFieldComment(type, names[i], membersEle);
+                    pinfo.desc = GetEnumFieldComment(type, names[i]);
                     pinfo.type = "";
                 }
                 return "#" + dataTypeInfo.typeName;
@@ -269,35 +272,26 @@ namespace JMS.WebApiDocument
             return "any";
         }
 
-        static string GetEnumFieldComment(Type type, string name, XElement membersEle)
+        static string GetEnumFieldComment(Type type, string name)
         {
-            var ele = membersEle.Elements("member").FirstOrDefault(m => m.Attribute("name").Value == $"F:{type.FullName.Replace("+", ".")}.{name}");
             try
             {
-                if (ele != null)
-                {
-                    var commentEle = ele.Element("summary");
-                    return commentEle.Value.Trim();
-                }
+                var typeDoc = DocumentReader.GetTypeDocument(type);
+                return typeDoc.Fields.FirstOrDefault(m => m.Name == name).Comment;
             }
-            catch
+            catch (Exception)
             {
-
+                return "";
             }
-            return "";
+
         }
         //
-        static string GetMethodComment(Type type, MethodInfo method, XElement membersEle)
+        static string GetMethodComment(Type type, MethodInfo method)
         {
             try
             {
-                var commentEle = membersEle.Elements("member").Where(m =>
-                              m.Attribute("name").Value == $"M:{type.FullName.Replace("+", ".")}.{method.Name}" ||
-                              m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}<") ||
-                              m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}(")).FirstOrDefault();
-
-                string methodComment = commentEle?.Element("summary").Value.Trim();
-                return methodComment;
+                var typeDoc = DocumentReader.GetTypeDocument(type);
+                return typeDoc.Methods.FirstOrDefault(m => m.Name == method.Name).Comment;
             }
             catch (Exception)
             {
@@ -305,17 +299,12 @@ namespace JMS.WebApiDocument
             }
 
         }
-        static string GetMethodReturnComment(Type type, MethodInfo method, XElement membersEle)
+        static string GetMethodReturnComment(Type type, MethodInfo method)
         {
             try
             {
-                var commentEle = membersEle.Elements("member").Where(m =>
-                              m.Attribute("name").Value == $"M:{type.FullName.Replace("+", ".")}.{method.Name}" ||
-                              m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}<") ||
-                              m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}(")).FirstOrDefault();
-
-                string methodComment = commentEle?.Element("returns").Value.Trim();
-                return methodComment;
+                var typeDoc = DocumentReader.GetTypeDocument(type);
+                return typeDoc.Methods.FirstOrDefault(m => m.Name == method.Name).ReturnComment;
             }
             catch (Exception)
             {
@@ -323,41 +312,27 @@ namespace JMS.WebApiDocument
             }
 
         }
-        static string GetPropertyComment(Type type,PropertyInfo pro,XElement membersEle)
+        static string GetPropertyComment(Type type,PropertyInfo pro)
         {
-            var ele = membersEle.Elements("member").FirstOrDefault(m => m.Attribute("name").Value == $"P:{ pro.DeclaringType.FullName.Replace("+", ".")}.{pro.Name}");
             try
             {
-                if (ele != null)
-                {
-                    var commentEle = ele.Element("summary");
-                    return commentEle.Value.Trim();
-                }
+                var typeDoc = DocumentReader.GetTypeDocument(type);
+                return typeDoc.Properties.FirstOrDefault(m => m.Name == pro.Name).Comment;
             }
-            catch
+            catch (Exception)
             {
-
+                return "";
             }
-            return "";
         }
 
-        static string GetParameterComment(Type type, MethodInfo method,ParameterInfo parameter, XElement membersEle)
+        static string GetParameterComment(Type type, MethodInfo method,ParameterInfo parameter)
         {
             try
             {
-                var commentEle = membersEle.Elements("member").Where(m =>
-                            m.Attribute("name").Value == $"M:{type.FullName.Replace("+", ".")}.{method.Name}" ||
-                            m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}<") ||
-                            m.Attribute("name").Value.StartsWith($"M:{type.FullName.Replace("+", ".")}.{method.Name}(")).FirstOrDefault();
-                var pele = commentEle?.Elements("param").FirstOrDefault(m => m.Attribute("name").Value == parameter.Name);
-                var comment = pele?.Value.Trim();
-                if (parameter.ParameterType.IsGenericType && parameter.ParameterType.GetGenericTypeDefinition() == typeof(System.Nullable<>))
-                {
-                    comment += " （可为null）";
-                }
-                return comment;
+                var typeDoc = DocumentReader.GetTypeDocument(type);
+                return typeDoc.Methods.FirstOrDefault(m => m.Name == method.Name).Parameters.FirstOrDefault(m=>m.Name == parameter.Name).Comment;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return "";
             }
