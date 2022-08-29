@@ -105,7 +105,11 @@ namespace JMS.Domains
                             try
                             {
                                 var hardwareInfo = command.Content.FromJson<PerformanceInfo>();
-                                Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity.GetValueOrDefault());
+                                if (ServiceInfo.Port != 0)
+                                {
+                                    //只有端口不为0，才是JMS微服务，如果是0，可能是webapi，无法统计当前连接数
+                                    Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity.GetValueOrDefault());
+                                }
                                 ServiceInfo.CpuUsage = hardwareInfo.CpuUsage.GetValueOrDefault();
                             }
                             catch
