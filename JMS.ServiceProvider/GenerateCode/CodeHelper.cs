@@ -206,7 +206,7 @@ namespace JMS.GenerateCode
                 {
                     List<PropertyInfo> list = new List<PropertyInfo>(properties);
                     //需要查找继承类
-                    var subTypes = type.Assembly.DefinedTypes.Where(m => m.IsSubclassOf(type)).ToArray();
+                    var subTypes = type.Assembly.DefinedTypes.Where(m => m.IsPublic && m.IsSubclassOf(type)).ToArray();
                     foreach (var subtype in subTypes)
                     {
                         var subPros = subtype.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(m => list.Any(n => n.Name == m.Name) == false).ToArray();

@@ -274,6 +274,8 @@ namespace JMS
         public void Run()
         {
             ServiceProvider = _services.BuildServiceProvider();
+            if (ServicePort == 0)
+                return;
 
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();

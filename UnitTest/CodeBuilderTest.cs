@@ -7,6 +7,18 @@ using System.Collections.Generic;
 
 namespace UnitTest
 {
+    public class Setting3 : Setting1
+    {
+        public int Age2 { get; set; }
+    }
+    class Setting2 : Setting1
+    {
+        public int Age { get; set; }
+    }
+    public class Setting1
+    {
+        public string Name { get; set; }
+    }
    
     public class TClass<T>
     {
@@ -82,6 +94,10 @@ namespace UnitTest
         {
             return null;
         }
+        public Setting1 Test3()
+        {
+            return null;
+        }
     }
 
     [TestClass]
@@ -91,7 +107,9 @@ namespace UnitTest
        public void Test()
         {
             MicroServiceHost host = new MicroServiceHost(new ServiceCollection());
+            
             host.Register<TestController>("testService");
+            host.Run();
             var type = typeof(MicroServiceHost).Assembly.GetType("JMS.GenerateCode.CodeBuilder");
             var builder = Activator.CreateInstance(type , new object[] {host });
             var str = type.GetMethod("GenerateCode").Invoke(builder, new object[] {"abc" , "MyClass" , "testService" });
