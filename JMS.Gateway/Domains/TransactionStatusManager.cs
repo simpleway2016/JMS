@@ -22,7 +22,7 @@ namespace JMS.Domains
         {
             while(true)
             {
-                var time = DateTime.Now.AddDays(-10);
+                var time = DateTime.Now.AddYears(-1);
                 foreach ( var item in _dataContext )
                 {
                     if(item.CreateTime < time)
