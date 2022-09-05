@@ -338,7 +338,7 @@
                                     <td>{{index}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td v-html="lineBreak(param.desc)"></td>
+                                    <td v-html="param.desc?lineBreak(param.desc):param.name"></td>
                                 </tr>
                             </table>
                         </div>
