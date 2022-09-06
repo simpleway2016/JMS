@@ -10,6 +10,7 @@ namespace ServiceStatusViewer
     public class MicroServiceClient : RemoteClient
     {
         static NetAddress[] GatewayAddresses;
+        static NetAddress ProxyAddresses;
         static IConfiguration Configuration;
         static MicroServiceClient()
         {
@@ -24,8 +25,9 @@ namespace ServiceStatusViewer
             Configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, null);
 
             GatewayAddresses = Configuration.GetSection("Gateways").Get<NetAddress[]>();
+            ProxyAddresses = Configuration.GetSection("Proxy").Get<NetAddress>();
         }
-        public MicroServiceClient():base(GatewayAddresses)
+        public MicroServiceClient():base(GatewayAddresses , ProxyAddresses)
         {
 
         }

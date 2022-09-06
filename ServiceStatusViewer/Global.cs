@@ -10,10 +10,5 @@ namespace ServiceStatusViewer
     {
         public static IConfiguration Configuration { get; set; }
 
-        public static NetAddress[] GatewayAddresses
-        {
-            get;
-            set;
-        }
     }
 }

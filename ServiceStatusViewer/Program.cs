@@ -27,10 +27,6 @@ namespace ServiceStatusViewer
             builder.AddJsonFile(SettingFileName, optional: true, reloadOnChange: true);
             Global.Configuration = builder.Build();
 
-            //网关地址
-            Global.GatewayAddresses = Global.Configuration.GetSection("Gateways").Get<NetAddress[]>();
-
-          
 
             BuildAvaloniaApp()
               .StartWithClassicDesktopLifetime(args);
