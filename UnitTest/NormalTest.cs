@@ -214,6 +214,7 @@ namespace UnitTest
                 }
 
                 client.BeginTransaction();
+                serviceClient.Invoke("CheckTranId");
                 serviceClient.Invoke("SetUserName", "Jack");
                 serviceClient.Invoke("SetAge", 28);
                 serviceClient.InvokeAsync("SetFather", "Tom");

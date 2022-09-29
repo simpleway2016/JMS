@@ -70,7 +70,6 @@ namespace JMS
             services.AddSingleton<Gateway>();
             services.AddSingleton<LockKeyManager>();
             services.AddTransient<IMicroServiceReception, MicroServiceReception>();
-            services.AddSingleton<TransactionIdBuilder>();
             services.AddSingleton<FileChangeWatcher>();
             services.AddTransient<ListenFileChangeReception>();
 

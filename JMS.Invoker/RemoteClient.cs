@@ -28,13 +28,6 @@ namespace JMS
         public string TransactionId
         {
             get => _TransactionId;
-            set
-            {
-                if (_TransactionId != value)
-                {
-                    _TransactionId = value;                   
-                }
-            }
         }
         /// <summary>
         /// 是否支持事务，如果为false，这之后调用的微服务端会直接提交事务。默认为true
@@ -80,6 +73,7 @@ namespace JMS
         /// <param name="serviceClientCert">与微服务互通的证书</param>
         public RemoteClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
+            _TransactionId = Guid.NewGuid().ToString("N");
             GatewayAddress = new NetAddress(gatewayAddress, port);
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
@@ -96,6 +90,7 @@ namespace JMS
         /// <param name="serviceClientCert">与微服务互通的证书</param>
         public RemoteClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
+            _TransactionId = Guid.NewGuid().ToString("N");
             _logger = logger;
             this.ProxyAddress = proxyAddress;
             GatewayClientCertificate = gatewayClientCert;
@@ -440,7 +435,11 @@ namespace JMS
         /// </summary>
         public void BeginTransaction()
         {
-            _SupportTransaction = true;
+            if (!_SupportTransaction)
+            {
+                _TransactionId = Guid.NewGuid().ToString("N");
+                _SupportTransaction = true;
+            }
         }
 
         /// <summary>
@@ -536,7 +535,6 @@ namespace JMS
 
                 _SupportTransaction = false;
             }
-            buildNewTranId();
         }
 
         List<TransactionException> endRequest(InvokeType invokeType)
@@ -671,23 +669,8 @@ namespace JMS
 
                 _SupportTransaction = false;
             }
-            buildNewTranId();
         }
 
-        void buildNewTranId()
-        {
-            if(!string.IsNullOrEmpty(this.TransactionId))
-            {
-                if (this.TransactionId.Contains("-"))
-                {
-                    this.TransactionId = $"R{DateTime.Now.Ticks}-{this.TransactionId.Split('-')[1]}";
-                }
-                else
-                {
-                    this.TransactionId = $"R{DateTime.Now.Ticks}-{this.TransactionId}";
-                }
-            }                
-        }
 
         public void Dispose()
         {
@@ -702,7 +685,6 @@ namespace JMS
                     waitTasks();
                 }
             }
-            buildNewTranId();
         }
     }
 }

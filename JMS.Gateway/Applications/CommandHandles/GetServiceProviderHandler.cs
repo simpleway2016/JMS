@@ -12,12 +12,10 @@ namespace JMS.Applications.CommandHandles
     class GetServiceProviderHandler : ICommandHandler
     {
         IServiceProvider _serviceProvider;
-        TransactionIdBuilder _TransactionIdBuilder;
         ClusterGatewayConnector _gatewayRefereeClient;
         public GetServiceProviderHandler(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            _TransactionIdBuilder = serviceProvider.GetService<TransactionIdBuilder>();
             _gatewayRefereeClient = serviceProvider.GetService<ClusterGatewayConnector>();
         }
         public CommandType MatchCommandType => CommandType.GetServiceProvider;
@@ -45,13 +43,6 @@ namespace JMS.Applications.CommandHandles
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
-            if (cmd.Header != null)
-            {
-                if (cmd.Header.ContainsKey("TranId") == false || string.IsNullOrEmpty(cmd.Header["TranId"]))
-                {
-                    cmd.Header["TranId"] = _TransactionIdBuilder.Build();
-                }
-            }
             var requestBody = cmd.Content.FromJson<GetServiceProviderRequest>();
             requestBody.Header = cmd.Header;
             requestBody.ClientAddress = ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString();

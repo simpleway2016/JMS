@@ -9,7 +9,7 @@ namespace JMS
     interface IRemoteClient
     {
 
-        string TransactionId { get; set; }
+        string TransactionId { get; }
         NetAddress GatewayAddress { get;  }
         NetAddress ProxyAddress { get; }
         int Timeout { get; set; }

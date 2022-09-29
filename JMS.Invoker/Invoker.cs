@@ -51,8 +51,6 @@ namespace JMS
                 if (serviceLocation.Host == "not master")
                     throw new MissMasterGatewayException("");
 
-                if (string.IsNullOrEmpty(ServiceTransaction.TransactionId))
-                    ServiceTransaction.TransactionId = serviceLocation.TransactionId;
 
                 if (serviceLocation.Port == 0)
                     return false;

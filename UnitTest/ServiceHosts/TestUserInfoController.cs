@@ -16,7 +16,11 @@ namespace UnitTest.ServiceHosts
             if (this.ServiceProvider.GetService<UserInfoDbContext>() != userInfoDbContext)
                 throw new Exception("作用域对象出错");
         }
-
+        public void CheckTranId()
+        {
+            if (string.IsNullOrEmpty(this.TransactionId))
+                throw new Exception("TransactionId为空");
+        }
         public void SetUserName(string name)
         {
             //启动支持分布式事务
