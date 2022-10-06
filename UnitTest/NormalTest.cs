@@ -440,7 +440,7 @@ namespace UnitTest
 
             while(File.Exists($"./$$_JMS.Invoker.Transactions/{tranid}.json"))
             {
-                Thread.Sleep(1000);//等待7秒，失败的事务
+                Thread.Sleep(1000);
             }
 
             if (UserInfoDbContext.FinallyUserName != "Jack" || TestCrashController.FinallyText != "abc")
