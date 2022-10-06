@@ -79,7 +79,7 @@ namespace JMS
 
                     if (this.RetryCommitFilePath != null)
                     {
-                        faildCommitBuilder.Rollback(this.RetryCommitFilePath);
+                        faildCommitBuilder.UnkonwStatus(this.RetryCommitFilePath);
                         this.RetryCommitFilePath = null;
                     }
                 }

@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using Way.Lib;
 using static JMS.RetryCommit.FaildCommitBuilder;
+using JMS.Infrastructures;
 
 namespace JMS.RetryCommit
 {
@@ -60,25 +61,28 @@ namespace JMS.RetryCommit
             while (true)
             {
                 Thread.Sleep(5000);
-                try
+                lock (this)
                 {
-                    var folder = _microServiceHost.RetryCommitPath;
-                    if (Directory.Exists(folder))
+                    try
                     {
-                        var files = Directory.GetFiles(folder, "*.err");
-                        handleFiles(files);
+                        var folder = _microServiceHost.RetryCommitPath;
+                        if (Directory.Exists(folder))
+                        {
+                            var files = Directory.GetFiles(folder, "*.err");
+                            handleFiles(files);
+                        }
                     }
-                }
-                catch (Exception)
-                {
+                    catch (Exception)
+                    {
 
+                    }
                 }
             }
         }
 
         void handleFiles(string[] files)
         {
-           
+
             if (files.Length > 0)
             {
                 foreach (var file in files)
@@ -88,20 +92,47 @@ namespace JMS.RetryCommit
             }
         }
 
-        public void RetryFile(string file)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="tranId"></param>
+        /// <returns>0:执行成功  -1：没有找到对应的事务文件 -2：执行出错</returns>
+        public int RetryTranaction(string tranId)
+        {
+            lock (this)
+            {
+                try
+                {
+                    var folder = _microServiceHost.RetryCommitPath;
+                    var files = Directory.GetFiles(folder, $"{tranId}_*.*");
+                    if (files.Length > 0)
+                    {
+                        RetryFile(files[0], false);
+                        return 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _loggerTran?.LogError(ex, "");
+                    return -2;
+                }
+                return -1;
+            }
+        }
+
+        public void RetryFile(string file, bool checkFromGateway = true)
         {
             try
             {
-                File.Move(file, file + ".trying");
-                file = file + ".trying";
+                file = FileHelper.ChangeFileExt(file, ".trying");
 
                 object usercontent = null;
                 var fileContent = File.ReadAllText(file, Encoding.UTF8).FromJson<RequestInfo>();
 
-                if(_gatewayConnector.CheckTransaction(fileContent.TransactionId) == false)
+                if (checkFromGateway && _gatewayConnector.CheckTransaction(fileContent.TransactionId) == false)
                 {
                     _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", fileContent.TransactionId);
-                    File.Move(file, file + ".faild");
+                    FileHelper.ChangeFileExt(file, ".faild");
                     return;
                 }
 
@@ -129,7 +160,7 @@ namespace JMS.RetryCommit
                     catch (Exception ex)
                     {
                         _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", fileContent.TransactionId, ex.Message);
-                        File.Move(file, file + ".faild");
+                        FileHelper.ChangeFileExt(file, ".faild");
                     }
 
 
@@ -150,8 +181,9 @@ namespace JMS.RetryCommit
             catch (Exception ex)
             {
                 _loggerTran?.LogError("RetryCommitMission处理事务id为{0}时发生未知错误,{1}", ex.Message);
-                File.Move(file, file + ".faild");
+                FileHelper.ChangeFileExt(file, ".faild");
             }
+
         }
 
         void retry(InvokeCommand cmd, object userContent)
@@ -164,7 +196,7 @@ namespace JMS.RetryCommit
             {
                 try
                 {
-                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.ThreadLocalObject(cmd,serviceScope.ServiceProvider);
+                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.ThreadLocalObject(cmd, serviceScope.ServiceProvider);
                     var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
                     controller = _controllerFactory.CreateController(serviceScope, controllerTypeInfo);

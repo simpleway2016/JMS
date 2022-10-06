@@ -9,6 +9,10 @@ namespace JMS
     public interface IMicroService
     {
         /// <summary>
+        /// 微服务地址是否是由网关分配
+        /// </summary>
+        bool IsFromGateway { get; }
+        /// <summary>
         /// 服务器地址
         /// </summary>
         RegisterServiceLocation ServiceLocation { get; }

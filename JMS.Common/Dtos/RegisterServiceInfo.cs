@@ -24,6 +24,17 @@ namespace JMS.Dtos
         /// 微服务的自定义描述
         /// </summary>
         public string Description;
+
+        public RegisterServiceLocation()
+        {
+            
+        }
+
+        public RegisterServiceLocation(NetAddress address)
+        {
+            this.Port = address.Port;
+            this.Host = this.ServiceAddress = address.Address;
+        }
     }
    
     public class RegisterServiceInfo: RegisterServiceLocation

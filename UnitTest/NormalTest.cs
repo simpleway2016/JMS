@@ -8,6 +8,7 @@ using Org.BouncyCastle.Crypto.Engines;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -374,6 +375,73 @@ namespace UnitTest
             }
 
             Thread.Sleep(7000);//等待7秒，失败的事务
+
+            if (UserInfoDbContext.FinallyUserName != "Jack" || TestCrashController.FinallyText != "abc")
+                throw new Exception("结果不正确");
+        }
+
+        [TestMethod]
+        public void TestCrashForLocal()
+        {
+            try
+            {
+                Directory.Delete("./$$_JMS.Invoker.Transactions", true);
+            }
+            catch (Exception)
+            {
+
+            }
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+            StartCrashServiceHost(_CrashServicePort);
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            string tranid;
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
+                }
+
+                var crashService = client.GetMicroService("CrashService",null , new JMS.Dtos.RegisterServiceLocation { 
+                    ServiceAddress = "127.0.0.1",
+                    Port = _CrashServicePort
+                } );               
+
+                client.BeginTransaction();
+                tranid = client.TransactionId;
+
+                serviceClient.Invoke("SetUserName", "Jack");
+                crashService.Invoke("SetText", "abc");
+                try
+                {
+                    client.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+
+                    Debug.WriteLine(ex.Message);
+                }
+
+            }
+
+            while(File.Exists($"./$$_JMS.Invoker.Transactions/{tranid}.json"))
+            {
+                Thread.Sleep(1000);//等待7秒，失败的事务
+            }
 
             if (UserInfoDbContext.FinallyUserName != "Jack" || TestCrashController.FinallyText != "abc")
                 throw new Exception("结果不正确");

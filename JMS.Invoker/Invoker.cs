@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -14,17 +15,26 @@ namespace JMS
         string _serviceName;
         RegisterServiceLocation _serviceLocation;
         public RegisterServiceLocation ServiceLocation => _serviceLocation;
+        bool _IsFromGateway;
+        public bool IsFromGateway => _IsFromGateway;
+
         string _arg;
         public Invoker(IRemoteClient ServiceTransaction, string serviceName,string arg = null)
         {
             this.ServiceTransaction = ServiceTransaction;
             _serviceName = serviceName;
             _arg = arg;
-
+            _IsFromGateway = true;
         }
 
         public bool Init(RegisterServiceLocation registerServiceLocation)
         {
+            if (registerServiceLocation != null)
+            {
+                _IsFromGateway = false;
+                _serviceLocation = registerServiceLocation.ToJsonString().FromJson<RegisterServiceLocation>();
+                return true;
+            }
             //获取服务地址
             var netclient = NetClientPool.CreateClient(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate);
             netclient.ReadTimeout = this.ServiceTransaction.Timeout;
@@ -41,12 +51,6 @@ namespace JMS
                     }.ToJsonString()
                 });
                 var serviceLocation = netclient.ReadServiceObject<RegisterServiceLocation>();
-                if (registerServiceLocation != null)
-                {
-                    serviceLocation.Host = registerServiceLocation.Host;
-                    serviceLocation.Port = registerServiceLocation.Port;
-                    serviceLocation.ServiceAddress = registerServiceLocation.ServiceAddress;
-                }
 
                 if (serviceLocation.Host == "not master")
                     throw new MissMasterGatewayException("");
@@ -80,21 +84,21 @@ namespace JMS
 
         public void Invoke(string method, params object[] parameters)
         {
-            new InvokeConnect(_serviceName, _serviceLocation).Invoke<object>(method, ServiceTransaction, parameters);
+            new InvokeConnect(_serviceName, _serviceLocation,this).Invoke<object>(method, ServiceTransaction, parameters);
         }
         public T Invoke<T>(string method, params object[] parameters)
         {
-            return new InvokeConnect(_serviceName, _serviceLocation).Invoke<T>(method, ServiceTransaction, parameters);
+            return new InvokeConnect(_serviceName, _serviceLocation, this).Invoke<T>(method, ServiceTransaction, parameters);
         }
         public Task<T> InvokeAsync<T>(string method, params object[] parameters)
         {
-            var task = new InvokeConnect(_serviceName, _serviceLocation).InvokeAsync<T>(method,  ServiceTransaction, parameters);
+            var task = new InvokeConnect(_serviceName, _serviceLocation, this).InvokeAsync<T>(method,  ServiceTransaction, parameters);
             ServiceTransaction.AddTask(task);
             return task;
         }
         public Task InvokeAsync(string method, params object[] parameters)
         {
-            var task = new InvokeConnect(_serviceName, _serviceLocation).InvokeAsync<object>(method, ServiceTransaction, parameters);
+            var task = new InvokeConnect(_serviceName, _serviceLocation, this).InvokeAsync<object>(method, ServiceTransaction, parameters);
             ServiceTransaction.AddTask(task);
             return task;
         }

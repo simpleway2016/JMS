@@ -6,7 +6,7 @@
     <AssemblyName>JMS.Invoker</AssemblyName>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/simpleway2016/JMS</PackageProjectUrl>
-    <Version>1.1.0.12</Version>
+    <Version>1.1.0.13</Version>
     <Authors>Jack.T</Authors>
     <Company>JMS</Company>
     <Product>JMS</Product>

@@ -25,11 +25,13 @@ namespace JMS
 
         public InvokingInformation InvokingInfo { get; private set; }
         public InvokeCommand Command { get; private set; }
-        public InvokeConnect(string serviceName , RegisterServiceLocation location)
+        public Invoker Invoker { get; private set; }
+        public InvokeConnect(string serviceName , RegisterServiceLocation location, Invoker invoker)
         {
             this.InvokingInfo = new InvokingInformation();
             this.InvokingInfo.ServiceName = serviceName;
             this.InvokingInfo.ServiceLocation = location;
+            Invoker = invoker;
         }
 
 

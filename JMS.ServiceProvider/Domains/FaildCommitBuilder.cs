@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using JMS.Infrastructures;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -92,25 +93,30 @@ namespace JMS.RetryCommit
         {
             try
             {
-                File.Move(filepath, filepath + ".err");
+                FileHelper.ChangeFileExt(filepath, ".err");
             }
             catch (Exception ex)
             {
                 _loggerTran?.LogError("移动RetryCommitFilePath失败，{0} {1}", filepath, ex.Message);
             }
         }
-        public void Timeout(string filepath)
+
+        /// <summary>
+        /// 保存至未知状态
+        /// </summary>
+        /// <param name="filepath"></param>
+        public void UnkonwStatus(string filepath)
         {
-            _retryCommitMission.RetryFile(filepath);
-            //try
-            //{
-            //    File.Move(filepath, filepath + ".timeout");
-            //}
-            //catch (Exception ex)
-            //{
-            //    _loggerTran?.LogError("移动RetryCommitFilePath失败，{0} {1}", filepath, ex.Message);
-            //}
+            try
+            {
+                FileHelper.ChangeFileExt(filepath, ".unknow");
+            }
+            catch (Exception ex)
+            {
+                _loggerTran?.LogError("移动RetryCommitFilePath失败，{0} {1}", filepath, ex.Message);
+            }
         }
+
         internal class RequestInfo
         {
             public string TransactionId;

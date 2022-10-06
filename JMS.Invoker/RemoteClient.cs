@@ -1,6 +1,7 @@
 ﻿using JMS;
 
 using JMS.Dtos;
+using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -21,7 +22,7 @@ namespace JMS
     /// </summary>
     public class RemoteClient : IDisposable, IRemoteClient
     {
-        List<InvokeConnect> _Connects = new List<InvokeConnect>();
+        internal List<InvokeConnect> _Connects = new List<InvokeConnect>();
         List<Task> _Tasks = new List<Task>();
 
         private string _TransactionId;
@@ -78,7 +79,7 @@ namespace JMS
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
             this.ProxyAddress = proxyAddress;
-            _logger = logger;
+            TransactionReporterRoute.Logger = _logger = logger;
         }
         /// <summary>
         /// 
@@ -442,84 +443,6 @@ namespace JMS
             }
         }
 
-        /// <summary>
-        /// 报告网关事务已成功
-        /// </summary>
-        /// <param name="tranid"></param>
-        /// <exception cref="MissMasterGatewayException"></exception>
-        void ReportTransactionSuccess(string tranid)
-        {
-            var netclient = NetClientPool.CreateClient(this.ProxyAddress, this.GatewayAddress, this.GatewayClientCertificate);
-            netclient.ReadTimeout = this.Timeout;
-            try
-            {
-                netclient.WriteServiceData(new GatewayCommand()
-                {
-                    Type = CommandType.ReportTransactionStatus,
-                    Content = tranid
-                });
-                byte[] data = new byte[4];
-                int readed = netclient.Socket.Receive(data, 4, SocketFlags.Peek);
-                if (readed == 0)
-                {
-                    //网关不支持此命令
-                    netclient.Dispose();
-                    return;
-                }
-                else
-                {
-                    netclient.ReadServiceObject<InvokeResult>();
-                }
-                NetClientPool.AddClientToPool(netclient);
-            }
-            catch (SocketException ex)
-            {
-                netclient.Dispose();
-                throw;
-            }
-            catch (Exception)
-            {
-                netclient.Dispose();
-                throw;
-            }
-        }
-
-        void ReportTransactionRemoved(string tranid)
-        {
-            var netclient = NetClientPool.CreateClient(this.ProxyAddress, this.GatewayAddress, this.GatewayClientCertificate);
-            netclient.ReadTimeout = this.Timeout;
-            try
-            {
-                netclient.WriteServiceData(new GatewayCommand()
-                {
-                    Type = CommandType.RemoveTransactionStatus,
-                    Content = tranid
-                });
-                byte[] data = new byte[4];
-                int readed = netclient.Socket.Receive(data, 4, SocketFlags.Peek);
-                if (readed == 0)
-                {
-                    //网关不支持此命令
-                    netclient.Dispose();
-                    return;
-                }
-                else
-                {
-                    netclient.ReadServiceObject<InvokeResult>();
-                }
-                NetClientPool.AddClientToPool(netclient);
-            }
-            catch (SocketException ex)
-            {
-                netclient.Dispose();
-                throw;
-            }
-            catch (Exception)
-            {
-                netclient.Dispose();
-                throw;
-            }
-        }
 
         /// <summary>
         /// 提交分布式事务 (请先使用BeginTransaction启动事务)
@@ -597,9 +520,11 @@ namespace JMS
 
                 if (errors.Count == 0)
                 {
-                    if(invokeType == InvokeType.CommitTranaction)
+                    var reporter = TransactionReporterRoute.GetReporter(this);
+
+                    if (invokeType == InvokeType.CommitTranaction)
                     {
-                        this.ReportTransactionSuccess(this.TransactionId);
+                        reporter.ReportTransactionSuccess(this,this.TransactionId);
                     }
                     Parallel.For(0, _Connects.Count, (i) =>
                     {
@@ -640,7 +565,7 @@ namespace JMS
                         if (invokeType == InvokeType.CommitTranaction)
                         {
                             Task.Run(() => {
-                                this.ReportTransactionRemoved(this.TransactionId);
+                                reporter.ReportTransactionCompleted(this,this.TransactionId);
                             });
                         }
                     }

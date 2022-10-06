@@ -18,7 +18,11 @@ namespace JMS.Dtos
         /// <summary>
         /// 强制unlock key
         /// </summary>
-        UnlockKeyAnyway = 6
+        UnlockKeyAnyway = 6,
+        /// <summary>
+        /// 重新执行事务
+        /// </summary>
+        RetryTranaction = 7
     }
     public class InvokeCommand
     {

@@ -8,10 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnitTest.ServiceHosts;
+using Way.Lib;
 
 namespace UnitTest
 {
@@ -174,6 +176,25 @@ namespace UnitTest
 
             if (servieName != "userinfo" || httpRequest != "/api/users/getName")
                 throw new Exception("结果错误");
+        }
+
+        [TestMethod]
+        public void CertToJson()
+        {
+            X509Certificate2 cert = new X509Certificate2("./test.pfx", "123456", X509KeyStorageFlags.Exportable);
+            var rawData = cert.RawData;
+            var json = new { data = rawData }.ToJsonString();
+            var obj = json.FromJson<CertItem>();
+            for(int i = 0; i < obj.data.Length; i++)
+            {
+                if (obj.data[i] != rawData[i])
+                    throw new Exception("error");
+            }
+        }
+
+        class CertItem
+        {
+            public byte[] data;
         }
     }
 }
