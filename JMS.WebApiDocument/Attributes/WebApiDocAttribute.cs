@@ -21,7 +21,7 @@ namespace JMS.WebApiDocument
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="microServiceType">映射的微服务客户端的类名称</param>
+        /// <param name="microServiceType">映射的微服务客户端的类名称，如果是给普通controller设置文档，这个参数应该是null</param>
         /// <param name="desc">名称描述</param>
         public WebApiDocAttribute(Type microServiceType,string desc)
         {

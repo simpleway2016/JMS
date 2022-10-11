@@ -120,5 +120,22 @@ namespace JMS
                 return ret.Data;
             }
         }
+
+        public string GetServiceInfo()
+        {
+            using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress, new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port), ServiceTransaction.ServiceClientCertificate))
+            {
+                netclient.ReadTimeout = this.ServiceTransaction.Timeout;
+                netclient.WriteServiceData(new InvokeCommand()
+                {
+                    Type = InvokeType.GenerateServiceInfo,
+                    Service = _serviceName
+                });
+                var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+                if (!ret.Success)
+                    throw new RemoteException(null, ret.Data);
+                return ret.Data;
+            }
+        }
     }
 }

@@ -22,7 +22,11 @@ namespace JMS.Dtos
         /// <summary>
         /// 重新执行事务
         /// </summary>
-        RetryTranaction = 7
+        RetryTranaction = 7,
+        /// <summary>
+        /// 获取服务提供的方法信息
+        /// </summary>
+        GenerateServiceInfo = 8,
     }
     public class InvokeCommand
     {

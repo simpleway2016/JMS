@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using JMS.GenerateCode;
+using Way.Lib;
 
 namespace UnitTest
 {
@@ -19,7 +21,7 @@ namespace UnitTest
     {
         public string Name { get; set; }
     }
-   
+
     public class TClass<T>
     {
         /// <summary>
@@ -38,7 +40,7 @@ namespace UnitTest
             Normal = 1,
         }
     }
-    public class TestModel<T1,T2>
+    public class TestModel<T1, T2>
     {
         public T2 Tag { get; set; }
         /// <summary>
@@ -53,7 +55,7 @@ namespace UnitTest
         /// <typeparam name="T1">t1×¢ÊÍ</typeparam>
         /// <param name="name">ÐÕÃû</param>
         /// <returns></returns>
-        public string GetString<T1,T2>(string name)
+        public string GetString<T1, T2>(string name)
         {
             return "";
         }
@@ -86,7 +88,7 @@ namespace UnitTest
         /// ²âÊÔ
         /// ÎÄ×Ö
         /// </returns>
-        public List<string> Hellow5(TestModel<TClass<int>, TClass<double>> a,int b2)
+        public List<string> Hellow5(TestModel<TClass<int>, TClass<double>> a, int b2)
         {
             return null;
         }
@@ -103,16 +105,16 @@ namespace UnitTest
     [TestClass]
     public class CodeBuilderTest
     {
-       [TestMethod]
-       public void Test()
+        [TestMethod]
+        public void Test()
         {
             MicroServiceHost host = new MicroServiceHost(new ServiceCollection());
-            
+
             host.Register<TestController>("testService");
             host.Run();
             var type = typeof(MicroServiceHost).Assembly.GetType("JMS.GenerateCode.CodeBuilder");
-            var builder = Activator.CreateInstance(type , new object[] {host });
-            var str = type.GetMethod("GenerateCode").Invoke(builder, new object[] {"abc" , "MyClass" , "testService" });
+            var builder = Activator.CreateInstance(type, new object[] { host });
+            var str = type.GetMethod("GenerateCode").Invoke(builder, new object[] { "abc", "MyClass", "testService" });
         }
 
         [TestMethod]
@@ -120,6 +122,17 @@ namespace UnitTest
         {
             var doc = DocumentReader.GetTypeDocument(typeof(TClass<int>.Enum1));
             doc = DocumentReader.GetTypeDocument(typeof(TestController));
+        }
+
+        [TestMethod]
+        public void TypeinfoBuilderTest()
+        {
+            var typeinfo = new ControllerTypeInfo()
+            {
+                ServiceName = "testService",
+                Type = typeof(TestController)
+            };
+            var code = TypeInfoBuilder.Build(typeinfo).ToJsonString(true);
         }
     }
 }

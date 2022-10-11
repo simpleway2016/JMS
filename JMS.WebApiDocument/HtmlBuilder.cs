@@ -2,12 +2,15 @@
 using JMS.WebApiDocument.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 using Way.Lib;
@@ -25,12 +28,49 @@ namespace JMS.WebApiDocument
                 Build(context, dataTypeInfos, controllerInfos, controllerType);
             }
 
+            if(ServiceRedirects.Configs != null)
+            {
+                foreach( var config in ServiceRedirects.Configs)
+                {
+                    using ( var client = ServiceRedirects.ClientProviderFunc())
+                    {
+                        var service = client.TryGetMicroService(config.ServiceName);
+                        if (service != null)
+                        {
+                            try
+                            {
+                                var jsonContent = service.GetServiceInfo();
+                                var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                                controllerInfo.desc = config.Description;
+                                foreach( var method in controllerInfo.items)
+                                {                                   
+                                    method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}/{method.title}";
+                                }
+                                controllerInfo.buttons = config.Buttons.Select(m=>new ButtonInfo { 
+                                    name = m.Name,
+                                    url = m.Url
+                                }).ToList();
+                                controllerInfos.Add(controllerInfo);
+                            }
+                            catch (Exception ex)
+                            {
+                                context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogError(ex, "");
+                            }
+                        }
+                        else
+                        {
+                            context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogInformation($"没有在网关中获取到微服务:{config.ServiceName}");
+                        }
+                    }
+                }
+            }
+
             using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.index.html"))
             {
                 context.Response.ContentType = "text/html; charset=utf-8";
                 var bs = new byte[ms.Length];
                 ms.Read(bs, 0, bs.Length);
-                var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.ToJsonString()).Replace("$$Types$$", dataTypeInfos.ToJsonString());
+                var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.OrderBy(m=>m.desc).ToJsonString()).Replace("$$Types$$", dataTypeInfos.ToJsonString());
                 return context.Response.WriteAsync(text);
             }
         }
@@ -152,7 +192,10 @@ namespace JMS.WebApiDocument
                         pinfo.name = param.Name;
                         pinfo.desc = GetParameterComment(controllerType, method, param);
                         pinfo.type = getType(dataTypeInfos, param.ParameterType);
-
+                        if (param.ParameterType.IsGenericType && param.ParameterType.GetGenericTypeDefinition() == typeof(System.Nullable<>))
+                        {
+                            pinfo.isNullable = true;
+                        }
                         if (fromQueryAttr != null || (fromQueryAttr == null && fromFromAttr == null && fromBodyAttr == null))
                         {
                             minfo.query.Add(pinfo);
@@ -186,7 +229,25 @@ namespace JMS.WebApiDocument
                 }
             }
         }
+        static string GetFullName(List<DataTypeInfo> dataTypeInfos, Type type)
+        {
+            var fullname = type.FullName;
+            var index = fullname.IndexOf("`");
+            if (index > 0)
+            {
+                fullname = fullname.Substring(0, index);
+            }
 
+            string ret = fullname;
+            index = 1;
+            while (dataTypeInfos.Any(m => m.typeName == ret && m.type != type))
+            {
+                ret = fullname + index;
+                index++;
+            }
+
+            return ret;
+        }
         static string getType(List<DataTypeInfo> dataTypeInfos, Type type)
         {
             if (type == typeof(object))
@@ -201,6 +262,11 @@ namespace JMS.WebApiDocument
             {
                 type = type.GenericTypeArguments[0];
                 return getType(dataTypeInfos , type) + "[]";
+            }
+            else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IEnumerable)))
+            {
+                type = type.GenericTypeArguments[0];
+                return getType(dataTypeInfos, type) + "[]";
             }
             else if (type.IsArray == false && type.GetInterfaces().Any(m => m == typeof(System.Collections.IList)))
             {
@@ -218,12 +284,24 @@ namespace JMS.WebApiDocument
             }
 
 
-            if (type == typeof(string))
-                return "String";
+            if (type == typeof(int))
+                return "number";
+            else if (type == typeof(long))
+                return "number";
+            else if (type == typeof(short))
+                return "number";
+            else if (type == typeof(float))
+                return "number";
+            else if (type == typeof(double))
+                return "number";
+            else if (type == typeof(decimal))
+                return "number";
+            else if (type == typeof(string))
+                return "string";
             else if (type.IsArray == false && type.IsValueType == false && type != typeof(string))
             {
                 DataTypeInfo dataTypeInfo = new DataTypeInfo(type);
-                dataTypeInfo.typeName = type.FullName;
+                dataTypeInfo.typeName = GetFullName(dataTypeInfos, type);
                 dataTypeInfo.members = new List<ParameterInformation>();
                 dataTypeInfos.Add(dataTypeInfo);
 
@@ -244,7 +322,7 @@ namespace JMS.WebApiDocument
                 var values = Enum.GetValues(type);
 
                 DataTypeInfo dataTypeInfo = new DataTypeInfo(type);
-                dataTypeInfo.typeName = type.FullName;
+                dataTypeInfo.typeName = GetFullName(dataTypeInfos, type);
                 dataTypeInfo.members = new List<ParameterInformation>();
                 dataTypeInfos.Add(dataTypeInfo);
 

@@ -156,7 +156,7 @@ public class MicroServiceControllerBase
     }
 }
 
-class ControllerTypeInfo
+public class ControllerTypeInfo
 {
     public string ServiceName;
     public Type Type;
@@ -167,7 +167,7 @@ class ControllerTypeInfo
     /// </summary>
     public bool NeedAuthorize = false;
 }
-class TypeMethodInfo
+public class TypeMethodInfo
 {
     public MethodInfo Method;
     public bool NeedAuthorize;

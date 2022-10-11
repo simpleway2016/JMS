@@ -54,16 +54,16 @@ namespace JMS.Applications
 
         public void Handle(NetClient netclient, InvokeCommand cmd)
         {
-            //System.Diagnostics.Debugger.Launch();
-            if( !IsDebug )
-            {
-                netclient.WriteServiceData(new InvokeResult()
-                {
-                    Data = "not support in release",
-                    Success = false
-                });
-                return;
-            }
+            //if( !IsDebug )
+            //{
+            //    netclient.WriteServiceData(new InvokeResult()
+            //    {
+            //        Data = "not support in release",
+            //        Success = false
+            //    });
+            //    return;
+            //}
+
             string code = null;
             bool success;
             try 

@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <DocumentationFile>bin\JMS.WebApiDocument.xml</DocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.1.1</Version>
+    <Version>1.0.1.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AssemblyDocumentReader\JMS.AssemblyDocumentReader.csproj" />
+    <ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
   </ItemGroup>
 
 </Project>

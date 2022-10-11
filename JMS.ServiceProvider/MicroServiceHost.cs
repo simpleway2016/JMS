@@ -251,6 +251,7 @@ namespace JMS
             _services.AddSingleton<IRequestReception, RequestReception>();
             _services.AddSingleton<InvokeRequestHandler>();
             _services.AddSingleton<GenerateInvokeCodeRequestHandler>();
+            _services.AddSingleton<GenerateServiceInfoHandler>();
             _services.AddSingleton<GetAllLockedKeysHandler>();
             _services.AddSingleton<RetryTranactionHandler>();
             _services.AddSingleton<UnLockedKeyAnywayHandler>();
