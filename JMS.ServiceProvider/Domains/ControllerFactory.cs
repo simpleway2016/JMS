@@ -36,6 +36,7 @@ namespace JMS.Domains
         /// </summary>
         public void RegisterController(Type contollerType, string serviceName)
         {
+            var baseMethods = typeof(MicroServiceControllerBase).GetMethods().Select(m => m.Name).ToArray();
             _controllerDict[serviceName] = new ControllerTypeInfo()
             {
                 ServiceName = serviceName,
@@ -46,8 +47,9 @@ namespace JMS.Domains
                     m.IsStatic == false &&
                     m.IsPublic &&
                     m.IsSpecialName == false &&
-                    m.DeclaringType != typeof(MicroServiceControllerBase)
-                    && m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
+                    m.DeclaringType != typeof(MicroServiceControllerBase) &&
+                    baseMethods.Contains(m.Name) == false &&
+                    m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
                     {
                         Method = m,
                         NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null

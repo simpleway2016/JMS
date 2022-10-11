@@ -25,7 +25,7 @@ namespace JMS.GenerateCode
                 dataTypeInfos = new List<DataTypeInfo>()
             };
             var dataTypeInfos = controllerInfo.dataTypeInfos;
-            var methods = controllerType.GetMethods().Where(m => m.IsSpecialName == false && m.DeclaringType != typeof(MicroServiceControllerBase) && m.DeclaringType != typeof(object)).ToArray();
+            var methods = controllerTypeInfo.Methods.Select(m => m.Method).ToArray();
             foreach (var method in methods)
             {
                 if (method.ReturnType == typeof(Task))

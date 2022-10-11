@@ -116,7 +116,7 @@ public class MicroServiceControllerBase
     /// </summary>
     /// <param name="key"></param>
     /// <returns>是否成功</returns>
-    public bool TryLock(string key)
+    public virtual bool TryLock(string key)
     {
         return _keyLocker.TryLock(this.TransactionId, key);
     }
@@ -124,7 +124,7 @@ public class MicroServiceControllerBase
     /// 释放锁定的key
     /// </summary>
     /// <param name="key"></param>
-    public bool TryUnLock(string key)
+    public virtual bool TryUnLock(string key)
     {
         return _keyLocker.TryUnLock(this.TransactionId, key);
     }

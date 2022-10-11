@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using JMS.GenerateCode;
 using Way.Lib;
+using System.Reflection;
+using System.Linq;
 
 namespace UnitTest
 {
@@ -66,6 +68,10 @@ namespace UnitTest
     /// </summary>
     class TestController : MicroServiceControllerBase
     {
+        public override void OnAfterAction(string actionName, object[] parameters)
+        {
+            base.OnAfterAction(actionName, parameters);
+        }
         public TestModel<TClass<int>, TClass<double>> Hellow()
         {
             return null;
@@ -130,7 +136,17 @@ namespace UnitTest
             var typeinfo = new ControllerTypeInfo()
             {
                 ServiceName = "testService",
-                Type = typeof(TestController)
+                Type = typeof(TestController),
+                Methods = typeof(TestController).GetTypeInfo().DeclaredMethods.Where(m =>
+                 m.IsStatic == false &&
+                 m.IsPublic &&
+                 m.IsSpecialName == false &&
+                 m.DeclaringType != typeof(MicroServiceControllerBase)
+                 && m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
+                 {
+                     Method = m,
+                     NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
+                 }).ToArray()
             };
             var code = TypeInfoBuilder.Build(typeinfo).ToJsonString(true);
         }

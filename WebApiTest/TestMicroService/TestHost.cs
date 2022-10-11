@@ -136,6 +136,11 @@ namespace WebApiTest.TestMicroService
         {
             return TestEnum.Normal;
         }
+
+        public override void OnAfterAction(string actionName, object[] parameters)
+        {
+            base.OnAfterAction(actionName, parameters);
+        }
     }
 
     /// <summary>
