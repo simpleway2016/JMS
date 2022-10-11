@@ -23,7 +23,7 @@ namespace JMS.WebApiDocument
         /// <param name="context"></param>
         /// <param name="method"></param>
         /// <returns></returns>
-        internal static object InvokeServiceMethod(ServiceRedirectConfig config,HttpContext context,string method)
+        internal static object InvokeServiceMethod(ServiceRedirectConfig config,HttpContext context,string method, string[] redirectHeaders)
         {
 
             byte[] postContent = null;
@@ -41,10 +41,12 @@ namespace JMS.WebApiDocument
             }
             using (var client = ClientProviderFunc())
             {
-                //设置身份验证头
-                if (context.Request.Headers.TryGetValue("Authorization", out StringValues value))
+                foreach (var header in redirectHeaders)
                 {
-                    client.SetHeader("Authorization", value.ToString());
+                    if (context.Request.Headers.TryGetValue(header, out StringValues value))
+                    {
+                        client.SetHeader(header, value.ToString());
+                    }
                 }
                 var service = client.TryGetMicroService(config.ServiceName);
                 if (_parames == null)

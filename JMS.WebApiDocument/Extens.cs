@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Way.Lib;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -57,52 +58,6 @@ namespace Microsoft.Extensions.DependencyInjection
                         return context.Response.WriteAsync(ex.ToString());
                     }
                 }
-                if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
-                {
-                    try
-                    {
-                        var m = Regex.Match(context.Request.Path.Value, @"\/JMSRedirect\/(?<s>((?![\/]).)+)/(?<m>\w+)");
-                        var servicename = m.Groups["s"].Value;
-                        var method = m.Groups["m"].Value;
-                        var config = ServiceRedirects.Configs?.FirstOrDefault(m => string.Equals(m.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
-                        if (config == null)
-                        {
-                            return context.Response.WriteAsync(new
-                            {
-                                code = 404,
-                                msg = "Service not found"
-                            }.ToJsonString());
-                        }
-                        else
-                        {
-                            var ret = ServiceRedirects.InvokeServiceMethod(config, context, method);
-                            return context.Response.WriteAsync(new
-                            {
-                                code = 200,
-                                data = ret
-                            }.ToJsonString());
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        if(ex.Message == "Authentication failed")
-                        {
-                            return context.Response.WriteAsync(new
-                            {
-                                code = 401,
-                                msg = ex.Message
-                            }.ToJsonString());
-                        }
-                        else
-                        {
-                            return context.Response.WriteAsync(new
-                            {
-                                code = 500,
-                                msg = ex.Message
-                            }.ToJsonString());
-                        }
-                    }
-                }
                 else if (context.Request.Path.Value.EndsWith("/JmsDoc/vue.js", StringComparison.OrdinalIgnoreCase))
                 {
                     if (context.Request.Headers.ContainsKey("If-Modified-Since"))
@@ -129,20 +84,76 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// 根据配置文件的JMS.ServiceRedirects节点配置，直接转接访问到指定的微服务
         /// </summary>
-        /// <param name="services"></param>
+        /// <param name="app"></param>
         /// <param name="configuration">配置信息</param>
         /// <param name="clientProviderFunc">RemoteClient创建函数</param>
-        /// <exception cref="Exception"></exception>
-        public static void RegisterServiceRedirect(this IServiceCollection services, IConfiguration configuration, Func<RemoteClient> clientProviderFunc)
+        /// <param name="redirectHeaders">需要转发的请求头，默认null，表示转发Authorization</param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseJmsServiceRedirect(this IApplicationBuilder app, IConfiguration configuration, Func<RemoteClient> clientProviderFunc , string[] redirectHeaders = null)
         {
             if (clientProviderFunc == null)
                 throw new Exception("clientProviderFunc is null");
 
+            if (redirectHeaders == null)
+                redirectHeaders = new string[] { "Authorization" }; 
             configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
 
             var configs = configuration.GetSection("JMS.ServiceRedirects").Get<ServiceRedirectConfig[]>();
             ServiceRedirects.Configs = configs;
             ServiceRedirects.ClientProviderFunc = clientProviderFunc;
+            app.Use((context, next) =>
+            {
+                if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var m = Regex.Match(context.Request.Path.Value, @"\/JMSRedirect\/(?<s>((?![\/]).)+)/(?<m>\w+)");
+                        var servicename = m.Groups["s"].Value;
+                        var method = m.Groups["m"].Value;
+                        var config = ServiceRedirects.Configs?.FirstOrDefault(m => string.Equals(m.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
+                        if (config == null)
+                        {
+                            return context.Response.WriteAsync(new
+                            {
+                                code = 404,
+                                msg = "Service not found"
+                            }.ToJsonString());
+                        }
+                        else
+                        {
+                            var ret = ServiceRedirects.InvokeServiceMethod(config, context, method,redirectHeaders);
+                            return context.Response.WriteAsync(new
+                            {
+                                code = 200,
+                                data = ret
+                            }.ToJsonString());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message == "Authentication failed")
+                        {
+                            return context.Response.WriteAsync(new
+                            {
+                                code = 401,
+                                msg = ex.Message
+                            }.ToJsonString());
+                        }
+                        else
+                        {
+                            return context.Response.WriteAsync(new
+                            {
+                                code = 500,
+                                msg = ex.Message
+                            }.ToJsonString());
+                        }
+                    }
+                }
+                return next();
+            });
+          
+
+            return app;
         }
 
         static void ConfigurationChangeCallback(object p)

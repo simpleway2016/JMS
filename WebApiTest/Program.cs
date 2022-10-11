@@ -5,9 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.RegisterServiceRedirect(builder.Configuration, () => {
-    return new JMS.RemoteClient("127.0.0.1", 8911);
-});
+
 
 var app = builder.Build();
 
@@ -20,6 +18,9 @@ app.UseAuthorization();
 app.MapControllers();
 app.UseJMSWebApiDocument();
 
+app.UseJmsServiceRedirect(builder.Configuration, () => {
+    return new JMS.RemoteClient("127.0.0.1", 8911);
+});
 Task.Run(() => { TestHost.Start(); });
 
 app.Run();
