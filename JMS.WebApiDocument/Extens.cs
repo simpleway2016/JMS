@@ -99,9 +99,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 redirectHeaders = new string[] { "Authorization" }; 
             configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
 
-            var configs = configuration.GetSection("JMS.ServiceRedirects").Get<ServiceRedirectConfig[]>();
-            ServiceRedirects.Configs = configs;
-            ServiceRedirects.ClientProviderFunc = clientProviderFunc;
+            ConfigurationChangeCallback(configuration);
+
             app.Use((context, next) =>
             {
                 if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
