@@ -383,6 +383,7 @@ namespace UnitTest
         [TestMethod]
         public void TestCrashForLocal()
         {
+            TestCrashController.CanCrash = true;
             try
             {
                 Directory.Delete("./$$_JMS.Invoker.Transactions", true);

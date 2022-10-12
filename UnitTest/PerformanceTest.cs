@@ -3,11 +3,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Crypto.Engines;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -190,6 +194,22 @@ namespace UnitTest
                 if (obj.data[i] != rawData[i])
                     throw new Exception("error");
             }
+        }
+        private byte[] GetKeepAliveData()
+        {
+            uint dummy = 0;
+            byte[] inOptionValues = new byte[Marshal.SizeOf(dummy) * 3];
+            BitConverter.GetBytes((uint)1).CopyTo(inOptionValues, 0);
+            BitConverter.GetBytes((uint)20000).CopyTo(inOptionValues, Marshal.SizeOf(dummy));//keep-alive间隔
+            BitConverter.GetBytes((uint)2000).CopyTo(inOptionValues, Marshal.SizeOf(dummy) * 2);// 尝试间隔
+            return inOptionValues;
+        }
+        [TestMethod]
+        public void SocketTest()
+        {
+            NetStream client = new NetStream("127.0.0.1", 5255);
+            client.Socket.Send(new byte[0]);
+
         }
 
         class CertItem

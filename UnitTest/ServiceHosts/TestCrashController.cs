@@ -10,7 +10,7 @@ namespace UnitTest.ServiceHosts
     internal class TestCrashController : MicroServiceControllerBase
     {
         public static string FinallyText;
-        static bool CanCrash = true;
+        public static bool CanCrash = true;
 
         string _text;
         public void SetText(string text)

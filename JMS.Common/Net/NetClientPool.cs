@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -151,6 +152,16 @@ namespace JMS
                         var ret = item.Client;
                         item.Client = null;
                         item.Used = 0;
+                        try
+                        {
+                            ret.Socket.Send(new byte[0]);
+                        }
+                        catch (SocketException)
+                        {
+                            //连接已断开
+                            ret.Dispose();
+                            continue;
+                        }
                         return ret;
                     }
                 }
