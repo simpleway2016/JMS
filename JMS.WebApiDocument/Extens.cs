@@ -17,6 +17,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 using Way.Lib;
@@ -162,6 +163,19 @@ namespace Microsoft.Extensions.DependencyInjection
             configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
 
             var configs = configuration.GetSection("JMS.ServiceRedirects").Get<ServiceRedirectConfig[]>();
+            foreach( var config in configs)
+            {
+                if(config.Buttons != null)
+                {
+                    foreach( var btn in config.Buttons)
+                    {
+                        if(btn.Url != null)
+                        {
+                            btn.Url = btn.Url.Replace("$ServiceName$", HttpUtility.UrlEncode(config.ServiceName));
+                        }
+                    }
+                }
+            }
             ServiceRedirects.Configs = configs;
         }
 
