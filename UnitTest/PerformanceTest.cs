@@ -203,14 +203,7 @@ namespace UnitTest
             client.Socket.Send(new byte[0]);
 
         }
-        [TestMethod]
-        public void NetClientPoolTest()
-        {
-            var client = NetClientPool.CreateClient(null, "47.241.20.45", 22, null);
-            NetClientPool.AddClientToPool(client);
-
-           var client2 = NetClientPool.CreateClient(null, "47.241.20.45", 22, null);
-        }
+      
 
         class CertItem
         {
