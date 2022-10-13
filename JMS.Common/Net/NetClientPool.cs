@@ -12,7 +12,7 @@ namespace JMS
 {
     public class NetClientPool
     {
-        static int POOLSIZE = 5000;
+        static int POOLSIZE = 50000;
         const int RELEASESECONDS = 30;
         static ConcurrentDictionary<(string,int), NetClientSeat[]> Dict = new ConcurrentDictionary<(string, int), NetClientSeat[]>();
         static NetClientPool()
@@ -21,7 +21,7 @@ namespace JMS
         }
 
         /// <summary>
-        /// 设置连接池大小（默认为5000）
+        /// 设置连接池大小（默认为50000）
         /// </summary>
         /// <param name="size"></param>
         public static void SetConnectionPoolSize(int size)
@@ -60,7 +60,7 @@ namespace JMS
                 {
 
                 }
-                Thread.Sleep(2000);
+                Thread.Sleep(5000);
             }
         }
 
@@ -168,6 +168,9 @@ namespace JMS
                     if( Interlocked.CompareExchange(ref item.Used , 1 , 0) == 0)
                     {
                         var ret = item.Client;
+                        if (ret == null)
+                            continue;
+
                         item.Client = null;
                         item.Used = 0;
                         try
