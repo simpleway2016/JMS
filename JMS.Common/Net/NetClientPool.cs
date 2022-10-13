@@ -12,7 +12,7 @@ namespace JMS
 {
     public class NetClientPool
     {
-        static int POOLSIZE = 50000;
+        static int POOLSIZE = 5000;
         const int RELEASESECONDS = 30;
         static ConcurrentDictionary<(string,int), NetClientSeat[]> Dict = new ConcurrentDictionary<(string, int), NetClientSeat[]>();
         static NetClientPool()
@@ -117,10 +117,16 @@ namespace JMS
                 {
                     if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
                     {
+                        if (item.Client != null)//这个判断很重要,防止并发的，决定不能删除
+                        {                                                    
+                            item.Used = 0;
+                            continue;
+                        }
                         item.OnSeatTime = DateTime.Now;
                         item.Client = client;
                         client.ReadTimeout = 16000;
-                        item.Used = 0;
+                        item.Used = 0; //在设置为0的时刻，有另外一个线程可能会满足条件： Interlocked.CompareExchange(ref item.Used, 1, 0) == 0
+                        //从而引起并发异常，导致两个NetClient被放到同一个位置上
                         return;
                     }
                 }
