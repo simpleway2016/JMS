@@ -140,6 +140,24 @@ namespace JMS
             return ret;
         }
 
+        public static int GetPoolAliveCount(NetAddress addr)
+        {
+            var key = (addr.Address, addr.Port);
+            if (Dict.ContainsKey(key) == false)
+                return 0;
+            var queue = Dict[key];
+            int count = 0;
+            for (int i = 0; i < queue.Length; i++)
+            {
+                var item = queue[i];
+                if (item.Client != null )
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
         static NetClient GetFree(NetClientSeat[] source)
         {
             for(int i = 0; i < source.Length; i ++)

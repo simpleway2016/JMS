@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Crypto.Engines;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -203,7 +204,99 @@ namespace UnitTest
             client.Socket.Send(new byte[0]);
 
         }
-      
+
+        int errcount = 0;
+        [TestMethod]
+        public void ClientPoolTest()
+        {
+            int newSocketCount = 0;
+            TcpListener tcpListener = new TcpListener( IPAddress.Any, 9000);
+            tcpListener.Start();
+            int connectCount = 0;
+            ConcurrentDictionary<NetClient, bool> cache = new ConcurrentDictionary<NetClient, bool>();
+
+            Task.Run(() => {
+                Thread.Sleep(1000);
+                List<NetClient> clients = new List<NetClient>();
+                for(int i = 0; i < 1000; i++)
+                {
+                    var client = NetClientPool.CreateClient(null, new NetAddress("localhost", 9000), null);
+                    clients.Add(client);
+                }
+                foreach( var client in clients)
+                {
+                    NetClientPool.AddClientToPool(client);
+                }
+                var addr = new NetAddress("localhost", 9000);
+                Parallel.For(0, 10, i => {
+                    while (true)
+                    {
+                        var client = NetClientPool.CreateClient(null, addr, null);
+                        if (cache.ContainsKey(client))
+                            throw new Exception("error");
+                       if( cache.TryAdd(client, true) == false)
+                            throw new Exception("error");
+                        client.Socket.ReceiveTimeout = 2000;
+                        Interlocked.Increment(ref connectCount);
+
+                        client.Write(new byte[3] { 0x1, 0x2, 0x3 });
+                        int c = client.Read(new byte[3]);
+                        if (c == 0)
+                            throw new Exception("data err");
+
+                        cache.TryRemove(client, out bool o);
+                        NetClientPool.AddClientToPool(client);
+
+                        //if(newSocketCount != 1000)
+                        //{
+                        //    throw new Exception("socket 数量不对");
+                        //}
+                        Debug.WriteLine($"当前连接数：{connectCount} socket数量{newSocketCount} 错误数量{errcount} {NetClientPool.GetPoolAliveCount(addr)}");
+                        Thread.Sleep(0);
+                        
+                    }
+                });
+            });
+
+           
+
+            while (true)
+            {
+                var socket = tcpListener.AcceptSocket();
+                socket.ReceiveTimeout = -1;
+                Interlocked.Increment(ref newSocketCount);
+                handlesocket(socket);
+            }
+        }
+
+        void handlesocket(Socket socket)
+        {
+            Task.Run(() => {
+                listenerSocketData(socket);
+            });
+        }
+
+        void listenerSocketData(Socket socket)
+        {
+            byte[] data = new byte[3];
+            while (true)
+            {
+                var count = socket.Receive(data);
+                if (count <= 0)
+                {
+                    Interlocked.Increment(ref errcount);
+                    socket.Close();
+                    socket.Dispose();
+                    return;
+
+                }
+                if (count != 3 || data[0] != 0x1 || data[1] != 0x2 || data[2] != 0x3)
+                {
+                    throw new Exception("data error");
+                }
+                socket.Send(data);
+            }
+        }
 
         class CertItem
         {
