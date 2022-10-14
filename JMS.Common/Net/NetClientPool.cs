@@ -13,7 +13,7 @@ namespace JMS
     public class NetClientPool
     {
         static int POOLSIZE = 5000;
-        const int RELEASESECONDS = 30;
+        const int RELEASESECONDS = 10;
         static ConcurrentDictionary<(string,int), NetClientSeat[]> Dict = new ConcurrentDictionary<(string, int), NetClientSeat[]>();
         static NetClientPool()
         {
@@ -44,11 +44,11 @@ namespace JMS
                         for (int i = 0; i < array.Length; i++)
                         {
                             var item = array[i];
-                            if (item.Client != null && item.Used == 0 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS)
+                            if ( item.Used == 2 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS)
                             {
-                                if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
+                                if (Interlocked.CompareExchange(ref item.Used, 3, 2) == 2)
                                 {
-                                    item.Client?.Dispose();
+                                    item.Client.Dispose();
                                     item.Client = null;
                                     item.Used = 0;
                                 }
@@ -113,20 +113,14 @@ namespace JMS
             for (int i = 0; i < array.Length; i++)
             {
                 var item = array[i];
-                if (item.Client == null && item.Used == 0)
+                if (item.Used == 0)
                 {
                     if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
                     {
-                        if (item.Client != null)//这个判断很重要,防止并发的，决定不能删除
-                        {                                                    
-                            item.Used = 0;
-                            continue;
-                        }
                         item.OnSeatTime = DateTime.Now;
                         item.Client = client;
                         client.ReadTimeout = 16000;
-                        item.Used = 0; //在设置为0的时刻，有另外一个线程可能会满足条件： Interlocked.CompareExchange(ref item.Used, 1, 0) == 0
-                        //从而引起并发异常，导致两个NetClient被放到同一个位置上
+                        item.Used = 2;
                         return;
                     }
                 }
@@ -169,14 +163,11 @@ namespace JMS
             for(int i = 0; i < source.Length; i ++)
             {
                 var item = source[i];
-                if(item.Client != null && item.Used == 0)
+                if(item.Used == 2)
                 {
-                    if( Interlocked.CompareExchange(ref item.Used , 1 , 0) == 0)
+                    if( Interlocked.CompareExchange(ref item.Used , 3 , 2) == 2)
                     {
                         var ret = item.Client;
-                        if (ret == null)
-                            continue;
-
                         item.Client = null;
                         item.Used = 0;
                         try
@@ -200,6 +191,12 @@ namespace JMS
     class NetClientSeat
     {
         public NetClient Client;
+        /// <summary>
+        /// 0 空闲位置
+        /// 1 将要放入
+        /// 2 已经放入
+        /// 3 准备取出
+        /// </summary>
         public int Used;
         public DateTime OnSeatTime;
     }

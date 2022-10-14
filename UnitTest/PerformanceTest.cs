@@ -212,7 +212,7 @@ namespace UnitTest
         {
             int connecting = 0;
           
-            int port = 11012;
+            int port = 9000;
             TcpListener tcpListener = new TcpListener( IPAddress.Any, port);
             tcpListener.Start();
             int connectCount = 0;
@@ -247,7 +247,7 @@ namespace UnitTest
                     while (true)
                     {
                         NetClient client;
-                        lock (this)
+                        //lock (this)
                         {
                             client = NetClientPool.CreateClient(null, addr, null);
                         }
