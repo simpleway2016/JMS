@@ -163,6 +163,10 @@ namespace Microsoft.Extensions.DependencyInjection
             configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
 
             var configs = configuration.GetSection("JMS.ServiceRedirects").Get<ServiceRedirectConfig[]>();
+            if(configs == null)
+            {
+                throw new Exception("配置文件中找不到有效的JMS.ServiceRedirects节点");
+            }
             foreach( var config in configs)
             {
                 if(config.Buttons != null)
