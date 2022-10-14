@@ -46,7 +46,7 @@ namespace JMS.WebApiDocument
                                 {                                   
                                     method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}/{method.title}";
                                 }
-                                controllerInfo.buttons = config.Buttons.Select(m=>new ButtonInfo { 
+                                controllerInfo.buttons = config.Buttons?.Select(m=>new ButtonInfo { 
                                     name = m.Name,
                                     url = m.Url
                                 }).ToList();

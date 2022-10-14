@@ -99,6 +99,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 redirectHeaders = new string[] { "Authorization" }; 
             configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
 
+            ServiceRedirects.ClientProviderFunc = clientProviderFunc;
             ConfigurationChangeCallback(configuration);
 
             app.Use((context, next) =>
