@@ -244,10 +244,17 @@ namespace UnitTest
 
               
                 Parallel.For(0, 10, i => {
+                    var lasttime = DateTime.Now;
                     while (true)
                     {
                         NetClient client;
-                        //lock (this)
+                        if((DateTime.Now - lasttime).TotalSeconds > 20)
+                        {
+                            lasttime = DateTime.Now;
+                            client = new NetClient(addr);
+                            client.KeepAlive = true;
+                        }
+                        else
                         {
                             client = NetClientPool.CreateClient(null, addr, null);
                         }
