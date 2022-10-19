@@ -3,11 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace JMS.Domains
+namespace JMS
 {
-    interface IGatewayConnector
+    public interface IGatewayConnector
     {
-        Action OnConnectCompleted { get; set; }
+        event EventHandler ConnectCompleted;
         NetClient CreateClient(NetAddress addr);
         void DisconnectGateway();
         void ConnectAsync();

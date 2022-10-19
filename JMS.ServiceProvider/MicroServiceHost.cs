@@ -276,8 +276,8 @@ namespace JMS
         public void Run()
         {
             ServiceProvider = _services.BuildServiceProvider();
-            if (ServicePort == 0)
-                return;
+            //if (ServicePort == 0)
+            //    return;
 
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
@@ -287,9 +287,12 @@ namespace JMS
 
             var sslConfig = ServiceProvider.GetService<SSLConfiguration>();
 
-            _tcpListener = new TcpListener(ServicePort);
-            _tcpListener.Start();
-            _logger?.LogInformation("Service host started , port:{0}",ServicePort);
+            if (ServicePort != 0 && !_isWebServer)
+            {
+                _tcpListener = new TcpListener(ServicePort);
+                _tcpListener.Start();
+                _logger?.LogInformation("Service host started , port:{0}", ServicePort);
+            }
             _logger?.LogInformation("Gateways:" + AllGatewayAddresses.ToJsonString());
 
             if (sslConfig != null)
@@ -301,35 +304,14 @@ namespace JMS
                     _logger?.LogInformation("Service host use ssl,certificate hash:{0}", sslConfig.ServerCertificate.GetCertHashString());
             }
 
-            _GatewayConnector.OnConnectCompleted = () => {
-                _GatewayConnector.OnConnectCompleted = null;
-
-                //实例化FaildCommitBuilder，并重复提交失败的事务
-                ServiceProvider.GetService<RetryCommitMission>().OnGatewayConnected();
-
-                if (ServiceProviderBuilded != null)
-                {
-                    Task.Run(() => {
-                        try
-                        {
-                            ServiceProviderBuilded(this, this.ServiceProvider);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError(ex, ex.Message);
-                        }
-                    });
-                }
-            };
+            _GatewayConnector.ConnectCompleted += _GatewayConnector_ConnectCompleted;
             _GatewayConnector.ConnectAsync();
 
-            if (_isWebServer)
-                return;
+            var processExitHandler = ServiceProvider.GetService<IProcessExitHandler>();
+            ((IProcessExitListener)processExitHandler).Listen(this);
 
-            using (var processExitHandler = (IProcessExitListener)ServiceProvider.GetService<IProcessExitHandler>())
+            if (_tcpListener != null)
             {
-                processExitHandler.Listen(this);
-
                 while (true)
                 {
                     var socket = _tcpListener.AcceptSocket();
@@ -338,6 +320,28 @@ namespace JMS
 
                     Task.Run(() => _RequestReception.Interview(socket));
                 }
+            }
+        }
+
+        private void _GatewayConnector_ConnectCompleted(object sender, EventArgs e)
+        {
+            _GatewayConnector.ConnectCompleted -= _GatewayConnector_ConnectCompleted;
+
+            //实例化FaildCommitBuilder，并重复提交失败的事务
+            ServiceProvider.GetService<RetryCommitMission>().OnGatewayReady();
+
+            if (ServiceProviderBuilded != null)
+            {
+                new Thread(() => {
+                    try
+                    {
+                        ServiceProviderBuilded(this, this.ServiceProvider);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, ex.Message);
+                    }
+                }).Start();
             }
         }
 

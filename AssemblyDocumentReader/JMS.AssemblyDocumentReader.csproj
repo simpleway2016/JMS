@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <DocumentationFile>bin\AssemblyDocumentReader.xml</DocumentationFile>
-    <Version>1.0.0.3</Version>
+    <Version>1.0.0.5</Version>
   </PropertyGroup>
 
 </Project>

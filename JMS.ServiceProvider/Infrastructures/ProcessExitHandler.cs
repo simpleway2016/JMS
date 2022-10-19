@@ -44,6 +44,7 @@ namespace JMS
 
         void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
+            AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
             OnProcessExit();
         }
 

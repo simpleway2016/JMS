@@ -75,7 +75,11 @@ public class MicroServiceControllerBase
     {
         get
         {
-            return _transactionid ??= this.Header["TranId"];
+            if(_transactionid == null)
+            {
+                _transactionid = this.Header["TranId"];
+            }
+            return _transactionid;
         }
     }
 

@@ -8,7 +8,7 @@ using System.Text;
 
 namespace JMS.Domains
 {
-    internal class ControllerFactory
+    class ControllerFactory
     {
         MicroServiceHost _microServiceHost;
         ConcurrentDictionary<string, ControllerTypeInfo> _controllerDict = new ConcurrentDictionary<string, ControllerTypeInfo>();
@@ -27,7 +27,8 @@ namespace JMS.Domains
         {
             _controllerDict[serviceName] = new ControllerTypeInfo()
             {
-                Enable = true
+                Enable = true,
+                ServiceName = serviceName
             };
         }
 

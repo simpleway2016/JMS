@@ -22,7 +22,11 @@ namespace JMS.Domains
         {
             get
             {
-                return _gatewayConnector??= _microServiceHost.ServiceProvider.GetService<IGatewayConnector>();
+                if(_gatewayConnector == null)
+                {
+                    _gatewayConnector = _microServiceHost.ServiceProvider.GetService<IGatewayConnector>();
+                }
+                return _gatewayConnector;
             }
         }
         ConcurrentDictionary<string,string> LockedKeyDict { get; }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace JMS.Infrastructures
 {
-    internal class FileHelper
+    public class FileHelper
     {
         /// <summary>
         /// 改变文件扩展名

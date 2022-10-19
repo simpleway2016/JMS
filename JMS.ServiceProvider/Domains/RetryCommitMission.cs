@@ -14,7 +14,7 @@ using JMS.Infrastructures;
 
 namespace JMS.RetryCommit
 {
-    internal class RetryCommitMission
+    class RetryCommitMission
     {
         ControllerFactory _controllerFactory;
         MicroServiceHost _microServiceHost;
@@ -29,7 +29,7 @@ namespace JMS.RetryCommit
             _gatewayConnector = _microServiceHost.ServiceProvider.GetService<IGatewayConnector>();
         }
 
-        internal void OnGatewayConnected()
+        internal void OnGatewayReady()
         {
             retryOnBoot();
             new Thread(run).Start();

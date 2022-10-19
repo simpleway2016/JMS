@@ -7,16 +7,16 @@ using System.IO;
 using System.Text;
 using Way.Lib;
 
-namespace JMS.RetryCommit
+namespace JMS.ServiceProvider.AspNetCore
 {
-    class FaildCommitBuilder
+    class ApiFaildCommitBuilder
     {
-        RetryCommitMission _retryCommitMission;
+        ApiRetryCommitMission _retryCommitMission;
         ILogger<TransactionDelegate> _loggerTran;
         MicroServiceHost _microServiceHost;
 
-        public FaildCommitBuilder(MicroServiceHost microServiceHost,
-            RetryCommitMission retryCommitMission,
+        public ApiFaildCommitBuilder(MicroServiceHost microServiceHost,
+            ApiRetryCommitMission retryCommitMission,
             ILogger<TransactionDelegate> loggerTran)
         {
             this._retryCommitMission = retryCommitMission;
@@ -31,7 +31,7 @@ namespace JMS.RetryCommit
         /// <param name="transactionId">事务id</param>
         /// <param name="cmd">请求对象</param>
         /// <param name="userContent">身份信息对象</param>
-        public string Build(string transactionId, InvokeCommand cmd, object userContent)
+        public string Build(string transactionId, InvokeInfo cmd, object userContent)
         {
             try
             {
@@ -120,7 +120,7 @@ namespace JMS.RetryCommit
         internal class RequestInfo
         {
             public string TransactionId;
-            public InvokeCommand Cmd;
+            public InvokeInfo Cmd;
             public Type UserContentType;
             public string UserContentValue;
         }
