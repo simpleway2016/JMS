@@ -86,24 +86,26 @@ Task.Run(() => {
     //    Thread.Sleep(10000000);
     int total = 0;
     var startTime = DateTime.Now;
+    var conCounter = app.Services.GetService<IConnectionCounter>();
     while (true)
     {
+        
         using (var client = new RemoteClient(gateways))
         {
-            Thread.Sleep(10000000);
+            //Thread.Sleep(10000000);
             client.BeginTransaction();
 
             var service = client.GetMicroService("TestWebService");
             var ret = service.Invoke<WeatherForecast[]>("/WeatherForecast2/Get");
             //var service = client.GetMicroService("TestService");
             //var ret = service.Invoke<WeatherForecast[]>("Get");
-
+            var ccCount = conCounter.ConnectionCount;
             client.CommitTransaction();
             total++;
             var sec = (int)((DateTime.Now - startTime).TotalSeconds);
             if (sec == 0)
                 sec = 1;
-            Debug.WriteLine($"通过一条,一共{total} 平均每秒：{ total / sec }");
+            Debug.WriteLine($"通过一条,一共{total} 平均每秒：{ total / sec } 连接数{ccCount}");
         }
     }
 

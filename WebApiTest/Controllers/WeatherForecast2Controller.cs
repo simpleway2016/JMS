@@ -34,7 +34,7 @@ namespace WebApiTest.Controllers
         public override void OnActionExecuted(ActionExecutedContext context)
         {
             _apiTransactionDelegate.CommitAction = () => {
-                Debug.WriteLine("提交事务了");
+               // Debug.WriteLine("提交事务了");
             };
             base.OnActionExecuted(context);
         }

@@ -16,6 +16,7 @@ namespace JMS.Applications
 {
     class RequestReception : IRequestReception
     {
+        IConnectionCounter _connectionCounter;
         Dictionary<InvokeType, IRequestHandler> _cache = new Dictionary<InvokeType, IRequestHandler>();
         MicroServiceHost _MicroServiceProvider;
         ILogger<RequestReception> _logger;
@@ -23,15 +24,17 @@ namespace JMS.Applications
         SSLConfiguration _SSLConfiguration;
         public RequestReception(ILogger<RequestReception> logger,
             IProcessExitHandler processExitHandler,
+            IConnectionCounter connectionCounter,
             MicroServiceHost microServiceProvider)
         {
+            this._connectionCounter = connectionCounter;
             _logger = logger;
             _MicroServiceProvider = microServiceProvider;
             _processExitHandler = processExitHandler;
             _SSLConfiguration = _MicroServiceProvider.ServiceProvider.GetService<SSLConfiguration>();
 
             var handlerTypes = typeof(RequestReception).Assembly.DefinedTypes.Where(m => m.ImplementedInterfaces.Contains(typeof(IRequestHandler)));
-            foreach( var type in handlerTypes )
+            foreach (var type in handlerTypes)
             {
                 var handler = (IRequestHandler)microServiceProvider.ServiceProvider.GetService(type);
                 _cache[handler.MatchType] = handler;
@@ -75,7 +78,7 @@ namespace JMS.Applications
                         if (_processExitHandler.ProcessExited)
                             return;
 
-                        Interlocked.Increment(ref _MicroServiceProvider.ClientConnected);
+                        _connectionCounter.OnConnect();
                         try
                         {
                             _cache[cmd.Type].Handle(netclient, cmd);
@@ -86,7 +89,7 @@ namespace JMS.Applications
                         }
                         finally
                         {
-                            Interlocked.Decrement(ref _MicroServiceProvider.ClientConnected);
+                            _connectionCounter.OnDisconnect();
                         }
 
                         if (netclient.HasSocketException || !netclient.KeepAlive)

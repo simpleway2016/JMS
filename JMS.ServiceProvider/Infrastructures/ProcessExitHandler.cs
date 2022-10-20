@@ -14,6 +14,7 @@ namespace JMS
     /// </summary>
     class ProcessExitHandler : IProcessExitHandler, IProcessExitListener
     {
+        IConnectionCounter _connectionCounter;
         SafeTaskFactory _safeTaskFactory;
         public MicroServiceHost _microServiceHost;
         bool _ProcessExited = false;
@@ -25,8 +26,10 @@ namespace JMS
         public ProcessExitHandler(
             ScheduleTaskManager scheduleTaskManager,
             SafeTaskFactory safeTaskFactory,
+            IConnectionCounter connectionCounter,
             ILogger<ProcessExitHandler> logger)
         {
+            this._connectionCounter = connectionCounter;
             this._safeTaskFactory = safeTaskFactory;
             _logger = logger;
             _scheduleTaskManager = scheduleTaskManager;
@@ -92,7 +95,7 @@ namespace JMS
 
             _logger?.LogInformation("等待客户端请求数清零");
             //等待客户连接处理完毕
-            while (_microServiceHost.ClientConnected > 0)
+            while (_connectionCounter.ConnectionCount > 0)
                 Thread.Sleep(1000);
 
             _logger?.LogInformation("客户端请求数为零");

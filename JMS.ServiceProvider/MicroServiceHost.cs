@@ -39,10 +39,6 @@ namespace JMS
 
         internal List<string> ServiceNames = new List<string>();
 
-        /// <summary>
-        /// 当前处理中的请求数
-        /// </summary>
-        internal int ClientConnected;
         public IServiceProvider ServiceProvider { private set; get; }
         /// <summary>
         /// 设置微服务的地址，如果为null，网关会使用微服务的外网ip作为服务地址
@@ -240,6 +236,7 @@ namespace JMS
             {
                 _services.AddSingleton<ICpuInfo, CpuInfoForUnkown>();
             }
+            _services.AddSingleton<IConnectionCounter, ConnectionCounter>();
             _services.AddSingleton<FaildCommitBuilder>();
             _services.AddSingleton<RetryCommitMission>();
             _services.AddSingleton<SSLConfiguration>(new SSLConfiguration());

@@ -23,6 +23,7 @@ namespace JMS.Domains
     /// </summary>
     class GatewayConnector : IGatewayConnector
     {
+        IConnectionCounter _connectionCounter;
         ControllerFactory _controllerFactory;
         NetClient _client;
         ILogger<GatewayConnector> _logger;
@@ -38,8 +39,10 @@ namespace JMS.Domains
             ICpuInfo cpuInfo,
             SSLConfiguration sSLConfiguration,
             ControllerFactory controllerFactory,
+            IConnectionCounter connectionCounter,
             ILogger<GatewayConnector> logger, IKeyLocker keyLocker)
         {
+            this._connectionCounter = connectionCounter;
             this._controllerFactory = controllerFactory;
             _microServiceHost = microServiceHost;
             _logger = logger;
@@ -283,7 +286,7 @@ namespace JMS.Domains
                     {
                         Type = CommandType.ReportClientConnectQuantity,
                         Content = new PerformanceInfo { 
-                            RequestQuantity = _microServiceHost.ClientConnected , 
+                            RequestQuantity = _connectionCounter.ConnectionCount , 
                             CpuUsage = _cpuInfo.GetCpuUsage() 
                         }.ToJsonString()
                     };

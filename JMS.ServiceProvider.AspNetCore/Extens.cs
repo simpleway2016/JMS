@@ -18,6 +18,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
@@ -31,6 +32,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         static MicroServiceHost Host;
         static NetAddress[] Gateways;
+        static IConnectionCounter ConnectionCounter;
         /// <summary>
         /// 把web server注册为JMS微服务
         /// </summary>
@@ -69,12 +71,29 @@ namespace Microsoft.Extensions.DependencyInjection
 
 
             Host.Build(0, Gateways).Run();
-            app.Use((context, next) => {
-                if (HttpHandler.Handle(app, context) == false)
+            app.Use(async (context, next) => {
+                if(ConnectionCounter == null)
                 {
-                    return next();
+                    ConnectionCounter = app.ApplicationServices.GetService<IConnectionCounter>();
                 }
-                return Task.CompletedTask;
+
+                ConnectionCounter.OnConnect();
+                try
+                {
+                    if (HttpHandler.Handle(app, context) == false)
+                    {
+                        await next();
+                    }
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+                finally
+                {
+                    ConnectionCounter.OnDisconnect();
+                }
             });
 
             
