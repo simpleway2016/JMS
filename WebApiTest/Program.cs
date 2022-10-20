@@ -90,15 +90,15 @@ Task.Run(() => {
     {
         using (var client = new RemoteClient(gateways))
         {
-            //Thread.Sleep(10000000);
-            //client.BeginTransaction();
+            Thread.Sleep(10000000);
+            client.BeginTransaction();
 
             var service = client.GetMicroService("TestWebService");
             var ret = service.Invoke<WeatherForecast[]>("/WeatherForecast2/Get");
             //var service = client.GetMicroService("TestService");
             //var ret = service.Invoke<WeatherForecast[]>("Get");
 
-            //client.CommitTransaction();
+            client.CommitTransaction();
             total++;
             var sec = (int)((DateTime.Now - startTime).TotalSeconds);
             if (sec == 0)

@@ -19,6 +19,9 @@ namespace JMS.ServiceProvider.AspNetCore
         internal InvokeInfo InvokeInfo;
         internal object UserContent;
         internal string RetryCommitFilePath;
+        /// <summary>
+        /// 事务标识，如果为null，表示本次访问来自浏览器等常规http客户端
+        /// </summary>
         public string TransactionId { get; }
         public ApiTransactionDelegate()
         {
@@ -26,7 +29,7 @@ namespace JMS.ServiceProvider.AspNetCore
             this.TransactionId = CurrentTranId.Value;
             CurrentTranId.Value = null;
         }
-        internal DateTime InCenterTime;
+        
         /// <summary>
         /// 如果在最后想阻止统一提交事务，可以把AgreeCommit设为false，那么，所有事务最后将回滚
         /// </summary>
