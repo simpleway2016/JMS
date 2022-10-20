@@ -21,7 +21,7 @@ using Way.Lib;
 
 namespace JMS.ServiceProvider.AspNetCore
 {
-    internal class WebSocketHandler
+    internal class HttpHandler
     {
         
         public static bool Handle(IApplicationBuilder app, HttpContext context)
@@ -34,7 +34,7 @@ namespace JMS.ServiceProvider.AspNetCore
                 }
                 else if (value.Contains("JmsRetry"))
                 {
-                    return JmsServiceHandler.Handle(app, context);
+                    return JmsRetryHandler.Handle(app, context);
                 }
                 else
                 {

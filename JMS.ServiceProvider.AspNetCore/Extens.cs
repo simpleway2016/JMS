@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
@@ -66,29 +67,14 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new Exception("请先调用services.RegisterJmsService() 注册服务");
             }
 
-            try
-            {
-                app.UseWebSockets();
-            }
-            catch (Exception ex)
-            {
-                app.ApplicationServices.GetService<ILogger<MicroServiceHost>>()?.LogError(ex, "");
-            }
 
             Host.Build(0, Gateways).Run();
             app.Use((context, next) => {
-                if (context.WebSockets.IsWebSocketRequest)
-                {
-                    if(WebSocketHandler.Handle(app, context) == false)
-                    {
-                        return next();
-                    }
-                    return Task.CompletedTask;
-                }
-                else
+                if (HttpHandler.Handle(app, context) == false)
                 {
                     return next();
                 }
+                return Task.CompletedTask;
             });
 
             

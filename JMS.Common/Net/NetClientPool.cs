@@ -20,6 +20,8 @@ namespace JMS
             new Thread(checkTime).Start();
         }
 
+        public static event EventHandler<NetClient> CreatedNewClient;
+
         /// <summary>
         /// 设置连接池大小（默认为50000）
         /// </summary>
@@ -64,11 +66,11 @@ namespace JMS
             }
         }
 
-        public static NetClient CreateClient( NetAddress proxy, string ip,int port, X509Certificate2 cert)
+        public static NetClient CreateClient( NetAddress proxy, string ip,int port, X509Certificate2 cert,Action<NetClient> newClientCallback = null)
         {
-            return CreateClient(proxy, new NetAddress(ip, port), cert);
+            return CreateClient(proxy, new NetAddress(ip, port), cert,newClientCallback);
         }
-        public static NetClient CreateClient(NetAddress proxy, NetAddress addr, X509Certificate2 cert)
+        public static NetClient CreateClient(NetAddress proxy, NetAddress addr, X509Certificate2 cert, Action<NetClient> newClientCallback = null)
         {
             var key = (addr.Address,addr.Port);
             NetClientSeat[] array;
@@ -83,6 +85,8 @@ namespace JMS
             {
                 freeitem = new ProxyClient(proxy, addr, cert);
                 freeitem.KeepAlive = array.Any(m => m.Client == null);
+                newClientCallback?.Invoke(freeitem);
+                CreatedNewClient?.Invoke(null, freeitem);
             }
 
             return freeitem;

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Primitives;
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using Way.Lib;
@@ -19,28 +20,36 @@ namespace JMS.ServiceProvider.AspNetCore
     {
         public static bool Handle(IApplicationBuilder app, HttpContext context)
         {
-            using (var wsClient = new WSClient(context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false).GetAwaiter().GetResult()))
+            using (var netClient = new NetClient(new ConnectionStream(context)))
             {
-                var tranId = wsClient.ReceiveData();
+                netClient.KeepAlive = true;
+                var tranId = context.Request.Path.Value.Substring(1);
+
                 var apiRetry = app.ApplicationServices.GetService<ApiRetryCommitMission>();
                 try
                 {
                     int ret = apiRetry.RetryTranaction(context, tranId);
-                    wsClient.SendData(new InvokeResult { Success = true, Data = ret }.ToJsonString());
+                    netClient.WriteServiceData(new InvokeResult { Success = true, Data = ret });
                 }
                 catch (Exception ex)
                 {
-                    wsClient.SendData(new InvokeResult
+                    netClient.WriteServiceData(new InvokeResult
                     {
                         Success = false,
                         Error = ex.Message
 
-                    }.ToJsonString());
+                    });
                   
                 }
-                wsClient.Close(WebSocketCloseStatus.NormalClosure, null);
+                releaseNetClient(netClient);
                 return true;
             }
+        }
+
+        static void releaseNetClient(NetClient client)
+        {
+            client.Socket = null;
+            client.InnerStream = null;
         }
     }
 }

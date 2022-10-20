@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
 using Microsoft.Extensions.Logging;
+using JMS.InvokeConnects;
 
 namespace JMS.TransactionReporters
 {
@@ -69,36 +70,10 @@ namespace JMS.TransactionReporters
                 {
                     try
                     {
-                        X509Certificate2 cert = null;
-                        if (obj.Cert != null)
+                        using (var invokeConnect = InvokeConnectFactory.Create(null, location, null))
                         {
-                            cert = new X509Certificate2(obj.Cert);
+                            invokeConnect.RetryTranaction(obj.ProxyAddress, location, obj.Cert, tranId);
                         }
-                        var netclient = NetClientPool.CreateClient(obj.ProxyAddress, location.ServiceAddress, location.Port, cert);
-                        var command = new InvokeCommand()
-                        {
-                            Type = InvokeType.RetryTranaction,
-                            Header = new Dictionary<string, string> {
-                                    { "TranId" , tranId}
-                                }
-                        };
-
-                        netclient.WriteServiceData(command);
-                        var result = netclient.ReadServiceObject<InvokeResult<int>>();
-                        if(result.Success && result.Data == 0)
-                        {
-                            TransactionReporterRoute.Logger?.LogInformation($"{location.ServiceAddress}:{location.Port}重新执行事务{tranId}成功");
-                        }
-
-                        if (result.Success == false || result.Data == -2)
-                        {
-                            if(result.Success == false)
-                            {
-                                location.Description = result.Error;
-                            }
-                            failds.Enqueue(location);
-                        }
-                        NetClientPool.AddClientToPool(netclient);
 
                     }
                     catch(Exception ex)

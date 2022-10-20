@@ -128,7 +128,11 @@ namespace JMS.RetryCommit
 
                 object usercontent = null;
                 var fileContent = File.ReadAllText(file, Encoding.UTF8).FromJson<RequestInfo>();
-
+                if(fileContent == null)
+                {
+                    FileHelper.ChangeFileExt(file, ".faild");
+                    return;
+                }
                 if (checkFromGateway && _gatewayConnector.CheckTransaction(fileContent.TransactionId) == false)
                 {
                     _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", fileContent.TransactionId);
@@ -254,6 +258,7 @@ namespace JMS.RetryCommit
                     if (transactionDelegate != null && transactionDelegate.CommitAction != null)
                     {
                         transactionDelegate.CommitAction();
+                        transactionDelegate.CommitAction = null;
                     }
                     transactionDelegate = null;
 

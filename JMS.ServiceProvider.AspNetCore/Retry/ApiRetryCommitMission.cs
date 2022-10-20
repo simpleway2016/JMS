@@ -18,6 +18,8 @@ using System.Net.WebSockets;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 
 namespace JMS.ServiceProvider.AspNetCore
 {
@@ -142,11 +144,6 @@ namespace JMS.ServiceProvider.AspNetCore
                 var controller = _controllerFactory.Create(requestInfo, serviceScope.ServiceProvider, out ControllerActionDescriptor desc);
                 if (controller != null)
                 {
-                    if(userContent != null)
-                    {
-
-                    }
-
                     var parameters = new object[desc.Parameters.Count];
                     for (int i = 0; i < parameters.Length && i < requestInfo.Cmd.Parameters.Length; i++)
                     {
@@ -164,13 +161,40 @@ namespace JMS.ServiceProvider.AspNetCore
                             throw new Exception(msg, ex);
                         }
                     }
+
+                    var mvcController = controller as Controller;
+                    ActionExecutedContext actionContext = null;
+                    ActionExecutingContext excutingContext = null;
+                    if (mvcController != null)
+                    {
+
+                        var ac = new ActionContext(context, new RouteData(), desc);
+                        actionContext = new ActionExecutedContext(ac, new List<IFilterMetadata>(), mvcController);
+                        Dictionary<string, object> dict = new Dictionary<string, object>();
+                        for (int i = 0; i < desc.Parameters.Count; i++)
+                        {
+                            dict[desc.Parameters[i].Name] = parameters[i];
+                        }
+                        excutingContext = new ActionExecutingContext(ac, new List<IFilterMetadata>(), dict, mvcController);
+                    }
+
+                    mvcController?.OnActionExecuting(excutingContext);
                     var result = desc.MethodInfo.Invoke(controller, parameters);
+                    if (mvcController != null)
+                    {
+                        mvcController.OnActionExecuted(actionContext);
+                    }
 
                     var tranDelegate = serviceScope.ServiceProvider.GetService<ApiTransactionDelegate>();
                     if (tranDelegate.CommitAction != null)
                     {
                         tranDelegate.CommitAction();
+                        tranDelegate.CommitAction = null;
                     }
+                }
+                else
+                {
+                    throw new Exception("controller is null");
                 }
             }
         }

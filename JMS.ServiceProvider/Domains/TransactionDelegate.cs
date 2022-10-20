@@ -88,44 +88,39 @@ namespace JMS
 
         void onCommit(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
-            if (CommitAction != null)
+            try
             {
-                try
+                CommitAction?.Invoke();
+                if (RetryCommitFilePath != null)
                 {
-                    CommitAction();
-                    if (RetryCommitFilePath != null)
-                    {
-                        faildCommitBuilder.CommitSuccess(RetryCommitFilePath);
-                        RetryCommitFilePath = null;
-                    }
+                    faildCommitBuilder.CommitSuccess(RetryCommitFilePath);
+                    RetryCommitFilePath = null;
+                    logger?.LogInformation("事务{0}提交完毕", TransactionId);
                 }
-                catch (Exception ex)
-                {
-                    if (RetryCommitFilePath != null)
-                    {
-                        faildCommitBuilder.CommitFaild(RetryCommitFilePath);
-                        RetryCommitFilePath = null;
-                    }
-                    logger?.LogInformation("事务{0}提交失败,{1}", TransactionId, ex.Message);
-                    throw ex;
-                }
-
-                logger?.LogInformation("事务{0}提交完毕", TransactionId);
             }
+            catch (Exception ex)
+            {
+                if (RetryCommitFilePath != null)
+                {
+                    faildCommitBuilder.CommitFaild(RetryCommitFilePath);
+                    RetryCommitFilePath = null;
+                }
+                logger?.LogInformation("事务{0}提交失败,{1}", TransactionId, ex.Message);
+                throw ex;
+            }
+
             netclient.WriteServiceData(new InvokeResult() { Success = true });
         }
         void onRollback(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
-            if (RollbackAction != null)
+            RollbackAction?.Invoke();
+            if (RetryCommitFilePath != null)
             {
-                RollbackAction();
-                if (RetryCommitFilePath != null)
-                {
-                    faildCommitBuilder.Rollback(RetryCommitFilePath);
-                    RetryCommitFilePath = null;
-                }
+                faildCommitBuilder.Rollback(RetryCommitFilePath);
+                RetryCommitFilePath = null;
                 logger?.LogInformation("事务{0}回滚完毕，请求数据:{1}", TransactionId, RequestCommand.ToJsonString());
             }
+           
             netclient.WriteServiceData(new InvokeResult() { Success = true });
         }
         void onHealthyCheck(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)

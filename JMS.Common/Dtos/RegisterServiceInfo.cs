@@ -25,15 +25,21 @@ namespace JMS.Dtos
         /// </summary>
         public string Description;
 
-        public RegisterServiceLocation()
+        public RegisterServiceLocation(string address, int port)
         {
-            
+            this.Port = port;
+            this.Host = this.ServiceAddress = address;
         }
 
         public RegisterServiceLocation(NetAddress address)
         {
             this.Port = address.Port;
             this.Host = this.ServiceAddress = address.Address;
+        }
+
+        public RegisterServiceLocation()
+        {
+
         }
     }
    

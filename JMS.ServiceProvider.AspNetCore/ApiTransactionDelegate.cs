@@ -4,6 +4,7 @@ using JMS.RetryCommit;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
@@ -23,6 +24,7 @@ namespace JMS.ServiceProvider.AspNetCore
         {
             this.AgreeCommit = true;
             this.TransactionId = CurrentTranId.Value;
+            CurrentTranId.Value = null;
         }
         internal DateTime InCenterTime;
         /// <summary>
@@ -35,24 +37,24 @@ namespace JMS.ServiceProvider.AspNetCore
         internal bool Handled { get; set; }
 
 
-        internal void WaitForCommand(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, WSClient wsClient, ILogger logger)
+        internal void WaitForCommand(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
         {
             string cmd;
             try
             {
                 while (true)
                 {
-                    cmd = wsClient.ReceiveData();
+                    cmd = netClient.ReadServiceData();
                     switch (cmd)
                     {
-                        case "coomit":
-                            onCommit(gatewayConnector, faildCommitBuilder, wsClient, logger);
+                        case "commit":
+                            onCommit(gatewayConnector, faildCommitBuilder, netClient, logger);
                             return;
                         case "rollback":
-                            onRollback(gatewayConnector, faildCommitBuilder, wsClient, logger);
+                            onRollback(gatewayConnector, faildCommitBuilder, netClient, logger);
                             return;
                         case "ready":
-                            onHealthyCheck(gatewayConnector, faildCommitBuilder, wsClient, logger);
+                            onHealthyCheck(gatewayConnector, faildCommitBuilder, netClient, logger);
                             break;
                     }
                 }
@@ -85,56 +87,52 @@ namespace JMS.ServiceProvider.AspNetCore
             }
         }
 
-        void onCommit(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, WSClient wsClient, ILogger logger)
+        void onCommit(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
         {
-            if (CommitAction != null)
+            try
             {
-                try
-                {
-                    CommitAction();
-                    if (RetryCommitFilePath != null)
-                    {
-                        faildCommitBuilder.CommitSuccess(RetryCommitFilePath);
-                        RetryCommitFilePath = null;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (RetryCommitFilePath != null)
-                    {
-                        faildCommitBuilder.CommitFaild(RetryCommitFilePath);
-                        RetryCommitFilePath = null;
-                    }
-                    logger?.LogInformation("事务{0}提交失败,{1}", TransactionId, ex.Message);
-                    throw ex;
-                }
-
-                logger?.LogInformation("事务{0}提交完毕", TransactionId);
-            }
-            wsClient.SendData("ok");
-        }
-        void onRollback(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, WSClient wsClient, ILogger logger)
-        {
-            if (RollbackAction != null)
-            {
-                RollbackAction();
+                CommitAction?.Invoke();
                 if (RetryCommitFilePath != null)
                 {
-                    faildCommitBuilder.Rollback(RetryCommitFilePath);
+                    faildCommitBuilder.CommitSuccess(RetryCommitFilePath);
                     RetryCommitFilePath = null;
                 }
-                logger?.LogInformation("事务{0}回滚完毕，请求数据:{1}", TransactionId, this.InvokeInfo.ToJsonString());
             }
-            wsClient.SendData("ok");
+            catch (Exception ex)
+            {
+                if (RetryCommitFilePath != null)
+                {
+                    faildCommitBuilder.CommitFaild(RetryCommitFilePath);
+                    RetryCommitFilePath = null;
+                }
+                logger?.LogInformation("事务{0}提交失败,{1}", TransactionId, ex.Message);
+                throw ex;
+            }
+
+            logger?.LogInformation("事务{0}提交完毕", TransactionId);
+
+            netClient.WriteServiceData( Encoding.UTF8.GetBytes("ok"));
         }
-        void onHealthyCheck(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, WSClient wsClient, ILogger logger)
+        void onRollback(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
+        {
+            RollbackAction?.Invoke();
+            if (RetryCommitFilePath != null)
+            {
+                faildCommitBuilder.Rollback(RetryCommitFilePath);
+                RetryCommitFilePath = null;
+            }
+            logger?.LogInformation("事务{0}回滚完毕，请求数据:{1}", TransactionId, this.InvokeInfo.ToJsonString());
+
+            netClient.WriteServiceData(Encoding.UTF8.GetBytes("ok"));
+        }
+        void onHealthyCheck(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
         {
             if (CommitAction != null)
             {
                 RetryCommitFilePath = faildCommitBuilder.Build(TransactionId, this.InvokeInfo,this.UserContent);
             }
             logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, this.InvokeInfo.ToJsonString(), UserContent);
-            wsClient.SendData("ok");
+            netClient.WriteServiceData(Encoding.UTF8.GetBytes("ok"));
         }
     }
 }

@@ -6,8 +6,8 @@ namespace JMS.ServiceProvider.AspNetCore
 {
     internal class InvokeInfo
     {
-        internal string ActionName;
-        internal string ControllerFullName;
-        internal string[] Parameters;
+        public string ActionName { get; set; }
+        public string ControllerFullName { get; set; }
+        public string[] Parameters { get; set; }
     }
 }

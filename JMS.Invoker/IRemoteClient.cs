@@ -16,7 +16,7 @@ namespace JMS
         X509Certificate2 GatewayClientCertificate { get; set; }
         X509Certificate2 ServiceClientCertificate { get; set; }
         Dictionary<string, string> GetCommandHeader();
-        void AddConnect(InvokeConnect connect);
+        void AddConnect(IInvokeConnect connect);
         void AddTask(Task task);
     }
 }

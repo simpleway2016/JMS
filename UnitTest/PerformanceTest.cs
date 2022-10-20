@@ -142,6 +142,10 @@ namespace UnitTest
                    }
                 };
 
+            var clientCount = 0;
+            NetClientPool.CreatedNewClient += (s, c) => {
+                Interlocked.Increment(ref clientCount);
+            };
             while (true)
             {
                 using (var client = new RemoteClient(gateways))
@@ -160,7 +164,7 @@ namespace UnitTest
                     serviceClient.InvokeAsync("SetUserName", "Jack4");
                     client.CommitTransaction();
 
-                    Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName}");
+                    Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName} socket创建数量：{clientCount} 连接池数量：{NetClientPool.GetPoolAliveCount(new NetAddress(serviceClient.ServiceLocation.ServiceAddress , serviceClient.ServiceLocation.Port))}");
 
                     if (UserInfoDbContext.FinallyUserName.StartsWith("Jack") == false)
                         throw new Exception("结果不正确");

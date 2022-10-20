@@ -2,6 +2,7 @@
 using JMS.Dtos;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
@@ -37,6 +38,11 @@ namespace JMS
         public NetClient(Socket socket):base(socket)
         {
             this.ReadTimeout = 16000;
+        }
+
+        public NetClient(Stream stream) : base(stream)
+        {
+
         }
 
         /// <summary>

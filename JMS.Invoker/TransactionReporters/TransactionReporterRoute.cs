@@ -20,7 +20,8 @@ namespace JMS.TransactionReporters
         public static ITransactionReporter GetReporter(RemoteClient remoteClient)
         {
             //如果有一个服务不是网关分配，那么，不向网关报告情况
-            bool reportToGateway = !remoteClient._Connects.Any(m => m.Invoker.IsFromGateway == false);
+            bool reportToGateway = !remoteClient._Connects.Any(m => m.Invoker.IsFromGateway == false || m.InvokingInfo.ServiceLocation.Port == 0);
+
             if (reportToGateway)
                 return _GatewayReporter;
             else

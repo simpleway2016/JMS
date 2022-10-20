@@ -1,6 +1,4 @@
-﻿using JMS;
-
-using JMS.Dtos;
+﻿using JMS.Dtos;
 using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
 using System;
@@ -22,7 +20,7 @@ namespace JMS
     /// </summary>
     public class RemoteClient : IDisposable, IRemoteClient
     {
-        internal List<InvokeConnect> _Connects = new List<InvokeConnect>();
+        internal List<IInvokeConnect> _Connects = new List<IInvokeConnect>();
         List<Task> _Tasks = new List<Task>();
 
         private string _TransactionId;
@@ -92,7 +90,7 @@ namespace JMS
         public RemoteClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
         {
             _TransactionId = Guid.NewGuid().ToString("N");
-            _logger = logger;
+            TransactionReporterRoute.Logger = _logger = logger;
             this.ProxyAddress = proxyAddress;
             GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
@@ -379,7 +377,7 @@ namespace JMS
         }
 
 
-        void IRemoteClient.AddConnect(InvokeConnect connect)
+        void IRemoteClient.AddConnect(IInvokeConnect connect)
         {
             lock(_Connects)
             {
@@ -473,11 +471,7 @@ namespace JMS
                     var connect = _Connects[i];
                     try
                     {
-                        connect.NetClient.WriteServiceData(new InvokeCommand()
-                        {
-                            Type = InvokeType.HealthyCheck,
-                        });
-                        var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
+                        var ret = connect.GoReadyCommit(this);
                         if (ret.Success == false)
                         {
                             //有人不同意提交事务
@@ -487,8 +481,7 @@ namespace JMS
                     }
                     catch (Exception ex)
                     {
-                        connect.NetClient.Dispose();
-                        connect.NetClient = null;
+                        connect.Dispose();
                         errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                     }
 
@@ -500,17 +493,14 @@ namespace JMS
                     {
                         try
                         {
-                            connect.NetClient.WriteServiceData(new InvokeCommand()
-                            {
-                                Type = InvokeType.RollbackTranaction,
-                                Header = this.GetCommandHeader()
-                            });
-                            var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
+                            connect.GoRollback(this);
+                            connect.AddClientToPool();
                         }
                         catch
                         {
+                            connect.Dispose();
                         }
-                        NetClientPool.AddClientToPool(connect.NetClient);
+                        
                     }
                     if (invokeType == InvokeType.CommitTranaction)
                         throw new TransactionException(null, "提交事务时，有连接中断，所有事务将回滚");
@@ -531,24 +521,19 @@ namespace JMS
                         var connect = _Connects[i];
                         try
                         {
-                            connect.NetClient.WriteServiceData(new InvokeCommand()
-                            {
-                                Type = invokeType,
-                                Header = this.GetCommandHeader()
-                            });
-                            var ret = connect.NetClient.ReadServiceObject<InvokeResult>();
+                            var ret = invokeType == InvokeType.CommitTranaction ? connect.GoCommit(this) : connect.GoRollback(this);
                             if (ret.Success == false)
                             {
                                 errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
                             }
+                            connect.AddClientToPool();
                         }
                         catch (Exception ex)
                         {
+                            connect.Dispose();
                             errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                             return;
                         }
-
-                        NetClientPool.AddClientToPool(connect.NetClient);
                     });
 
                     if (errors.Count > 0)

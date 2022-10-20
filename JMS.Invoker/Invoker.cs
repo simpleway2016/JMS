@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using JMS.InvokeConnects;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
@@ -55,9 +56,12 @@ namespace JMS
                 if (serviceLocation.Host == "not master")
                     throw new MissMasterGatewayException("");
 
-
-                if (serviceLocation.Port == 0)
+                if(serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.Host))
+                {
+                    //网关没有这个服务
                     return false;
+                }
+
                 _serviceLocation = serviceLocation;
 
                 NetClientPool.AddClientToPool(netclient);
@@ -84,21 +88,21 @@ namespace JMS
 
         public void Invoke(string method, params object[] parameters)
         {
-            new InvokeConnect(_serviceName, _serviceLocation,this).Invoke<object>(method, ServiceTransaction, parameters);
+            InvokeConnectFactory.Create(_serviceName, _serviceLocation,this).Invoke<object>(method, ServiceTransaction, parameters);
         }
         public T Invoke<T>(string method, params object[] parameters)
         {
-            return new InvokeConnect(_serviceName, _serviceLocation, this).Invoke<T>(method, ServiceTransaction, parameters);
+            return InvokeConnectFactory.Create(_serviceName, _serviceLocation, this).Invoke<T>(method, ServiceTransaction, parameters);
         }
         public Task<T> InvokeAsync<T>(string method, params object[] parameters)
         {
-            var task = new InvokeConnect(_serviceName, _serviceLocation, this).InvokeAsync<T>(method,  ServiceTransaction, parameters);
+            var task = InvokeConnectFactory.Create(_serviceName, _serviceLocation, this).InvokeAsync<T>(method,  ServiceTransaction, parameters);
             ServiceTransaction.AddTask(task);
             return task;
         }
         public Task InvokeAsync(string method, params object[] parameters)
         {
-            var task = new InvokeConnect(_serviceName, _serviceLocation, this).InvokeAsync<object>(method, ServiceTransaction, parameters);
+            var task = InvokeConnectFactory.Create(_serviceName, _serviceLocation, this).InvokeAsync<object>(method, ServiceTransaction, parameters);
             ServiceTransaction.AddTask(task);
             return task;
         }
