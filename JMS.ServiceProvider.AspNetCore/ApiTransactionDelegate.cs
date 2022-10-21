@@ -111,6 +111,10 @@ namespace JMS.ServiceProvider.AspNetCore
                 logger?.LogInformation("事务{0}提交失败,{1}", TransactionId, ex.Message);
                 throw ex;
             }
+            finally
+            {
+                CommitAction = null;
+            }
 
             logger?.LogInformation("事务{0}提交完毕", TransactionId);
 
@@ -119,6 +123,7 @@ namespace JMS.ServiceProvider.AspNetCore
         void onRollback(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
         {
             RollbackAction?.Invoke();
+            RollbackAction = null;
             if (RetryCommitFilePath != null)
             {
                 faildCommitBuilder.Rollback(RetryCommitFilePath);

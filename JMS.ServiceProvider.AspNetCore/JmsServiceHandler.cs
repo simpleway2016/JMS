@@ -42,39 +42,65 @@ namespace JMS.ServiceProvider.AspNetCore
 
                 var controllerFactory = app.ApplicationServices.GetService<ControllerFactory>();
 
-                using (var scope = app.ApplicationServices.CreateScope())
+                var controller = controllerFactory.Create(context, context.RequestServices, out ControllerActionDescriptor desc);
+
+                var author = desc.MethodInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
+                if (author == null)
+                    author = desc.ControllerTypeInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
+
+                if (author != null)
                 {
-                    var controller = controllerFactory.Create(context, scope.ServiceProvider, out ControllerActionDescriptor desc);
-
-                    var author = desc.MethodInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
-                    if (author == null)
-                        author = desc.ControllerTypeInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
-
-                    if (author != null)
+                    try
                     {
-                        try
-                        {
-                            var authRet = context.AuthenticateAsync(author.AuthenticationSchemes).ConfigureAwait(false).GetAwaiter().GetResult();
+                        var authRet = context.AuthenticateAsync(author.AuthenticationSchemes).ConfigureAwait(false).GetAwaiter().GetResult();
 
-                            if (authRet.Succeeded == false)
-                            {
-                                netClient.WriteServiceData(new InvokeResult
-                                {
-                                    Success = false,
-                                    Error = "Authentication failed",
-
-                                });
-                                releaseNetClient(netClient);
-                                return true;
-                            }
-                            context.User = authRet.Principal;
-                        }
-                        catch (Exception ex)
+                        if (authRet.Succeeded == false)
                         {
                             netClient.WriteServiceData(new InvokeResult
                             {
                                 Success = false,
-                                Error = ex.Message,
+                                Error = "Authentication failed",
+
+                            });
+                            releaseNetClient(netClient);
+                            return true;
+                        }
+                        context.User = authRet.Principal;
+                    }
+                    catch (Exception ex)
+                    {
+                        netClient.WriteServiceData(new InvokeResult
+                        {
+                            Success = false,
+                            Error = ex.Message,
+
+                        });
+                        releaseNetClient(netClient);
+                        return true;
+                    }
+                }
+
+
+                if (controller != null)
+                {
+                    var parameters = new object[desc.Parameters.Count];
+                    for (int i = 0; i < parameters.Length && i < parametersStrArr.Length; i++)
+                    {
+                        string pvalue = parametersStrArr[i];
+                        if (pvalue == null)
+                            continue;
+
+                        try
+                        {
+                            parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, desc.Parameters[i].ParameterType);
+                        }
+                        catch (Exception ex)
+                        {
+                            var msg = $"转换参数出错，name:{desc.Parameters[i].Name} value:{pvalue} err:{ex.Message}";
+                            netClient.WriteServiceData(new InvokeResult
+                            {
+                                Success = false,
+                                Error = msg,
 
                             });
                             releaseNetClient(netClient);
@@ -82,125 +108,92 @@ namespace JMS.ServiceProvider.AspNetCore
                         }
                     }
 
-
-                    if (controller != null)
+                    var actionFilterProcessor = new ActionFilterProcessor(context, controller, desc, parameters);
+                    var tranDelegate = context.RequestServices.GetService<ApiTransactionDelegate>();
+                    try
                     {
-                       
-                       
-
-                        var parameters = new object[desc.Parameters.Count];
-                        for (int i = 0; i < parameters.Length && i < parametersStrArr.Length; i++)
+                        actionFilterProcessor?.OnActionExecuting();
+                        var result = desc.MethodInfo.Invoke(controller, parameters);
+                        result = actionFilterProcessor.OnActionExecuted(result);
+                        if (result != null)
                         {
-                            string pvalue = parametersStrArr[i];
-                            if (pvalue == null)
-                                continue;
-
-                            try
+                            if (result is ObjectResult oret)
                             {
-                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, desc.Parameters[i].ParameterType);
+                                result = oret.Value;
                             }
-                            catch (Exception ex)
+                            else if (result is JsonResult jret)
                             {
-                                var msg = $"转换参数出错，name:{desc.Parameters[i].Name} value:{pvalue} err:{ex.Message}";
-                                netClient.WriteServiceData(new InvokeResult
-                                {
-                                    Success = false,
-                                    Error = msg,
-
-                                });
-                                releaseNetClient(netClient);
-                                return true;
+                                result = jret.Value;
                             }
+                            else if(result is IActionResult)
+                                throw new Exception("不支持返回值类型" + result.GetType().FullName);
+                        }
+                        else
+                        {
+                            result = null;
                         }
 
-                        var mvcController = controller as Controller;
-                        ActionExecutedContext actionContext = null;
-                        ActionExecutingContext excutingContext = null;
-                        if (mvcController != null)
+                        if (tranDelegate.CommitAction != null && !supportTran)
                         {
-
-                            var ac = new ActionContext(context, new RouteData(), desc);
-                            actionContext = new ActionExecutedContext(ac, new List<IFilterMetadata>(), mvcController);
-                            Dictionary<string, object> dict = new Dictionary<string, object>();
-                            for(int i = 0; i < desc.Parameters.Count; i++)
-                            {
-                                dict[desc.Parameters[i].Name] = parameters[i];
-                            }
-                            excutingContext = new ActionExecutingContext(ac, new List<IFilterMetadata>(), dict, mvcController);
+                            tranDelegate.CommitAction();
+                            tranDelegate = null;
+                        }
+                        else if (tranDelegate.CommitAction == null)
+                        {
+                            tranDelegate = null;
+                            supportTran = false;
                         }
 
-                        try
+                        var outputObj = new InvokeResult
                         {
-                            mvcController?.OnActionExecuting(excutingContext);
-                            var result = desc.MethodInfo.Invoke(controller, parameters);
-                            if (mvcController != null)
-                            {
-                                mvcController.OnActionExecuted(actionContext);
-                            }
-                            
+                            Success = true,
+                            SupportTransaction = supportTran,
+                            Data = result
 
-                            var tranDelegate = scope.ServiceProvider.GetService<ApiTransactionDelegate>();
-                            if (tranDelegate.CommitAction != null && !supportTran)
-                            {
-                                tranDelegate.CommitAction();
-                                tranDelegate = null;
-                            }
-                            else if (tranDelegate.CommitAction == null)
-                            {
-                                tranDelegate = null;
-                                supportTran = false;
-                            }
+                        };
+                        netClient.WriteServiceData(outputObj);
 
-                            var outputObj = new InvokeResult
-                            {
-                                Success = true,
-                                SupportTransaction = supportTran,
-                                Data = result
-
-                            };
-                            netClient.WriteServiceData(outputObj);
-
-                            if (!supportTran)
-                            {
-                                releaseNetClient(netClient);
-                                return true;
-                            }
-
-                            tranDelegate.InvokeInfo = new InvokeInfo()
-                            {
-                                ActionName = desc.ActionName,
-                                ControllerFullName = desc.ControllerTypeInfo.FullName,
-                                Parameters = parametersStrArr
-                            };
-
-                            tranDelegate.UserContent = context.User;
-
-                            var failbuilder = app.ApplicationServices.GetService<ApiFaildCommitBuilder>();
-                            var gatewayConnector = app.ApplicationServices.GetService<IGatewayConnector>();
-                            tranDelegate.WaitForCommand(gatewayConnector, failbuilder, netClient, app.ApplicationServices.GetService<ILogger>());
-
-
-                        }
-                        catch (Exception ex)
+                        if (!supportTran)
                         {
-                            if (actionContext != null)
-                            {
-                                actionContext.Exception = ex;
-                                mvcController.OnActionExecuted(actionContext);
-                            }
-
-                            var outputObj = new InvokeResult
-                            {
-                                Success = false,
-                                Error = ex.Message
-
-                            };
-                            netClient.WriteServiceData(outputObj);
+                            releaseNetClient(netClient);
+                            return true;
                         }
-                        releaseNetClient(netClient);
+
+                        tranDelegate.InvokeInfo = new InvokeInfo()
+                        {
+                            ActionName = desc.ActionName,
+                            ControllerFullName = desc.ControllerTypeInfo.FullName,
+                            Parameters = parametersStrArr
+                        };
+
+                        tranDelegate.UserContent = context.User;
+
+                        var failbuilder = app.ApplicationServices.GetService<ApiFaildCommitBuilder>();
+                        var gatewayConnector = app.ApplicationServices.GetService<IGatewayConnector>();
+                        tranDelegate.WaitForCommand(gatewayConnector, failbuilder, netClient, app.ApplicationServices.GetService<ILogger>());
+
+
                     }
+                    catch (Exception ex)
+                    {
+                        if (tranDelegate.RollbackAction != null)
+                        {
+                            tranDelegate.RollbackAction();
+                            tranDelegate.RollbackAction = null;
+                            tranDelegate.CommitAction = null;
+                        }
 
+                        var outputObj = new InvokeResult
+                        {
+                            Success = false,
+                            Error = ex.Message
+
+                        };
+                        netClient.WriteServiceData(outputObj);
+                    }
+                    releaseNetClient(netClient);
                 }
+
                 return true;
             }
         }

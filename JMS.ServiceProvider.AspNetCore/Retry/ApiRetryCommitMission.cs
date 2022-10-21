@@ -162,28 +162,11 @@ namespace JMS.ServiceProvider.AspNetCore
                         }
                     }
 
-                    var mvcController = controller as Controller;
-                    ActionExecutedContext actionContext = null;
-                    ActionExecutingContext excutingContext = null;
-                    if (mvcController != null)
-                    {
+                    var actionFilterProcessor = new ActionFilterProcessor(context, controller, desc, parameters);
 
-                        var ac = new ActionContext(context, new RouteData(), desc);
-                        actionContext = new ActionExecutedContext(ac, new List<IFilterMetadata>(), mvcController);
-                        Dictionary<string, object> dict = new Dictionary<string, object>();
-                        for (int i = 0; i < desc.Parameters.Count; i++)
-                        {
-                            dict[desc.Parameters[i].Name] = parameters[i];
-                        }
-                        excutingContext = new ActionExecutingContext(ac, new List<IFilterMetadata>(), dict, mvcController);
-                    }
-
-                    mvcController?.OnActionExecuting(excutingContext);
+                    actionFilterProcessor.OnActionExecuting();
                     var result = desc.MethodInfo.Invoke(controller, parameters);
-                    if (mvcController != null)
-                    {
-                        mvcController.OnActionExecuted(actionContext);
-                    }
+                    result = actionFilterProcessor.OnActionExecuted(result);
 
                     var tranDelegate = serviceScope.ServiceProvider.GetService<ApiTransactionDelegate>();
                     if (tranDelegate.CommitAction != null)

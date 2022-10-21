@@ -108,12 +108,17 @@ namespace JMS
                 logger?.LogInformation("事务{0}提交失败,{1}", TransactionId, ex.Message);
                 throw ex;
             }
+            finally
+            {
+                CommitAction = null;
+            }
 
             netclient.WriteServiceData(new InvokeResult() { Success = true });
         }
         void onRollback(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
             RollbackAction?.Invoke();
+            RollbackAction = null;
             if (RetryCommitFilePath != null)
             {
                 faildCommitBuilder.Rollback(RetryCommitFilePath);

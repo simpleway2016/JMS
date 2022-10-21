@@ -8,8 +8,9 @@ namespace WebApiTest.Controllers
 {
     [Authorize]
     [ApiController]
+    [MyActionFilter]
     [Route("[controller]")]
-    public class WeatherForecast2Controller : Controller
+    public class WeatherForecast2Controller : ControllerBase
     {
         ApiTransactionDelegate _apiTransactionDelegate;
         private static readonly string[] Summaries = new[]
@@ -26,22 +27,10 @@ namespace WebApiTest.Controllers
             _logger = logger;
         }
 
-        public override void OnActionExecuting(ActionExecutingContext context)
-        {
-            base.OnActionExecuting(context);
-        }
-
-        public override void OnActionExecuted(ActionExecutedContext context)
-        {
-            _apiTransactionDelegate.CommitAction = () => {
-               // Debug.WriteLine("提交事务了");
-            };
-            base.OnActionExecuted(context);
-        }
 
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
-        {           
+        {
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
@@ -49,6 +38,23 @@ namespace WebApiTest.Controllers
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+    }
+
+    class MyActionFilterAttribute : Attribute, IActionFilter
+    {
+        public void OnActionExecuted(ActionExecutedContext context)
+        {
+            var ctrl = context.HttpContext.RequestServices.GetService<ApiTransactionDelegate>();
+            ctrl.CommitAction = () =>
+            {
+                Debug.WriteLine("提交事务了");
+            };
+        }
+
+        public void OnActionExecuting(ActionExecutingContext context)
+        {
+
         }
     }
 }
