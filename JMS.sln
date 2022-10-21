@@ -37,7 +37,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.AssemblyDocumentReader"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiTest", "WebApiTest\WebApiTest.csproj", "{BAC0ED06-F74D-4717-9C4A-E8B8457D34F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.ServiceProvider.AspNetCore", "JMS.ServiceProvider.AspNetCore\JMS.ServiceProvider.AspNetCore.csproj", "{405786C6-AF19-4655-A8D0-A8ACB63E2664}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.ServiceProvider.AspNetCore", "JMS.ServiceProvider.AspNetCore\JMS.ServiceProvider.AspNetCore.csproj", "{405786C6-AF19-4655-A8D0-A8ACB63E2664}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiTest3", "WebApiTest3\WebApiTest3.csproj", "{644B5F43-E01E-4D77-908B-92A2EEAD68F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -191,6 +193,14 @@ Global
 		{405786C6-AF19-4655-A8D0-A8ACB63E2664}.Release|Any CPU.Build.0 = Release|Any CPU
 		{405786C6-AF19-4655-A8D0-A8ACB63E2664}.Release|x86.ActiveCfg = Release|Any CPU
 		{405786C6-AF19-4655-A8D0-A8ACB63E2664}.Release|x86.Build.0 = Release|Any CPU
+		{644B5F43-E01E-4D77-908B-92A2EEAD68F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{644B5F43-E01E-4D77-908B-92A2EEAD68F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{644B5F43-E01E-4D77-908B-92A2EEAD68F0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{644B5F43-E01E-4D77-908B-92A2EEAD68F0}.Debug|x86.Build.0 = Debug|Any CPU
+		{644B5F43-E01E-4D77-908B-92A2EEAD68F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{644B5F43-E01E-4D77-908B-92A2EEAD68F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{644B5F43-E01E-4D77-908B-92A2EEAD68F0}.Release|x86.ActiveCfg = Release|Any CPU
+		{644B5F43-E01E-4D77-908B-92A2EEAD68F0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

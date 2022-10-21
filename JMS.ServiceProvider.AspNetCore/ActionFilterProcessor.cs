@@ -66,6 +66,9 @@ namespace JMS.ServiceProvider.AspNetCore
 
         public object OnActionExecuted(object result)
         {
+            if (_actionContext == null)
+                return result;
+
             if (result != null && !(result is IActionResult))
             {
                 _actionContext.Result = new ObjectResult(result);
