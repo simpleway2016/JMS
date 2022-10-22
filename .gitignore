@@ -342,3 +342,5 @@ healthchecksdb
 /Publish/Gateway.zip
 /Publish/GatewayReferee.zip
 /Publish/Proxy.zip
+/WebApiTest/$$_JMS.Invoker.Transactions
+/WebApiTest/$$JMS_RetryCommitPath

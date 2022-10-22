@@ -15,7 +15,7 @@ namespace JMS.ServiceProvider.AspNetCore
 {
     public class ApiTransactionDelegate
     {
-        internal static ThreadLocal<string> CurrentTranId = new ThreadLocal<string>();
+        internal static AsyncLocal<string> CurrentTranId = new AsyncLocal<string>();
         internal InvokeInfo InvokeInfo;
         internal object UserContent;
         internal string RetryCommitFilePath;
