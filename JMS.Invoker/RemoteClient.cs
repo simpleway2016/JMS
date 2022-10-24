@@ -21,7 +21,8 @@ namespace JMS
     public class RemoteClient : IDisposable, IRemoteClient
     {
         internal List<IInvokeConnect> _Connects = new List<IInvokeConnect>();
-        List<Task> _Tasks = new List<Task>();
+        TaskCollection _transactionTasks = new TaskCollection();
+        TaskCollection _normalTasks = new TaskCollection();
 
         private string _TransactionId;
         public string TransactionId
@@ -386,47 +387,22 @@ namespace JMS
         }
         void IRemoteClient.AddTask(Task task)
         {
-            lock (_Tasks)
+            if(_SupportTransaction)
             {
-                _Tasks.Add(task);
+                _transactionTasks.AddTask(task);
+            }
+            else
+            {
+                _normalTasks.AddTask(task);
             }
         }
 
         void waitTasks()
         {
-            try
-            {
-                Exception lastErr = null;
-                for(int i = 0; i < _Tasks.Count; i ++)
-                {
-                    try
-                    {
-                        _Tasks[i].Wait();
-                    }
-                    catch (Exception ex)
-                    {
-                        lastErr = ex;
-                    }
-                }
-               
-                if (lastErr != null)
-                    throw lastErr;
-            }
-            catch (Exception ex)
-            {
-                var err = ex;
-                if(err.InnerException != null)
-                {
-                    err = err.InnerException;
-                }
+            var errs = _transactionTasks.Wait();
+            if ( errs != null && errs.Count > 0)
+                throw errs[0];
 
-                throw err;
-            }
-            finally
-            {
-                _Tasks.Clear();
-            }
-           
         }
 
         /// <summary>
@@ -482,6 +458,7 @@ namespace JMS
                     catch (Exception ex)
                     {
                         connect.Dispose();
+                        _Connects[i] = null;
                         errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                     }
 
@@ -491,6 +468,9 @@ namespace JMS
                 {
                     foreach (var connect in _Connects)
                     {
+                        if (connect == null)
+                            continue;
+
                         try
                         {
                             connect.GoRollback(this);
@@ -519,6 +499,9 @@ namespace JMS
                     Parallel.For(0, _Connects.Count, (i) =>
                     {
                         var connect = _Connects[i];
+                        if (connect == null)
+                            return;
+
                         try
                         {
                             var ret = invokeType == InvokeType.CommitTranaction ? connect.GoCommit(this) : connect.GoRollback(this);
@@ -588,13 +571,10 @@ namespace JMS
             {
                 RollbackTransaction();
             }
-            else
-            {
-                if (_Tasks.Count > 0)
-                {
-                    waitTasks();
-                }
-            }
+
+            var errs = _normalTasks.Wait();
+            if (errs != null && errs.Count > 0)
+                throw errs[0];
         }
     }
 }
