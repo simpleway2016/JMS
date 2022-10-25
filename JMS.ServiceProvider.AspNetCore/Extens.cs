@@ -66,14 +66,18 @@ namespace Microsoft.Extensions.DependencyInjection
         /// 启动JMS微服务
         /// </summary>
         /// <param name="app"></param>
+        /// <param name="onRegister">当微服务注册成功后的回调事件</param>
         /// <returns></returns>
-        public static IApplicationBuilder UseJmsService(this IApplicationBuilder app)
+        public static IApplicationBuilder UseJmsService(this IApplicationBuilder app,Action onRegister = null)
         {
             if (Host == null)
             {
                 throw new Exception("请先调用services.RegisterJmsService() 注册服务");
             }
 
+            Host.ServiceProviderBuilded += (s, e) => {
+                onRegister?.Invoke();
+            };
 
             Host.Build(0, Gateways).Run();
             app.Use(async (context, next) =>

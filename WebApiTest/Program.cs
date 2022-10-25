@@ -31,7 +31,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();    //认证
 app.UseAuthorization();     //授权
 
-app.UseJmsService();
+app.UseJmsService(() => {
+    Console.WriteLine("注册成功啦");
+});
 
 app.MapControllers();
 //app.UseJMSWebApiDocument();
