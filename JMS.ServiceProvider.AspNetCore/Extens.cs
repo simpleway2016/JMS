@@ -40,9 +40,10 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="webServerUrl">web服务器的根访问路径，如 http://192.168.2.128:8080</param>
         /// <param name="serviceName">服务名称</param>
         /// <param name="gateways">网关地址</param>
+        /// <param name="configOption">配置更多可选项</param>
         /// <param name="sslConfig">配置ssl证书</param>
         /// <returns></returns>
-        public static IServiceCollection RegisterJmsService(this IServiceCollection services,string webServerUrl , string serviceName, NetAddress[] gateways,Action< SSLConfiguration> sslConfig = null)
+        public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName, NetAddress[] gateways, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
         {
             services.AddScoped<ApiTransactionDelegate>();
             services.AddSingleton<ApiRetryCommitMission>();
@@ -53,8 +54,12 @@ namespace Microsoft.Extensions.DependencyInjection
             MicroServiceHost host = new MicroServiceHost(services);
             host.RegisterWebServer(webServerUrl, serviceName);
             host.UseSSL(sslConfig);
+            if (configOption != null)
+            {
+                configOption(host);
+            }
             Host = host;
-                return services;
+            return services;
         }
 
         /// <summary>
@@ -64,15 +69,16 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IApplicationBuilder UseJmsService(this IApplicationBuilder app)
         {
-            if(Host == null)
+            if (Host == null)
             {
                 throw new Exception("请先调用services.RegisterJmsService() 注册服务");
             }
 
 
             Host.Build(0, Gateways).Run();
-            app.Use(async (context, next) => {
-                if(ConnectionCounter == null)
+            app.Use(async (context, next) =>
+            {
+                if (ConnectionCounter == null)
                 {
                     ConnectionCounter = app.ApplicationServices.GetService<IConnectionCounter>();
                 }
@@ -96,7 +102,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 }
             });
 
-            
+
 
             return app;
         }

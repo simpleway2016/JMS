@@ -25,7 +25,7 @@ using System.Collections.Concurrent;
 
 namespace JMS
 {
-    public class MicroServiceHost:IDisposable
+    public class MicroServiceHost: IMicroServiceOption,IDisposable
     {
         bool _disposed;
         TcpListener _tcpListener;
