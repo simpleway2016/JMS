@@ -8,6 +8,7 @@ using JMS.Dtos;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net;
+using Microsoft.CodeAnalysis;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -27,10 +28,21 @@ namespace JMS.Applications.CommandHandles
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
-            netclient.WriteServiceData(new InvokeResult
+            if (cmd.IsHttp)
             {
-                Success = _gatewayRefereeClient.IsMaster,
-            });
+                var contentBytes = Encoding.UTF8.GetBytes(new 
+                {
+                    Success = _gatewayRefereeClient.IsMaster,
+                }.ToJsonString());
+                netclient.OutputHttpContent(contentBytes);
+            }
+            else
+            {
+                netclient.WriteServiceData(new InvokeResult
+                {
+                    Success = _gatewayRefereeClient.IsMaster,
+                });
+            }
 
         }
     }

@@ -71,7 +71,7 @@ namespace JMS.Applications.CommandHandles
             }
 
             var httpRequest = questLine.Split(' ')[1];
-            if (httpRequest.StartsWith("/?GetServiceProvider=") || httpRequest.StartsWith("/?GetAllServiceProviders"))
+            if (httpRequest.StartsWith("/?GetServiceProvider=") || httpRequest.StartsWith("/?GetAllServiceProviders") || httpRequest.StartsWith("/?FindMaster"))
             {
                 httpRequest = httpRequest.Substring(2);
                 if (httpRequest.Contains("="))
