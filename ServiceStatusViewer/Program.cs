@@ -6,6 +6,8 @@ using Avalonia.Platform;
 using Avalonia.ReactiveUI;
 using JMS;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using ServiceStatusViewer.Infrastructures;
 using ServiceStatusViewer.Views;
 using Way.Lib;
 
@@ -13,21 +15,17 @@ namespace ServiceStatusViewer
 {
     class Program
     {
-        public static string SettingFileName;
         // Initialization code. Don't use any Avalonia, third-party APIs or any
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
         // yet and stuff might break.
         public static void Main(string[] args)
         {
-            SettingFileName = "appsettings.json";
-            if (args != null && args.Length > 0)
-                SettingFileName = args[0];
+            Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-            var builder = new ConfigurationBuilder();
-            builder.AddJsonFile(SettingFileName, optional: true, reloadOnChange: true);
-            Global.Configuration = builder.Build();
-
-
+            ServiceCollection services = new ServiceCollection();
+            services.AddSingleton<AddressProvider>();
+            Global.ServiceProvider = services.BuildServiceProvider();
+           
             BuildAvaloniaApp()
               .StartWithClassicDesktopLifetime(args);
         }

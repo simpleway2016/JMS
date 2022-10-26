@@ -10,5 +10,7 @@ namespace ServiceStatusViewer
     {
         public static IConfiguration Configuration { get; set; }
 
+        public static IServiceProvider ServiceProvider;
+
     }
 }

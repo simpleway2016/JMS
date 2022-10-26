@@ -17,10 +17,8 @@ namespace ServiceStatusViewer
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainWindow
-                {
-                    DataContext = new MainWindowViewModel(),
-                };
+                desktop.MainWindow = new GatewayListWindow();
+                desktop.MainWindow.DataContext = new GatewayListWindowModel(desktop.MainWindow as GatewayListWindow);
             }
 
             base.OnFrameworkInitializationCompleted();

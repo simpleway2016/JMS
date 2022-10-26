@@ -4,7 +4,9 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Input.Platform;
 using Avalonia.Native.Interop;
 using Avalonia.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
+using ServiceStatusViewer.Infrastructures;
 using ServiceStatusViewer.Views;
 using System;
 using System.Collections.Generic;
@@ -109,7 +111,14 @@ namespace ServiceStatusViewer.ViewModels
 
         public override string ToString()
         {
-            return $"{_data.ServiceAddress}:{_data.Port} {(this.IsOnline ? "在线":"离线")} 支持的服务：{string.Join(',' , _data.ServiceNames)}";
+            if (_data.ServiceAddress?.StartsWith("http") == true)
+            {
+                return $"{_data.ServiceAddress} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceNames)}";
+            }
+            else
+            {
+                return $"{_data.ServiceAddress}:{_data.Port} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceNames)}";
+            }
         }
     }
     public class MainWindowViewModel : ViewModelBase
@@ -138,10 +147,30 @@ namespace ServiceStatusViewer.ViewModels
             }
         }
 
-       
+        string _title;
+        public string Title
+        {
+            get => _title;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _title, value);
+            }
+        }
 
+        AddressProvider _addressProvider;
+        bool _isFirstLoad = true;
         public MainWindowViewModel()
         {
+            _addressProvider = Global.ServiceProvider.GetService<AddressProvider>();
+
+            if (MicroServiceClient.ProxyAddresses == null)
+            { 
+                this.Title = $"微服务状态浏览器 网关：{string.Join(",", MicroServiceClient.GatewayAddresses.Select(m => m.ToString()).ToArray())}";
+            }
+            else
+            {
+                this.Title = $"微服务状态浏览器 网关：{string.Join(",", MicroServiceClient.GatewayAddresses.Select(m => m.ToString()).ToArray())}  代理：{MicroServiceClient.ProxyAddresses}";
+            }
             this.ServiceList = new System.Collections.ObjectModel.ObservableCollection<ServiceInformation>();
             this.loadServiceList();
             this.checkState();
@@ -171,6 +200,11 @@ namespace ServiceStatusViewer.ViewModels
             try
             {
                 loadServiceData();
+                if (_isFirstLoad)
+                {
+                    _isFirstLoad = false;
+                    _addressProvider.Add(MicroServiceClient.GatewayAddresses, MicroServiceClient.ProxyAddresses);
+                }
             }
             catch (Exception ex)
             {

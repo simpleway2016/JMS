@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="350"
+        x:Class="ServiceStatusViewer.Views.GatewayListWindow"
+		CanResize="False"
+        Title="网关地址">
+	<DockPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Vertical" Spacing="5">
+			<StackPanel Orientation="Horizontal" Margin="10" Spacing="5">
+				<TextBox Watermark="网关ip:端口      双击热备用逗号隔开两个地址" Text="{Binding GatewayAddress}" Width="400"></TextBox>
+				<TextBox Watermark="（可选）代理ip:端口" Text="{Binding ProxyAddress}" Width="200"></TextBox>
+				<Button Width="80" Command="{Binding EnterClick}">  进入  </Button>
+			</StackPanel>
+		</StackPanel>
+		<ScrollViewer DockPanel.Dock="Bottom" Padding="10">
+			<ItemsControl Items="{Binding AddressList}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate>
+						<Button Command="{Binding Click}" Margin="0,10,0,0">
+							<Button.Template>
+								<ControlTemplate>
+									<Border Cursor="Hand" CornerRadius="10" Padding="10" Background="AliceBlue">
+										<TextBlock Text="{Binding}"></TextBlock>
+									</Border>
+								</ControlTemplate>
+							</Button.Template>
+						</Button>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+	</DockPanel>
+</Window>
