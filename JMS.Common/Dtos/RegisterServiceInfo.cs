@@ -17,10 +17,6 @@ namespace JMS.Dtos
         /// </summary>
         public string ServiceAddress;
         /// <summary>
-        /// 
-        /// </summary>
-        public string TransactionId;
-        /// <summary>
         /// 微服务的自定义描述
         /// </summary>
         public string Description;

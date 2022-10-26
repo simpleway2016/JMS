@@ -65,15 +65,11 @@ namespace JMS.Applications.CommandHandles
                         outputResult(netclient, cmd, new RegisterServiceLocation
                         {
                             Host = "",
-                            Port = 0,
-                            TransactionId = cmd.Header != null ? cmd.Header["TranId"] : null
+                            Port = 0
                         });
                         return;
                     }
-                    if (cmd.Header != null)
-                    {
-                        location.TransactionId = cmd.Header["TranId"];
-                    }
+
                     outputResult(netclient, cmd, location);
                 }
             }
@@ -82,8 +78,7 @@ namespace JMS.Applications.CommandHandles
                 outputResult(netclient, cmd, new RegisterServiceLocation
                 {
                     Host = "",
-                    Port = 0,
-                    TransactionId = cmd.Header != null ? cmd.Header["TranId"] : null
+                    Port = 0
                 });
             }
 
