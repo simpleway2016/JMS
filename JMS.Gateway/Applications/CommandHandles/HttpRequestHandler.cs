@@ -36,7 +36,7 @@ namespace JMS.Applications.CommandHandles
                 //不能在构造函数获取_manager
                 _manager = _serviceProvider.GetService<ICommandHandlerRoute>();
             }
-            client.KeepAlive = false;
+            client.KeepAlive = true;
 
             List<byte> buffer = null;
             var data = new byte[1024];
@@ -77,10 +77,15 @@ namespace JMS.Applications.CommandHandles
                 if (httpRequest.Contains("="))
                 {
                     var arr = httpRequest.Split('=');
+                    var json = HttpUtility.UrlDecode(arr[1], Encoding.UTF8);
+                    if (!json.StartsWith("{"))
+                    {
+                        json = new GetServiceProviderRequest { ServiceName = json }.ToJsonString();
+                    }
                     cmd = new GatewayCommand
                     {
                         Type = (CommandType)Enum.Parse(typeof(CommandType), arr[0]),
-                        Content = HttpUtility.UrlDecode(arr[1], Encoding.UTF8),
+                        Content = json,
                         IsHttp = true
                     };
                     _manager.AllocHandler(cmd)?.Handle(client, cmd);
@@ -97,24 +102,31 @@ namespace JMS.Applications.CommandHandles
             }
             else
             {
-                var servieName = httpRequest.Substring(1);
-                servieName = servieName.Substring(0, servieName.IndexOf("/"));
-
-                httpRequest = httpRequest.Substring(servieName.Length + 1);
-                //重定向
-                var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest
+                try
                 {
-                    ServiceName = servieName
-                });
-                if (location != null && !string.IsNullOrEmpty(location.ServiceAddress))
-                {
-                    var serverAddr = location.ServiceAddress;
-                    if (serverAddr.EndsWith("/"))
-                        serverAddr = serverAddr.Substring(0, serverAddr.Length);
+                    var servieName = httpRequest.Substring(1);
+                    servieName = servieName.Substring(0, servieName.IndexOf("/"));
 
-                    client.OutputHttpRedirect($"{serverAddr}{httpRequest}");
+                    httpRequest = httpRequest.Substring(servieName.Length + 1);
+                    //重定向
+                    var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest
+                    {
+                        ServiceName = servieName
+                    });
+                    if (location != null && !string.IsNullOrEmpty(location.ServiceAddress))
+                    {
+                        var serverAddr = location.ServiceAddress;
+                        if (serverAddr.EndsWith("/"))
+                            serverAddr = serverAddr.Substring(0, serverAddr.Length);
+
+                        client.OutputHttpRedirect($"{serverAddr}{httpRequest}");
+                    }
+                    else
+                    {
+                        client.OutputHttpNotFund();
+                    }
                 }
-                else
+                catch
                 {
                     client.OutputHttpNotFund();
                 }
