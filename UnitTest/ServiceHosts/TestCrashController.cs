@@ -22,7 +22,7 @@ namespace UnitTest.ServiceHosts
         {
             base.OnAfterAction(actionName, parameters);
 
-            this.TransactionControl = new JMS.TransactionDelegate(this.TransactionId);
+            this.TransactionControl = new JMS.TransactionDelegate(this);
             this.TransactionControl.CommitAction = () => {
                 if (CanCrash)
                 {

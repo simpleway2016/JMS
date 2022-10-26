@@ -15,7 +15,7 @@ namespace JMS.ServiceProvider.AspNetCore
 {
     public class ApiTransactionDelegate
     {
-        internal static AsyncLocal<string> CurrentTranId = new AsyncLocal<string>();
+        internal static AsyncLocal<(string tranId, string tranFlag)> CurrentTranId = new AsyncLocal<(string tranId, string tranFlag)>();
         internal InvokeInfo InvokeInfo;
         internal object UserContent;
         internal string RetryCommitFilePath;
@@ -23,11 +23,14 @@ namespace JMS.ServiceProvider.AspNetCore
         /// 事务标识，如果为null，表示本次访问来自浏览器等常规http客户端
         /// </summary>
         public string TransactionId { get; }
+        public string TransactionFlag { get; }
         public ApiTransactionDelegate()
         {
             this.AgreeCommit = true;
-            this.TransactionId = CurrentTranId.Value;
-            CurrentTranId.Value = null;
+            var val = CurrentTranId.Value;
+            this.TransactionId = CurrentTranId.Value.tranId;
+            this.TransactionFlag = CurrentTranId.Value.tranFlag;
+            CurrentTranId.Value = (null,null);
         }
         
         /// <summary>
@@ -137,7 +140,7 @@ namespace JMS.ServiceProvider.AspNetCore
         {
             if (CommitAction != null)
             {
-                RetryCommitFilePath = faildCommitBuilder.Build(TransactionId, this.InvokeInfo,this.UserContent);
+                RetryCommitFilePath = faildCommitBuilder.Build(TransactionId,TransactionFlag, this.InvokeInfo,this.UserContent);
             }
             logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, this.InvokeInfo.ToJsonString(), UserContent);
             netClient.WriteServiceData(Encoding.UTF8.GetBytes("ok"));

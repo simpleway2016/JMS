@@ -23,7 +23,11 @@ namespace JMS.Applications
         public void Handle(NetClient netclient, InvokeCommand cmd)
         {
             var tranid = cmd.Header["TranId"];
-            var ret = _retryCommitMission.RetryTranaction(tranid);
+            string tranFlag = null;
+            if (cmd.Header.ContainsKey("TranFlag"))
+                tranFlag = cmd.Header["TranFlag"];
+
+            var ret = _retryCommitMission.RetryTranaction(tranid , tranFlag);
             netclient.WriteServiceData(new InvokeResult
             {
                 Success = true,

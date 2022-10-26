@@ -29,7 +29,7 @@ namespace JMS
         /// <param name="serviceLocation"></param>
         /// <param name="cert">连接服务器的证书</param>
         /// <param name="tranId"></param>
-        void RetryTranaction(NetAddress proxyAddress, RegisterServiceLocation serviceLocation,byte[] cert, string tranId);
+        void RetryTranaction(NetAddress proxyAddress, RegisterServiceLocation serviceLocation,byte[] cert, string tranId,string tranFlag);
 
         void AddClientToPool();
     }

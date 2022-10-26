@@ -44,7 +44,7 @@ namespace JMS.ServiceProvider.AspNetCore
         /// </summary>
         /// <param name="tranId"></param>
         /// <returns>0:执行成功  -1：没有找到对应的事务文件 -2：执行出错</returns>
-        public int RetryTranaction(HttpContext context, string tranId)
+        public int RetryTranaction(HttpContext context, string tranId,string tranFlag)
         {
             lock (this)
             {
@@ -54,7 +54,7 @@ namespace JMS.ServiceProvider.AspNetCore
                     var files = Directory.GetFiles(folder, $"{tranId}_*.*");
                     if (files.Length > 0)
                     {
-                        RetryFile(context, files[0], false);
+                        RetryFile(context, files[0], tranFlag, false);
                         return 0;
                     }
                 }
@@ -67,7 +67,7 @@ namespace JMS.ServiceProvider.AspNetCore
             }
         }
 
-        public void RetryFile(HttpContext context, string file, bool checkFromGateway = true)
+        public void RetryFile(HttpContext context, string file,string tranFlag, bool checkFromGateway = true)
         {
             try
             {
@@ -80,6 +80,11 @@ namespace JMS.ServiceProvider.AspNetCore
                 {
                     _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", fileContent.TransactionId);
                     FileHelper.ChangeFileExt(file, ".faild");
+                    return;
+                }
+
+                if(checkFromGateway == false && tranFlag != fileContent.TransactionFlag)
+                {
                     return;
                 }
 

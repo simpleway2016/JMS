@@ -20,10 +20,15 @@ namespace JMS
         internal string RetryCommitFilePath;
         internal object UserContent;
         public string TransactionId { get; }
-        public TransactionDelegate(string tranId)
+       public string TransactionFlag { get; }
+        public TransactionDelegate(MicroServiceControllerBase controller)
         {
             this.AgreeCommit = true;
-            this.TransactionId = tranId;
+            this.TransactionId = controller.TransactionId;
+            if (controller.Header.ContainsKey("TranFlag"))
+            {
+                this.TransactionFlag = controller.Header["TranFlag"];
+            }
         }
 
         /// <summary>
@@ -132,7 +137,7 @@ namespace JMS
         {
             if (CommitAction != null)
             {
-                RetryCommitFilePath = faildCommitBuilder.Build(TransactionId, RequestCommand, UserContent);
+                RetryCommitFilePath = faildCommitBuilder.Build(TransactionId,TransactionFlag, RequestCommand, UserContent);
             }
             logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, RequestCommand.ToJsonString(), UserContent);
             netclient.WriteServiceData(new InvokeResult

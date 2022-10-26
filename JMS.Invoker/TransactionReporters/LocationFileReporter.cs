@@ -72,7 +72,7 @@ namespace JMS.TransactionReporters
                     {
                         using (var invokeConnect = InvokeConnectFactory.Create(null, location, null))
                         {
-                            invokeConnect.RetryTranaction(obj.ProxyAddress, location, obj.Cert, tranId);
+                            invokeConnect.RetryTranaction(obj.ProxyAddress, location, obj.Cert, tranId , obj.TransactionFlag);
                         }
 
                     }
@@ -112,6 +112,7 @@ namespace JMS.TransactionReporters
             var obj = new FileReportContent();
             obj.Locations = remoteClient._Connects.Select(m => m.InvokingInfo.ServiceLocation).ToArray();
             obj.ProxyAddress = remoteClient.ProxyAddress;
+            obj.TransactionFlag = remoteClient.TransactionFlag;
             if (remoteClient.ServiceClientCertificate != null)
             {
                 obj.Cert = remoteClient.ServiceClientCertificate.RawData;
@@ -135,6 +136,7 @@ namespace JMS.TransactionReporters
             public RegisterServiceLocation[] Locations;
             public byte[] Cert;
             public string LastError;
+            public string TransactionFlag;
         }
     }
 }

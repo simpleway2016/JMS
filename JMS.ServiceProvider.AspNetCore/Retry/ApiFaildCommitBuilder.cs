@@ -31,7 +31,7 @@ namespace JMS.ServiceProvider.AspNetCore
         /// <param name="transactionId">事务id</param>
         /// <param name="cmd">请求对象</param>
         /// <param name="userContent">身份信息对象</param>
-        public string Build(string transactionId, InvokeInfo cmd, object userContent)
+        public string Build(string transactionId,string tranFlag, InvokeInfo cmd, object userContent)
         {
             try
             {
@@ -54,6 +54,7 @@ namespace JMS.ServiceProvider.AspNetCore
                 {
                     Cmd = cmd,
                     TransactionId = transactionId,
+                    TransactionFlag = tranFlag,
                     UserContentType = userContent == null ? null : userContentType,
                     UserContentValue = userContent?.ToJsonString()
                 }.ToJsonString(), Encoding.UTF8);
@@ -120,6 +121,7 @@ namespace JMS.ServiceProvider.AspNetCore
         internal class RequestInfo
         {
             public string TransactionId;
+            public string TransactionFlag;
             public InvokeInfo Cmd;
             public Type UserContentType;
             public string UserContentValue;

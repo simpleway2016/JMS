@@ -23,12 +23,17 @@ namespace JMS.ServiceProvider.AspNetCore
             using (var netClient = new NetClient(new ConnectionStream(context)))
             {
                 netClient.KeepAlive = true;
-                var tranId = context.Request.Path.Value.Substring(1);
+                var arr = context.Request.Path.Value.Substring(1).Split(',');
+                var tranId = arr[0];
+                string tranFlag = null;
+                if (arr.Length > 1)
+                    tranFlag = arr[1]; 
+
 
                 var apiRetry = app.ApplicationServices.GetService<ApiRetryCommitMission>();
                 try
                 {
-                    int ret = apiRetry.RetryTranaction(context, tranId);
+                    int ret = apiRetry.RetryTranaction(context, tranId , tranFlag);
                     netClient.WriteServiceData(new InvokeResult { Success = true, Data = ret });
                 }
                 catch (Exception ex)

@@ -31,7 +31,7 @@ namespace JMS.RetryCommit
         /// <param name="transactionId">事务id</param>
         /// <param name="cmd">请求对象</param>
         /// <param name="userContent">身份信息对象</param>
-        public string Build(string transactionId, InvokeCommand cmd, object userContent)
+        public string Build(string transactionId,string tranFlag, InvokeCommand cmd, object userContent)
         {
             try
             {
@@ -54,6 +54,7 @@ namespace JMS.RetryCommit
                 {
                     Cmd = cmd,
                     TransactionId = transactionId,
+                    TransactionFlag = tranFlag,
                     UserContentType = userContent == null ? null : userContentType,
                     UserContentValue = userContent?.ToJsonString()
                 }.ToJsonString(), Encoding.UTF8);
@@ -119,9 +120,11 @@ namespace JMS.RetryCommit
 
         internal class RequestInfo
         {
+            public string TransactionFlag;
             public string TransactionId;
             public InvokeCommand Cmd;
             public Type UserContentType;
+           
             public string UserContentValue;
         }
     }

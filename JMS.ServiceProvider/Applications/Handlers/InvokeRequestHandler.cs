@@ -104,7 +104,7 @@ namespace JMS.Applications
                         if (parameterInfos[0].ParameterType == typeof(TransactionDelegate))
                         {
                             startPIndex = 1;
-                            parameters[0] = transactionDelegate = new TransactionDelegate(cmd.Header["TranId"]);
+                            parameters[0] = transactionDelegate = new TransactionDelegate(controller);
                             transactionDelegate.RequestCommand = cmd;
                         }
                     }

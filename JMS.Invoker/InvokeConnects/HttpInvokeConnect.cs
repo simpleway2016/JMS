@@ -220,7 +220,7 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public void RetryTranaction(NetAddress proxyAddress, RegisterServiceLocation serviceLocation, byte[] cert, string tranId)
+        public void RetryTranaction(NetAddress proxyAddress, RegisterServiceLocation serviceLocation, byte[] cert, string tranId,string tranFlag)
         {
             var uri = new Uri(serviceLocation.ServiceAddress);
             _client = NetClientPool.CreateClient(null, uri.Host, uri.Port, null, (client) => {
@@ -230,7 +230,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 }
             });
 
-            var data = createHttpDatas(null, uri, "JmsRetry", "/" + tranId);
+            var data = createHttpDatas(null, uri, "JmsRetry", "/" + tranId + "," + tranFlag);
             _client.Write(data);
 
             var result = _client.ReadServiceObject<InvokeResult<int>>();

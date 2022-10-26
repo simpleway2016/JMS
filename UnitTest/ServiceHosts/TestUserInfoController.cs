@@ -37,6 +37,11 @@ namespace UnitTest.ServiceHosts
             _userInfoDbContext.Age = age;
         }
 
+        public void BeError()
+        {
+            throw new Exception("有意触发错误");
+        }
+
         public void SetFather(string father)
         {
             //启动支持分布式事务
@@ -72,7 +77,7 @@ namespace UnitTest.ServiceHosts
 
             if (_userInfoDbContext.BeganTransaction)
             {
-                this.TransactionControl = new JMS.TransactionDelegate(this.TransactionId);
+                this.TransactionControl = new JMS.TransactionDelegate(this);
                 this.TransactionControl.CommitAction = () => {
                     _userInfoDbContext.CommitTransaction();
                 };

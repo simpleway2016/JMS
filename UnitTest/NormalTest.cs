@@ -275,6 +275,59 @@ namespace UnitTest
                 throw new Exception("结果不正确");
         }
 
+        [TestMethod]
+        public void RollbackForError()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            try
+            {
+                using (var client = new RemoteClient(gateways))
+                {
+                    var serviceClient = client.TryGetMicroService("UserInfoService");
+                    while (serviceClient == null)
+                    {
+                        Thread.Sleep(10);
+                        serviceClient = client.TryGetMicroService("UserInfoService");
+                    }
+
+                    client.BeginTransaction();
+                    serviceClient.Invoke("SetUserName", "Jack");
+                    serviceClient.Invoke("SetAge", 28);
+
+                    serviceClient.InvokeAsync("SetFather", "Tom");
+                    serviceClient.InvokeAsync("SetMather", "Lucy");
+                    serviceClient.InvokeAsync("BeError");//这个方法调用会有异常
+                    client.CommitTransaction();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.InnerException.Message;
+                if (msg != "有意触发错误")
+                    throw ex;
+            }
+
+            if (UserInfoDbContext.FinallyUserName != null ||
+                UserInfoDbContext.FinallyAge != 0 ||
+                UserInfoDbContext.FinallyFather != null ||
+                UserInfoDbContext.FinallyMather != null)
+                throw new Exception("结果不正确");
+        }
+
         /// <summary>
         /// 没有事务
         /// </summary>

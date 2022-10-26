@@ -29,6 +29,8 @@ namespace JMS
         {
             get => _TransactionId;
         }
+
+        internal string TransactionFlag;
         /// <summary>
         /// 是否支持事务，如果为false，这之后调用的微服务端会直接提交事务。默认为true
         /// </summary>
@@ -198,6 +200,10 @@ namespace JMS
 
             if (_SupportTransaction == false)
                 header["Tran"] = "0";
+            else
+            {
+                header["TranFlag"] = TransactionFlag;
+            }
 
             foreach (var pair in _Header)
             {
@@ -412,6 +418,7 @@ namespace JMS
         {
             if (!_SupportTransaction)
             {
+                this.TransactionFlag = Guid.NewGuid().ToString("N");
                 _TransactionId = Guid.NewGuid().ToString("N");
                 _SupportTransaction = true;
             }
@@ -442,27 +449,30 @@ namespace JMS
             {
                 List<TransactionException> errors = new List<TransactionException>(_Connects.Count);
                 //健康检查
-                Parallel.For(0, _Connects.Count, (i) =>
+                if (invokeType == InvokeType.CommitTranaction)
                 {
-                    var connect = _Connects[i];
-                    try
+                    Parallel.For(0, _Connects.Count, (i) =>
                     {
-                        var ret = connect.GoReadyCommit(this);
-                        if (ret.Success == false)
+                        var connect = _Connects[i];
+                        try
                         {
-                            //有人不同意提交事务
-                            //把提交更改为回滚
-                            invokeType = InvokeType.RollbackTranaction;
+                            var ret = connect.GoReadyCommit(this);
+                            if (ret.Success == false)
+                            {
+                                //有人不同意提交事务
+                                //把提交更改为回滚
+                                invokeType = InvokeType.RollbackTranaction;
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        connect.Dispose();
-                        _Connects[i] = null;
-                        errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
-                    }
+                        catch (Exception ex)
+                        {
+                            connect.Dispose();
+                            _Connects[i] = null;
+                            errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
+                        }
 
-                });
+                    });
+                }
 
                 if (errors.Count > 0)
                 {
@@ -523,10 +533,13 @@ namespace JMS
                     {
                         var successed = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
 
-                        if (successed.Length > 0)
-                            _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${successed.ToJsonString()}");
-                        foreach (var err in errors)
-                            _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
+                        if (invokeType == InvokeType.CommitTranaction)
+                        {
+                            if (successed.Length > 0)
+                                _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${successed.ToJsonString()}");
+                            foreach (var err in errors)
+                                _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
+                        }
                     }
                     else
                     {

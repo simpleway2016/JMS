@@ -165,7 +165,7 @@ namespace JMS
             }
         }
 
-        public void RetryTranaction(NetAddress proxyAddress, RegisterServiceLocation serviceLocation, byte[] certData, string tranId)
+        public void RetryTranaction(NetAddress proxyAddress, RegisterServiceLocation serviceLocation, byte[] certData, string tranId,string tranFlag)
         {
             X509Certificate2 cert = null;
             if (certData != null)
@@ -177,7 +177,8 @@ namespace JMS
             {
                 Type = InvokeType.RetryTranaction,
                 Header = new Dictionary<string, string> {
-                                    { "TranId" , tranId}
+                                    { "TranId" , tranId},
+                                    {"TranFlag" , tranFlag }
                                 }
             };
 

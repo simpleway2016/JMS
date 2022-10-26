@@ -34,9 +34,10 @@ namespace JMS.ServiceProvider.AspNetCore
             {
                 context.Request.Headers.TryGetValue("TranId", out StringValues tranIds);
                 context.Request.Headers.TryGetValue("Tran", out StringValues supportTransactionStrs);
-                
+                context.Request.Headers.TryGetValue("TranFlag", out StringValues tranFlag);
+
                 var supportTran = !(supportTransactionStrs.Count > 0 && supportTransactionStrs[0] == "0");
-                ApiTransactionDelegate.CurrentTranId.Value = tranIds[0];
+                ApiTransactionDelegate.CurrentTranId.Value = (tranIds[0] , tranFlag.Count == 0? null : tranFlag[0]);
 
                 var parametersStrArr = netClient.ReadServiceData().FromJson<string[]>();
 

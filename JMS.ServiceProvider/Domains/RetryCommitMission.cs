@@ -87,7 +87,7 @@ namespace JMS.RetryCommit
             {
                 foreach (var file in files)
                 {
-                    RetryFile(file);
+                    RetryFile(file,null);
                 }
             }
         }
@@ -97,7 +97,7 @@ namespace JMS.RetryCommit
         /// </summary>
         /// <param name="tranId"></param>
         /// <returns>0:执行成功  -1：没有找到对应的事务文件 -2：执行出错</returns>
-        public int RetryTranaction(string tranId)
+        public int RetryTranaction(string tranId,string tranFlag)
         {
             lock (this)
             {
@@ -107,7 +107,7 @@ namespace JMS.RetryCommit
                     var files = Directory.GetFiles(folder, $"{tranId}_*.*");
                     if (files.Length > 0)
                     {
-                        RetryFile(files[0], false);
+                        RetryFile(files[0],tranFlag, false);
                         return 0;
                     }
                 }
@@ -120,7 +120,7 @@ namespace JMS.RetryCommit
             }
         }
 
-        public void RetryFile(string file, bool checkFromGateway = true)
+        public void RetryFile(string file,string tranFlag, bool checkFromGateway = true)
         {
             try
             {
@@ -131,6 +131,10 @@ namespace JMS.RetryCommit
                 if(fileContent == null)
                 {
                     FileHelper.ChangeFileExt(file, ".faild");
+                    return;
+                }
+                if(checkFromGateway == false && fileContent.TransactionFlag != tranFlag)
+                {
                     return;
                 }
                 if (checkFromGateway && _gatewayConnector.CheckTransaction(fileContent.TransactionId) == false)
@@ -225,7 +229,7 @@ namespace JMS.RetryCommit
                         if (parameterInfos[0].ParameterType == typeof(TransactionDelegate))
                         {
                             startPIndex = 1;
-                            parameters[0] = transactionDelegate = new TransactionDelegate(cmd.Header["TranId"]);
+                            parameters[0] = transactionDelegate = new TransactionDelegate(controller);
                             transactionDelegate.RequestCommand = cmd;
                         }
                     }
