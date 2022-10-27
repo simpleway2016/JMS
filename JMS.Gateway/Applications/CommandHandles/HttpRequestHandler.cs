@@ -31,46 +31,50 @@ namespace JMS.Applications.CommandHandles
 
         public void Handle(NetClient client, GatewayCommand cmd)
         {
-            if(_manager == null)
+            if (_manager == null)
             {
                 //不能在构造函数获取_manager
                 _manager = _serviceProvider.GetService<ICommandHandlerRoute>();
             }
             client.KeepAlive = true;
 
-            List<byte> buffer = null;
-            var data = new byte[1024];
-            string questLine = null;
-            int readed;
-
+            List<byte> lineBuffer = new List<byte>(1024);
+            string preline = null;
+            string line = null;
+            string requestPathLine = null;
+            int contentLength = 0;
             while (true)
             {
-                readed = client.Socket.Receive(data, data.Length, SocketFlags.None);
-                if (readed <= 0)
-                    return;
+                int bData = client.InnerStream.ReadByte();
+                if (bData == 13)
+                {
+                    preline = line;
+                    line = Encoding.UTF8.GetString(lineBuffer.ToArray());
+                    lineBuffer.Clear();
+                    if (requestPathLine == null)
+                        requestPathLine = line;
 
-                if (data.Any(m => m == 10))
-                {
-                    if (buffer != null)
+                    if (line == "")
                     {
-                        buffer.AddRange(data);
-                        data = buffer.ToArray();
+                        bData = client.InnerStream.ReadByte();
+                        if (contentLength > 0)
+                        {
+                            client.ReceiveDatas(new byte[contentLength], 0, contentLength);
+                        }
+                        break;
                     }
-                    questLine = Encoding.UTF8.GetString(data);
-                    questLine = questLine.Substring(0, questLine.IndexOf("\r"));
-                    break;
+                    else if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        contentLength = int.Parse(line.Split(' ')[1]);
+                    }
                 }
-                else
+                else if (bData != 10)
                 {
-                    if (buffer == null)
-                    {
-                        buffer = new List<byte>();
-                    }
-                    buffer.AddRange(data);
+                    lineBuffer.Add((byte)bData);
                 }
             }
 
-            var httpRequest = questLine.Split(' ')[1];
+            var httpRequest = requestPathLine.Split(' ')[1];
             if (httpRequest.StartsWith("/?GetServiceProvider=") || httpRequest.StartsWith("/?GetAllServiceProviders") || httpRequest.StartsWith("/?FindMaster"))
             {
                 httpRequest = httpRequest.Substring(2);
