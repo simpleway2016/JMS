@@ -12,11 +12,13 @@ namespace JMS.Infrastructures.Haredware
         PerformanceCounter _counter;
         public CpuInfoForWin()
         {
-            _counter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-            _counter.NextValue();
         }
         public double GetCpuUsage()
         {
+            if(_counter == null)
+            {
+                _counter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            }
             return _counter.NextValue();
         }
     }

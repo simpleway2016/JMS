@@ -52,6 +52,7 @@ namespace WebApiTest3
             });
             app.UseJmsService();
             Task.Run(() => {
+                return;
                 Thread.Sleep(2000);
                 var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", 8911) };
                 
