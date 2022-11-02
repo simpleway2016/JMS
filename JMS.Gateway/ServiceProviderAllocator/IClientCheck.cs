@@ -11,6 +11,6 @@ namespace JMS
     {
         AssemblyCSharpBuilder CodeBuilder { get; set; }
         string ClientCode { get; set; }
-        bool Check(string arg);
+        bool Check(IDictionary<string,string> headers);
     }
 }

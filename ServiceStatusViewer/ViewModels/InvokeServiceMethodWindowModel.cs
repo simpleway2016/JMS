@@ -150,7 +150,7 @@ namespace ServiceStatusViewer.ViewModels
             {
                 using (var client = new MicroServiceClient())
                 {
-                    var service = client.GetMicroService(this.SelectedServiceName, null, new JMS.Dtos.RegisterServiceLocation
+                    var service = client.GetMicroService(this.SelectedServiceName, new JMS.Dtos.RegisterServiceLocation
                     {
                         Host = this._ServiceInformation._data.Host,
                         Port = this._ServiceInformation._data.Port,

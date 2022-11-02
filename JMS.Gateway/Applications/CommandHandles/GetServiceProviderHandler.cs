@@ -43,6 +43,10 @@ namespace JMS.Applications.CommandHandles
 
         public void Handle(NetClient netclient, GatewayCommand cmd)
         {
+            if (cmd.Header == null)
+            {
+                cmd.Header = new Dictionary<string, string>();
+            }
             var requestBody = cmd.Content.FromJson<GetServiceProviderRequest>();
             requestBody.Header = cmd.Header;
             requestBody.ClientAddress = ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString();

@@ -19,12 +19,10 @@ namespace JMS
         bool _IsFromGateway;
         public bool IsFromGateway => _IsFromGateway;
 
-        string _arg;
-        public Invoker(IRemoteClient ServiceTransaction, string serviceName,string arg = null)
+        public Invoker(IRemoteClient ServiceTransaction, string serviceName)
         {
             this.ServiceTransaction = ServiceTransaction;
             _serviceName = serviceName;
-            _arg = arg;
             _IsFromGateway = true;
         }
 
@@ -47,8 +45,7 @@ namespace JMS
                     Header = ServiceTransaction.GetCommandHeader(),
                     Content = new GetServiceProviderRequest
                     {
-                        ServiceName = _serviceName,
-                        Arg = _arg
+                        ServiceName = _serviceName
                     }.ToJsonString()
                 });
                 var serviceLocation = netclient.ReadServiceObject<RegisterServiceLocation>();

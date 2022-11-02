@@ -282,12 +282,11 @@ namespace JMS
         /// 获取指定微服务，获取不到微服务则抛出异常
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual T GetMicroService<T>(string arg = null , RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
+        public virtual T GetMicroService<T>( RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
         {
-            var ret = TryGetMicroService<T>(arg , registerServiceLocation);
+            var ret = TryGetMicroService<T>( registerServiceLocation);
             if (ret == null)
             {
                 var classType = typeof(T);
@@ -301,10 +300,9 @@ namespace JMS
         /// 获取指定微服务, 获取不到微服务则返回null
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual T TryGetMicroService<T>(string arg = null, RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
+        public virtual T TryGetMicroService<T>( RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
         {
             var classType = typeof(T);
             var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
@@ -315,7 +313,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, att.ServiceName, arg);
+                    var invoker = new Invoker(this, att.ServiceName);
                     if (invoker.Init(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
@@ -338,12 +336,11 @@ namespace JMS
         /// 获取指定微服务, 获取不到微服务则抛出异常
         /// </summary>
         /// <param name="serviceName"></param>
-        /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual IMicroService GetMicroService( string serviceName,string arg = null , RegisterServiceLocation registerServiceLocation = null)
+        public virtual IMicroService GetMicroService( string serviceName,RegisterServiceLocation registerServiceLocation = null)
         {
-            var ret = TryGetMicroService(serviceName, arg, registerServiceLocation);
+            var ret = TryGetMicroService(serviceName,registerServiceLocation);
             if(ret == null)
                 throw new MissServiceException($"找不到微服务“{serviceName}”");
 
@@ -354,16 +351,15 @@ namespace JMS
         /// 获取指定微服务, 获取不到微服务则返回null
         /// </summary>
         /// <param name="serviceName"></param>
-        /// <param name="arg">用于执行微服务自定义客户端检验代码时，传进去的arg变量</param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual IMicroService TryGetMicroService(string serviceName, string arg = null, RegisterServiceLocation registerServiceLocation = null)
+        public virtual IMicroService TryGetMicroService(string serviceName, RegisterServiceLocation registerServiceLocation = null)
         {
             for (int i = 0; i < 2; i++)
             {
                 try
                 {
-                    var invoker = new Invoker(this, serviceName, arg);
+                    var invoker = new Invoker(this, serviceName);
                     if (invoker.Init(registerServiceLocation))
                         return invoker;
                 }

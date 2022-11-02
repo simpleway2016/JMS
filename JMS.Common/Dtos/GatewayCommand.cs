@@ -47,7 +47,6 @@ namespace JMS.Dtos
     public class GetServiceProviderRequest
     {
         public string ServiceName;
-        public string Arg;
         public IDictionary<string, string> Header;
         public string ClientAddress;
     }

@@ -43,6 +43,10 @@ namespace JMS.Applications.CommandHandles
             string line = null;
             string requestPathLine = null;
             int contentLength = 0;
+            if(cmd.Header == null)
+            {
+                cmd.Header = new Dictionary<string, string>();
+            }
             while (true)
             {
                 int bData = client.InnerStream.ReadByte();
@@ -57,15 +61,28 @@ namespace JMS.Applications.CommandHandles
                     if (line == "")
                     {
                         bData = client.InnerStream.ReadByte();
+                        if (cmd.Header.ContainsKey("Content-Length"))
+                        {
+                            int.TryParse(cmd.Header["Content-Length"], out contentLength);
+                        }
                         if (contentLength > 0)
                         {
                             client.ReceiveDatas(new byte[contentLength], 0, contentLength);
                         }
                         break;
                     }
-                    else if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+                    else if(line.Contains(":"))
                     {
-                        contentLength = int.Parse(line.Split(' ')[1]);
+                        var arr = line.Split(':');
+                        if (arr.Length >= 2)
+                        {
+                            var key = arr[0].Trim();
+                            var value = arr[1].Trim();
+                            if (cmd.Header.ContainsKey(key) == false)
+                            {
+                                cmd.Header[key] = value;
+                            }
+                        }
                     }
                 }
                 else if (bData != 10)

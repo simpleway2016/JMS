@@ -39,15 +39,20 @@ namespace JMS
                         {
                             string text = @"
 using System;
+using System.Collections.Generic;
 namespace HelloWorld
 {
     public class Test : JMS.IClientCheck
     {
         public AssemblyCSharpBuilder CodeBuilder { get; set; }
         public string ClientCode { get; set; }
-        public bool Check(string arg)
+        public bool Check(IDictionary<string,string> headers)
         {
-            " + value.ClientCheckCode + @"
+            try{
+                " + value.ClientCheckCode + @"
+            }
+            catch{}
+            return false;
         }
     }
 }";

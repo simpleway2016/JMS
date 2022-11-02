@@ -85,6 +85,7 @@ namespace UnitTest
             }
         }
 
+
         public void StartUserInfoServiceHost()
         {
             Task.Run(() =>
@@ -108,6 +109,13 @@ namespace UnitTest
                 services.AddScoped<UserInfoDbContext>();
                 var msp = new MicroServiceHost(services);
                 msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + _UserInfoServicePort;
+                msp.ClientCheckCode = @"
+            if(headers.TryGetValue(""UserId"",out string userid))
+            {
+                return true;
+            }
+            return true;
+";
                 msp.Register<TestUserInfoController>("UserInfoService");
                 msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
                 msp.Build(_UserInfoServicePort, gateways)
@@ -470,7 +478,7 @@ namespace UnitTest
                     serviceClient = client.TryGetMicroService("UserInfoService");
                 }
 
-                var crashService = client.GetMicroService("CrashService",null , new JMS.Dtos.RegisterServiceLocation { 
+                var crashService = client.GetMicroService("CrashService",new JMS.Dtos.RegisterServiceLocation { 
                     ServiceAddress = "127.0.0.1",
                     Port = _CrashServicePort
                 } );               

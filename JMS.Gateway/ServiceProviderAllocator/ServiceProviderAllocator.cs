@@ -73,7 +73,7 @@ namespace JMS
             var matchServices = _serviceInfos.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName)
             && m.ServiceInfo.MaxThread > 0
             && (m.ServiceInfo.MaxRequestCount == 0 || m.ServiceInfo.RequestQuantity < m.ServiceInfo.MaxRequestCount)
-            && (m.ClientChecker == null || m.ClientChecker.Check(request.Arg)));
+            && (m.ClientChecker == null || m.ClientChecker.Check(request.Header)));
 
 
             IEnumerable<ServiceRunningItem> services = null ;
