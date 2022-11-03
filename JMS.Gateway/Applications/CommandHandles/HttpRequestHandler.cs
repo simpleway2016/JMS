@@ -96,7 +96,9 @@ namespace JMS.Applications.CommandHandles
                     _manager.AllocHandler(cmd)?.Handle(client, cmd);
                 }
             }
-            else if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase) && cmd.Header["Upgrade"] == "websocket")
+            else if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase) &&
+                cmd.Header.TryGetValue("Upgrade",out string upgrade) 
+                && upgrade == "websocket")
             {
                 HttpProxy.WebSocketProxy(client, _serviceProviderAllocator, requestPathLine, requestPath, cmd);
             }
