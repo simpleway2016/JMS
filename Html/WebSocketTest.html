@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    
+
+</body>
+<script>
+    var ws = new WebSocket("ws://localhost:8912/TestWebService");
+
+    function sendmsg() {
+        ws.send("hello " + new Date().toLocaleTimeString());
+    }
+
+    ws.onopen = function () {
+        //当WebSocket创建成功时，触发onopen事件
+        console.log("open");
+        //将消息发送到服务端
+        setInterval(sendmsg, 2000);
+    }
+    ws.onmessage = function (e) {
+        //当客户端收到服务端发来的消息时，触发onmessage事件，参数e.data包含server传递过来的数据
+        console.log("收到：", e.data);
+    }
+    ws.onclose = function (e) {
+        //当客户端收到服务端发送的关闭连接请求时，触发onclose事件
+        console.log("close");
+    }
+    ws.onerror = function (e) {
+        //如果出现连接、处理、接收、发送数据失败的时候触发onerror事件
+        console.log(error);
+    }
+</script>
+</html>

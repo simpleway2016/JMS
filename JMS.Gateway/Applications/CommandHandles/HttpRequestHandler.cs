@@ -10,6 +10,9 @@ using JMS.Dtos;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Web;
+using Microsoft.CodeAnalysis;
+using JMS.Infrastructures;
+using System.Reflection.PortableExecutable;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -36,68 +39,40 @@ namespace JMS.Applications.CommandHandles
                 //不能在构造函数获取_manager
                 _manager = _serviceProvider.GetService<ICommandHandlerRoute>();
             }
-            client.KeepAlive = true;
 
-            List<byte> lineBuffer = new List<byte>(1024);
-            string preline = null;
-            string line = null;
-            string requestPathLine = null;
-            int contentLength = 0;
-            if(cmd.Header == null)
+            if (cmd.Header == null)
             {
                 cmd.Header = new Dictionary<string, string>();
             }
-            while (true)
-            {
-                int bData = client.InnerStream.ReadByte();
-                if (bData == 13)
-                {
-                    preline = line;
-                    line = Encoding.UTF8.GetString(lineBuffer.ToArray());
-                    lineBuffer.Clear();
-                    if (requestPathLine == null)
-                        requestPathLine = line;
 
-                    if (line == "")
-                    {
-                        bData = client.InnerStream.ReadByte();
-                        if (cmd.Header.ContainsKey("Content-Length"))
-                        {
-                            int.TryParse(cmd.Header["Content-Length"], out contentLength);
-                        }
-                        if (contentLength > 0)
-                        {
-                            client.ReceiveDatas(new byte[contentLength], 0, contentLength);
-                        }
-                        break;
-                    }
-                    else if(line.Contains(":"))
-                    {
-                        var arr = line.Split(':');
-                        if (arr.Length >= 2)
-                        {
-                            var key = arr[0].Trim();
-                            var value = arr[1].Trim();
-                            if (cmd.Header.ContainsKey(key) == false)
-                            {
-                                cmd.Header[key] = value;
-                            }
-                        }
-                    }
-                }
-                else if (bData != 10)
-                {
-                    lineBuffer.Add((byte)bData);
-                }
+            var requestPathLine = HttpProxy.ReadHeaders(client, cmd.Header);
+            int contentLength = 0;
+            if (cmd.Header.ContainsKey("Content-Length"))
+            {
+                int.TryParse(cmd.Header["Content-Length"], out contentLength);
             }
 
-            var httpRequest = requestPathLine.Split(' ')[1];
-            if (httpRequest.StartsWith("/?GetServiceProvider=") || httpRequest.StartsWith("/?GetAllServiceProviders") || httpRequest.StartsWith("/?FindMaster"))
+            if (cmd.Header.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {
-                httpRequest = httpRequest.Substring(2);
-                if (httpRequest.Contains("="))
+                client.KeepAlive = true;
+            }
+            else if(cmd.Header.ContainsKey("Connection") == false)
+            {
+                client.KeepAlive = true;
+            }
+
+            var requestPath = requestPathLine.Split(' ')[1];
+            if (requestPath.StartsWith("/?GetServiceProvider=") || requestPath.StartsWith("/?GetAllServiceProviders") || requestPath.StartsWith("/?FindMaster"))
+            {
+                if (contentLength > 0)
                 {
-                    var arr = httpRequest.Split('=');
+                    client.ReceiveDatas(new byte[contentLength], 0, contentLength);
+                }
+
+                requestPath = requestPath.Substring(2);
+                if (requestPath.Contains("="))
+                {
+                    var arr = requestPath.Split('=');
                     var json = HttpUtility.UrlDecode(arr[1], Encoding.UTF8);
                     if (!json.StartsWith("{"))
                     {
@@ -115,43 +90,24 @@ namespace JMS.Applications.CommandHandles
                 {
                     cmd = new GatewayCommand
                     {
-                        Type = (CommandType)Enum.Parse(typeof(CommandType), httpRequest),
+                        Type = (CommandType)Enum.Parse(typeof(CommandType), requestPath),
                         IsHttp = true
                     };
                     _manager.AllocHandler(cmd)?.Handle(client, cmd);
                 }
             }
+            else if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase))
+            {
+                HttpProxy.WebSocketProxy(client, _serviceProviderAllocator, requestPathLine, requestPath, cmd);
+            }
             else
             {
-                try
-                {
-                    var servieName = httpRequest.Substring(1);
-                    servieName = servieName.Substring(0, servieName.IndexOf("/"));
-
-                    httpRequest = httpRequest.Substring(servieName.Length + 1);
-                    //重定向
-                    var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest
-                    {
-                        ServiceName = servieName
-                    });
-                    if (location != null && !string.IsNullOrEmpty(location.ServiceAddress))
-                    {
-                        var serverAddr = location.ServiceAddress;
-                        if (serverAddr.EndsWith("/"))
-                            serverAddr = serverAddr.Substring(0, serverAddr.Length);
-
-                        client.OutputHttpRedirect($"{serverAddr}{httpRequest}");
-                    }
-                    else
-                    {
-                        client.OutputHttpNotFund();
-                    }
-                }
-                catch
-                {
-                    client.OutputHttpNotFund();
-                }
+                //以代理形式去做中转
+                HttpProxy.Proxy(client, _serviceProviderAllocator, requestPathLine, requestPath, contentLength, cmd);
+                //HttpProxy.Redirect(client ,_serviceProviderAllocator, requestPath);
             }
         }
+
+      
     }
 }

@@ -83,6 +83,9 @@ namespace JMS
                 try
                 {
                     var socket = _tcpListener.AcceptSocket();
+#if DEBUG
+                    //Console.WriteLine("new socket");
+#endif
                     Task.Run(() => _requestReception.Interview(socket));
                 }
                 catch (Exception ex)

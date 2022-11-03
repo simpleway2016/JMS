@@ -23,6 +23,7 @@ namespace JMS
         public bool KeepAlive { get; set; }
         public string Address { get; protected set; }
         public int Port { get; protected set; }
+        public NetClient PairClient { get; set; }
         public NetClient(NetAddress addr) : base(addr.Address, addr.Port)
         {
             this.Address = addr.Address;
@@ -43,6 +44,16 @@ namespace JMS
         public NetClient(Stream stream) : base(stream)
         {
 
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if(PairClient != null)
+            {
+                PairClient.Dispose();
+                PairClient = null;
+            }
+            base.Dispose(disposing);
         }
 
         /// <summary>
