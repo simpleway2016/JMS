@@ -158,6 +158,29 @@ namespace JMS
             }
         }
 
+        public byte[] ReadServiceDataBytes(int flag)
+        {
+            try
+            {
+                if (flag == 1179010630)
+                    return new byte[0];
+
+                var isgzip = (flag & 1) == 1;
+                this.KeepAlive = (flag & 2) == 2;
+                var len = flag >> 2;
+                var datas = this.ReceiveDatas(len);
+                if (isgzip)
+                    datas = GZipHelper.Decompress(datas);
+                return datas;
+            }
+            catch (System.IO.IOException ex)
+            {
+                if (ex.InnerException is SocketException)
+                    throw ex.InnerException;
+                throw ex;
+            }
+        }
+
         public byte[] ReadServiceDataBytes()
         {
             try

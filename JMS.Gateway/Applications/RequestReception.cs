@@ -41,19 +41,19 @@ namespace JMS.Applications
         GatewayCommand GetRequestCommand(NetClient client)
         {
             // var cmd = client.ReadServiceObject<GatewayCommand>();
-            byte[] data = new byte[3];
-            int readed = client.Socket.Receive(data,data.Length , SocketFlags.Peek);
-            if (readed < 3)
+            byte[] data = new byte[4];
+            int readed = client.InnerStream.Read(data, 0, data.Length);
+            if (readed < 4)
                 return null;
 
             var text = Encoding.UTF8.GetString(data);
-            if( text == "GET" || text == "POS")
+            if( text == "GET " || text == "POST")
             {
-                return new GatewayCommand { Type = CommandType.HttpRequest };
+                return new GatewayCommand { Type = CommandType.HttpRequest , Content = text };
             }
             else
             {
-                return client.ReadServiceObject<GatewayCommand>();
+                return Encoding.UTF8.GetString(client.ReadServiceDataBytes(BitConverter.ToInt32(data))).FromJson<GatewayCommand>();
             }    
         }
 

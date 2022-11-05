@@ -231,7 +231,7 @@ namespace JMS.Infrastructures
 
             //读取服务器发回来的头部
             var headers = new Dictionary<string, string>();
-            requestPathLine = ReadHeaders(proxyClient, headers);
+            requestPathLine = ReadHeaders(null,proxyClient, headers);
             inputContentLength = 0;
             if (headers.ContainsKey("Content-Length"))
             {
@@ -320,7 +320,7 @@ namespace JMS.Infrastructures
             }
         }
 
-        public static string ReadHeaders( NetClient client, IDictionary<string,string> headers)
+        public static string ReadHeaders(string preRequestString, NetClient client, IDictionary<string,string> headers)
         {
             List<byte> lineBuffer = new List<byte>(1024);
             string line = null;
@@ -334,7 +334,7 @@ namespace JMS.Infrastructures
                     line = Encoding.UTF8.GetString(lineBuffer.ToArray());
                     lineBuffer.Clear();
                     if (requestPathLine == null)
-                        requestPathLine = line;
+                        requestPathLine = preRequestString + line;
 
                     if (line == "")
                     {
