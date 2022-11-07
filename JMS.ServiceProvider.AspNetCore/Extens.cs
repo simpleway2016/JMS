@@ -76,6 +76,8 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             Host.ServiceProviderBuilded += (s, e) => {
+                var retryEngine = app.ApplicationServices.GetService<ApiRetryCommitMission>();
+                retryEngine.OnGatewayReady();
                 onRegister?.Invoke();
             };
 

@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace JMS.ServiceProvider.AspNetCore
 {
@@ -38,7 +39,73 @@ namespace JMS.ServiceProvider.AspNetCore
             this._gatewayConnector = gatewayConnector;
         }
 
-      
+        internal void OnGatewayReady()
+        {
+            retryOnBoot();
+            new Thread(run).Start();
+        }
+
+        void retryOnBoot()
+        {
+            try
+            {
+
+                var folder = _microServiceHost.RetryCommitPath;
+                if (Directory.Exists(folder) == false)
+                    return;
+                var files = Directory.GetFiles(folder, "*.txt");
+                handleFiles(files);
+
+                files = Directory.GetFiles(folder, "*.trying");
+                handleFiles(files);
+
+                files = Directory.GetFiles(folder, "*.err");
+                handleFiles(files);
+            }
+            catch (Exception ex)
+            {
+                _loggerTran?.LogError(ex, "重新提交事务，发生未知错误");
+            }
+        }
+
+        void run()
+        {
+
+            while (true)
+            {
+                Thread.Sleep(5000);
+                lock (this)
+                {
+                    try
+                    {
+                        var folder = _microServiceHost.RetryCommitPath;
+                        if (Directory.Exists(folder))
+                        {
+                            var files = Directory.GetFiles(folder, "*.err");
+                            handleFiles(files);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+            }
+        }
+
+        void handleFiles(string[] files)
+        {
+            if (files.Length > 0)
+            {
+                foreach (var file in files)
+                {
+                    var httpContext = _microServiceHost.ServiceProvider.GetService<IHttpContextFactory>().Create(new FeatureCollection());
+                    RetryFile(httpContext , file, null ,true);
+                }
+            }
+        }
+
+
         /// <summary>
         /// 
         /// </summary>
@@ -146,7 +213,9 @@ namespace JMS.ServiceProvider.AspNetCore
             }
             using (IServiceScope serviceScope = _microServiceHost.ServiceProvider.CreateScope())
             {
-                var controller = _controllerFactory.Create(requestInfo, serviceScope.ServiceProvider, out ControllerActionDescriptor desc);
+                context.RequestServices = serviceScope.ServiceProvider;
+
+                var controller = _controllerFactory.Create(requestInfo, context.RequestServices, out ControllerActionDescriptor desc);
                 if (controller != null)
                 {
                     var parameters = new object[desc.Parameters.Count];
@@ -173,7 +242,7 @@ namespace JMS.ServiceProvider.AspNetCore
                     var result = desc.MethodInfo.Invoke(controller, parameters);
                     result = actionFilterProcessor.OnActionExecuted(result);
 
-                    var tranDelegate = serviceScope.ServiceProvider.GetService<ApiTransactionDelegate>();
+                    var tranDelegate = context.RequestServices.GetService<ApiTransactionDelegate>();
                     if (tranDelegate.CommitAction != null)
                     {
                         tranDelegate.CommitAction();

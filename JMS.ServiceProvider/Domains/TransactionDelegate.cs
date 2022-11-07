@@ -79,7 +79,7 @@ namespace JMS
                 }
                 else
                 {
-                    //网关告知事务识别，需要回滚事务
+                    //网关告知事务失败，需要回滚事务
                     this.RollbackAction();
 
                     if (this.RetryCommitFilePath != null)

@@ -46,6 +46,9 @@ namespace JMS.RetryCommit
                 var files = Directory.GetFiles(folder, "*.txt");
                 handleFiles(files);
 
+                files = Directory.GetFiles(folder, "*.trying");
+                handleFiles(files);
+
                 files = Directory.GetFiles(folder, "*.err");
                 handleFiles(files);
             }
