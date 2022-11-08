@@ -266,6 +266,7 @@ namespace JMS
                 throw new Exception("Gateway addres is empty");
             AllGatewayAddresses = gatewayAddresses;
             this.ServicePort = port;
+
             return this;
         }
 
@@ -325,7 +326,10 @@ namespace JMS
             _GatewayConnector.ConnectCompleted -= _GatewayConnector_ConnectCompleted;
 
             //实例化FaildCommitBuilder，并重复提交失败的事务
-            ServiceProvider.GetService<RetryCommitMission>().OnGatewayReady();
+            if (!_isWebServer)
+            {
+                ServiceProvider.GetService<RetryCommitMission>().OnGatewayReady();
+            }
 
             if (ServiceProviderBuilded != null)
             {

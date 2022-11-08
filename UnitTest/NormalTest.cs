@@ -20,13 +20,13 @@ namespace UnitTest
     [TestClass]
     public class NormalTest
     {
-        int _gateWayPort = 9800;
-        int _clusterGateWayPort1 = 10001;
-        int _clusterGateWayPort2 = 10002;
-        int _UserInfoServicePort = 9801;
-        int _CrashServicePort = 9802;
-        int _UserInfoServicePort_forcluster = 9803;
-        bool _userInfoServiceReady = false;
+        public int _gateWayPort = 9800;
+        public int _clusterGateWayPort1 = 10001;
+        public int _clusterGateWayPort2 = 10002;
+        public int _UserInfoServicePort = 9801;
+        public int _CrashServicePort = 9802;
+        public int _UserInfoServicePort_forcluster = 9803;
+        public bool _userInfoServiceReady = false;
 
         Gateway _clusterGateway1;
         Gateway _clusterGateway2;
@@ -66,7 +66,7 @@ namespace UnitTest
             });
         }
 
-        void WaitGatewayReady(int port)
+        public void WaitGatewayReady(int port)
         {
             //等待网关就绪
             while (true)
