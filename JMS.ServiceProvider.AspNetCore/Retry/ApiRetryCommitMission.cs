@@ -146,7 +146,7 @@ namespace JMS.ServiceProvider.AspNetCore
                 if (checkFromGateway && _gatewayConnector.CheckTransaction(fileContent.TransactionId) == false)
                 {
                     _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", fileContent.TransactionId);
-                    FileHelper.ChangeFileExt(file, ".faild");
+                    FileHelper.ChangeFileExt(file, ".failed");
                     return;
                 }
 
@@ -179,7 +179,7 @@ namespace JMS.ServiceProvider.AspNetCore
                     catch (Exception ex)
                     {
                         _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", fileContent.TransactionId, ex.Message);
-                        FileHelper.ChangeFileExt(file, ".faild");
+                        FileHelper.ChangeFileExt(file, ".failed");
                     }
 
 
@@ -200,7 +200,7 @@ namespace JMS.ServiceProvider.AspNetCore
             catch (Exception ex)
             {
                 _loggerTran?.LogError("RetryCommitMission处理事务id为{0}时发生未知错误,{1}", ex.Message);
-                FileHelper.ChangeFileExt(file, ".faild");
+                FileHelper.ChangeFileExt(file, ".failed");
             }
 
         }
