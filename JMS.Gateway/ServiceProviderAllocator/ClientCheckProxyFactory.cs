@@ -21,10 +21,7 @@ namespace Codes" + DateTime.Now.Ticks + @"
     {
         public bool Check(IDictionary<string,string> headers)
         {
-            try{
-                " + code + @"
-            }
-            catch{}
+            " + code + @"
             return false;
         }
     }

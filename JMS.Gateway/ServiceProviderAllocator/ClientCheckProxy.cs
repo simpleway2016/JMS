@@ -21,7 +21,14 @@ namespace JMS
 
         public bool Check(IDictionary<string, string> headers)
         {
-            return _clientCheck.Check(headers);
+            try
+            {
+                return _clientCheck.Check(headers);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public void Dispose()
