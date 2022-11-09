@@ -11,10 +11,12 @@ namespace JMS
 {
     class ServiceRunningItem
     {
+        ClientCheckProxyFactory _clientCheckProxyFactory;
         ILogger _logger;
 
-        public ServiceRunningItem(ILogger logger)
+        public ServiceRunningItem(ILogger logger, ClientCheckProxyFactory clientCheckProxyFactory)
         {
+            this._clientCheckProxyFactory = clientCheckProxyFactory;
             this._logger = logger;
 
         }
@@ -37,53 +39,13 @@ namespace JMS
                     {
                         try
                         {
-                            string text = @"
-using System;
-using System.Collections.Generic;
-namespace HelloWorld
-{
-    public class Test : JMS.IClientCheck
-    {
-        public AssemblyCSharpBuilder CodeBuilder { get; set; }
-        public string ClientCode { get; set; }
-        public bool Check(IDictionary<string,string> headers)
-        {
-            try{
-                " + value.ClientCheckCode + @"
-            }
-            catch{}
-            return false;
-        }
-    }
-}";
-
-                            //根据脚本创建动态类
-                            AssemblyCSharpBuilder oop = new AssemblyCSharpBuilder();
-                            oop.ThrowCompilerError();
-                            oop.ThrowSyntaxError();
-                            oop.Compiler.Domain = DomainManagement.Random;
-                            oop.Add(text);
-
-                            Type type = oop.GetTypeFromShortName("Test");
-
-                            _logger?.LogInformation("客户端检验代码编译通过，代码：{0}", value.ClientCheckCode);
-
+                            
                             if (this.ClientChecker != null)
                             {
-                                try
-                                {
-                                    this.ClientChecker.CodeBuilder.Domain.Unload();
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger?.LogError(ex, "ClientChecker Unload失败");
-                                }
+                                this.ClientChecker.Dispose();
                             }
 
-
-                            this.ClientChecker = (IClientCheck)Activator.CreateInstance(type);
-                            this.ClientChecker.ClientCode = value.ClientCheckCode;
-                            this.ClientChecker.CodeBuilder = oop;
+                            this.ClientChecker = _clientCheckProxyFactory.Create(value.ClientCheckCode);
                         }
                         catch (Exception ex)
                         {
@@ -95,20 +57,14 @@ namespace HelloWorld
                 {
                     if (this.ClientChecker != null)
                     {
-                        try
-                        {
-                            this.ClientChecker.CodeBuilder.Domain.Unload();
-                        }
-                        catch
-                        {
-                        }
+                        this.ClientChecker.Dispose();
                     }
                     this.ClientChecker = null;
                 }
             }
         }
 
-        public IClientCheck ClientChecker { get; private set; }
+        public ClientCheckProxy ClientChecker { get; private set; }
 
     }
 }

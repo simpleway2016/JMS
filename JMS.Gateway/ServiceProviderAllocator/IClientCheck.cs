@@ -9,8 +9,7 @@ namespace JMS
     /// </summary>
     public interface IClientCheck
     {
-        AssemblyCSharpBuilder CodeBuilder { get; set; }
-        string ClientCode { get; set; }
+       
         bool Check(IDictionary<string,string> headers);
     }
 }

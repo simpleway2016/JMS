@@ -17,12 +17,14 @@ namespace JMS
     /// </summary>
     class ServiceProviderAllocator : IServiceProviderAllocator
     {
+        ClientCheckProxyFactory _clientCheckProxyFactory;
         IRegisterServiceManager _registerServiceManager;
         ILogger<ServiceProviderAllocator> _logger;
         ServiceRunningItem[] _serviceRunningItems;
 
-        public ServiceProviderAllocator(ILogger<ServiceProviderAllocator> logger, IRegisterServiceManager registerServiceManager)
+        public ServiceProviderAllocator(ILogger<ServiceProviderAllocator> logger, ClientCheckProxyFactory clientCheckProxyFactory, IRegisterServiceManager registerServiceManager)
         {
+            this._clientCheckProxyFactory = clientCheckProxyFactory;
             this._registerServiceManager = registerServiceManager;
             this._logger = logger;
             _registerServiceManager.ServiceConnect += _registerServiceManager_ServiceConnect;
@@ -36,7 +38,7 @@ namespace JMS
                 RegisterServiceInfo[] serviceInfos = _registerServiceManager.GetAllRegisterServices().ToArray();
                 if (_serviceRunningItems == null)
                 {
-                    _serviceRunningItems = serviceInfos.Select(m => new ServiceRunningItem(_logger)
+                    _serviceRunningItems = serviceInfos.Select(m => new ServiceRunningItem(_logger, _clientCheckProxyFactory)
                     {
                         ServiceInfo = m
                     }).ToArray();
@@ -55,7 +57,7 @@ namespace JMS
                         }
                         else
                         {
-                            items.Add(new ServiceRunningItem(_logger)
+                            items.Add(new ServiceRunningItem(_logger, _clientCheckProxyFactory)
                             {
                                 ServiceInfo = info
                             });
