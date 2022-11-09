@@ -30,7 +30,7 @@ namespace WebApiTest3
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", 8912) };
+            var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", 8911) };
             services.RegisterJmsService("http://127.0.0.1:5000", "TestWebService", gateways);
         }
 
@@ -52,28 +52,9 @@ namespace WebApiTest3
             {
                 endpoints.MapControllers();
             });
-            app.UseWebSockets();
+
             app.UseJmsService();
 
-            app.Use(async (context, next) =>
-            {
-
-                if (context.WebSockets.IsWebSocketRequest)
-                {
-                    var websocket = await context.WebSockets.AcceptWebSocketAsync();
-                    var buffer = new byte[1024 * 8];
-                    while (true)
-                    {
-                        var ret = await websocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                        await websocket.SendAsync(new ArraySegment<byte>(buffer, 0, ret.Count), WebSocketMessageType.Text, true, CancellationToken.None);
-                    }
-                }
-                else
-                {
-                    await next();
-                }
-
-            });
 
             Task.Run(() => {
                 return;
