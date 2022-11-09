@@ -19,7 +19,7 @@ namespace JMS
     {
         IRegisterServiceManager _registerServiceManager;
         ILogger<ServiceProviderAllocator> _logger;
-        ServiceRunningItem[] _serviceInfos;
+        ServiceRunningItem[] _serviceRunningItems;
 
         public ServiceProviderAllocator(ILogger<ServiceProviderAllocator> logger, IRegisterServiceManager registerServiceManager)
         {
@@ -34,35 +34,35 @@ namespace JMS
             lock (this)
             {
                 RegisterServiceInfo[] serviceInfos = _registerServiceManager.GetAllRegisterServices().ToArray();
-                if (_serviceInfos == null)
+                if (_serviceRunningItems == null)
                 {
-                    _serviceInfos = serviceInfos.Select(m => new ServiceRunningItem(_logger)
+                    _serviceRunningItems = serviceInfos.Select(m => new ServiceRunningItem(_logger)
                     {
                         ServiceInfo = m
                     }).ToArray();
                 }
                 else
                 {
-                    List<ServiceRunningItem> ret = new List<ServiceRunningItem>();
+                    List<ServiceRunningItem> items = new List<ServiceRunningItem>();
 
                     foreach (var info in serviceInfos)
                     {
-                        var item = _serviceInfos.FirstOrDefault(m => m.ServiceInfo.ServiceId == info.ServiceId);
+                        var item = _serviceRunningItems.FirstOrDefault(m => m.ServiceInfo.ServiceId == info.ServiceId);
                         if (item != null)
                         {
                             item.ServiceInfo = info;
-                            ret.Add(item);
+                            items.Add(item);
                         }
                         else
                         {
-                            ret.Add(new ServiceRunningItem(_logger)
+                            items.Add(new ServiceRunningItem(_logger)
                             {
                                 ServiceInfo = info
                             });
                         }
                     }
 
-                    _serviceInfos = ret.ToArray();
+                    _serviceRunningItems = items.ToArray();
                 }
             }
         }
@@ -70,7 +70,7 @@ namespace JMS
        
         public RegisterServiceLocation Alloc(GetServiceProviderRequest request)
         {
-            var matchServices = _serviceInfos.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName)
+            var matchServices = _serviceRunningItems.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName)
             && m.ServiceInfo.MaxThread > 0
             && (m.ServiceInfo.MaxRequestCount == 0 || m.ServiceInfo.RequestQuantity < m.ServiceInfo.MaxRequestCount)
             && (m.ClientChecker == null || m.ClientChecker.Check(request.Header)));
