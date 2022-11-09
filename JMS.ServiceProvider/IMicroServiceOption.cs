@@ -22,9 +22,9 @@ namespace JMS
         int MaxRequestCount { get; set; }
 
         /// <summary>
-        /// 自定义客户端检验代码
+        /// 自定义客户端检验代码在网关服务器上的文件位置
         /// </summary>
-        string ClientCheckCode { get; set; }
+        string ClientCheckCodeFile { get; set; }
 
         /// <summary>
         /// 当与网关连接断开时，是否自动关闭进程

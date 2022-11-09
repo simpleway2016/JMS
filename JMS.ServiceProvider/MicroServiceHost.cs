@@ -72,18 +72,18 @@ namespace JMS
             set;
         }
 
-        private string _ClientCheckCode;
+        private string _ClientCheckCodeFile;
         /// <summary>
-        /// 自定义客户端检验代码
+        /// 自定义客户端检验代码在网关服务器上的文件位置
         /// </summary>
-        public string ClientCheckCode
+        public string ClientCheckCodeFile
         {
-            get => _ClientCheckCode;
+            get => _ClientCheckCodeFile;
             set
             {
-                if (_ClientCheckCode != value)
+                if (_ClientCheckCodeFile != value)
                 {
-                    _ClientCheckCode = value;
+                    _ClientCheckCodeFile = value;
                     _GatewayConnector?.OnServiceInfoChanged();
                 }
             }

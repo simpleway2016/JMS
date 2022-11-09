@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Natasha.CSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,9 +30,10 @@ namespace JMS
             {
                 _ServiceInfo = value;
 
-                if (!string.IsNullOrEmpty(value.ClientCheckCode))
+                if (!string.IsNullOrEmpty(value.ClientCheckCodeFile) && File.Exists(value.ClientCheckCodeFile))
                 {
-                    if (this.ClientChecker != null && this.ClientChecker.ClientCode == value.ClientCheckCode)
+                    var clientCheckCode = File.ReadAllText(value.ClientCheckCodeFile, Encoding.UTF8);
+                    if (this.ClientChecker != null && this.ClientChecker.ClientCode == clientCheckCode)
                     {
 
                     }
@@ -45,11 +47,11 @@ namespace JMS
                                 this.ClientChecker.Dispose();
                             }
 
-                            this.ClientChecker = _clientCheckProxyFactory.Create(value.ClientCheckCode);
+                            this.ClientChecker = _clientCheckProxyFactory.Create(clientCheckCode);
                         }
                         catch (Exception ex)
                         {
-                            _logger?.LogError(ex, "客户端检验代码编译错误，代码：{0}", value.ClientCheckCode);
+                            _logger?.LogError(ex, "客户端检验代码编译错误，代码：{0}", clientCheckCode);
                         }
                     }
                 }

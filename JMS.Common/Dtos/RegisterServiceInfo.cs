@@ -71,9 +71,9 @@ namespace JMS.Dtos
         public double CpuUsage;
 
         /// <summary>
-        /// 用来是否运行客户端连接的检验代码
+        /// 用来是否运行客户端连接的检验代码的文件路径
         /// </summary>
-        public string ClientCheckCode;
+        public string ClientCheckCodeFile;
         /// <summary>
         /// 是否同一时间只有一个相同的服务器运行（双机热备）
         /// </summary>

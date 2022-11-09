@@ -109,13 +109,7 @@ namespace UnitTest
                 services.AddScoped<UserInfoDbContext>();
                 var msp = new MicroServiceHost(services);
                 msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + _UserInfoServicePort;
-                msp.ClientCheckCode = @"
-            if(headers.TryGetValue(""UserId"",out string userid))
-            {
-                return true;
-            }
-            return true;
-";
+                msp.ClientCheckCodeFile = "./code1.txt";
                 msp.Register<TestUserInfoController>("UserInfoService");
                 msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
                 msp.Build(_UserInfoServicePort, gateways)

@@ -101,7 +101,7 @@ namespace JMS.Domains
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
-                        ClientCheckCode = _microServiceHost.ClientCheckCode,
+                        ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
                         SingletonService = _microServiceHost.SingletonService
                     }.ToJsonString()
                 });
@@ -222,7 +222,7 @@ namespace JMS.Domains
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
                         MaxRequestCount = _microServiceHost.MaxRequestCount,
-                        ClientCheckCode = _microServiceHost.ClientCheckCode,
+                        ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
                         SingletonService = _microServiceHost.SingletonService
                     }.ToJsonString()
                 });
