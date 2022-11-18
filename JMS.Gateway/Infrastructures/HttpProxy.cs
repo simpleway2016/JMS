@@ -35,7 +35,8 @@ namespace JMS.Infrastructures
 
             var location = serviceProviderAllocator.Alloc(new GetServiceProviderRequest
             {
-                ServiceName = servieName
+                ServiceName = servieName,
+                IsGatewayProxy = true,
             });
             if (location == null)
             {
@@ -150,7 +151,8 @@ namespace JMS.Infrastructures
 
             var location = serviceProviderAllocator.Alloc(new GetServiceProviderRequest
             {
-                ServiceName = servieName
+                ServiceName = servieName,
+                IsGatewayProxy = true,
             });
             if(location == null)
             {

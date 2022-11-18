@@ -49,6 +49,7 @@ namespace JMS.Dtos
         public string ServiceName;
         public IDictionary<string, string> Header;
         public string ClientAddress;
+        public bool IsGatewayProxy;
     }
 
 }

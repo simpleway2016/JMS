@@ -23,8 +23,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.ShareFileClient", "JMS.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.Token.AspNetCore", "JMS.Token.AspNetCore\JMS.Token.AspNetCore.csproj", "{36BF753E-25E0-4E78-A0DA-3AEB0823CA50}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.MicroServiceProjectTemplate", "JMS.MicroServiceProjectTemplate\JMS.MicroServiceProjectTemplate.csproj", "{C766280F-3C76-46A0-9826-76631B94EDB5}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JMS.MicroServiceProjectTemplate2022", "JMS.MicroServiceProjectTemplate2022\JMS.MicroServiceProjectTemplate2022.csproj", "{1F430D24-B60A-4A0F-AEB6-A9C463D8040F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.IdentityModel.JWT.Authentication", "JMS.IdentityModel.JWT.Authentication\JMS.IdentityModel.JWT.Authentication.csproj", "{61F9EEDB-D019-427E-9066-29853980C2B5}"
@@ -39,7 +37,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiTest", "WebApiTest\We
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.ServiceProvider.AspNetCore", "JMS.ServiceProvider.AspNetCore\JMS.ServiceProvider.AspNetCore.csproj", "{405786C6-AF19-4655-A8D0-A8ACB63E2664}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiTest3", "WebApiTest3\WebApiTest3.csproj", "{644B5F43-E01E-4D77-908B-92A2EEAD68F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiTest3", "WebApiTest3\WebApiTest3.csproj", "{644B5F43-E01E-4D77-908B-92A2EEAD68F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -129,14 +127,6 @@ Global
 		{36BF753E-25E0-4E78-A0DA-3AEB0823CA50}.Release|Any CPU.Build.0 = Release|Any CPU
 		{36BF753E-25E0-4E78-A0DA-3AEB0823CA50}.Release|x86.ActiveCfg = Release|Any CPU
 		{36BF753E-25E0-4E78-A0DA-3AEB0823CA50}.Release|x86.Build.0 = Release|Any CPU
-		{C766280F-3C76-46A0-9826-76631B94EDB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C766280F-3C76-46A0-9826-76631B94EDB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C766280F-3C76-46A0-9826-76631B94EDB5}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C766280F-3C76-46A0-9826-76631B94EDB5}.Debug|x86.Build.0 = Debug|Any CPU
-		{C766280F-3C76-46A0-9826-76631B94EDB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C766280F-3C76-46A0-9826-76631B94EDB5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C766280F-3C76-46A0-9826-76631B94EDB5}.Release|x86.ActiveCfg = Release|Any CPU
-		{C766280F-3C76-46A0-9826-76631B94EDB5}.Release|x86.Build.0 = Release|Any CPU
 		{1F430D24-B60A-4A0F-AEB6-A9C463D8040F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1F430D24-B60A-4A0F-AEB6-A9C463D8040F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F430D24-B60A-4A0F-AEB6-A9C463D8040F}.Debug|x86.ActiveCfg = Debug|x86

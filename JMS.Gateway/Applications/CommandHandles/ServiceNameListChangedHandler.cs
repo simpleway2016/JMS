@@ -35,7 +35,7 @@ namespace JMS.Applications.CommandHandles
                 service.ServiceNames = info.ServiceNames;
                 service.Description = info.Description;
                 service.ClientCheckCodeFile = info.ClientCheckCodeFile;
-
+                service.GatewayProxy = info.GatewayProxy;
                
             }
 

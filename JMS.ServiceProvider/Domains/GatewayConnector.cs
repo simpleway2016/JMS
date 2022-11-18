@@ -102,7 +102,8 @@ namespace JMS.Domains
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
                         ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
-                        SingletonService = _microServiceHost.SingletonService
+                        SingletonService = _microServiceHost.SingletonService,
+                        GatewayProxy = ((IMicroServiceOption)_microServiceHost).GatewayProxy
                     }.ToJsonString()
                 });
                 client.ReadServiceObject<InvokeResult>();
@@ -223,7 +224,8 @@ namespace JMS.Domains
                         Description = _microServiceHost.Description,
                         MaxRequestCount = _microServiceHost.MaxRequestCount,
                         ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
-                        SingletonService = _microServiceHost.SingletonService
+                        SingletonService = _microServiceHost.SingletonService,
+                        GatewayProxy = ((IMicroServiceOption)_microServiceHost).GatewayProxy
                     }.ToJsonString()
                 });
                 var ret = _client.ReadServiceObject<InvokeResult>();

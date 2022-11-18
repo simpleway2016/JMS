@@ -45,6 +45,10 @@ namespace JMS
         /// </summary>
         public NetAddress ServiceAddress { get; set; }
         public int ServicePort { get; private set; }
+        bool IMicroServiceOption.GatewayProxy
+        {
+            get; set;
+        }
 
         private string _Description;
         /// <summary>
