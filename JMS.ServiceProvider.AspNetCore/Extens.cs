@@ -82,7 +82,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 onRegister?.Invoke();
             };
 
-            Host.Build(0, Gateways).Run();
+            Host.Build(0, Gateways).Run(app.ApplicationServices);
             app.Use(async (context, next) =>
             {
                 if (ConnectionCounter == null)

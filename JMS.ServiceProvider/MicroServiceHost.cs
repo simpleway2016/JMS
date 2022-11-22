@@ -274,10 +274,22 @@ namespace JMS
             return this;
         }
 
-
+       
+        /// <summary>
+        /// 运行服务
+        /// </summary>
         public void Run()
         {
-            ServiceProvider = _services.BuildServiceProvider();
+            Run( _services.BuildServiceProvider());           
+        }
+
+        /// <summary>
+        /// 在指定的IServiceProvider环境下运行服务
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        public void Run(IServiceProvider serviceProvider)
+        {
+            ServiceProvider = serviceProvider;
             //if (ServicePort == 0)
             //    return;
 
@@ -299,7 +311,7 @@ namespace JMS
 
             if (sslConfig != null)
             {
-                if(sslConfig.GatewayClientCertificate != null)
+                if (sslConfig.GatewayClientCertificate != null)
                     _logger?.LogInformation("Gateway client use ssl,certificate hash:{0}", sslConfig.GatewayClientCertificate.GetCertHashString());
 
                 if (sslConfig.ServerCertificate != null)
