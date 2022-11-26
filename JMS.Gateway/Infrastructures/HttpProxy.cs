@@ -31,22 +31,43 @@ namespace JMS.Infrastructures
             {
                 servieName = servieName.Substring(0, servieName.IndexOf("/"));
             }
-
+            if(servieName.Contains("?"))
+            {
+                servieName = servieName.Substring(0, servieName.IndexOf("?"));
+            }
 
             var location = serviceProviderAllocator.Alloc(new GetServiceProviderRequest
             {
                 ServiceName = servieName,
                 IsGatewayProxy = true,
+                Header = cmd.Header
             });
             if (location == null)
             {
                 return;
             }
-            requestPath = requestPath.Substring(servieName.Length + 1);
-            if (requestPath.Length == 0)
-                requestPath = "/";
 
-            var hostUri = new Uri(location.ServiceAddress.ToLower());
+            if (location.ProxyWithServiceName == false)
+            {
+                //去除servicename去代理访问
+                requestPath = requestPath.Substring(servieName.Length + 1);
+                if (requestPath.Length == 0)
+                    requestPath = "/";
+            }
+
+            Uri hostUri = null;
+            if (location.ServiceAddress.Contains("://"))
+            {
+                hostUri = new Uri(location.ServiceAddress.ToLower());
+            }
+            else if (location.UseSsl)
+            {
+                hostUri = new Uri($"wws://{location.ServiceAddress}:{location.Port}");
+            }
+            else
+            {
+                hostUri = new Uri($"wws://{location.ServiceAddress}:{location.Port}");
+            }
             NetClient proxyClient = client.PairClient;
             if (proxyClient == null)
             {
@@ -153,6 +174,7 @@ namespace JMS.Infrastructures
             {
                 ServiceName = servieName,
                 IsGatewayProxy = true,
+                Header = cmd.Header
             });
             if(location == null)
             {
@@ -163,11 +185,29 @@ namespace JMS.Infrastructures
                 client.OutputHttpNotFund();
                 return;
             }
-            requestPath = requestPath.Substring(servieName.Length + 1);
-            if (requestPath.Length == 0)
-                requestPath = "/";
 
-            var hostUri = new Uri(location.ServiceAddress.ToLower());
+            if (location.ProxyWithServiceName == false)
+            {
+                //去除servicename去代理访问
+                requestPath = requestPath.Substring(servieName.Length + 1);
+                if (requestPath.Length == 0)
+                    requestPath = "/";
+            }
+
+            Uri hostUri = null;
+            if (location.ServiceAddress.Contains("://"))
+            {
+                hostUri = new Uri(location.ServiceAddress.ToLower());
+            }
+            else if (location.UseSsl)
+            {
+                hostUri = new Uri($"wws://{location.ServiceAddress}:{location.Port}");
+            }
+            else
+            {
+                hostUri = new Uri($"wws://{location.ServiceAddress}:{location.Port}");
+            }
+
             NetClient proxyClient = client.PairClient;
             if (proxyClient == null)
             {

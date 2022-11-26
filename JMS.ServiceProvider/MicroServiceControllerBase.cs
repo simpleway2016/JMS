@@ -7,65 +7,46 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using Way.Lib;
+using System.Net;
 
-public class MicroServiceControllerBase
+public class MicroServiceControllerBase: BaseJmsController
 {
-    internal class ThreadLocalObject
+    internal class LocalObject
     {
         public InvokeCommand Command;
         public IServiceProvider ServiceProvider;
-        internal ThreadLocalObject(InvokeCommand command, IServiceProvider serviceProvider)
+        public object UserContent;
+        public string RequestPath;
+        public EndPoint RemoteEndPoint;
+        internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider,object userContent)
         {
-            Command = command;
-            ServiceProvider = serviceProvider;
+            this.RemoteEndPoint = remoteEndPoint;
+            this.Command = command;
+            this.ServiceProvider = serviceProvider;
+            this.UserContent = userContent;
+        }
+
+        internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider, object userContent,string requestPath)
+        {
+            this.RemoteEndPoint = remoteEndPoint;
+            this.Command = command;
+            this.ServiceProvider = serviceProvider;
+            this.UserContent = userContent;
+            this.RequestPath = requestPath;
         }
     }
     internal IKeyLocker _keyLocker;
     internal NetClient NetClient;
-    internal static ThreadLocal<ThreadLocalObject> RequestingObject = new ThreadLocal<ThreadLocalObject>();
+   
 
 
-    private IDictionary<string, string> _Header;
-    /// <summary>
-    /// 请求的头
-    /// </summary>
-    public IDictionary<string, string> Header
-    {
-        get
-        {
-            if (_Header == null && RequestingObject.Value != null)
-            {
-                _Header = RequestingObject.Value.Command.Header;
-            }
-            return _Header;
-        }
-    }
-
-    /// <summary>
-    /// 身份验证后获取的身份信息
-    /// </summary>
-    public object UserContent { get; internal set; }
 
     /// <summary>
     /// 当前的事务委托器
     /// </summary>
     public TransactionDelegate TransactionControl { set; get; }
 
-    IServiceProvider _ServiceProvider;
-    /// <summary>
-    /// Controller的依赖注入服务提供者
-    /// </summary>
-    public IServiceProvider ServiceProvider
-    {
-        get
-        {
-            if (_ServiceProvider == null && RequestingObject.Value != null)
-            {
-                _ServiceProvider = RequestingObject.Value.ServiceProvider;
-            }
-            return _ServiceProvider;
-        }
-    }
+
 
     string _transactionid;
     /// <summary>
@@ -80,22 +61,6 @@ public class MicroServiceControllerBase
                 _transactionid = this.Header["TranId"];
             }
             return _transactionid;
-        }
-    }
-
-    internal static ThreadLocal<MicroServiceControllerBase> ThreadCurrent = new ThreadLocal<MicroServiceControllerBase>();
-    /// <summary>
-    /// 与当前请求相关联的Controller对象
-    /// </summary>
-    public static MicroServiceControllerBase Current
-    {
-        get
-        {
-            return ThreadCurrent.Value;
-        }
-        internal set
-        {
-            ThreadCurrent.Value = value;
         }
     }
 
@@ -174,5 +139,6 @@ public class ControllerTypeInfo
 public class TypeMethodInfo
 {
     public MethodInfo Method;
+    public PropertyInfo ResultProperty;
     public bool NeedAuthorize;
 }

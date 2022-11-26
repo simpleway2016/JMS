@@ -89,6 +89,8 @@ namespace JMS.Domains
             if (_microServiceHost.MasterGatewayAddress == null)
                 return;
 
+            var controllers = _controllerFactory.GetAllControllers();
+
             using (var client = CreateClient(_microServiceHost.MasterGatewayAddress))
             {
                 client.WriteServiceData(new GatewayCommand()
@@ -96,17 +98,19 @@ namespace JMS.Domains
                     Type = CommandType.ServiceNameListChanged,
                     Content = new RegisterServiceInfo
                     {
-                        ServiceNames = _controllerFactory.GetAllControllers().Where(m=>m.Enable).Select(m=>m.ServiceName).ToArray(),
+                        ServiceNames = controllers.Where(m => m.Enable).Select(m => m.ServiceName).ToArray(),
                         Port = (_microServiceHost.ServiceAddress == null || _microServiceHost.ServiceAddress.Port == 0) ? _microServiceHost.ServicePort : _microServiceHost.ServiceAddress.Port,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
                         ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
                         SingletonService = _microServiceHost.SingletonService,
-                        GatewayProxy = ((IMicroServiceOption)_microServiceHost).GatewayProxy
+                        GatewayProxy = ((IMicroServiceOption)_microServiceHost).GatewayProxy.GetValueOrDefault()
                     }.ToJsonString()
                 });
                 client.ReadServiceObject<InvokeResult>();
+
+               
             }
         }
         /// <summary>
@@ -114,7 +118,7 @@ namespace JMS.Domains
         /// </summary>
         void findMasterGateway()
         {
-            if(_microServiceHost.AllGatewayAddresses.Length == 1)
+            if (_microServiceHost.AllGatewayAddresses.Length == 1)
             {
                 _microServiceHost.MasterGatewayAddress = _microServiceHost.AllGatewayAddresses[0];
                 return;
@@ -122,15 +126,17 @@ namespace JMS.Domains
 
             _microServiceHost.MasterGatewayAddress = null;
 
-           
+
 
             bool logError = true;
             while (_microServiceHost.MasterGatewayAddress == null)
             {
                 ManualResetEvent waitObj = new ManualResetEvent(false);
-                Task.Run(() => {
+                Task.Run(() =>
+                {
                     bool exit = false;
-                    Parallel.For(0, _microServiceHost.AllGatewayAddresses.Length, i => {
+                    Parallel.For(0, _microServiceHost.AllGatewayAddresses.Length, i =>
+                    {
                         var addr = _microServiceHost.AllGatewayAddresses[i];
                         try
                         {
@@ -185,7 +191,7 @@ namespace JMS.Domains
 
                 findMasterGateway();
 
-                if(_microServiceHost.SingletonService)
+                if (_microServiceHost.SingletonService)
                 {
                     try
                     {
@@ -210,26 +216,29 @@ namespace JMS.Domains
                 }
 
                 _client = CreateClient(_microServiceHost.MasterGatewayAddress);
-                
+                var controllers = _controllerFactory.GetAllControllers();
+
                 _client.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.RegisterSerivce,
                     Content = new RegisterServiceInfo
                     {
-                        ServiceNames = _controllerFactory.GetAllControllers().Where(m => m.Enable).Select(m => m.ServiceName).ToArray(),
+                        ServiceNames = controllers.Where(m => m.Enable).Select(m => m.ServiceName).ToArray(),
                         Port = (_microServiceHost.ServiceAddress == null || _microServiceHost.ServiceAddress.Port == 0) ? _microServiceHost.ServicePort : _microServiceHost.ServiceAddress.Port,
-                        ServiceAddress = _microServiceHost.ServiceAddress == null?null: _microServiceHost.ServiceAddress.Address,
+                        ServiceAddress = _microServiceHost.ServiceAddress == null ? null : _microServiceHost.ServiceAddress.Address,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
                         Description = _microServiceHost.Description,
                         MaxRequestCount = _microServiceHost.MaxRequestCount,
                         ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
                         SingletonService = _microServiceHost.SingletonService,
-                        GatewayProxy = ((IMicroServiceOption)_microServiceHost).GatewayProxy
+                        GatewayProxy = _microServiceHost.GatewayProxy.GetValueOrDefault(),
+                        ProxyWithServiceName = controllers.Any(m=>m.Type != null && m.Type.IsSubclassOf(typeof(WebSocketController))) ? true : false,
+                        UseSsl = (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     }.ToJsonString()
                 });
                 var ret = _client.ReadServiceObject<InvokeResult>();
-                if(ret.Success == false)
+                if (ret.Success == false)
                 {
                     _client.Dispose();
                     _client = null;
@@ -238,7 +247,7 @@ namespace JMS.Domains
                         throw new Exception("网关不允许当前ip作为微服务");
                     else if (ret.Error == "SingletonService")
                     {
-                        if(_singletonErrorMsg != null)
+                        if (_singletonErrorMsg != null)
                         {
                             _logger?.LogInformation(_singletonErrorMsg);
                             _singletonErrorMsg = null;
@@ -280,16 +289,18 @@ namespace JMS.Domains
                     }
                 }
 
-                ConnectCompleted?.Invoke(this , null);
+                ConnectCompleted?.Invoke(this, null);
 
                 //保持心跳，并且定期发送ClientConnected
-                _client.KeepHeartBeating(() => {
+                _client.KeepHeartBeating(() =>
+                {
                     return new GatewayCommand
                     {
                         Type = CommandType.ReportClientConnectQuantity,
-                        Content = new PerformanceInfo { 
-                            RequestQuantity = _connectionCounter.ConnectionCount , 
-                            CpuUsage = _cpuInfo.GetCpuUsage() 
+                        Content = new PerformanceInfo
+                        {
+                            RequestQuantity = _connectionCounter.ConnectionCount,
+                            CpuUsage = _cpuInfo.GetCpuUsage()
                         }.ToJsonString()
                     };
                 });
@@ -297,11 +308,11 @@ namespace JMS.Domains
                 _client = null;
 
                 _logger?.LogError("和网关连接断开");
-                if( _microServiceHost.AutoExitProcess || _microServiceHost.SingletonService )
+                if (_microServiceHost.AutoExitProcess || _microServiceHost.SingletonService)
                 {
                     _logger?.LogInformation("和网关连接断开，准备自动关闭进程");
                     var handler = _microServiceHost.ServiceProvider.GetService<ProcessExitHandler>();
-                    if(handler != null)
+                    if (handler != null)
                     {
                         handler.OnProcessExit();
                     }
@@ -337,12 +348,12 @@ namespace JMS.Domains
         public void DisconnectGateway()
         {
             _manualDisconnected = true;
-            if(_client != null && _client.Socket != null)
+            if (_client != null && _client.Socket != null)
             {
                 _client.Socket.Close();
                 _logger?.LogInformation("Socket closed");
                 _client.Dispose();
-            }            
+            }
         }
 
 

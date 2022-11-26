@@ -11,6 +11,8 @@ using System.Threading;
 using Way.Lib;
 using static JMS.RetryCommit.FaildCommitBuilder;
 using JMS.Infrastructures;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace JMS.RetryCommit
 {
@@ -207,11 +209,10 @@ namespace JMS.RetryCommit
             {
                 try
                 {
-                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.ThreadLocalObject(cmd, serviceScope.ServiceProvider);
+                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(new IPEndPoint(IPAddress.Parse("127.0.0.1") , 0),cmd, serviceScope.ServiceProvider, userContent);
                     var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
-                    controller = _controllerFactory.CreateController(serviceScope, controllerTypeInfo);
-                    controller.UserContent = userContent;
+                    controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                     controller._keyLocker = _microServiceHost.ServiceProvider.GetService<IKeyLocker>();
 
 
@@ -220,7 +221,6 @@ namespace JMS.RetryCommit
                         throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
 
 
-                    MicroServiceControllerBase.Current = controller;
 
                     var parameterInfos = methodInfo.Method.GetParameters();
                     object result = null;
@@ -252,6 +252,20 @@ namespace JMS.RetryCommit
 
                     }
                     result = methodInfo.Method.Invoke(controller, parameters);
+                    if (result is Task t)
+                    {
+                        t.Wait();
+
+                        if (methodInfo.ResultProperty != null)
+                        {
+                            result = methodInfo.ResultProperty.GetValue(t);
+                        }
+                        else
+                        {
+                            result = null;
+                        }
+                    }
+
                     controller.OnAfterAction(cmd.Method, parameters);
                     if (transactionDelegate != null && (transactionDelegate.CommitAction != null || transactionDelegate.RollbackAction != null))
                     {
@@ -272,7 +286,6 @@ namespace JMS.RetryCommit
                 }
                 finally
                 {
-                    MicroServiceControllerBase.Current = null;
                     controller?.OnUnLoad();
                     MicroServiceControllerBase.RequestingObject.Value = null;
                 }

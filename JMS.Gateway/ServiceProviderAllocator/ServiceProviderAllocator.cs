@@ -72,6 +72,8 @@ namespace JMS
        
         public RegisterServiceLocation Alloc(GetServiceProviderRequest request)
         {
+            if (_serviceRunningItems == null)
+                return null;
             var matchServices = _serviceRunningItems.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName)
             && m.ServiceInfo.MaxThread > 0
             && (m.ServiceInfo.MaxRequestCount == 0 || m.ServiceInfo.RequestQuantity < m.ServiceInfo.MaxRequestCount)
@@ -105,6 +107,8 @@ namespace JMS
                 ServiceAddress = item.ServiceInfo.ServiceAddress,
                 Port = item.ServiceInfo.Port,
                 GatewayProxy = item.ServiceInfo.GatewayProxy,
+                UseSsl = item.ServiceInfo.UseSsl,
+                ProxyWithServiceName = item.ServiceInfo.ProxyWithServiceName,
             };
         }
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JMS.Domains
 {
@@ -53,6 +54,7 @@ namespace JMS.Domains
                     m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
                     {
                         Method = m,
+                        ResultProperty = m.ReturnType.GetProperty(nameof(Task<int>.Result)),
                         NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
                     }).ToArray()
             };
@@ -93,9 +95,9 @@ namespace JMS.Domains
             throw new Exception($"服务{serviceName}不存在");
         }
 
-        public MicroServiceControllerBase CreateController(IServiceScope serviceScope, ControllerTypeInfo o)
+        public object CreateController(IServiceScope serviceScope, ControllerTypeInfo o)
         {
-            return (MicroServiceControllerBase)serviceScope.ServiceProvider.GetService(o.Type);
+            return serviceScope.ServiceProvider.GetService(o.Type);
         }
     }
 }

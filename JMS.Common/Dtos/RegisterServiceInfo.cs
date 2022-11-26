@@ -20,8 +20,20 @@ namespace JMS.Dtos
         /// 微服务的自定义描述
         /// </summary>
         public string Description;
+        /// <summary>
+        /// 是否允许通过网关反向代理访问此服务器
+        /// 默认可以通过 http://网关域名/服务名称/ 来访问
+        /// </summary>
         public bool GatewayProxy;
+        /// <summary>
+        /// 代理时，路径需要带上服务名称
+        /// </summary>
+        public bool ProxyWithServiceName;
 
+        /// <summary>
+        /// 服务器是否启用了ssl证书
+        /// </summary>
+        public bool UseSsl;
         public RegisterServiceLocation(string address, int port)
         {
             this.Port = port;
@@ -79,11 +91,8 @@ namespace JMS.Dtos
         /// 是否同一时间只有一个相同的服务器运行（双机热备）
         /// </summary>
         public bool SingletonService;
-        /// <summary>
-        /// 是否允许通过网关反向代理访问此服务器
-        /// 默认可以通过 http://网关域名/服务名称/ 来访问
-        /// </summary>
-        public bool GatewayProxy;
+        
+       
     }
 
     public class PerformanceInfo

@@ -45,7 +45,10 @@ namespace JMS
         /// </summary>
         public NetAddress ServiceAddress { get; set; }
         public int ServicePort { get; private set; }
-        bool IMicroServiceOption.GatewayProxy
+        /// <summary>
+        /// 允许网关转发请求
+        /// </summary>
+        public bool? GatewayProxy
         {
             get; set;
         }
@@ -159,7 +162,7 @@ namespace JMS
         /// </summary>
         /// <typeparam name="T">Controller</typeparam>
         /// <param name="serviceName">服务名称</param>
-        public void Register<T>(string serviceName) where T : MicroServiceControllerBase
+        public void Register<T>(string serviceName) where T : BaseJmsController
         {
             this.Register(typeof(T), serviceName);
         }
@@ -191,7 +194,13 @@ namespace JMS
 
             _services.AddScoped(contollerType);
             _ControllerFactory.RegisterController(contollerType, serviceName);
+
+            if ( this.GatewayProxy == null && contollerType.IsSubclassOf(typeof(WebSocketController)))
+            {
+                this.GatewayProxy = true;
+            }
         }
+
 
         /// <summary>
         /// 设置服务可用
@@ -251,6 +260,7 @@ namespace JMS
             _services.AddSingleton<IGatewayConnector, GatewayConnector>();
             _services.AddSingleton<IRequestReception, RequestReception>();
             _services.AddSingleton<InvokeRequestHandler>();
+            _services.AddSingleton<HttpHandler>();
             _services.AddSingleton<GenerateInvokeCodeRequestHandler>();
             _services.AddSingleton<GenerateServiceInfoHandler>();
             _services.AddSingleton<GetAllLockedKeysHandler>();

@@ -4,12 +4,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Natasha.CSharp;
 using Org.BouncyCastle.Crypto.Engines;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.WebSockets;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -111,6 +116,7 @@ namespace UnitTest
                 msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + _UserInfoServicePort;
                 msp.ClientCheckCodeFile = "./code1.txt";
                 msp.Register<TestUserInfoController>("UserInfoService");
+                msp.Register<TestWebSocketController>("TestWebSocketService");
                 msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
                 msp.Build(_UserInfoServicePort, gateways)
                     .Run();
@@ -591,6 +597,82 @@ namespace UnitTest
             {
                 throw new Exception("lock key数量不对");
             }
+        }
+
+        [TestMethod]
+        public void TestWebsocket()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("TestWebSocketService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("TestWebSocketService");
+                }
+            }
+                var clientWebsocket = new ClientWebSocket();
+            clientWebsocket.ConnectAsync(new Uri($"ws://127.0.0.1:{_gateWayPort}/TestWebSocketService?name=test"), CancellationToken.None).ConfigureAwait(true).GetAwaiter().GetResult();
+            var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+            if (text != "hello")
+                throw new Exception("error");
+            clientWebsocket.SendString("test").ConfigureAwait(true).GetAwaiter().GetResult();
+            text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+            if (text != "test")
+                throw new Exception("error");
+
+            text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+            if (text != null)
+                throw new Exception("error");
+
+            if(clientWebsocket.CloseStatus != WebSocketCloseStatus.NormalClosure)
+                throw new Exception("error");
+
+            if (clientWebsocket.CloseStatusDescription != "abc")
+                throw new Exception("error");
+        }
+        public async Task test()
+        {
+            await Task.Delay(1000);
+        }
+
+        //[TestMethod]
+        public void test2()
+        {
+            Task.Run(async () => {
+                var method = typeof(NormalTest).GetMethod("test");
+
+                Type attType = typeof(AsyncStateMachineAttribute);
+
+                // Obtain the custom attribute for the method. 
+                // The value returned contains the StateMachineType property. 
+                // Null is returned if the attribute isn't present for the method. 
+                var attrib = method.GetCustomAttribute<AsyncStateMachineAttribute>();
+
+                var isAwaitable = method.ReturnType.GetMethod(nameof(Task.GetAwaiter)) != null;
+                var result = method.Invoke(this, new object[0]);
+                if(result is Task t)
+                {
+                    t.Wait();
+
+                    var p = method.ReturnType.GetProperty(nameof(Task<int>.Result));
+                }
+            });
+
+            Thread.Sleep(100000);
         }
     }
 }

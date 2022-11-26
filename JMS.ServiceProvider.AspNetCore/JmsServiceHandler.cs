@@ -22,6 +22,7 @@ using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS.ServiceProvider.AspNetCore
@@ -115,6 +116,20 @@ namespace JMS.ServiceProvider.AspNetCore
                     {
                         actionFilterProcessor?.OnActionExecuting();
                         var result = desc.MethodInfo.Invoke(controller, parameters);
+                        if (result is Task t)
+                        {
+                            t.Wait();
+
+                            if (desc.MethodInfo.ReturnType.IsGenericType)
+                            {
+                                result = desc.MethodInfo.ReturnType.GetProperty(nameof(Task<int>.Result)).GetValue(t);
+                            }
+                            else
+                            {
+                                result = null;
+                            }
+                        }
+
                         result = actionFilterProcessor.OnActionExecuted(result);
                         if (result != null)
                         {

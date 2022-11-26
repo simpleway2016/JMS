@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using JMS;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,7 +23,7 @@ namespace UnitTest.ServiceHosts
             if (string.IsNullOrEmpty(this.TransactionId))
                 throw new Exception("TransactionId为空");
         }
-        public void SetUserName(string name)
+        public async Task SetUserName(string name)
         {
             //启动支持分布式事务
             _userInfoDbContext.BeginTransaction();
@@ -86,6 +88,17 @@ namespace UnitTest.ServiceHosts
                     _userInfoDbContext.RollbackTransaction();
                 };
             }
+        }
+    }
+
+    internal class TestWebSocketController : WebSocketController
+    {
+        public override async Task OnConnected(WebSocket webSocket)
+        {
+            await webSocket.SendString("hello");
+            var ret = await webSocket.ReadString();
+            await webSocket.SendString(ret);
+            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "abc", System.Threading.CancellationToken.None);
         }
     }
 }

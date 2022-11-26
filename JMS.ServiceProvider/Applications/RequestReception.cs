@@ -54,6 +54,24 @@ namespace JMS.Applications
             return true;
         }
 
+        InvokeCommand GetRequestCommand(NetClient client)
+        {
+            byte[] data = new byte[4];
+            int readed = client.InnerStream.Read(data, 0, data.Length);
+            if (readed < 4)
+                return null;
+
+            var text = Encoding.UTF8.GetString(data);
+            if (text == "GET " || text == "POST")
+            {
+                return new InvokeCommand { Type =  InvokeType.Http, Service = text };
+            }
+            else
+            {
+                return Encoding.UTF8.GetString(client.ReadServiceDataBytes(BitConverter.ToInt32(data))).FromJson<InvokeCommand>();
+            }
+        }
+
         public void Interview(Socket socket)
         {
             try
@@ -69,7 +87,7 @@ namespace JMS.Applications
 
                     while (true)
                     {
-                        var cmd = netclient.ReadServiceObject<InvokeCommand>();
+                        var cmd = GetRequestCommand(netclient);
                         if (cmd == null)
                         {
                             netclient.Write(Encoding.UTF8.GetBytes("ok"));

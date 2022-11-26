@@ -41,11 +41,20 @@ namespace JMS.Domains
         public void HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
-            ServiceInfo = registerCmd.Content.FromJson<RegisterServiceInfo>();
+            handleRegister(registerCmd , this);
+            if (this.ServiceInfo == null)
+                return;
 
-            if(ServiceInfo.SingletonService)
+            checkState();
+        }
+
+        void handleRegister(GatewayCommand registerCmd,MicroServiceReception reception)
+        {
+            var serviceItem = registerCmd.Content.FromJson<RegisterServiceInfo>();
+
+            if (serviceItem.SingletonService)
             {
-                if (_registerServiceManager.GetAllRegisterServices().Any(m => string.Join(',', m.ServiceNames) == string.Join(',', ServiceInfo.ServiceNames)))
+                if (_registerServiceManager.GetAllRegisterServices().Any(m => string.Join(',', m.ServiceNames) == string.Join(',', serviceItem.ServiceNames)))
                 {
                     NetClient.WriteServiceData(new InvokeResult
                     {
@@ -56,19 +65,22 @@ namespace JMS.Domains
                 }
             }
 
-            ServiceInfo.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
-            if (string.IsNullOrEmpty(ServiceInfo.ServiceAddress))
-                ServiceInfo.ServiceAddress = ServiceInfo.Host;
+            serviceItem.Host = ((IPEndPoint)NetClient.Socket.RemoteEndPoint).Address.ToString();
+            if (string.IsNullOrEmpty(serviceItem.ServiceAddress))
+                serviceItem.ServiceAddress = serviceItem.Host;
 
 
-            NetClient.WriteServiceData(new InvokeResult{ 
+            NetClient.WriteServiceData(new InvokeResult
+            {
                 Success = true
             });
-            _registerServiceManager.AddRegisterService(this);
 
-            _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}注册");
+            reception.ServiceInfo = serviceItem;
+            _registerServiceManager.AddRegisterService(reception);
 
-            checkState();
+            _Logger?.LogInformation($"微服务{serviceItem.ServiceNames.ToJsonString()} {serviceItem.Host}:{serviceItem.Port}注册");
+           
+
         }
 
         void disconnect()
@@ -76,7 +88,7 @@ namespace JMS.Domains
             _registerServiceManager.RemoveRegisterService(ServiceInfo);
 
         }
-        public void Close()
+        public virtual void Close()
         {
             _closed = true;
             disconnect();
@@ -90,11 +102,7 @@ namespace JMS.Domains
             {
                 try
                 {
-                    var command = NetClient.ReadServiceObject<GatewayCommand>();
-                    NetClient.WriteServiceData(new InvokeResult
-                    {
-                        Success = true
-                    });
+                    var command = NetClient.ReadServiceObject<GatewayCommand>();                    
 
                     if (command.Type == CommandType.ReportClientConnectQuantity)
                     {                       
@@ -115,7 +123,23 @@ namespace JMS.Domains
                             catch
                             {
                             }
-                        });                       
+                        });
+
+                        NetClient.WriteServiceData(new InvokeResult
+                        {
+                            Success = true
+                        });
+                    }
+                    else if(command.Type == CommandType.RegisterSerivce)
+                    {
+                        handleRegister(command , new VirtualServiceReception());
+                    }
+                    else
+                    {
+                        NetClient.WriteServiceData(new InvokeResult
+                        {
+                            Success = true
+                        });
                     }
                 }
                 catch(System.ObjectDisposedException)

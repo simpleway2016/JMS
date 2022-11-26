@@ -27,6 +27,10 @@ namespace JMS.Dtos
         /// 获取服务提供的方法信息
         /// </summary>
         GenerateServiceInfo = 8,
+        /// <summary>
+        /// http请求
+        /// </summary>
+        Http = 9
     }
     public class InvokeCommand
     {

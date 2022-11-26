@@ -83,6 +83,12 @@ namespace JMS
             this.Write(data);
         }
 
+        public void OutputHttp401()
+        {
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 401 NotAllow\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nConnection: keep-alive\r\n\r\n");
+            this.Write(data);
+        }
+
         /// <summary>
         /// 发送HealthyCheck命令，维持心跳
         /// </summary>

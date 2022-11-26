@@ -12,6 +12,7 @@ using System.Reflection;
 using JMS.RetryCommit;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace JMS.Applications
 {
@@ -51,7 +52,6 @@ namespace JMS.Applications
             {
                 try
                 {
-                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.ThreadLocalObject(cmd,serviceScope.ServiceProvider);
                     var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
                     object userContent = null;
@@ -64,8 +64,9 @@ namespace JMS.Applications
                         }
                     }
 
-                    controller = _controllerFactory.CreateController(serviceScope, controllerTypeInfo);
-                    controller.UserContent = userContent;
+                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent);
+
+                    controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                     controller.NetClient = netclient;
                     controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();
                     if (_logger != null && _logger.IsEnabled(LogLevel.Trace))
@@ -91,8 +92,6 @@ namespace JMS.Applications
                             userContent = auth.Authenticate(cmd.Header);
                         }
                     }
-
-                    MicroServiceControllerBase.Current = controller;
 
                     var parameterInfos = methodInfo.Method.GetParameters();
                     object result = null;
@@ -131,6 +130,20 @@ namespace JMS.Applications
 
                     }
                     result = methodInfo.Method.Invoke(controller, parameters);
+                    if (result is Task t)
+                    {
+                        t.Wait();
+
+                        if (methodInfo.ResultProperty != null)
+                        {
+                            result = methodInfo.ResultProperty.GetValue(t);
+                        }
+                        else
+                        {
+                            result = null;
+                        }
+                    }
+
                     controller.OnAfterAction(cmd.Method, parameters);
 
                     var supportTran = false;
@@ -235,7 +248,6 @@ namespace JMS.Applications
                 finally
                 {
                     netclient.ReadTimeout = originalTimeout;
-                    MicroServiceControllerBase.Current = null;
                     controller?.OnUnLoad();
                     MicroServiceControllerBase.RequestingObject.Value = null;
                 }

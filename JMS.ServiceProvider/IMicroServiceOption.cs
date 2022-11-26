@@ -50,7 +50,7 @@ namespace JMS
         /// 是否允许通过网关反向代理访问此服务器
         /// 默认可以通过 http://网关域名/服务名称/ 来访问
         /// </summary>
-        bool GatewayProxy
+        bool? GatewayProxy
         {
             get;set;
         }
