@@ -105,6 +105,7 @@ namespace JMS.Applications
 
             try
             {
+                netclient.ReadTimeout = 0;
                 using (IServiceScope serviceScope = _MicroServiceProvider.ServiceProvider.CreateScope())
                 {
                     MicroServiceControllerBase.RequestingObject.Value =
