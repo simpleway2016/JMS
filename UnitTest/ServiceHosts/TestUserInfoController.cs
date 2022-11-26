@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnitTest.ServiceHosts
@@ -95,7 +96,10 @@ namespace UnitTest.ServiceHosts
     {
         public override async Task OnConnected(WebSocket webSocket)
         {
-            await webSocket.SendString("hello");
+            Task.Run(async () => {
+                Thread.Sleep(1000);
+                await webSocket.SendString("hello");
+            });
             var ret = await webSocket.ReadString();
             await webSocket.SendString(ret);
             await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "abc", System.Threading.CancellationToken.None);

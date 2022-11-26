@@ -15,9 +15,9 @@ namespace JMS.GenerateCode
 {
     class CodeHelper
     {
-        public static ThreadLocal<Type> CurrentControllerType = new ThreadLocal<Type>();
-        public static ThreadLocal<Dictionary<Type, string>> CurrentCreatedSubTypes = new ThreadLocal<Dictionary<Type, string>>();
-        public static ThreadLocal<CodeTypeDeclaration> CurrentClassCode = new ThreadLocal<CodeTypeDeclaration>();
+        public static AsyncLocal<Type> CurrentControllerType = new AsyncLocal<Type>();
+        public static AsyncLocal<Dictionary<Type, string>> CurrentCreatedSubTypes = new AsyncLocal<Dictionary<Type, string>>();
+        public static AsyncLocal<CodeTypeDeclaration> CurrentClassCode = new AsyncLocal<CodeTypeDeclaration>();
 
         public static CodeMemberMethod GetCodeMethod(MethodInfo method, ParameterInfo[] parameters)
         {
