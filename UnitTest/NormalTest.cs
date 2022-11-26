@@ -644,35 +644,6 @@ namespace UnitTest
             if (clientWebsocket.CloseStatusDescription != "abc")
                 throw new Exception("error");
         }
-        public async Task test()
-        {
-            await Task.Delay(1000);
-        }
-
-        //[TestMethod]
-        public void test2()
-        {
-            Task.Run(async () => {
-                var method = typeof(NormalTest).GetMethod("test");
-
-                Type attType = typeof(AsyncStateMachineAttribute);
-
-                // Obtain the custom attribute for the method. 
-                // The value returned contains the StateMachineType property. 
-                // Null is returned if the attribute isn't present for the method. 
-                var attrib = method.GetCustomAttribute<AsyncStateMachineAttribute>();
-
-                var isAwaitable = method.ReturnType.GetMethod(nameof(Task.GetAwaiter)) != null;
-                var result = method.Invoke(this, new object[0]);
-                if(result is Task t)
-                {
-                    t.Wait();
-
-                    var p = method.ReturnType.GetProperty(nameof(Task<int>.Result));
-                }
-            });
-
-            Thread.Sleep(100000);
-        }
+      
     }
 }
