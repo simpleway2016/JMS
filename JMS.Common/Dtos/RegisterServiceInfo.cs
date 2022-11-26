@@ -112,6 +112,7 @@ namespace JMS.Dtos
         public int Port;
         public string Host;
         public string ServiceAddress;
+        public bool UseSsl;
         /// <summary>
         /// 支持的服务
         /// </summary>

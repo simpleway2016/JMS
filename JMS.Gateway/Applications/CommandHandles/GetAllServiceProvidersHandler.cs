@@ -54,6 +54,7 @@ namespace JMS.Applications.CommandHandles
                 ServiceNames = m.ServiceNames,
                 Description = m.Description,
                 MaxThread = m.MaxThread,
+                UseSsl = m.UseSsl,
                 PerformanceInfo = new PerformanceInfo
                 {
                     RequestQuantity = m.RequestQuantity,
