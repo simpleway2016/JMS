@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -15,7 +16,7 @@ namespace JMS.Applications.CommandHandles
         {
             _serviceProvider = serviceProvider;
         }
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             _serviceProvider.GetService<ClusterGatewayConnector>().SomeoneWantToBeMaster(netclient, cmd);
         }

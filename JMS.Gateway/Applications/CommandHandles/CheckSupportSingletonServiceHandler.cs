@@ -18,7 +18,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.CheckSupportSingletonService;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             netclient.WriteServiceData(new InvokeResult { Success = true});
         }

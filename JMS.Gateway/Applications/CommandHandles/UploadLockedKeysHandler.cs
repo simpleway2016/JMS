@@ -8,6 +8,7 @@ using JMS.Dtos;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -25,7 +26,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.UploadLockKeys;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             var keys = cmd.Content.FromJson<string[]>();
             var service = _registerServiceManager.GetServiceById(cmd.Header["ServiceId"]);

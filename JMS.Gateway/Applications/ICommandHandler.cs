@@ -2,12 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JMS.Applications
 {
     interface ICommandHandler
     {
         CommandType MatchCommandType { get; }
-        void Handle(NetClient netclient,GatewayCommand cmd);
+        Task Handle(NetClient netclient,GatewayCommand cmd);
     }
 }

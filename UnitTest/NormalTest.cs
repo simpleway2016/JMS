@@ -22,6 +22,7 @@ using UnitTest.ServiceHosts;
 
 namespace UnitTest
 {
+
     [TestClass]
     public class NormalTest
     {
@@ -35,6 +36,7 @@ namespace UnitTest
 
         Gateway _clusterGateway1;
         Gateway _clusterGateway2;
+
         public void StartGateway()
         {
             Task.Run(() =>
@@ -109,7 +111,9 @@ namespace UnitTest
 
                 services.AddLogging(loggingBuilder =>
                 {
+                    loggingBuilder.AddDebug();
                     loggingBuilder.AddConsole(); // 将日志输出到控制台
+                    loggingBuilder.SetMinimumLevel(LogLevel.Debug);
                 });
 
                 services.AddScoped<UserInfoDbContext>();
@@ -148,7 +152,9 @@ namespace UnitTest
 
                 services.AddLogging(loggingBuilder =>
                 {
+                    loggingBuilder.AddDebug();
                     loggingBuilder.AddConsole(); // 将日志输出到控制台
+                    loggingBuilder.SetMinimumLevel(LogLevel.Debug);
                 });
 
                 services.AddScoped<UserInfoDbContext>();
@@ -178,7 +184,9 @@ namespace UnitTest
 
                 services.AddLogging(loggingBuilder =>
                 {
+                    loggingBuilder.AddDebug();
                     loggingBuilder.AddConsole(); // 将日志输出到控制台
+                    loggingBuilder.SetMinimumLevel(LogLevel.Debug);
                 });
 
                 services.AddScoped<UserInfoDbContext>();
@@ -445,6 +453,7 @@ namespace UnitTest
         [TestMethod]
         public void TestCrashForLocal()
         {
+          
             TestCrashController.CanCrash = true;
             try
             {
@@ -469,8 +478,18 @@ namespace UnitTest
                    }
                 };
 
+            ServiceCollection services = new ServiceCollection();
+
+           services.AddLogging(loggingBuilder =>
+           {
+               loggingBuilder.AddDebug();
+               loggingBuilder.AddConsole(); // 将日志输出到控制台
+               loggingBuilder.SetMinimumLevel(LogLevel.Debug);
+            });
+            var serviceProvider = services.BuildServiceProvider();
+
             string tranid;
-            using (var client = new RemoteClient(gateways))
+            using (var client = new RemoteClient(gateways,null, serviceProvider.GetService<ILogger<RemoteClient>>()))
             {
                 var serviceClient = client.TryGetMicroService("UserInfoService");
                 while (serviceClient == null)
@@ -500,14 +519,18 @@ namespace UnitTest
                 }
 
             }
-
+            DateTime starttime = DateTime.Now;
             while(File.Exists($"./$$_JMS.Invoker.Transactions/{tranid}.json"))
             {
+                if ((DateTime.Now - starttime).TotalSeconds > 80)
+                    throw new Exception("超时");
                 Thread.Sleep(1000);
             }
 
             if (UserInfoDbContext.FinallyUserName != "Jack" || TestCrashController.FinallyText != "abc")
                 throw new Exception("结果不正确");
+
+            ThreadPool.GetAvailableThreads(out int w, out int c);
         }
 
         /// <summary>

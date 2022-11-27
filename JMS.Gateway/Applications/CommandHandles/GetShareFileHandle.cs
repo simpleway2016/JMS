@@ -11,6 +11,7 @@ using System.Net;
 using System.Threading;
 using System.IO;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -29,7 +30,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.GetShareFile;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             var filepath = cmd.Content;
             var root = _configuration.GetValue<string>("ShareFolder");
@@ -38,7 +39,7 @@ namespace JMS.Applications.CommandHandles
             _logger?.LogDebug("getting file:{0}" , filepath);
             if (File.Exists(filepath))
             {
-                byte[] data = File.ReadAllBytes(filepath);
+                byte[] data = await File.ReadAllBytesAsync(filepath);
 
                 netclient.WriteServiceData(new InvokeResult
                 {

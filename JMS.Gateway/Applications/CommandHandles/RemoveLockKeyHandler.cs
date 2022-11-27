@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using JMS.Dtos;
 using Org.BouncyCastle.Utilities.IO.Pem;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -26,7 +27,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.RemoveLockKey;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             while (true)
             {               
@@ -41,7 +42,7 @@ namespace JMS.Applications.CommandHandles
                 {
                     _lockKeyManager.RemoveKey(cmd.Content);
                 }
-                cmd = netclient.ReadServiceObject<GatewayCommand>();
+                cmd = await netclient.ReadServiceObjectAsync<GatewayCommand>();
             }
 
             netclient.WriteServiceData(new InvokeResult

@@ -23,7 +23,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.GetAllServiceProviders;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             var locations = this.List(cmd.Content);
             if (cmd.IsHttp)

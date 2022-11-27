@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net;
 using JMS.Domains;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -23,7 +24,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.RegisterSerivce;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             string[] allowips = _configuration.GetSection("AllowIps").Get<string[]>();
             if(allowips != null && allowips.Length > 0 && allowips.Contains(((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString()) == false)
@@ -34,11 +35,11 @@ namespace JMS.Applications.CommandHandles
                     Success = false,
                     Error = "not allow"
                 });
-                return;
+                return Task.CompletedTask;
             }
 
             var serviceClient = _serviceProvider.GetService<IMicroServiceReception>();
-            serviceClient.HealthyCheck(netclient , cmd);
+            return serviceClient.HealthyCheck(netclient , cmd);
         }
     }
 }

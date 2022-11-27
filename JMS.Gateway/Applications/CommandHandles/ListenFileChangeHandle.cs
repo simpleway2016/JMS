@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -24,9 +25,9 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.ListenFileChange;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public Task Handle(NetClient netclient, GatewayCommand cmd)
         {
-            _serviceProvider.GetService<ListenFileChangeReception>().Handle(netclient, cmd);
+            return _serviceProvider.GetService<ListenFileChangeReception>().Handle(netclient, cmd);
 
         }
     }

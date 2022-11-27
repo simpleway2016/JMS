@@ -2,13 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JMS.Domains
 {
     public interface IMicroServiceReception
     {
         RegisterServiceInfo ServiceInfo { get; set; }
-        void HealthyCheck(NetClient netclient, GatewayCommand registerCmd);
+        Task HealthyCheck(NetClient netclient, GatewayCommand registerCmd);
         void Close();
     }
 }

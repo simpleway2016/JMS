@@ -32,7 +32,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.HttpRequest;
 
-        public void Handle(NetClient client, GatewayCommand cmd)
+        public async Task Handle(NetClient client, GatewayCommand cmd)
         {
             if (_manager == null)
             {
@@ -100,12 +100,12 @@ namespace JMS.Applications.CommandHandles
                 && cmd.Header.TryGetValue("Upgrade",out string upgrade) 
                 && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
             {
-                HttpProxy.WebSocketProxy(client, _serviceProviderAllocator, requestPathLine, requestPath, cmd);
+                await HttpProxy.WebSocketProxy(client, _serviceProviderAllocator, requestPathLine, requestPath, cmd);
             }
             else
             {
                 //以代理形式去做中转
-                HttpProxy.Proxy(client, _serviceProviderAllocator, requestPathLine, requestPath, contentLength, cmd);
+                await HttpProxy.Proxy(client, _serviceProviderAllocator, requestPathLine, requestPath, contentLength, cmd);
                 //HttpProxy.Redirect(client ,_serviceProviderAllocator, requestPath);
             }
         }

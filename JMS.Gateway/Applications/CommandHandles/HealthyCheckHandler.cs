@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -17,7 +18,7 @@ namespace JMS.Applications.CommandHandles
             _serviceProvider = serviceProvider;
             _gateway = _serviceProvider.GetService<Gateway>();
         }
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             netclient.ReadTimeout = 30000;
             while (!_gateway.Disposed)
@@ -25,7 +26,7 @@ namespace JMS.Applications.CommandHandles
                 netclient.WriteServiceData(new InvokeResult { 
                     Success = true
                 });
-                netclient.ReadServiceObject<GatewayCommand>();                
+                await netclient.ReadServiceObjectAsync<GatewayCommand>();                
             }
         }
     }

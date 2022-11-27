@@ -299,6 +299,11 @@ namespace JMS
         /// <param name="serviceProvider"></param>
         public void Run(IServiceProvider serviceProvider)
         {
+            ThreadPool.GetMinThreads(out int w, out int c);
+            if(c < 500)
+            {
+                ThreadPool.SetMinThreads(500,500);
+            }
             ServiceProvider = serviceProvider;
             //if (ServicePort == 0)
             //    return;

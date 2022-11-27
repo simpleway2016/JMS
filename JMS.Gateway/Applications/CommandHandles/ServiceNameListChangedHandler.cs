@@ -26,7 +26,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.ServiceNameListChanged;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             var info = cmd.Content.FromJson<RegisterServiceInfo>();
            var service = _RegisterServiceManager.GetServiceById(info.ServiceId);

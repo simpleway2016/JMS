@@ -14,7 +14,7 @@ namespace JMS.Infrastructures
     internal class HttpProxy
     {
         
-        public static void WebSocketProxy(NetClient client, IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, GatewayCommand cmd)
+        public static async Task WebSocketProxy(NetClient client, IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, GatewayCommand cmd)
         {
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
             if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
@@ -72,10 +72,10 @@ namespace JMS.Infrastructures
             if (proxyClient == null)
             {
                 proxyClient = new NetClient();
-                proxyClient.Connect(hostUri.Host, hostUri.Port);
+                await proxyClient.ConnectAsync(hostUri.Host, hostUri.Port);
                 if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
                 {
-                    proxyClient.AsSSLClient(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
+                   await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
                 }
                 client.PairClient = proxyClient;
             }
@@ -125,14 +125,14 @@ namespace JMS.Infrastructures
             //发送头部到服务器
             proxyClient.Write(data);
 
-            Task.Run(() => {
+            Task.Run(async () => {
                 byte[] recData = new byte[4096];
                 int readed;
                 try
                 {
                     while (true)
                     {
-                        readed = proxyClient.InnerStream.Read(recData, 0, recData.Length);
+                        readed = await proxyClient.InnerStream.ReadAsync(recData, 0, recData.Length);
                         client.InnerStream.Write(recData, 0, readed);
                     }
                 }
@@ -146,13 +146,13 @@ namespace JMS.Infrastructures
             int readed;
             while (true)
             {
-                readed = client.InnerStream.Read(recData, 0, recData.Length);
+                readed = await client.InnerStream.ReadAsync(recData, 0, recData.Length);
                 proxyClient.InnerStream.Write(recData, 0, readed);
             }
         }
 
 
-        public static void Proxy(NetClient client,IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, int inputContentLength, GatewayCommand cmd)
+        public static async Task Proxy(NetClient client,IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, int inputContentLength, GatewayCommand cmd)
         {
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
             if (cmd.Header.TryGetValue("X-Forwarded-For",out string xff))
@@ -181,7 +181,7 @@ namespace JMS.Infrastructures
             {
                 if (inputContentLength > 0)
                 {
-                    client.ReadData(new byte[inputContentLength], 0, inputContentLength);
+                    await client.ReadDataAsync(new byte[inputContentLength], 0, inputContentLength);
                 }
                 client.OutputHttpNotFund();
                 return;
@@ -213,10 +213,10 @@ namespace JMS.Infrastructures
             if (proxyClient == null)
             {
                 proxyClient = new NetClient();
-                proxyClient.Connect(hostUri.Host, hostUri.Port);
+                await proxyClient.ConnectAsync(hostUri.Host, hostUri.Port);
                 if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
                 {
-                    proxyClient.AsSSLClient(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
+                    await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
                 }
                 client.PairClient = proxyClient;
             }
@@ -269,7 +269,7 @@ namespace JMS.Infrastructures
             {
                 //发送upload数据到服务器
                 data = new byte[inputContentLength];
-                client.ReadData(data, 0, inputContentLength);
+                await client.ReadDataAsync(data, 0, inputContentLength);
                 proxyClient.Write(data);
             }
 
@@ -298,7 +298,7 @@ namespace JMS.Infrastructures
             if (inputContentLength > 0)
             {
                 data = new byte[inputContentLength];
-                proxyClient.ReadData(data, 0, inputContentLength);
+                await proxyClient.ReadDataAsync(data, 0, inputContentLength);
                 client.Write(data);
             }
             else if (headers.TryGetValue("Transfer-Encoding" , out string transferEncoding) && transferEncoding == "chunked")
@@ -317,7 +317,7 @@ namespace JMS.Infrastructures
                     else
                     {
                         data = new byte[inputContentLength];
-                        proxyClient.ReadData(data, 0, inputContentLength);
+                        await proxyClient.ReadDataAsync(data, 0, inputContentLength);
                         client.InnerStream.Write(data,0,inputContentLength);
 
                         line = proxyClient.ReadLine();

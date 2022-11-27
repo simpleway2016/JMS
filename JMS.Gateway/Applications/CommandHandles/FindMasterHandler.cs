@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net;
 using Microsoft.CodeAnalysis;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -26,7 +27,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.FindMaster;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             if (cmd.IsHttp)
             {

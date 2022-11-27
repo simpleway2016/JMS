@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading;
 using JMS.Dtos;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -25,7 +26,7 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.LockKey;
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             var info = cmd.Content.FromJson<LockKeyInfo>();
             if(info.IsUnlock && info.MicroServiceId == "$$$")

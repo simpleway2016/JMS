@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS.Domains
@@ -40,7 +41,7 @@ namespace JMS.Domains
             }            
         }
 
-        public void Handle(NetClient client,GatewayCommand cmd)
+        public async Task Handle(NetClient client,GatewayCommand cmd)
         {
             try
             {
@@ -54,7 +55,7 @@ namespace JMS.Domains
                         {
                             Success = true
                         });
-                        client.ReadServiceObject<InvokeResult>();
+                        await client.ReadServiceObjectAsync<InvokeResult>();
                     }
                     else
                     {
@@ -73,7 +74,7 @@ namespace JMS.Domains
                                 byte[] data = null;
                                 try
                                 {
-                                    data = File.ReadAllBytes(fullpath);
+                                    data = await File.ReadAllBytesAsync(fullpath);
 
                                 }
                                 catch (Exception ex)
@@ -90,7 +91,7 @@ namespace JMS.Domains
                                 
                                 client.Write(data.Length);
                                 client.Write(data);
-                                client.ReadServiceObject<InvokeResult>();
+                                await client.ReadServiceObjectAsync<InvokeResult>();
                             }
                         }
 

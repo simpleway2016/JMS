@@ -6,6 +6,7 @@ using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using JMS.Dtos;
+using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -41,7 +42,7 @@ namespace JMS.Applications.CommandHandles
             }
         }
 
-        public void Handle(NetClient netclient, GatewayCommand cmd)
+        public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             if (cmd.Header == null)
             {

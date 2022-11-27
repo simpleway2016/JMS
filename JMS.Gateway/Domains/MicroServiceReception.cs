@@ -38,14 +38,14 @@ namespace JMS.Domains
             _Logger = logger;
             _lockKeyManager = lockKeyManager;
         }
-        public void HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
+        public Task HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
             handleRegister(registerCmd , this);
             if (this.ServiceInfo == null)
-                return;
+                return Task.CompletedTask;
 
-            checkState();
+            return checkState();
         }
 
         void handleRegister(GatewayCommand registerCmd,MicroServiceReception reception)
@@ -95,14 +95,14 @@ namespace JMS.Domains
 
             NetClient?.Dispose();
         }
-        void checkState()
+        async Task checkState()
         {
             NetClient.ReadTimeout = 30000;
             while(!_closed)
             {
                 try
                 {
-                    var command = NetClient.ReadServiceObject<GatewayCommand>();                    
+                    var command = await NetClient.ReadServiceObjectAsync<GatewayCommand>();                    
 
                     if (command.Type == CommandType.ReportClientConnectQuantity)
                     {                       

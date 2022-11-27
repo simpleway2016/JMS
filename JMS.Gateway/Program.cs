@@ -13,6 +13,7 @@ using System.Diagnostics;
 using Natasha.CSharp;
 using JMS.Applications;
 using JMS.Infrastructures;
+using System.Threading;
 
 namespace JMS
 {
@@ -28,6 +29,11 @@ namespace JMS
             }
             //固定当前工作目录
             System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+            ThreadPool.GetMinThreads(out int w, out int c);
+            if (c < 500)
+            {
+                ThreadPool.SetMinThreads(500, 500);
+            }
 
             var builder = new ConfigurationBuilder();
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);

@@ -12,6 +12,7 @@ using System.Web;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using JMS.Applications.CommandHandles;
+using System.Threading.Tasks;
 
 namespace JMS.Applications
 {
@@ -38,13 +39,10 @@ namespace JMS.Applications
             return true;
         }
 
-        GatewayCommand GetRequestCommand(NetClient client)
+        async Task<GatewayCommand> GetRequestCommand(NetClient client)
         {
-            // var cmd = client.ReadServiceObject<GatewayCommand>();
             byte[] data = new byte[4];
-            int readed = client.InnerStream.Read(data, 0, data.Length);
-            if (readed < 4)
-                return null;
+            await client.ReadDataAsync(data, 0, data.Length);
 
             var text = Encoding.UTF8.GetString(data);
             if( text == "GET " || text == "POST")
@@ -53,11 +51,13 @@ namespace JMS.Applications
             }
             else
             {
-                return Encoding.UTF8.GetString(client.ReadServiceDataBytes(BitConverter.ToInt32(data))).FromJson<GatewayCommand>();
+                var len = BitConverter.ToInt32(data);
+                data = await client.ReadServiceDataBytesAsync(len);
+                return Encoding.UTF8.GetString(data).FromJson<GatewayCommand>();
             }    
         }
 
-        public void Interview(Socket socket)
+        public async void Interview(Socket socket)
         {
             try
             {
@@ -66,21 +66,21 @@ namespace JMS.Applications
                     if (_gateway.ServerCert != null)
                     {
                         var sslts = new SslStream(client.InnerStream , false , new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
-                        sslts.AuthenticateAsServer(_gateway.ServerCert, true,  NetClient.SSLProtocols , false);
+                        await sslts.AuthenticateAsServerAsync(_gateway.ServerCert, true,  NetClient.SSLProtocols , false);
                         client.InnerStream = sslts;
                     }
 
                     while (true)
                     {
-                        var cmd = GetRequestCommand(client);
+                        var cmd = await GetRequestCommand(client);
                         if (cmd == null)
                         {
                             client.Write(Encoding.UTF8.GetBytes("ok"));
                             return;
                         }
-                        _logger?.LogDebug("type:{0} content:{1}", cmd.Type, cmd.Content);
+                        _logger?.LogTrace("type:{0} content:{1}", cmd.Type, cmd.Content);
 
-                        _manager.AllocHandler(cmd)?.Handle(client, cmd);
+                        await _manager.AllocHandler(cmd)?.Handle(client, cmd);
 
                         if (client.HasSocketException || !client.KeepAlive)
                             break;
