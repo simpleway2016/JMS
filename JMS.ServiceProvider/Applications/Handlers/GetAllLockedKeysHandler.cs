@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
+using System.Threading.Tasks;
 
 namespace JMS.Applications
 {
@@ -18,7 +19,7 @@ namespace JMS.Applications
 
         public InvokeType MatchType => InvokeType.GetAllLockedKeys;
 
-        public void Handle(NetClient netclient, InvokeCommand cmd)
+        public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {            
             netclient.WriteServiceData(new InvokeResult { 
                 Success = true,

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS.Applications
@@ -9,6 +10,6 @@ namespace JMS.Applications
     interface IRequestHandler
     {
         InvokeType MatchType { get; }
-        void Handle(NetClient netclient, InvokeCommand cmd);
+        Task Handle(NetClient netclient, InvokeCommand cmd);
     }
 }

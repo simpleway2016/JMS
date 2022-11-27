@@ -11,6 +11,7 @@ using System.Linq;
 using JMS.Dtos;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
+using System.Threading.Tasks;
 
 namespace JMS.Applications
 {
@@ -54,40 +55,39 @@ namespace JMS.Applications
             return true;
         }
 
-        InvokeCommand GetRequestCommand(NetClient client)
+        async Task<InvokeCommand> GetRequestCommand(NetClient client)
         {
             byte[] data = new byte[4];
-            int readed = client.InnerStream.Read(data, 0, data.Length);
-            if (readed < 4)
-                return null;
+            await client.ReadDataAsync(data, 0, data.Length);
 
             var text = Encoding.UTF8.GetString(data);
             if (text == "GET " || text == "POST")
             {
-                return new InvokeCommand { Type =  InvokeType.Http, Service = text };
+                return new InvokeCommand { Type = InvokeType.Http, Service = text };
             }
             else
             {
-                return Encoding.UTF8.GetString(client.ReadServiceDataBytes(BitConverter.ToInt32(data))).FromJson<InvokeCommand>();
+                data = await client.ReadServiceDataBytesAsync(BitConverter.ToInt32(data));
+                return Encoding.UTF8.GetString(data).FromJson<InvokeCommand>();
             }
         }
 
-        public void Interview(Socket socket)
+        public async void Interview(Socket socket)
         {
             try
-            {                
+            {
                 using (var netclient = new NetClient(socket))
                 {
                     if (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     {
                         var sslts = new SslStream(netclient.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
-                        sslts.AuthenticateAsServer(_SSLConfiguration.ServerCertificate, true, NetClient.SSLProtocols, false);
+                        await sslts.AuthenticateAsServerAsync(_SSLConfiguration.ServerCertificate, true, NetClient.SSLProtocols, false);
                         netclient.InnerStream = sslts;
                     }
 
                     while (true)
                     {
-                        var cmd = GetRequestCommand(netclient);
+                        var cmd = await GetRequestCommand(netclient);
                         if (cmd == null)
                         {
                             netclient.Write(Encoding.UTF8.GetBytes("ok"));
@@ -99,7 +99,7 @@ namespace JMS.Applications
                         _connectionCounter.OnConnect();
                         try
                         {
-                            _cache[cmd.Type].Handle(netclient, cmd);
+                            await _cache[cmd.Type].Handle(netclient, cmd);
                         }
                         catch
                         {

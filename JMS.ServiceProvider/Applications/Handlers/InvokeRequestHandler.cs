@@ -42,7 +42,7 @@ namespace JMS.Applications
         public InvokeType MatchType => InvokeType.Invoke;
         static string LastInvokingMsgString;
         static DateTime LastInvokingMsgStringTime = DateTime.Now.AddDays(-1);
-        public void Handle(NetClient netclient, InvokeCommand cmd)
+        public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
             var originalTimeout = netclient.ReadTimeout;
             TransactionDelegate transactionDelegate = null;
@@ -130,16 +130,15 @@ namespace JMS.Applications
 
                     }
                     result = methodInfo.Method.Invoke(controller, parameters);
-                    if (result is Task t)
+                    if (result is Task || result is ValueTask)
                     {
-                        t.Wait();
-
-                        if (methodInfo.ResultProperty != null)
+                        if (methodInfo.Method.ReturnType.IsGenericType)
                         {
-                            result = methodInfo.ResultProperty.GetValue(t);
+                            result = await (dynamic)result;
                         }
                         else
                         {
+                            await (dynamic)result;
                             result = null;
                         }
                     }
@@ -193,7 +192,7 @@ namespace JMS.Applications
                     {
                         netclient.ReadTimeout = 0;
                         transactionDelegate.UserContent = controller.UserContent;
-                        transactionDelegate.WaitForCommand(_gatewayConnector, _faildCommitBuilder, netclient, _loggerTran);
+                        await transactionDelegate.WaitForCommandAsync(_gatewayConnector, _faildCommitBuilder, netclient, _loggerTran);
                         transactionDelegate = null;
                     }
                 }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JMS
 {
@@ -17,6 +18,8 @@ namespace JMS
         /// </summary>
         /// <param name="tranid"></param>
         /// <returns></returns>
+        Task<bool> CheckTransactionAsync(string tranid);
+
         bool CheckTransaction(string tranid);
     }
 }

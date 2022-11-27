@@ -77,6 +77,27 @@ namespace JMS.Domains
             }
         }
 
+        /// <summary>
+        /// 检查事务是否已成功
+        /// </summary>
+        /// <param name="tranid"></param>
+        /// <returns></returns>
+        public async Task<bool> CheckTransactionAsync(string tranid)
+        {
+            using (var netclient = this.CreateClient(_microServiceHost.MasterGatewayAddress))
+            {
+
+                netclient.WriteServiceData(new GatewayCommand
+                {
+                    Type = CommandType.GetTransactionStatus,
+                    Content = tranid
+                });
+
+                var ret = await netclient.ReadServiceObjectAsync<InvokeResult>();
+                return ret.Success;
+            }
+        }
+
         public void ConnectAsync()
         {
             new Thread(connect).Start();

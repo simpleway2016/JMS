@@ -55,7 +55,7 @@ namespace JMS.Applications
             
         }
 
-        public void Handle(NetClient netclient, InvokeCommand cmd)
+        public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
             cmd.Header = new Dictionary<string, string>();
             var urlLine = ReadHeaders(cmd.Service, netclient, cmd.Header);
@@ -112,7 +112,7 @@ namespace JMS.Applications
                         new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
 
                     var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
-                    controller.OnConnected(websocket).Wait();
+                    await controller.OnConnected(websocket);
                 }
             }
             catch (Exception)

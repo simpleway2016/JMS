@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
 using JMS.RetryCommit;
+using System.Threading.Tasks;
 
 namespace JMS.Applications
 {
@@ -20,7 +21,7 @@ namespace JMS.Applications
 
         public InvokeType MatchType => InvokeType.RetryTranaction;
 
-        public void Handle(NetClient netclient, InvokeCommand cmd)
+        public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
             var tranid = cmd.Header["TranId"];
             string tranFlag = null;

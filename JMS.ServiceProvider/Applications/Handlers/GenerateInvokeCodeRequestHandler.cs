@@ -9,6 +9,7 @@ using System.Text;
 using Way.Lib;
 using JMS.Infrastructures;
 using JMS.GenerateCode;
+using System.Threading.Tasks;
 
 namespace JMS.Applications
 {
@@ -52,7 +53,7 @@ namespace JMS.Applications
             }
         }
 
-        public void Handle(NetClient netclient, InvokeCommand cmd)
+        public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
             //if( !IsDebug )
             //{

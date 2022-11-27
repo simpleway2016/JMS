@@ -251,20 +251,23 @@ namespace JMS.RetryCommit
                         }
 
                     }
-                    result = methodInfo.Method.Invoke(controller, parameters);
-                    if (result is Task t)
-                    {
-                        t.Wait();
 
-                        if (methodInfo.ResultProperty != null)
+                    Task.Run(async () => {
+                        result = methodInfo.Method.Invoke(controller, parameters);
+                        if (result is Task || result is ValueTask)
                         {
-                            result = methodInfo.ResultProperty.GetValue(t);
+                            if (methodInfo.Method.ReturnType.IsGenericType)
+                            {
+                                result = await (dynamic)result;
+                            }
+                            else
+                            {
+                                await (dynamic)result;
+                                result = null;
+                            }
                         }
-                        else
-                        {
-                            result = null;
-                        }
-                    }
+                    }).Wait();
+                   
 
                     controller.OnAfterAction(cmd.Method, parameters);
                     if (transactionDelegate != null && (transactionDelegate.CommitAction != null || transactionDelegate.RollbackAction != null))

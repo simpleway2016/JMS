@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS
@@ -41,14 +42,14 @@ namespace JMS
         internal bool Handled { get; set; }
 
 
-        internal void WaitForCommand(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient,ILogger logger)
+        internal async Task WaitForCommandAsync(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient,ILogger logger)
         {
             InvokeCommand cmd;
             try
             {
                 while (true)
                 {
-                    cmd = netclient.ReadServiceObject<InvokeCommand>();
+                    cmd = await netclient.ReadServiceObjectAsync<InvokeCommand>();
                     switch (cmd.Type)
                     {
                         case InvokeType.CommitTranaction:
@@ -66,7 +67,7 @@ namespace JMS
             catch (SocketException)
             {
                 Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
-                if (gatewayConnector.CheckTransaction(this.TransactionId))
+                if (await gatewayConnector.CheckTransactionAsync(this.TransactionId))
                 {
                     //网关告知事务已成功，需要提交事务
                     this.CommitAction();

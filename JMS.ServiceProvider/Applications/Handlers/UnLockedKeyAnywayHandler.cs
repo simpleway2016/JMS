@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
+using System.Threading.Tasks;
 
 namespace JMS.Applications
 {
@@ -18,9 +19,9 @@ namespace JMS.Applications
 
         public InvokeType MatchType => InvokeType.UnlockKeyAnyway;
 
-        public void Handle(NetClient netclient, InvokeCommand cmd)
+        public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
-            _keyLocker.UnLockAnyway(cmd.Method);
+            await _keyLocker.UnLockAnywayAsync(cmd.Method);
             netclient.WriteServiceData(new InvokeResult { Success = true});
         }
     }
