@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS.ServiceProvider.AspNetCore
@@ -43,14 +44,14 @@ namespace JMS.ServiceProvider.AspNetCore
         internal bool Handled { get; set; }
 
 
-        internal void WaitForCommand(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
+        internal async Task WaitForCommandAsync(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
         {
             string cmd;
             try
             {
                 while (true)
                 {
-                    cmd = netClient.ReadServiceData();
+                    cmd = await netClient.ReadServiceDataAsync();
                     switch (cmd)
                     {
                         case "commit":

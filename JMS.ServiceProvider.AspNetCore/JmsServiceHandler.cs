@@ -29,7 +29,7 @@ namespace JMS.ServiceProvider.AspNetCore
 {
     internal class JmsServiceHandler
     {
-        public static bool Handle(IApplicationBuilder app, HttpContext context)
+        public static async Task<bool> Handle(IApplicationBuilder app, HttpContext context)
         {
             using (var netClient = new NetClient(new ConnectionStream(context)))
             {
@@ -38,9 +38,9 @@ namespace JMS.ServiceProvider.AspNetCore
                 context.Request.Headers.TryGetValue("TranFlag", out StringValues tranFlag);
 
                 var supportTran = !(supportTransactionStrs.Count > 0 && supportTransactionStrs[0] == "0");
-                ApiTransactionDelegate.CurrentTranId.Value = (tranIds[0] , tranFlag.Count == 0? null : tranFlag[0]);
+                ApiTransactionDelegate.CurrentTranId.Value = (tranIds[0], tranFlag.Count == 0 ? null : tranFlag[0]);
 
-                var parametersStrArr = netClient.ReadServiceData().FromJson<string[]>();
+                var parametersStrArr = (await netClient.ReadServiceDataAsync()).FromJson<string[]>();
 
                 var controllerFactory = app.ApplicationServices.GetService<ControllerFactory>();
 
@@ -118,14 +118,13 @@ namespace JMS.ServiceProvider.AspNetCore
                         var result = desc.MethodInfo.Invoke(controller, parameters);
                         if (result is Task t)
                         {
-                            t.Wait();
-
                             if (desc.MethodInfo.ReturnType.IsGenericType)
                             {
-                                result = desc.MethodInfo.ReturnType.GetProperty(nameof(Task<int>.Result)).GetValue(t);
+                                result = await (dynamic)result;
                             }
                             else
                             {
+                                await (dynamic)result;
                                 result = null;
                             }
                         }
@@ -141,7 +140,7 @@ namespace JMS.ServiceProvider.AspNetCore
                             {
                                 result = jret.Value;
                             }
-                            else if(result is IActionResult)
+                            else if (result is IActionResult)
                                 throw new Exception("不支持返回值类型" + result.GetType().FullName);
                         }
                         else
@@ -186,7 +185,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
                         var failbuilder = app.ApplicationServices.GetService<ApiFaildCommitBuilder>();
                         var gatewayConnector = app.ApplicationServices.GetService<IGatewayConnector>();
-                        tranDelegate.WaitForCommand(gatewayConnector, failbuilder, netClient, app.ApplicationServices.GetService<ILogger>());
+                        await tranDelegate.WaitForCommandAsync(gatewayConnector, failbuilder, netClient, app.ApplicationServices.GetService<ILogger>());
 
 
                     }

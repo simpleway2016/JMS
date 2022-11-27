@@ -201,12 +201,51 @@ namespace UnitTest
             }
         }
 
+        public async Task hello()
+        {
+            var tid = Thread.CurrentThread.ManagedThreadId;
+            Debug.WriteLine($"线程id:{tid}");
+
+            await Task.Delay(10000);
+
+            var tid2 = Thread.CurrentThread.ManagedThreadId;
+            if (tid == tid2)
+                throw new Exception("一样");
+        }
+
         [TestMethod]
         public void SocketTest()
         {
-            NetStream client = new NetStream("127.0.0.1", 5255);
-            client.Socket.Send(new byte[0]);
+            Task.Run(async () => {
+                var tid = Thread.CurrentThread.ManagedThreadId;
+                Debug.WriteLine($"线程id:{tid}");
 
+                Task.Run(() => {
+                    for (int i = 0; i < 10000; i++)
+                    {
+                        Thread.Sleep(1);
+                        Task.Run(() => {
+                            var webclient = new WebClient();
+                            try
+                            {
+                                var data = webclient.DownloadData("https://www.baidu.com");
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        });
+                    }
+                });
+
+                var t2 = this.hello();
+                t2.Wait();
+
+                var tid2 = Thread.CurrentThread.ManagedThreadId;
+                if (tid == tid2)
+                    throw new Exception("一样");
+                Debug.WriteLine($"线程id:{tid} {tid2}");
+            }).Wait();
+            Thread.Sleep(3000000);
         }
 
         int errcount = 0;

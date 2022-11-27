@@ -93,7 +93,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 ConnectionCounter.OnConnect();
                 try
                 {
-                    if (HttpHandler.Handle(app, context) == false)
+                    if (await HttpHandler.Handle(app, context) == false)
                     {
                         await next();
                     }

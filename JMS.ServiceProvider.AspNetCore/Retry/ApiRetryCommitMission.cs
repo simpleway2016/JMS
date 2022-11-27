@@ -206,7 +206,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
         }
 
-        void retry(HttpContext context, RequestInfo requestInfo, object userContent)
+        async void retry(HttpContext context, RequestInfo requestInfo, object userContent)
         {
             if(userContent != null)
             {
@@ -243,14 +243,13 @@ namespace JMS.ServiceProvider.AspNetCore
                     var result = desc.MethodInfo.Invoke(controller, parameters);
                     if (result is Task t)
                     {
-                        t.Wait();
-
                         if (desc.MethodInfo.ReturnType.IsGenericType)
                         {
-                            result = desc.MethodInfo.ReturnType.GetProperty(nameof(Task<int>.Result)).GetValue(t);
+                            result = await (dynamic)result;
                         }
                         else
                         {
+                            await (dynamic)result;
                             result = null;
                         }
                     }

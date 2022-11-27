@@ -12,13 +12,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS.ServiceProvider.AspNetCore
 {
     internal class JmsRetryHandler
     {
-        public static bool Handle(IApplicationBuilder app, HttpContext context)
+        public static async Task<bool> Handle(IApplicationBuilder app, HttpContext context)
         {
             using (var netClient = new NetClient(new ConnectionStream(context)))
             {

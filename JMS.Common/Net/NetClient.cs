@@ -178,6 +178,22 @@ namespace JMS
             return datas;
         }
 
+        public async Task<byte[]> ReadServiceDataBytesAsync(int flag)
+        {
+            if (flag == 1179010630)
+                return new byte[0];
+
+            var isgzip = (flag & 1) == 1;
+            this.KeepAlive = (flag & 2) == 2;
+            var len = flag >> 2;
+            var datas = new byte[len];
+            await this.ReadDataAsync(datas, 0, datas.Length);
+
+            if (isgzip)
+                datas = GZipHelper.Decompress(datas);
+            return datas;
+        }
+
         public byte[] ReadServiceDataBytes()
         {
             try
@@ -193,6 +209,42 @@ namespace JMS
             }
         }
 
+        /// <summary>
+        /// 读取指定数量的数据
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        public virtual async Task ReadDataAsync(byte[] data,int offset,int count)
+        {
+            int readed;
+            while(count > 0)
+            {
+                readed = await this.InnerStream.ReadAsync(data, offset, count);
+                count -= readed;
+                offset += readed;
+            }
+        }
+
+
+        public async Task<byte[]> ReadServiceDataBytesAsync()
+        {
+            try
+            {
+                byte[] data = new byte[4];
+                await this.ReadDataAsync(data, 0, data.Length);
+                var flag = BitConverter.ToInt32(data);
+                return await ReadServiceDataBytesAsync(flag);
+            }
+            catch (System.IO.IOException ex)
+            {
+                if (ex.InnerException is SocketException)
+                    throw ex.InnerException;
+                throw ex;
+            }
+        }
+
         public  string ReadServiceData()
         {
             var data = ReadServiceDataBytes();
@@ -201,9 +253,32 @@ namespace JMS
             return Encoding.UTF8.GetString(data);
         }
 
+        public async Task<string> ReadServiceDataAsync()
+        {
+            var data = await ReadServiceDataBytesAsync();
+            if (data.Length == 0)
+                return null;
+            return Encoding.UTF8.GetString(data);
+        }
+
         public  T ReadServiceObject<T>()
         {
             var datas = ReadServiceDataBytes();
+            string str = Encoding.UTF8.GetString(datas);
+            try
+            {
+                return str.FromJson<T>();
+            }
+            catch (Exception ex)
+            {
+                throw new ConvertException(str, $"无法将{str}实例化为{typeof(T).FullName}，" + ex.ToString());
+            }
+
+        }
+
+        public async Task<T> ReadServiceObjectAsync<T>()
+        {
+            var datas = await ReadServiceDataBytesAsync();
             string str = Encoding.UTF8.GetString(datas);
             try
             {
@@ -252,6 +327,46 @@ namespace JMS
             else
             {
                 this.WriteServiceData(Encoding.UTF8.GetBytes(value.ToJsonString()));
+            }
+
+        }
+
+        public unsafe Task WriteServiceDataAsync(byte[] data)
+        {
+            //第一位表示gzip，第二位表示keepclient
+            int flag = 0;
+
+            if (data.Length > CompressionMinSize)
+            {
+                data = GZipHelper.Compress(data);
+                flag = 1;
+            }
+
+            if (KeepAlive)
+                flag |= 2;
+
+            byte[] tosend = new byte[data.Length + 4];
+            flag |= (data.Length << 2);
+
+            fixed (byte* ptrData = data)
+            {
+                Marshal.Copy(new IntPtr(ptrData), tosend, 4, data.Length);
+            }
+
+            byte* ptr = (byte*)&flag;
+            Marshal.Copy(new IntPtr(ptr), tosend, 0, 4);
+
+            return this.InnerStream.WriteAsync(tosend,0,tosend.Length);
+        }
+        public Task WriteServiceDataAsync(object value)
+        {
+            if (value == null)
+            {
+                return this.WriteServiceDataAsync(new byte[0]);
+            }
+            else
+            {
+                return this.WriteServiceDataAsync(Encoding.UTF8.GetBytes(value.ToJsonString()));
             }
 
         }

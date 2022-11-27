@@ -16,6 +16,7 @@ using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Way.Lib;
 
@@ -24,7 +25,7 @@ namespace JMS.ServiceProvider.AspNetCore
     internal class HttpHandler
     {
         
-        public static bool Handle(IApplicationBuilder app, HttpContext context)
+        public static Task<bool> Handle(IApplicationBuilder app, HttpContext context)
         {
             if (context.Request.Headers.TryGetValue("Protocol", out StringValues value))
             {
@@ -38,12 +39,12 @@ namespace JMS.ServiceProvider.AspNetCore
                 }
                 else
                 {
-                    return false;
+                    return Task.FromResult(false);
                 }
             }
             else
             {
-                return false;
+                return Task.FromResult(false);
             }
         }
 
