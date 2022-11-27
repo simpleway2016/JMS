@@ -201,16 +201,10 @@ namespace UnitTest
             }
         }
 
-        public async Task hello()
+        public async ValueTask hello()
         {
-            var tid = Thread.CurrentThread.ManagedThreadId;
-            Debug.WriteLine($"线程id:{tid}");
-
             await Task.Delay(10000);
 
-            var tid2 = Thread.CurrentThread.ManagedThreadId;
-            if (tid == tid2)
-                throw new Exception("一样");
         }
 
         [TestMethod]
@@ -238,7 +232,11 @@ namespace UnitTest
                 });
 
                 var t2 = this.hello();
-                t2.Wait();
+                if(t2 is Task)
+                {
+                    await t2;
+                }
+                
 
                 var tid2 = Thread.CurrentThread.ManagedThreadId;
                 if (tid == tid2)

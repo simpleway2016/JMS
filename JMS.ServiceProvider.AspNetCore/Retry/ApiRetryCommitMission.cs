@@ -241,7 +241,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
                     actionFilterProcessor.OnActionExecuting();
                     var result = desc.MethodInfo.Invoke(controller, parameters);
-                    if (result is Task t)
+                    if (result is Task || result is ValueTask)
                     {
                         if (desc.MethodInfo.ReturnType.IsGenericType)
                         {
