@@ -40,7 +40,8 @@ namespace JMS.Proxy
             }
             _logger?.LogDebug("收到转发{0} {1}", target.Address, target.Port);
 
-            _targetClient = new CertClient(target, _proxy.ClientCert);
+            _targetClient = new CertClient(_proxy.ClientCert);
+            _targetClient.Connect(target);
             _targetClient.ReadTimeout = 0;
 
             new Thread(readTarget).Start();
@@ -53,10 +54,10 @@ namespace JMS.Proxy
                 if (buffer.Length < len)
                     buffer = new byte[len];
 
-                _client.ReceiveDatas(buffer , 0 , len);
+                _client.ReadData(buffer , 0 , len);
 
                 _targetClient.Write(flag);
-                _targetClient.Write(buffer, 0, len);
+                _targetClient.InnerStream.Write(buffer, 0, len);
             }
         }
 
@@ -72,10 +73,10 @@ namespace JMS.Proxy
                     if (buffer.Length < len)
                         buffer = new byte[len];
 
-                    _targetClient.ReceiveDatas(buffer, 0, len);
+                    _targetClient.ReadData(buffer, 0, len);
 
                     _client.Write(flag);
-                    _client.Write(buffer, 0, len);
+                    _client.InnerStream.Write(buffer, 0, len);
                 }
             }
             catch (System.IO.IOException ex)

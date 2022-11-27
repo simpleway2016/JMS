@@ -75,7 +75,8 @@ namespace JMS
             _logger?.LogInformation("准备断开网关");
             try
             {
-                var client = new NetClient(_microServiceHost.MasterGatewayAddress);
+                var client = new NetClient();
+                client.Connect(_microServiceHost.MasterGatewayAddress);
                 client.WriteServiceData(new GatewayCommand
                 {
                     Type = CommandType.UnRegisterSerivce,

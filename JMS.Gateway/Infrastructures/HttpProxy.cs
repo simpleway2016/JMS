@@ -71,7 +71,8 @@ namespace JMS.Infrastructures
             NetClient proxyClient = client.PairClient;
             if (proxyClient == null)
             {
-                proxyClient = new NetClient(hostUri.Host, hostUri.Port);
+                proxyClient = new NetClient();
+                proxyClient.Connect(hostUri.Host, hostUri.Port);
                 if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
                 {
                     proxyClient.AsSSLClient(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
@@ -180,7 +181,7 @@ namespace JMS.Infrastructures
             {
                 if (inputContentLength > 0)
                 {
-                    client.ReceiveDatas(new byte[inputContentLength], 0, inputContentLength);
+                    client.ReadData(new byte[inputContentLength], 0, inputContentLength);
                 }
                 client.OutputHttpNotFund();
                 return;
@@ -211,7 +212,8 @@ namespace JMS.Infrastructures
             NetClient proxyClient = client.PairClient;
             if (proxyClient == null)
             {
-                proxyClient = new NetClient(hostUri.Host, hostUri.Port);
+                proxyClient = new NetClient();
+                proxyClient.Connect(hostUri.Host, hostUri.Port);
                 if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
                 {
                     proxyClient.AsSSLClient(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
@@ -267,7 +269,7 @@ namespace JMS.Infrastructures
             {
                 //发送upload数据到服务器
                 data = new byte[inputContentLength];
-                client.ReceiveDatas(data, 0, inputContentLength);
+                client.ReadData(data, 0, inputContentLength);
                 proxyClient.Write(data);
             }
 
@@ -296,7 +298,7 @@ namespace JMS.Infrastructures
             if (inputContentLength > 0)
             {
                 data = new byte[inputContentLength];
-                proxyClient.ReceiveDatas(data, 0, inputContentLength);
+                proxyClient.ReadData(data, 0, inputContentLength);
                 client.Write(data);
             }
             else if (headers.TryGetValue("Transfer-Encoding" , out string transferEncoding) && transferEncoding == "chunked")
@@ -315,7 +317,7 @@ namespace JMS.Infrastructures
                     else
                     {
                         data = new byte[inputContentLength];
-                        proxyClient.ReceiveDatas(data, 0, inputContentLength);
+                        proxyClient.ReadData(data, 0, inputContentLength);
                         client.InnerStream.Write(data,0,inputContentLength);
 
                         line = proxyClient.ReadLine();

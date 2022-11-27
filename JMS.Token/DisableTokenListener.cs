@@ -65,7 +65,8 @@ namespace JMS.Token
                         CertClient client = null;
                         try
                         {
-                            client = new CertClient(_serverAddress, _serverPort, _cert);
+                            client = new CertClient(_cert);
+                            client.Connect(_serverAddress, _serverPort);
                             client.Write(888);
                             len = client.ReadInt();
                             if (len != 4)
@@ -89,10 +90,13 @@ namespace JMS.Token
                         }
 
 
-                        client = new CertClient(_serverAddress,_serverPort, _cert);
+                        client = new CertClient(_cert);
+                        client.Connect(_serverAddress, _serverPort);
                         client.Write(999);
                         len = client.ReadInt();
-                        var keyvalue = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
+                        var buffer = new byte[len];
+                        client.ReadData(buffer, 0, len);
+                        var keyvalue = Encoding.UTF8.GetString(buffer).FromJson<string[]>();
                         TokenClient.ServerKeys.AddOrUpdate((_serverAddress, _serverPort), keyvalue, (k, o) => keyvalue);
 
                         printedErr = false;
@@ -104,7 +108,9 @@ namespace JMS.Token
                             {
                                 var expireTime = client.ReadLong();
                                 len = client.ReadInt();
-                                var token = Encoding.UTF8.GetString(client.ReceiveDatas(len));
+                                buffer = new byte[len];
+                                client.ReadData(buffer, 0, buffer.Length);
+                                var token = Encoding.UTF8.GetString(buffer);
                                 _disableTokens.TryAdd(token, expireTime);
                                 TokenClient.Logger?.LogDebug("Token:{0}被作废", token);
                             }

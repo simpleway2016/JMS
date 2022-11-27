@@ -40,8 +40,9 @@ namespace JMS
         /// <param name="localFilePath">保存到本地的路径</param>
         public void GetGatewayShareFile( string filepath, string localFilePath )
         {
-            using (var client = new CertClient(_gatewayAddress, _gatewayClientCert))
+            using (var client = new CertClient(_gatewayClientCert))
             {
+                client.Connect(_gatewayAddress);
                 client.WriteServiceData(new GatewayCommand
                 {
                     Type = CommandType.GetShareFile,
@@ -53,8 +54,9 @@ namespace JMS
                     throw new Exception(ret.Error);
 
                 int len = ret.Data.GetValueOrDefault();
-                var data = client.ReceiveDatas(len);
- 
+                var data = new byte[len];
+                client.ReadData(data, 0, len );
+
                 File.WriteAllBytes(localFilePath, data);
             }
         }
@@ -88,8 +90,9 @@ namespace JMS
             {
                 try
                 {
-                    using (var client = new CertClient( _gatewayAddress , _gatewayClientCert))
+                    using (var client = new CertClient(_gatewayClientCert))
                     {
+                        client.Connect(_gatewayAddress);
                         client.WriteServiceData(new GatewayCommand { 
                             Type = CommandType.ListenFileChange,
                             Content = _dict.Keys.ToJsonString()
@@ -104,7 +107,9 @@ namespace JMS
                                 string filepath = ret.Data;
                                 _logger?.LogInformation("文件映射系统收到新的文件:{0}",filepath);
                                 int len = client.ReadInt();
-                                var data = client.ReceiveDatas(len);
+                                var data = new byte[len];
+                                client.ReadData(data,0,len);
+
                                 try
                                 {
                                     var item = _dict[filepath];

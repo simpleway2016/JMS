@@ -66,7 +66,7 @@ namespace JMS.Applications.CommandHandles
             {
                 if (contentLength > 0)
                 {
-                    client.ReceiveDatas(new byte[contentLength], 0, contentLength);
+                    client.ReadData(new byte[contentLength], 0, contentLength);
                 }
 
                 requestPath = requestPath.Substring(2);

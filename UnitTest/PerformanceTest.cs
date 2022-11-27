@@ -48,7 +48,8 @@ namespace UnitTest
             {
                 try
                 {
-                    var client = new NetClient("127.0.0.1", _gateWayPort);
+                    var client = new NetClient();
+                    client.Connect("127.0.0.1", _gateWayPort);
                     client.Dispose();
 
                     break;
@@ -201,20 +202,24 @@ namespace UnitTest
             }
         }
 
+        AsyncLocal<int> testObj = new AsyncLocal<int>();
         public async ValueTask hello()
         {
+           
             await Task.Delay(10000);
-
+            var t = testObj.Value;
         }
 
         [TestMethod]
         public void SocketTest()
         {
+          
             Task.Run(async () => {
                 var tid = Thread.CurrentThread.ManagedThreadId;
                 Debug.WriteLine($"线程id:{tid}");
-
+                testObj.Value = 1;
                 Task.Run(() => {
+                  
                     for (int i = 0; i < 10000; i++)
                     {
                         Thread.Sleep(1);
@@ -232,11 +237,8 @@ namespace UnitTest
                 });
 
                 var t2 = this.hello();
-                if(t2 is Task)
-                {
-                    await t2;
-                }
-                
+                await t2;
+
 
                 var tid2 = Thread.CurrentThread.ManagedThreadId;
                 if (tid == tid2)
@@ -292,7 +294,8 @@ namespace UnitTest
                         if((DateTime.Now - lasttime).TotalSeconds > 20)
                         {
                             lasttime = DateTime.Now;
-                            client = new NetClient(addr);
+                            client = new NetClient();
+                            client.Connect(addr);
                             client.KeepAlive = true;
                         }
                         else
@@ -308,7 +311,7 @@ namespace UnitTest
                         Interlocked.Increment(ref connectCount);
 
                         client.Write(new byte[3] { 0x1, 0x2, 0x3 });
-                        int c = client.Read(new byte[3]);
+                        int c = client.InnerStream.Read(new byte[3]);
                         if (c == 0)
                             throw new Exception("data err");
 

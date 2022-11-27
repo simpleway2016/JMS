@@ -78,7 +78,8 @@ namespace UnitTest
             {
                 try
                 {
-                    var client = new NetClient("127.0.0.1", port);
+                    var client = new NetClient();
+                    client.Connect("127.0.0.1", port);
                     client.Dispose();
 
                     break;

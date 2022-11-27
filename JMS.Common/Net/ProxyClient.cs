@@ -21,16 +21,42 @@ namespace JMS
         /// 
         /// </summary>
         /// <param name="proxyAddr">代理地址，如果为null，则直接访问目标服务器</param>
-        /// <param name="targetAddr">目标服务器地址</param>
         /// <param name="cert">访问代理服务器的客户端证书</param>
-        public ProxyClient(NetAddress proxyAddr,NetAddress targetAddr, X509Certificate2 cert) : base(proxyAddr == null ? targetAddr:proxyAddr, cert)
+        public ProxyClient(NetAddress proxyAddr,X509Certificate2 cert) : base(cert)
         {
             this.ProxyAddress = proxyAddr;
-            this.Address = targetAddr.Address;
-            this.Port = targetAddr.Port;
-            if(proxyAddr != null)
-                this.WriteServiceData(targetAddr);
         }
-       
+
+        public override void Connect(string address, int port)
+        {
+            if(this.ProxyAddress != null)
+            {
+                base.Connect(this.ProxyAddress.Address, this.ProxyAddress.Port);
+                this.Address = address;
+                this.Port = port;
+                this.WriteServiceData(new NetAddress(address, port));
+            }
+            else
+            {
+                base.Connect(address, port);
+            }
+           
+        }
+
+        public override async Task ConnectAsync(string address, int port)
+        {
+            if (this.ProxyAddress != null)
+            {
+                await base.ConnectAsync(this.ProxyAddress.Address, this.ProxyAddress.Port);
+                this.Address = address;
+                this.Port = port;
+                this.WriteServiceData(new NetAddress(address, port));
+            }
+            else
+            {
+                await base.ConnectAsync(address, port);
+            }
+        }
+
     }
 }

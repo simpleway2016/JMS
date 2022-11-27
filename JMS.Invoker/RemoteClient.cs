@@ -110,8 +110,9 @@ namespace JMS
         /// <returns></returns>
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
-            using (var netclient = new ProxyClient( this.ProxyAddress, GatewayAddress, GatewayClientCertificate))
+            using (var netclient = new ProxyClient( this.ProxyAddress, GatewayClientCertificate))
             {
+                netclient.Connect(GatewayAddress);
                 netclient.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.GetAllServiceProviders,
@@ -155,8 +156,9 @@ namespace JMS
         /// <param name="key"></param>
         public void UnLockKeyAnyway(NetAddress serviceAddress,string key)
         {
-            using (var netclient = new ProxyClient(this.ProxyAddress, serviceAddress, ServiceClientCertificate))
+            using (var netclient = new ProxyClient(this.ProxyAddress, ServiceClientCertificate))
             {
+                netclient.Connect(serviceAddress);
                 netclient.WriteServiceData(new InvokeCommand()
                 {
                     Type = InvokeType.UnlockKeyAnyway,
@@ -173,8 +175,9 @@ namespace JMS
         /// <returns></returns>
         public string[] GetLockedKeys(NetAddress serviceAddress)
         {
-            using (var netclient = new ProxyClient(this.ProxyAddress, serviceAddress, ServiceClientCertificate))
+            using (var netclient = new ProxyClient(this.ProxyAddress, ServiceClientCertificate))
             {
+                netclient.Connect(serviceAddress);
                 netclient.WriteServiceData(new InvokeCommand()
                 {
                     Type = InvokeType.GetAllLockedKeys,
@@ -239,8 +242,9 @@ namespace JMS
                     try
                     {
                         var addr = _allGateways[i];
-                        using (var client = new ProxyClient(this.ProxyAddress, addr, GatewayClientCertificate))
+                        using (var client = new ProxyClient(this.ProxyAddress,GatewayClientCertificate))
                         {
+                            client.Connect(addr);
                             client.ReadTimeout = this.Timeout;
                             client.WriteServiceData(new GatewayCommand
                             {

@@ -69,10 +69,13 @@ namespace JMS.Token
             }
             else
             {
-                CertClient client = new CertClient(key.addr, key.port, _cert);
+                CertClient client = new CertClient( _cert);
+                client.Connect(key.addr, key.port);
                 client.Write(1);
                 var len = client.ReadInt();
-                value = Encoding.UTF8.GetString(client.ReceiveDatas(len)).FromJson<string[]>();
+                var data = new byte[len];
+                client.ReadData(data, 0, len);
+                value = Encoding.UTF8.GetString(data).FromJson<string[]>();
             }
             ServerKeys.AddOrUpdate(key, value, (k, old) => value);
         }
@@ -186,9 +189,10 @@ namespace JMS.Token
 
             expireTime = tokendata.e;
 
-            CertClient client = new CertClient(_serverAddr, _cert);
+            CertClient client = new CertClient(_cert);
             try
             {
+                client.Connect(_serverAddr);
                 client.Write(2);
                 client.Write(expireTime);
                 var data = Encoding.UTF8.GetBytes(token);

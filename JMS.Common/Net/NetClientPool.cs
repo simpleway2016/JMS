@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace JMS
 {
@@ -70,6 +71,10 @@ namespace JMS
         {
             return CreateClient(proxy, new NetAddress(ip, port), cert,newClientCallback);
         }
+        public static Task<NetClient> CreateClientAsync(NetAddress proxy, string ip, int port, X509Certificate2 cert, Action<NetClient> newClientCallback = null)
+        {
+            return CreateClientAsync(proxy, new NetAddress(ip, port), cert, newClientCallback);
+        }
         public static NetClient CreateClient(NetAddress proxy, NetAddress addr, X509Certificate2 cert, Action<NetClient> newClientCallback = null)
         {
             var key = (addr.Address,addr.Port);
@@ -83,7 +88,31 @@ namespace JMS
             var freeitem = GetFree(array);
             if (freeitem == null)
             {
-                freeitem = new ProxyClient(proxy, addr, cert);
+                freeitem = new ProxyClient(proxy, cert);
+                freeitem.Connect(addr.Address, addr.Port);
+                freeitem.KeepAlive = array.Any(m => m.Client == null);
+                newClientCallback?.Invoke(freeitem);
+                CreatedNewClient?.Invoke(null, freeitem);
+            }
+
+            return freeitem;
+        }
+
+        public static async Task<NetClient> CreateClientAsync(NetAddress proxy, NetAddress addr, X509Certificate2 cert, Action<NetClient> newClientCallback = null)
+        {
+            var key = (addr.Address, addr.Port);
+            NetClientSeat[] array;
+            if (Dict.TryGetValue(key, out array) == false)
+            {
+                Dict.TryAdd(key, GetArray());
+                array = Dict[key];
+            }
+
+            var freeitem = GetFree(array);
+            if (freeitem == null)
+            {
+                freeitem = new ProxyClient(proxy, cert);
+                await freeitem.ConnectAsync(addr.Address, addr.Port);
                 freeitem.KeepAlive = array.Any(m => m.Client == null);
                 newClientCallback?.Invoke(freeitem);
                 CreatedNewClient?.Invoke(null, freeitem);

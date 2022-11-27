@@ -115,10 +115,77 @@ namespace JMS
 
 
         }
-        public Task<T> InvokeAsync<T>(string method, IRemoteClient tran, params object[] parameter)
+        public async Task<T> InvokeAsync<T>(string method, IRemoteClient tran, params object[] parameters)
         {
             var headers = tran.GetCommandHeader();
-            return Task.Run(() => Invoke<T>(method, tran, headers, parameter));
+
+            if (tran == null)
+            {
+                throw new ArgumentNullException("tran");
+            }
+            InvokingInfo.MethodName = method;
+            InvokingInfo.Parameters = parameters;
+
+            _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
+            try
+            {
+                _client.ReadTimeout = tran.Timeout;
+                Command = new InvokeCommand()
+                {
+                    Header = headers,
+                    Service = InvokingInfo.ServiceName,
+                    Method = method,
+                    Parameters = parameters.Length == 0 ? null :
+                                    parameters.GetStringArrayParameters()
+                };
+
+
+                _client.WriteServiceData(Command);
+                var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>();
+                if (result.Success == false)
+                {
+                    this.AddClientToPool();
+                    throw new RemoteException(tran.TransactionId, result.Error);
+                }
+
+
+                if (result.SupportTransaction)
+                    tran.AddConnect(this);
+                else
+                {
+                    this.AddClientToPool();
+                    this.Dispose();
+                }
+
+                return result.Data;
+            }
+            catch (ConvertException ex)
+            {
+                InvokeResult<string> otherObj = null;
+                try
+                {
+                    otherObj = ex.Source.FromJson<InvokeResult<string>>();
+                }
+                catch
+                {
+
+                }
+
+                if (otherObj.Success == false)
+                {
+                    throw new RemoteException(tran.TransactionId, otherObj.Error);
+                }
+
+                if (otherObj != null)
+                    throw new ConvertException(otherObj.Data, $"无法将{ex.Source}里面的Data实例化为{typeof(T).FullName}");
+
+                throw ex;
+            }
+            catch (Exception)
+            {
+                this.Dispose();
+                throw;
+            }
         }
 
         public InvokeResult GoReadyCommit(IRemoteClient tran)

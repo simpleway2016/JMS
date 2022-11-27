@@ -13,7 +13,7 @@ using Way.Lib;
 
 namespace JMS
 {
-    public class NetClient:Way.Lib.NetStream
+    public class NetClient:BaseNetClient
     {
         public const SslProtocols SSLProtocols = SslProtocols.Tls12;
         /// <summary>
@@ -21,24 +21,13 @@ namespace JMS
         /// </summary>
         const int CompressionMinSize = 2048;
         public bool KeepAlive { get; set; }
-        public string Address { get; protected set; }
-        public int Port { get; protected set; }
+      
         public NetClient PairClient { get; set; }
-        public NetClient(NetAddress addr) : base(addr.Address, addr.Port)
-        {
-            this.Address = addr.Address;
-            this.Port = addr.Port;
-            this.ReadTimeout = 16000;
-        }
-        public NetClient(string ip,int port) : base(ip,port)
-        {
-            this.Address = ip;
-            this.Port = port;
-            this.ReadTimeout = 16000;
+        public NetClient(){
+            
         }
         public NetClient(Socket socket):base(socket)
         {
-            this.ReadTimeout = 16000;
         }
 
         public NetClient(Stream stream) : base(stream)
@@ -46,14 +35,14 @@ namespace JMS
 
         }
 
-        protected override void Dispose(bool disposing)
+        public override void Dispose()
         {
             if(PairClient != null)
             {
                 PairClient.Dispose();
                 PairClient = null;
             }
-            base.Dispose(disposing);
+            base.Dispose();
         }
 
         /// <summary>
@@ -172,7 +161,8 @@ namespace JMS
             var isgzip = (flag & 1) == 1;
             this.KeepAlive = (flag & 2) == 2;
             var len = flag >> 2;
-            var datas = this.ReceiveDatas(len);
+            var datas = new byte[len];
+            this.ReadData(datas, 0, len);
             if (isgzip)
                 datas = GZipHelper.Decompress(datas);
             return datas;
@@ -198,7 +188,9 @@ namespace JMS
         {
             try
             {
-                var flag = this.ReadInt();
+                byte[] data = new byte[4];
+                this.ReadData(data, 0, data.Length);
+                var flag = BitConverter.ToInt32(data);
                 return ReadServiceDataBytes(flag);
             }
             catch(System.IO.IOException ex)
@@ -207,6 +199,24 @@ namespace JMS
                     throw ex.InnerException;
                 throw ex;
             }
+        }
+        public int ReadInt()
+        {
+            byte[] data = new byte[4];
+            this.ReadData(data, 0, data.Length);
+            return BitConverter.ToInt32(data);
+        }
+        public long ReadLong()
+        {
+            byte[] data = new byte[8];
+            this.ReadData(data, 0, data.Length);
+            return BitConverter.ToInt64(data);
+        }
+        public bool ReadBoolean()
+        {
+            byte[] bs = new byte[1];
+            this.InnerStream.Read(bs, 0, bs.Length);
+            return BitConverter.ToBoolean(bs, 0);
         }
 
         /// <summary>
@@ -222,6 +232,17 @@ namespace JMS
             while(count > 0)
             {
                 readed = await this.InnerStream.ReadAsync(data, offset, count);
+                count -= readed;
+                offset += readed;
+            }
+        }
+
+        public virtual void ReadData(byte[] data, int offset, int count)
+        {
+            int readed;
+            while (count > 0)
+            {
+                readed = this.InnerStream.Read(data, offset, count);
                 count -= readed;
                 offset += readed;
             }

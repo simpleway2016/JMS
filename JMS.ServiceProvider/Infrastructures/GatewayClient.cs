@@ -9,7 +9,7 @@ namespace JMS.Infrastructures
 {
     class GatewayClient : CertClient
     {
-        public GatewayClient(NetAddress addr,SSLConfiguration sSLConfiguration):base(addr , sSLConfiguration != null ? sSLConfiguration.GatewayClientCertificate : null )
+        public GatewayClient(SSLConfiguration sSLConfiguration):base(sSLConfiguration != null ? sSLConfiguration.GatewayClientCertificate : null )
         {
         }
     }
