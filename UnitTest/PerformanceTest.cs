@@ -213,38 +213,8 @@ namespace UnitTest
         [TestMethod]
         public void SocketTest()
         {
-            Task.Run(async () => {
-                var tid = Thread.CurrentThread.ManagedThreadId;
-                Debug.WriteLine($"线程id:{tid}");
-                testObj.Value = 1;
-                Task.Run(() => {
-                  
-                    for (int i = 0; i < 10000; i++)
-                    {
-                        Thread.Sleep(1);
-                        Task.Run(() => {
-                            var webclient = new WebClient();
-                            try
-                            {
-                                var data = webclient.DownloadData("https://www.baidu.com");
-                            }
-                            catch (Exception)
-                            {
-                            }
-                        });
-                    }
-                });
-
-                var t2 = this.hello();
-                await t2;
-
-
-                var tid2 = Thread.CurrentThread.ManagedThreadId;
-                if (tid == tid2)
-                    throw new Exception("一样");
-                Debug.WriteLine($"线程id:{tid} {tid2}");
-            }).Wait();
-            Thread.Sleep(3000000);
+            byte[] bs = BitConverter.GetBytes(false);
+            
         }
 
         int errcount = 0;

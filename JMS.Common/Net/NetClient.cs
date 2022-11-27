@@ -220,9 +220,12 @@ namespace JMS
         }
         public bool ReadBoolean()
         {
-            byte[] bs = new byte[1];
-            this.InnerStream.Read(bs, 0, bs.Length);
-            return BitConverter.ToBoolean(bs, 0);
+            return this.InnerStream.ReadByte() == 1;
+        }
+
+        public void Write(bool value)
+        {
+            this.InnerStream.WriteByte(value ? (byte)0x1:(byte)0x0);
         }
 
         /// <summary>

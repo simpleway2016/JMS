@@ -9,8 +9,8 @@ namespace JMS.TokenServer
 {
     class ClientReception
     {
-        NetStream _netStream;
-        public ClientReception(NetStream netStream)
+        NetClient _netStream;
+        public ClientReception(NetClient netStream)
         {
             this._netStream = netStream;
         }

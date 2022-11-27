@@ -98,21 +98,21 @@ namespace JMS.TokenServer
             }
             return true;
         }
-        static void onSocket(Socket socket)
+        static async void onSocket(Socket socket)
         {
-            Way.Lib.NetStream client = null;
+            NetClient client = null;
             try
             {
-                client = new Way.Lib.NetStream(socket);
+                client = new NetClient(socket);
                 client.ReadTimeout = 0;
                 if (ServerCert != null)
                 {
                     var sslts = new SslStream(client.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
-                    sslts.AuthenticateAsServer(ServerCert, true, NetClient.SSLProtocols, false);
+                    await sslts.AuthenticateAsServerAsync(ServerCert, true, NetClient.SSLProtocols, false);
                     client.InnerStream = sslts;
                 }
                
-                var flag = client.ReadInt();
+                var flag = await client.ReadIntAsync();
                 if (flag == 0 || flag == 1179010630)//健康检查
                 {
                     client.Write(Encoding.UTF8.GetBytes("ok"));
@@ -121,13 +121,16 @@ namespace JMS.TokenServer
                 { 
                     //data里面前面四个字节包含了长度,所以不用先Write(数据长度)
                     client.Write(data);
-                    client.ReadInt();
+                    await client.ReadIntAsync();
                 }
                 else if (flag == 2) //disable token
                 {
                     var expireTimeLong = client.ReadLong();//utc过期时间
-                    var len = client.ReadInt();                    
-                    var token = System.Text.Encoding.UTF8.GetString( client.ReceiveDatas(len));
+                    var len = client.ReadInt();
+                    var data = new byte[len];
+                    await client.ReadDataAsync(data, 0, len);
+
+                    var token = System.Text.Encoding.UTF8.GetString(data);
                     _ClientManager.DisableToken(token, expireTimeLong);
                     client.Write(true);
                 }
@@ -135,7 +138,7 @@ namespace JMS.TokenServer
                 {
                     client.Write(4);
                     client.Write(888);
-                    client.ReadInt();
+                    await client.ReadIntAsync();
                 }
                 else if(flag == 999)
                 { 

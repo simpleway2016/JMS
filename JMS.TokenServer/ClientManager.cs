@@ -31,7 +31,7 @@ namespace JMS.TokenServer
             }).Start();
         }
 
-        public ClientReception AddClient(NetStream netStream)
+        public ClientReception AddClient(NetClient netStream)
         {
             var client = new ClientReception(netStream);
             _clients.TryAdd(client, true);
