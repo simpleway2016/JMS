@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Way.Lib;
 using System.Linq;
+using System.Threading;
 
 namespace JMS.TokenServer
 {
@@ -39,10 +40,16 @@ namespace JMS.TokenServer
 
         static void Main(string[] args)
         {
+            ThreadPool.GetMinThreads(out int w, out int c);
+            if (c < 100)
+            {
+                ThreadPool.SetMinThreads(100, 100);
+            }
+
             var builder = new ConfigurationBuilder();
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
             var configuration = builder.Build();
-
+           
             var port = configuration.GetValue<int>("Port");
 
             ServiceCollection services = new ServiceCollection();

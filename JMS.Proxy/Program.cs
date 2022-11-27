@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Threading;
 
 namespace JMS.Proxy
 {
@@ -9,6 +10,12 @@ namespace JMS.Proxy
     {
         static void Main(string[] args)
         {
+            ThreadPool.GetMinThreads(out int w, out int c);
+            if (c < 500)
+            {
+                ThreadPool.SetMinThreads(500, 500);
+            }
+
             var builder = new ConfigurationBuilder();
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
             var configuration = builder.Build();
