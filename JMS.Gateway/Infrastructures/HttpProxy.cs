@@ -2,6 +2,7 @@
 using Org.BouncyCastle.Crypto.Tls;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
@@ -124,30 +125,20 @@ namespace JMS.Infrastructures
             var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
             //发送头部到服务器
             proxyClient.Write(data);
+           
+            readAndSend(proxyClient.InnerStream, client.InnerStream);
 
-            Task.Run(async () => {
-                byte[] recData = new byte[4096];
-                int readed;
-                try
-                {
-                    while (true)
-                    {
-                        readed = await proxyClient.InnerStream.ReadAsync(recData, 0, recData.Length);
-                        client.InnerStream.Write(recData, 0, readed);
-                    }
-                }
-                catch 
-                {
-                }
-            });
+            await readAndSend(client.InnerStream, proxyClient.InnerStream);
+        }
 
-
+        static async Task readAndSend(Stream readStream ,Stream writeStream)
+        {
             byte[] recData = new byte[4096];
             int readed;
             while (true)
             {
-                readed = await client.InnerStream.ReadAsync(recData, 0, recData.Length);
-                proxyClient.InnerStream.Write(recData, 0, readed);
+                readed = await readStream.ReadAsync(recData, 0, recData.Length);
+                writeStream.Write(recData, 0, readed);
             }
         }
 

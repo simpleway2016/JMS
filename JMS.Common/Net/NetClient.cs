@@ -206,6 +206,12 @@ namespace JMS
             this.ReadData(data, 0, data.Length);
             return BitConverter.ToInt32(data);
         }
+        public async Task<int> ReadIntAsync()
+        {
+            byte[] data = new byte[4];
+            await this.ReadDataAsync(data, 0, data.Length);
+            return BitConverter.ToInt32(data);
+        }
         public long ReadLong()
         {
             byte[] data = new byte[8];

@@ -222,36 +222,33 @@ namespace UnitTest
                    }
                 };
 
-            while (true)
+            UserInfoDbContext.Reset();
+            using (var client = new RemoteClient(gateways))
             {
-                UserInfoDbContext.Reset();
-                using (var client = new RemoteClient(gateways))
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
                 {
-                    var serviceClient = client.TryGetMicroService("UserInfoService");
-                    while (serviceClient == null)
-                    {
-                        Thread.Sleep(10);
-                        serviceClient = client.TryGetMicroService("UserInfoService");
-                    }
-
-                    client.BeginTransaction();
-                    serviceClient.Invoke("CheckTranId");
-                    serviceClient.Invoke("SetUserName", "Jack");
-                    serviceClient.Invoke("SetAge", 28);
-                    serviceClient.InvokeAsync("SetFather", "Tom");
-                    serviceClient.InvokeAsync("SetMather", "Lucy");
-
-                    client.CommitTransaction();
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
                 }
 
-                Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName}");
+                client.BeginTransaction();
+                serviceClient.Invoke("CheckTranId");
+                serviceClient.Invoke("SetUserName", "Jack");
+                serviceClient.Invoke("SetAge", 28);
+                serviceClient.InvokeAsync("SetFather", "Tom");
+                serviceClient.InvokeAsync("SetMather", "Lucy");
 
-                if (UserInfoDbContext.FinallyUserName != "Jack" ||
-                    UserInfoDbContext.FinallyAge != 28 ||
-                    UserInfoDbContext.FinallyFather != "Tom" ||
-                    UserInfoDbContext.FinallyMather != "Lucy")
-                    throw new Exception("结果不正确");
+                client.CommitTransaction();
             }
+
+            Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName}");
+
+            if (UserInfoDbContext.FinallyUserName != "Jack" ||
+                UserInfoDbContext.FinallyAge != 28 ||
+                UserInfoDbContext.FinallyFather != "Tom" ||
+                UserInfoDbContext.FinallyMather != "Lucy")
+                throw new Exception("结果不正确");
         }
 
         [TestMethod]
