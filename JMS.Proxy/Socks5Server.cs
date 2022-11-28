@@ -10,14 +10,12 @@ using System.Threading.Tasks;
 
 namespace JMS.Proxy
 {
-    class Proxy
+    class Socks5Server
     {
-        public X509Certificate2 ServerCert { get; set; }
-        public X509Certificate2 ClientCert { get; set; }
-        public string[] AcceptCertHash { get; set; }
+
         public IServiceProvider ServiceProvider { get; }
-        ILogger<Proxy> _logger;
-        public Proxy(IServiceProvider serviceProvider,ILogger<Proxy> logger)
+        ILogger<Socks5Server> _logger;
+        public Socks5Server(IServiceProvider serviceProvider,ILogger<Socks5Server> logger)
         {
             this.ServiceProvider = serviceProvider;
             _logger = logger;

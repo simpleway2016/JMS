@@ -202,18 +202,11 @@ namespace UnitTest
             }
         }
 
-        AsyncLocal<int> testObj = new AsyncLocal<int>();
-        public async ValueTask hello()
-        {
-           
-            await Task.Delay(10000);
-            var t = testObj.Value;
-        }
-
+      
         [TestMethod]
         public void SocketTest()
         {
-            byte[] bs = BitConverter.GetBytes(false);
+           
             
         }
 

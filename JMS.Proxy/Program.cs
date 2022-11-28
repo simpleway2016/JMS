@@ -6,9 +6,9 @@ using System.Threading;
 
 namespace JMS.Proxy
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             ThreadPool.GetMinThreads(out int w, out int c);
             if (c < 500)
@@ -20,7 +20,15 @@ namespace JMS.Proxy
             builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
             var configuration = builder.Build();
 
-            var port = configuration.GetValue<int>("Port");
+            int port;
+            if(args.Length > 0)
+            {
+                port = int.Parse(args[0]);
+            }
+            else
+            {
+                port = configuration.GetValue<int>("Port");
+            }
 
             ServiceCollection services = new ServiceCollection();
             services.AddLogging(loggingBuilder =>
@@ -30,25 +38,11 @@ namespace JMS.Proxy
             });
             services.AddSingleton<IConfiguration>(configuration);
 
-            services.AddSingleton<Proxy>();
+            services.AddSingleton<Socks5Server>();
             services.AddSingleton<RequestHandler>();
             var serviceProvider = services.BuildServiceProvider();
 
-            var proxy = serviceProvider.GetService<Proxy>();
-            //SSL
-            var certPath = configuration.GetValue<string>("SSL:ServerCert");
-            if (!string.IsNullOrEmpty(certPath))
-            {
-                proxy.ServerCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, configuration.GetValue<string>("SSL:ServerPassword"));
-                proxy.AcceptCertHash = configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
-            }
-
-            certPath = configuration.GetValue<string>("SSL:ClientCert");
-            if (!string.IsNullOrEmpty(certPath))
-            {
-                proxy.ClientCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, configuration.GetValue<string>("SSL:ClientPassword"));
-            }
-
+            var proxy = serviceProvider.GetService<Socks5Server>();
 
             proxy.Run(port);
         }

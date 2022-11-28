@@ -138,6 +138,8 @@ namespace JMS.Infrastructures
             while (true)
             {
                 readed = await readStream.ReadAsync(recData, 0, recData.Length);
+                if(readed < 0)
+                    break;
                 writeStream.Write(recData, 0, readed);
             }
         }

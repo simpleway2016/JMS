@@ -20,12 +20,14 @@
     <PackageReference Include="MSTest.TestAdapter" Version="2.2.7" />
     <PackageReference Include="MSTest.TestFramework" Version="2.2.7" />
     <PackageReference Include="coverlet.collector" Version="3.1.0" />
+  <PackageReference Include="Extreme.Net.Core" Version="2.0.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AssemblyDocumentReader\JMS.AssemblyDocumentReader.csproj" />
     <ProjectReference Include="..\JMS.Gateway\JMS.Gateway.csproj" />
     <ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
+    <ProjectReference Include="..\JMS.Proxy\JMS.Proxy.csproj" />
     <ProjectReference Include="..\JMS.ServiceProvider.AspNetCore\JMS.ServiceProvider.AspNetCore.csproj" />
     <ProjectReference Include="..\JMS.ServiceProvider\JMS.ServiceProvider.csproj" />
   </ItemGroup>
