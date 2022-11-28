@@ -105,25 +105,18 @@ namespace JMS.Domains
                     var command = await NetClient.ReadServiceObjectAsync<GatewayCommand>();                    
 
                     if (command.Type == CommandType.ReportClientConnectQuantity)
-                    {                       
+                    {
                         //微服务向我报告当前它的请求连接数
                         //_Logger?.LogDebug($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port} 当前连接数：{command.Content}");
-                        Task.Run(() =>
+                        try
                         {
-                            try
-                            {
-                                var hardwareInfo = command.Content.FromJson<PerformanceInfo>();
-                                if (ServiceInfo.Port != 0)
-                                {
-                                    //只有端口不为0，才是JMS微服务，如果是0，可能是webapi，无法统计当前连接数
-                                    Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity.GetValueOrDefault());
-                                }
-                                ServiceInfo.CpuUsage = hardwareInfo.CpuUsage.GetValueOrDefault();
-                            }
-                            catch
-                            {
-                            }
-                        });
+                            var hardwareInfo = command.Content.FromJson<PerformanceInfo>();
+                            Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity.GetValueOrDefault());
+                            ServiceInfo.CpuUsage = hardwareInfo.CpuUsage.GetValueOrDefault();
+                        }
+                        catch
+                        {
+                        }
 
                         NetClient.WriteServiceData(new InvokeResult
                         {

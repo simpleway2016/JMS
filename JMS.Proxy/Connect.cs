@@ -68,8 +68,9 @@ namespace JMS.Proxy
             {
                 case 0x01:
                     //IPV4
-                    await _client.ReadDataAsync(buffer, 0, 4);
-                    _header.Address = new IPAddress(buffer).ToString();
+                    var data = new byte[4];
+                    await _client.ReadDataAsync(data, 0, data.Length);
+                    _header.Address = new IPAddress(data).ToString();
                     break;
                 case 0x03:
                     //域名
@@ -83,8 +84,9 @@ namespace JMS.Proxy
                     break;
                 case 0x04:
                     //IPV6;
-                    await _client.ReadDataAsync(buffer, 0, 16);
-                    _header.Address = new IPAddress(buffer).ToString();
+                    var data6 = new byte[16];
+                    await _client.ReadDataAsync(data6, 0, data6.Length);
+                    _header.Address = new IPAddress(data6).ToString();
                     break;
                 default:
                     rep = 0x08; //不支持的地址类型
@@ -134,14 +136,20 @@ namespace JMS.Proxy
 
         async Task readWrite(NetClient readClient,NetClient writeClient)
         {
-            byte[] buffer = new byte[4096];
-            int len;
-            while (true)
+            try
             {
-                len = await readClient.InnerStream.ReadAsync(buffer, 0, buffer.Length);
-                if (len <= 0)
-                    break;
-                writeClient.InnerStream.Write(buffer, 0, len);
+                byte[] buffer = new byte[40960];
+                int len;
+                while (true)
+                {
+                    len = await readClient.InnerStream.ReadAsync(buffer, 0, buffer.Length);
+                    if (len <= 0)
+                        break;
+                    writeClient.InnerStream.Write(buffer, 0, len);
+                }
+            }
+            catch
+            {
             }
         }
 

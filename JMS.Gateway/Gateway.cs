@@ -18,9 +18,10 @@ using Microsoft.Extensions.Configuration;
 
 namespace JMS
 {
-    public class Gateway:IDisposable
+    public class Gateway : IDisposable
     {
         TcpListener _tcpListener;
+        TcpListener _tcpListenerV6;
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
         internal int Port;
@@ -41,7 +42,7 @@ namespace JMS
         {
             get
             {
-                if(_id == null)
+                if (_id == null)
                 {
                     var configuration = ServiceProvider.GetService<IConfiguration>();
                     var datafolder = configuration.GetValue<string>("DataFolder");
@@ -67,16 +68,21 @@ namespace JMS
 
             this.Port = port;
             _requestReception = ServiceProvider.GetService<IRequestReception>();
-               _tcpListener = new TcpListener(IPAddress.Any, port);
+            _tcpListener = new TcpListener(IPAddress.Any, port);
             _tcpListener.Start();
-            _Logger?.LogInformation("Gateway started, port:{0}", port );
-            if(ServerCert != null)
+
+            _tcpListenerV6 = new TcpListener(IPAddress.IPv6Any, port);
+            _tcpListenerV6.Start();
+            _Logger?.LogInformation("Gateway started, port:{0}", port);
+            if (ServerCert != null)
             {
                 _Logger?.LogInformation("Use ssl,certificate hash:{0}", ServerCert.GetCertHashString());
             }
 
             //启动GatewayRefereeClient，申请成为主网关
             ServiceProvider.GetService<ClusterGatewayConnector>().BeMaster();
+
+            new Thread(listenIPV6).Start();
 
             while (true)
             {
@@ -93,7 +99,25 @@ namespace JMS
                     _Logger?.LogError(ex, ex.Message);
                     break;
                 }
-               
+
+            }
+        }
+
+        void listenIPV6()
+        {
+            while (true)
+            {
+                try
+                {
+                    var socket = _tcpListenerV6.AcceptSocket();
+                    Task.Run(() => _requestReception.Interview(socket));
+                }
+                catch (Exception ex)
+                {
+                    _Logger?.LogError(ex, ex.Message);
+                    break;
+                }
+
             }
         }
 

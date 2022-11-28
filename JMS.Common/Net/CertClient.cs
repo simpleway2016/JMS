@@ -27,7 +27,8 @@ namespace JMS
         public override void Connect(string address, int port)
         {
             base.Connect(address, port);
-            if(_cert != null)
+            this.AfterConnect();
+            if (_cert != null)
             {
                 SslStream sslStream = new SslStream(this.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
                 X509CertificateCollection certs = new X509CertificateCollection();
@@ -40,6 +41,7 @@ namespace JMS
         public override async Task ConnectAsync(string address, int port)
         {
             await base.ConnectAsync(address, port);
+            this.AfterConnect();
             if (_cert != null)
             {
                 SslStream sslStream = new SslStream(this.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
@@ -48,6 +50,11 @@ namespace JMS
                 await sslStream.AuthenticateAsClientAsync("SslSocket", certs, NetClient.SSLProtocols, false);
                 this.InnerStream = sslStream;
             }
+        }
+
+        protected virtual void AfterConnect()
+        {
+
         }
     }
 }

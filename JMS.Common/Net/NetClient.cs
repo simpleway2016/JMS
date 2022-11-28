@@ -241,6 +241,8 @@ namespace JMS
             while(count > 0)
             {
                 readed = await this.InnerStream.ReadAsync(data, offset, count);
+                if (readed <= 0)
+                    throw new SocketException();
                 count -= readed;
                 offset += readed;
             }
@@ -252,6 +254,9 @@ namespace JMS
             while (count > 0)
             {
                 readed = this.InnerStream.Read(data, offset, count);
+                if (readed <= 0)
+                    throw new SocketException();
+
                 count -= readed;
                 offset += readed;
             }
