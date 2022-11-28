@@ -15,6 +15,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using UnitTest.ServiceHosts;
@@ -206,8 +207,9 @@ namespace UnitTest
         [TestMethod]
         public void SocketTest()
         {
-           
-            
+            var line = "09:29:18 AM  all   45.00    0.01    2.75    0.46    0.34    0.35    0.00    0.00    0.00   51.08";
+                        string idle = Regex.Match(line, @"[0-9\.]+$").Value;
+
         }
 
         int errcount = 0;

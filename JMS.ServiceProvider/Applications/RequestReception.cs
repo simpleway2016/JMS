@@ -47,7 +47,7 @@ namespace JMS.Applications
             if (_SSLConfiguration != null)
             {
                 if (_SSLConfiguration.AcceptClientCertHash != null && _SSLConfiguration.AcceptClientCertHash.Length > 0
-                    && _SSLConfiguration.AcceptClientCertHash.Contains(certificate.GetCertHashString()) == false)
+                    && _SSLConfiguration.AcceptClientCertHash.Contains(certificate?.GetCertHashString()) == false)
                 {
                     return false;
                 }
@@ -80,9 +80,7 @@ namespace JMS.Applications
                 {
                     if (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     {
-                        var sslts = new SslStream(netclient.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
-                        await sslts.AuthenticateAsServerAsync(_SSLConfiguration.ServerCertificate, true, NetClient.SSLProtocols, false);
-                        netclient.InnerStream = sslts;
+                        await netclient.AsSSLServerAsync(_SSLConfiguration.ServerCertificate, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
                     }
 
                     while (true)

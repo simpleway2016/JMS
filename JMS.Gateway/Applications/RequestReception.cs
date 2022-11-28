@@ -13,6 +13,7 @@ using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using JMS.Applications.CommandHandles;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace JMS.Applications
 {
@@ -32,7 +33,7 @@ namespace JMS.Applications
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (_gateway.AcceptCertHash != null && _gateway.AcceptCertHash.Length >0 && _gateway.AcceptCertHash.Contains(certificate.GetCertHashString()) == false)
+            if (_gateway.AcceptCertHash != null && _gateway.AcceptCertHash.Length >0 && _gateway.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
             {
                 return false;
             }
@@ -65,9 +66,8 @@ namespace JMS.Applications
                 {
                     if (_gateway.ServerCert != null)
                     {
-                        var sslts = new SslStream(client.InnerStream , false , new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback));
-                        await sslts.AuthenticateAsServerAsync(_gateway.ServerCert, true,  NetClient.SSLProtocols , false);
-                        client.InnerStream = sslts;
+                        await client.AsSSLServerAsync(_gateway.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
+
                     }
 
                     while (true)

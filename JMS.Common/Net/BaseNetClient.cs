@@ -317,10 +317,10 @@ namespace JMS.Common
         /// </summary>
         /// <param name="ssl"></param>
         /// <param name="protocol"></param>
-        public void AsSSLServer(X509Certificate2 ssl , SslProtocols protocol = SslProtocols.Tls)
+        public void AsSSLServer(X509Certificate2 ssl , RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
-            SslStream sslStream = new SslStream(_stream, false);
-            sslStream.AuthenticateAsServer(ssl, false, protocol, true);
+            SslStream sslStream = new SslStream(_stream, false, remoteCertificateValidationCallback);
+            sslStream.AuthenticateAsServer(ssl, true, protocol, false);
 
             _stream = sslStream;
         }
@@ -329,10 +329,10 @@ namespace JMS.Common
         /// </summary>
         /// <param name="ssl"></param>
         /// <param name="protocol"></param>
-        public async Task AsSSLServerAsync(X509Certificate2 ssl, SslProtocols protocol = SslProtocols.Tls)
+        public async Task AsSSLServerAsync(X509Certificate2 ssl, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
-            SslStream sslStream = new SslStream(_stream, false);
-            await sslStream.AuthenticateAsServerAsync(ssl, false, protocol, true);
+            SslStream sslStream = new SslStream(_stream, false ,remoteCertificateValidationCallback);
+            await sslStream.AuthenticateAsServerAsync(ssl, true, protocol, false);
 
             _stream = sslStream;
         }

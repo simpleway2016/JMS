@@ -12,9 +12,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,6 +29,7 @@ namespace UnitTest
     public class NormalTest
     {
         public int _gateWayPort = 9800;
+        public int _gateWayPortCert = 9805;
         public int _clusterGateWayPort1 = 10001;
         public int _clusterGateWayPort2 = 10002;
         public int _UserInfoServicePort = 9801;
@@ -46,6 +49,18 @@ namespace UnitTest
                 var configuration = builder.Build();
 
                 JMS.GatewayProgram.Run(configuration, _gateWayPort,out Gateway g);
+            });
+        }
+
+        public void StartGatewayWithCert()
+        {
+            Task.Run(() =>
+            {
+                var builder = new ConfigurationBuilder();
+                builder.AddJsonFile("appsettings-gateway-cert.json", optional: true, reloadOnChange: true);
+                var configuration = builder.Build();
+
+                JMS.GatewayProgram.Run(configuration, _gateWayPortCert, out Gateway g);
             });
         }
 
@@ -291,6 +306,50 @@ namespace UnitTest
                 UserInfoDbContext.FinallyFather !=null ||
                 UserInfoDbContext.FinallyMather != null)
                 throw new Exception("结果不正确");
+        }
+
+        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
+        }
+
+        [TestMethod]
+        public void HttpsTest()
+        {
+            StartGatewayWithCert();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPortCert);
+
+            JMS.NetClient client = new JMS.NetClient();
+            client.Connect("127.0.0.1", _gateWayPortCert);
+            client.AsSSLClient("127.0.0.1", RemoteCertificateValidationCallback);
+            var content = @"GET /?GetAllServiceProviders HTTP/1.1
+Host: 127.0.0.1
+Connection: keep-alive
+User-Agent: JmsInvoker
+Accept: text/html
+Accept-Encoding: deflate, br
+Accept-Language: zh-CN,zh;q=0.9
+Content-Length: 0
+
+";
+            client.Write(Encoding.UTF8.GetBytes(content));
+
+            byte[] data = new byte[40960];
+            var len = client.InnerStream.Read(data, 0, data.Length);
+            var text = Encoding.UTF8.GetString(data, 0, len);
+            client.Dispose();
+
+            JMS.CertClient client2 = new JMS.CertClient(new X509Certificate2("../../../../pfx/client.pfx" , "123456"));
+            client2.Connect("127.0.0.1", _gateWayPortCert);
+
+            client2.Write(Encoding.UTF8.GetBytes(content));
+
+           data = new byte[40960];
+            len = client2.InnerStream.Read(data, 0, data.Length);
+            text = Encoding.UTF8.GetString(data, 0, len);
+            client2.Dispose();
         }
 
         [TestMethod]
