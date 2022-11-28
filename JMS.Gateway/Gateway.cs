@@ -15,13 +15,14 @@ using System.Reflection;
 using System.Linq;
 using System.IO;
 using Microsoft.Extensions.Configuration;
+using JMS.Common.Net;
+using Org.BouncyCastle.Bcpg;
 
 namespace JMS
 {
     public class Gateway : IDisposable
     {
-        TcpListener _tcpListener;
-        TcpListener _tcpListenerV6;
+        TcpServer _tcpServer;
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
         internal int Port;
@@ -68,11 +69,9 @@ namespace JMS
 
             this.Port = port;
             _requestReception = ServiceProvider.GetService<IRequestReception>();
-            _tcpListener = new TcpListener(IPAddress.Any, port);
-            _tcpListener.Start();
+            _tcpServer = new TcpServer(port);
+            _tcpServer.Connected += _tcpServer_Connected;
 
-            _tcpListenerV6 = new TcpListener(IPAddress.IPv6Any, port);
-            _tcpListenerV6.Start();
             _Logger?.LogInformation("Gateway started, port:{0}", port);
             if (ServerCert != null)
             {
@@ -82,43 +81,12 @@ namespace JMS
             //启动GatewayRefereeClient，申请成为主网关
             ServiceProvider.GetService<ClusterGatewayConnector>().BeMaster();
 
-            new Thread(listenIPV6).Start();
-
-            while (true)
-            {
-                try
-                {
-                    var socket = _tcpListener.AcceptSocket();
-#if DEBUG
-                    //Console.WriteLine("new socket");
-#endif
-                    Task.Run(() => _requestReception.Interview(socket));
-                }
-                catch (Exception ex)
-                {
-                    _Logger?.LogError(ex, ex.Message);
-                    break;
-                }
-
-            }
+            _tcpServer.Run();
         }
 
-        void listenIPV6()
+        private void _tcpServer_Connected(object sender, Socket socket)
         {
-            while (true)
-            {
-                try
-                {
-                    var socket = _tcpListenerV6.AcceptSocket();
-                    Task.Run(() => _requestReception.Interview(socket));
-                }
-                catch (Exception ex)
-                {
-                    _Logger?.LogError(ex, ex.Message);
-                    break;
-                }
-
-            }
+            Task.Run(() => _requestReception.Interview(socket));
         }
 
         public void Dispose()
@@ -128,10 +96,10 @@ namespace JMS
                 Disposed = true;
                 ServiceProvider.GetService<IRegisterServiceManager>().DisconnectAllServices();
 
-                if (_tcpListener != null)
+                if (_tcpServer != null)
                 {
-                    _tcpListener.Stop();
-                    _tcpListener = null;
+                    _tcpServer.Stop();
+                    _tcpServer = null;
                 }
             }
         }

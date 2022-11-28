@@ -7,6 +7,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
+using JMS.Common.Net;
+using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Bcpg;
 
 namespace JMS.Proxy
 {
@@ -15,6 +18,7 @@ namespace JMS.Proxy
 
         public IServiceProvider ServiceProvider { get; }
         ILogger<Socks5Server> _logger;
+        RequestHandler _requestHandler;
         public Socks5Server(IServiceProvider serviceProvider,ILogger<Socks5Server> logger)
         {
             this.ServiceProvider = serviceProvider;
@@ -22,24 +26,17 @@ namespace JMS.Proxy
         }
         public void Run(int port)
         {
-            var request = ServiceProvider.GetService<RequestHandler>();
-            var _tcpListener = new TcpListener(IPAddress.Any, port);
-            _tcpListener.Start();
-            _logger?.LogInformation("Proxy started, port:{0}", port);
-            while (true)
-            {
-                try
-                {
-                    var socket = _tcpListener.AcceptSocket();
-                    Task.Run(() => request.Interview(socket));
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogDebug(ex, ex.Message);
-                    break;
-                }
+            _requestHandler = ServiceProvider.GetService<RequestHandler>();
+            var _tcpListener = new TcpServer(port);
+            _tcpListener.Connected += _tcpListener_Connected;
+             _logger?.LogInformation("Proxy started, port:{0}", port);
+            _tcpListener.Run();
 
-            }
+        }
+
+        private void _tcpListener_Connected(object sender, Socket socket)
+        {
+            Task.Run(() => _requestHandler.Interview(socket));
         }
     }
 }

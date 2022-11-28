@@ -22,17 +22,20 @@ using JMS.Applications;
 using JMS.Domains;
 using JMS.Infrastructures;
 using System.Collections.Concurrent;
+using JMS.Common.Net;
+using Org.BouncyCastle.Bcpg;
 
 namespace JMS
 {
     public class MicroServiceHost: IMicroServiceOption,IDisposable
     {
         bool _disposed;
-        TcpListener _tcpListener;
+        TcpServer _tcpServer;
         public string Id { get; private set; }
         ILogger<MicroServiceHost> _logger;
         IGatewayConnector _GatewayConnector;
         ControllerFactory _ControllerFactory;
+        IProcessExitHandler _processExitHandler;
         internal IGatewayConnector GatewayConnector => _GatewayConnector;
         public NetAddress MasterGatewayAddress { internal set; get; }
         public NetAddress[] AllGatewayAddresses { get; private set; }
@@ -318,8 +321,8 @@ namespace JMS
 
             if (ServicePort != 0 && !_isWebServer)
             {
-                _tcpListener = new TcpListener(ServicePort);
-                _tcpListener.Start();
+                _tcpServer = new TcpServer(ServicePort);
+                _tcpServer.Connected += _tcpServer_Connected;
                 _logger?.LogInformation("Service host started , port:{0}", ServicePort);
             }
             _logger?.LogInformation("Gateways:" + AllGatewayAddresses.ToJsonString());
@@ -336,20 +339,24 @@ namespace JMS
             _GatewayConnector.ConnectCompleted += _GatewayConnector_ConnectCompleted;
             _GatewayConnector.ConnectAsync();
 
-            var processExitHandler = ServiceProvider.GetService<IProcessExitHandler>();
-            ((IProcessExitListener)processExitHandler).Listen(this);
+            _processExitHandler = ServiceProvider.GetService<IProcessExitHandler>();
+            ((IProcessExitListener)_processExitHandler).Listen(this);
 
-            if (_tcpListener != null)
+            if (_tcpServer != null)
             {
-                while (true)
-                {
-                    var socket = _tcpListener.AcceptSocket();
-                    if (processExitHandler.ProcessExited)
-                        break;
-
-                    Task.Run(() => _RequestReception.Interview(socket));
-                }
+                _tcpServer.Run();
             }
+        }
+
+        private void _tcpServer_Connected(object sender, Socket socket)
+        {
+            if (_processExitHandler.ProcessExited)
+            {
+                _tcpServer?.Stop();
+                _tcpServer = null;
+                return;
+            }
+            Task.Run(() => _RequestReception.Interview(socket));
         }
 
         private void _GatewayConnector_ConnectCompleted(object sender, EventArgs e)
@@ -382,7 +389,8 @@ namespace JMS
             if (!_disposed)
             {
                 _disposed = true;
-                _tcpListener.Stop();
+                _tcpServer?.Stop();
+                _tcpServer = null;
                 _GatewayConnector.DisconnectGateway();
             }
         }

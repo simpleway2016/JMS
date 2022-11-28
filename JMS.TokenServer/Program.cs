@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Way.Lib;
 using System.Linq;
 using System.Threading;
+using JMS.Common.Net;
+using Org.BouncyCastle.Bcpg;
 
 namespace JMS.TokenServer
 {
@@ -81,15 +83,17 @@ namespace JMS.TokenServer
                 AcceptCertHash = configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
             }
 
-            TcpListener listener = new TcpListener(port);
-            listener.Start();
+            TcpServer listener = new TcpServer(port);
+            listener.Connected += Listener_Connected;
             Console.WriteLine($"Token server started,port：{port}");
-            while(true)
-            {
-                var socket = listener.AcceptSocket();
-                Task.Run(()=>onSocket(socket));
-            }
+            listener.Run();
         }
+
+        private static void Listener_Connected(object sender, Socket socket)
+        {
+            Task.Run(() => onSocket(socket));
+        }
+
         static bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             if (AcceptCertHash != null && AcceptCertHash.Length > 0 && AcceptCertHash.Contains(certificate.GetCertHashString()) == false)
