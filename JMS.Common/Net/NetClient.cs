@@ -3,6 +3,7 @@ using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
@@ -52,8 +53,7 @@ namespace JMS
         public void OutputHttpContent(byte[] contentBytes)
         {
             var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {contentBytes.Length}\r\nConnection: keep-alive\r\n\r\n");
-            this.Write(data);
-            this.Write(contentBytes);
+            this.Write(data.Concat(contentBytes).ToArray());
         }
 
         /// <summary>

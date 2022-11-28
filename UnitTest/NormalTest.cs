@@ -334,22 +334,30 @@ Accept-Language: zh-CN,zh;q=0.9
 Content-Length: 0
 
 ";
-            client.Write(Encoding.UTF8.GetBytes(content));
 
-            byte[] data = new byte[40960];
-            var len = client.InnerStream.Read(data, 0, data.Length);
-            var text = Encoding.UTF8.GetString(data, 0, len);
+            for (int i = 0; i < 2; i++)
+            {
+               
+                client.Write(Encoding.UTF8.GetBytes(content));
+
+                byte[] data = new byte[40960];
+                var len = client.InnerStream.Read(data, 0, data.Length);
+                var text = Encoding.UTF8.GetString(data, 0, len);
+            }
             client.Dispose();
 
-            JMS.CertClient client2 = new JMS.CertClient(new X509Certificate2("../../../../pfx/client.pfx" , "123456"));
-            client2.Connect("127.0.0.1", _gateWayPortCert);
+            if (true)
+            {
+                JMS.CertClient client2 = new JMS.CertClient(new X509Certificate2("../../../../pfx/client.pfx", "123456"));
+                client2.Connect("127.0.0.1", _gateWayPortCert);
 
-            client2.Write(Encoding.UTF8.GetBytes(content));
+                client2.Write(Encoding.UTF8.GetBytes(content));
 
-           data = new byte[40960];
-            len = client2.InnerStream.Read(data, 0, data.Length);
-            text = Encoding.UTF8.GetString(data, 0, len);
-            client2.Dispose();
+                var data = new byte[40960];
+                var len = client2.InnerStream.Read(data, 0, data.Length);
+                var text = Encoding.UTF8.GetString(data, 0, len);
+                client2.Dispose();
+            }
         }
 
         [TestMethod]
