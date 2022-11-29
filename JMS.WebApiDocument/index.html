@@ -295,12 +295,15 @@
                                     <td>参数</td>
                                     <td>类型</td>
                                     <td>说明</td>
+                                    <td>&nbsp;</td>
                                 </tr>
                                 <tr class="tabletr" v-for="param,index in item.query">
                                     <td>{{param.name}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
                                     <td v-html="lineBreak(param.desc)"></td>
+                                    <td v-if="param.isNullable">可选项</td>
+                                    <td v-else>&nbsp;</td>
                                 </tr>
                             </table>
                         </div>
@@ -314,12 +317,15 @@
                                     <td>参数</td>
                                     <td>类型</td>
                                     <td>说明</td>
+                                    <td>&nbsp;</td>
                                 </tr>
                                 <tr class="tabletr" v-for="param,index in item.form">
                                     <td>{{param.name}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
                                     <td v-html="lineBreak(param.desc)"></td>
+                                    <td v-if="param.isNullable">可选项</td>
+                                    <td v-else>&nbsp;</td>
                                 </tr>
                             </table>
                         </div>
@@ -333,12 +339,15 @@
                                     <td>数组索引</td>
                                     <td>类型</td>
                                     <td>说明</td>
+                                    <td>&nbsp;</td>
                                 </tr>
                                 <tr class="tabletr" v-for="param,index in item.data.items">
                                     <td>{{index}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
                                     <td v-html="param.desc?lineBreak(param.desc):param.name"></td>
+                                    <td v-if="param.isNullable">可选项</td>
+                                    <td v-else>&nbsp;</td>
                                 </tr>
                             </table>
                         </div>
@@ -351,12 +360,15 @@
                                     <td>参数</td>
                                     <td>类型</td>
                                     <td>说明</td>
+                                    <td>&nbsp;</td>
                                 </tr>
                                 <tr class="tabletr" v-for="param,index in item.data.items">
                                     <td>{{param.name}}</td>
                                     <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
                                     <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
                                     <td v-html="lineBreak(param.desc)"></td>
+                                    <td v-if="param.isNullable">可选项</td>
+                                    <td v-else>&nbsp;</td>
                                 </tr>
                             </table>
                         </div>
