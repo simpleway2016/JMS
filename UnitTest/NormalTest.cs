@@ -267,6 +267,52 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void CommitAsync()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            UserInfoDbContext.Reset();
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
+                }
+
+                client.BeginTransaction();
+                serviceClient.Invoke("CheckTranId");
+                serviceClient.Invoke("SetUserName", "Jack");
+                serviceClient.Invoke("SetAge", 28);
+                serviceClient.InvokeAsync("SetFather", "Tom");
+                serviceClient.InvokeAsync("SetMather", "Lucy");
+
+                client.CommitTransactionAsync().Wait();
+            }
+
+            Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName}");
+
+            if (UserInfoDbContext.FinallyUserName != "Jack" ||
+                UserInfoDbContext.FinallyAge != 28 ||
+                UserInfoDbContext.FinallyFather != "Tom" ||
+                UserInfoDbContext.FinallyMather != "Lucy")
+                throw new Exception("结果不正确");
+        }
+
+        [TestMethod]
         public void Rollback()
         {
             UserInfoDbContext.Reset();

@@ -43,5 +43,33 @@ namespace JMS
             _tasks.Clear();
             return ret;
         }
+
+        /// <summary>
+        /// 等待所有任务执行完毕
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<Exception>> WaitAsync()
+        {
+            if (_tasks.Count == 0)
+            {
+                return null;
+            }
+
+            List<Exception> ret = new List<Exception>(_tasks.Count);
+            for (int i = 0; i < _tasks.Count; i++)
+            {
+                try
+                {
+                    await _tasks[i];
+                }
+                catch (Exception ex)
+                {
+                    ret.Add(ex);
+                }
+            }
+
+            _tasks.Clear();
+            return ret;
+        }
     }
 }

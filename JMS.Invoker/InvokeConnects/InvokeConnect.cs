@@ -196,6 +196,14 @@ namespace JMS
             });
             return _client.ReadServiceObject<InvokeResult>();
         }
+        public Task<InvokeResult> GoReadyCommitAsync(IRemoteClient tran)
+        {
+            _client.WriteServiceData(new InvokeCommand()
+            {
+                Type = InvokeType.HealthyCheck,
+            });
+            return _client.ReadServiceObjectAsync<InvokeResult>();
+        }
 
         public InvokeResult GoCommit(IRemoteClient tran)
         {
@@ -206,6 +214,15 @@ namespace JMS
             });
             return _client.ReadServiceObject<InvokeResult>();
         }
+        public Task<InvokeResult> GoCommitAsync(IRemoteClient tran)
+        {
+            _client.WriteServiceData(new InvokeCommand()
+            {
+                Type = InvokeType.CommitTranaction,
+                Header = tran.GetCommandHeader()
+            });
+            return _client.ReadServiceObjectAsync<InvokeResult>();
+        }
 
         public InvokeResult GoRollback(IRemoteClient tran)
         {
@@ -215,6 +232,15 @@ namespace JMS
                 Header = tran.GetCommandHeader()
             });
             return _client.ReadServiceObject<InvokeResult>();
+        }
+        public Task<InvokeResult> GoRollbackAsync(IRemoteClient tran)
+        {
+            _client.WriteServiceData(new InvokeCommand()
+            {
+                Type = InvokeType.RollbackTranaction,
+                Header = tran.GetCommandHeader()
+            });
+            return _client.ReadServiceObjectAsync<InvokeResult>();
         }
 
         public void AddClientToPool()

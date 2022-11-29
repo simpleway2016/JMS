@@ -8,6 +8,7 @@ namespace JMS.Proxy
 {
     public class Program
     {
+        static Socks5Server _socks5Server;
         public static void Main(string[] args)
         {
             ThreadPool.GetMinThreads(out int w, out int c);
@@ -17,18 +18,29 @@ namespace JMS.Proxy
             }
 
             var builder = new ConfigurationBuilder();
-            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            var configuration = builder.Build();
+            string appsettingFileName = "appsettings.json";
 
+            IConfiguration configuration;
             int port;
-            if(args.Length > 0)
+            if (args.Length > 0)
             {
                 port = int.Parse(args[0]);
+                if (args.Length > 1)
+                {
+                    appsettingFileName = args[1];
+                }
+
+                builder.AddJsonFile(appsettingFileName, optional: true, reloadOnChange: true);
+                configuration = builder.Build();
             }
             else
             {
+                builder.AddJsonFile(appsettingFileName, optional: true, reloadOnChange: true);
+                configuration = builder.Build();
+
                 port = configuration.GetValue<int>("Port");
             }
+
 
             ServiceCollection services = new ServiceCollection();
             services.AddLogging(loggingBuilder =>
@@ -42,9 +54,18 @@ namespace JMS.Proxy
             services.AddSingleton<RequestHandler>();
             var serviceProvider = services.BuildServiceProvider();
 
-            var proxy = serviceProvider.GetService<Socks5Server>();
+            _socks5Server = serviceProvider.GetService<Socks5Server>();
+            _socks5Server.WhiteList = configuration.GetSection("WhiteList").Get<NetAddress[]>();
 
-            proxy.Run(port);
+            configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
+            _socks5Server.Run(port);
+        }
+
+        static void ConfigurationChangeCallback(object p)
+        {
+            IConfiguration configuration = (IConfiguration)p;
+            configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
+            _socks5Server.WhiteList = configuration.GetSection("WhiteList").Get<NetAddress[]>();
         }
     }
 }

@@ -411,6 +411,14 @@ namespace JMS
 
         }
 
+        async Task waitTasksAsync()
+        {
+            var errs = await _transactionTasks.WaitAsync();
+            if (errs != null && errs.Count > 0)
+                throw errs[0];
+
+        }
+
         /// <summary>
         /// 启动分布式事务
         /// </summary>
@@ -441,9 +449,27 @@ namespace JMS
             }
         }
 
-        List<TransactionException> endRequest(InvokeType invokeType)
+        /// <summary>
+        /// 提交分布式事务 (请先使用BeginTransaction启动事务)
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="TransactionArrayException"></exception>
+        public async Task CommitTransactionAsync()
         {
-            waitTasks();
+            if (_SupportTransaction)
+            {
+                var errors = await endRequestAsync(InvokeType.CommitTranaction);
+
+                if (errors != null && errors.Count > 0)
+                    throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
+
+                _SupportTransaction = false;
+            }
+        }
+
+        async Task<List<TransactionException>> endRequestAsync(InvokeType invokeType)
+        {
+            await waitTasksAsync();
 
             if (_Connects.Count > 0)
             {
@@ -451,12 +477,12 @@ namespace JMS
                 //健康检查
                 if (invokeType == InvokeType.CommitTranaction)
                 {
-                    Parallel.For(0, _Connects.Count, (i) =>
+                    for(int i = 0; i < _Connects.Count; i ++)
                     {
                         var connect = _Connects[i];
                         try
                         {
-                            var ret = connect.GoReadyCommit(this);
+                            var ret = await connect.GoReadyCommitAsync(this);
                             if (ret.Success == false)
                             {
                                 //有人不同意提交事务
@@ -471,7 +497,7 @@ namespace JMS
                             errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
                         }
 
-                    });
+                    };
                 }
 
                 if (errors.Count > 0)
@@ -483,7 +509,7 @@ namespace JMS
 
                         try
                         {
-                            connect.GoRollback(this);
+                            await connect.GoRollbackAsync(this);
                             connect.AddClientToPool();
                         }
                         catch
@@ -506,15 +532,15 @@ namespace JMS
                     {
                         reporter.ReportTransactionSuccess(this,this.TransactionId);
                     }
-                    Parallel.For(0, _Connects.Count, (i) =>
+                    for(int i = 0; i < _Connects.Count; i ++)
                     {
                         var connect = _Connects[i];
                         if (connect == null)
-                            return;
+                            continue;
 
                         try
                         {
-                            var ret = invokeType == InvokeType.CommitTranaction ? connect.GoCommit(this) : connect.GoRollback(this);
+                            var ret = invokeType == InvokeType.CommitTranaction ? await connect.GoCommitAsync(this) : await connect.GoRollbackAsync(this);
                             if (ret.Success == false)
                             {
                                 errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
@@ -525,9 +551,8 @@ namespace JMS
                         {
                             connect.Dispose();
                             errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
-                            return;
                         }
-                    });
+                    }
 
                     if (errors.Count > 0)
                     {
@@ -562,6 +587,129 @@ namespace JMS
             }           
            
         }
+
+        List<TransactionException> endRequest(InvokeType invokeType)
+        {
+            waitTasks();
+
+            if (_Connects.Count > 0)
+            {
+                List<TransactionException> errors = new List<TransactionException>(_Connects.Count);
+                //健康检查
+                if (invokeType == InvokeType.CommitTranaction)
+                {
+                    for(int i = 0; i < _Connects.Count; i ++)
+                    {
+                        var connect = _Connects[i];
+                        try
+                        {
+                            var ret = connect.GoReadyCommit(this);
+                            if (ret.Success == false)
+                            {
+                                //有人不同意提交事务
+                                //把提交更改为回滚
+                                invokeType = InvokeType.RollbackTranaction;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            connect.Dispose();
+                            _Connects[i] = null;
+                            errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
+                        }
+
+                    }
+                }
+
+                if (errors.Count > 0)
+                {
+                    foreach (var connect in _Connects)
+                    {
+                        if (connect == null)
+                            continue;
+
+                        try
+                        {
+                            connect.GoRollback(this);
+                            connect.AddClientToPool();
+                        }
+                        catch
+                        {
+                            connect.Dispose();
+                        }
+
+                    }
+                    if (invokeType == InvokeType.CommitTranaction)
+                        throw new TransactionException(null, "提交事务时，有连接中断，所有事务将回滚");
+                    else
+                        throw new TransactionException(null, "回滚事务时，有连接中断，所有事务将稍后回滚");
+                }
+
+                if (errors.Count == 0)
+                {
+                    var reporter = TransactionReporterRoute.GetReporter(this);
+
+                    if (invokeType == InvokeType.CommitTranaction)
+                    {
+                        reporter.ReportTransactionSuccess(this, this.TransactionId);
+                    }
+                    for (int i = 0; i < _Connects.Count; i++)
+                    {
+                        var connect = _Connects[i];
+                        if (connect == null)
+                            continue;
+
+                        try
+                        {
+                            var ret = invokeType == InvokeType.CommitTranaction ? connect.GoCommit(this) : connect.GoRollback(this);
+                            if (ret.Success == false)
+                            {
+                                errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
+                            }
+                            connect.AddClientToPool();
+                        }
+                        catch (Exception ex)
+                        {
+                            connect.Dispose();
+                            errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
+                            
+                        }
+                    }
+
+                    if (errors.Count > 0)
+                    {
+                        var successed = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
+
+                        if (invokeType == InvokeType.CommitTranaction)
+                        {
+                            if (successed.Length > 0)
+                                _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${successed.ToJsonString()}");
+                            foreach (var err in errors)
+                                _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
+                        }
+                    }
+                    else
+                    {
+                        if (invokeType == InvokeType.CommitTranaction)
+                        {
+                            Task.Run(() => {
+                                reporter.ReportTransactionCompleted(this, this.TransactionId);
+                            });
+                        }
+                    }
+                }
+
+
+                _Connects.Clear();
+                return errors;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+
         /// <summary>
         /// 回滚分布式事务
         /// </summary>
@@ -570,6 +718,21 @@ namespace JMS
             if (_SupportTransaction)
             {
                 var errors = endRequest(InvokeType.RollbackTranaction);
+                if (errors != null && errors.Count > 0)
+                    throw new TransactionArrayException(errors, "rollback transaction error");
+
+                _SupportTransaction = false;
+            }
+        }
+
+        /// <summary>
+        /// 回滚分布式事务
+        /// </summary>
+        public async Task RollbackTransactionAsync()
+        {
+            if (_SupportTransaction)
+            {
+                var errors = await endRequestAsync(InvokeType.RollbackTranaction);
                 if (errors != null && errors.Count > 0)
                     throw new TransactionArrayException(errors, "rollback transaction error");
 

@@ -15,7 +15,7 @@ namespace JMS.Proxy
 {
     class Socks5Server
     {
-
+        public NetAddress[] WhiteList { get; set; }
         public IServiceProvider ServiceProvider { get; }
         ILogger<Socks5Server> _logger;
         RequestHandler _requestHandler;

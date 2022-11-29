@@ -130,16 +130,103 @@ Accept-Language: zh-CN,zh;q=0.9
 
 
         }
-        public Task<T> InvokeAsync<T>(string method, IRemoteClient tran, params object[] parameter)
+        public async Task<T> InvokeAsync<T>(string method, IRemoteClient tran, params object[] parameters)
         {
             var headers = tran.GetCommandHeader();
-            return Task.Run(() => Invoke<T>(method, tran, headers, parameter));
+            if (tran == null)
+            {
+                throw new ArgumentNullException("tran");
+            }
+            InvokingInfo.MethodName = method;
+            InvokingInfo.Parameters = parameters;
+
+            var uri = new Uri(InvokingInfo.ServiceLocation.ServiceAddress);
+            _client = await NetClientPool.CreateClientAsync(null, uri.Host, uri.Port, null, (client) => {
+                if (uri.Scheme == "https")
+                {
+                    return client.AsSSLClientAsync(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
+                }
+                return Task.CompletedTask;
+            });
+            try
+            {
+
+                _client.ReadTimeout = tran.Timeout;
+                var data = createHttpDatas(tran, uri, "JmsService", method);
+                _client.Write(data);
+
+                _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
+                var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>();
+                if (result.Success == false)
+                {
+                    this.AddClientToPool();
+                    throw new RemoteException(tran.TransactionId, result.Error);
+                }
+
+                if (result.SupportTransaction)
+                    tran.AddConnect(this);
+                else
+                {
+                    this.AddClientToPool();
+                    this.Dispose();
+                }
+
+                return result.Data;
+            }
+            catch (ConvertException ex)
+            {
+                InvokeResult<string> otherObj = null;
+                try
+                {
+                    otherObj = ex.Source.FromJson<InvokeResult<string>>();
+                }
+                catch
+                {
+
+                }
+
+                if (otherObj.Success == false)
+                {
+                    throw new RemoteException(tran.TransactionId, otherObj.Error);
+                }
+
+                if (otherObj != null)
+                    throw new ConvertException(otherObj.Data, $"无法将{ex.Source}里面的Data实例化为{typeof(T).FullName}");
+
+                throw ex;
+            }
+            catch (Exception)
+            {
+                this.Dispose();
+                throw;
+            }
+
         }
 
         public InvokeResult GoReadyCommit(IRemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("ready"));
             var ret = _client.ReadServiceData();
+            if (ret == "ok")
+            {
+                return new InvokeResult
+                {
+                    Success = true
+                };
+            }
+            else
+            {
+                return new InvokeResult
+                {
+                    Success = false
+                };
+            }
+        }
+
+        public async Task<InvokeResult> GoReadyCommitAsync(IRemoteClient tran)
+        {
+            _client.WriteServiceData(Encoding.UTF8.GetBytes("ready"));
+            var ret = await _client.ReadServiceDataAsync();
             if (ret == "ok")
             {
                 return new InvokeResult
@@ -176,10 +263,50 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
+        public async Task<InvokeResult> GoCommitAsync(IRemoteClient tran)
+        {
+            _client.WriteServiceData(Encoding.UTF8.GetBytes("commit"));
+            var ret = await _client.ReadServiceDataAsync();
+            if (ret == "ok")
+            {
+                return new InvokeResult
+                {
+                    Success = true
+                };
+            }
+            else
+            {
+                return new InvokeResult
+                {
+                    Success = false
+                };
+            }
+        }
+
         public InvokeResult GoRollback(IRemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("rollback"));
             var ret = _client.ReadServiceData();
+            if (ret == "ok")
+            {
+                return new InvokeResult
+                {
+                    Success = true
+                };
+            }
+            else
+            {
+                return new InvokeResult
+                {
+                    Success = false
+                };
+            }
+        }
+
+        public async Task<InvokeResult> GoRollbackAsync(IRemoteClient tran)
+        {
+            _client.WriteServiceData(Encoding.UTF8.GetBytes("rollback"));
+            var ret = await _client.ReadServiceDataAsync();
             if (ret == "ok")
             {
                 return new InvokeResult

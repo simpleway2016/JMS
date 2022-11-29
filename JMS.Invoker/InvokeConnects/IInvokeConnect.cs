@@ -22,6 +22,10 @@ namespace JMS
         InvokeResult GoCommit(IRemoteClient tran);
         InvokeResult GoRollback(IRemoteClient tran);
 
+        Task<InvokeResult> GoReadyCommitAsync(IRemoteClient tran);
+        Task<InvokeResult> GoCommitAsync(IRemoteClient tran);
+        Task<InvokeResult> GoRollbackAsync(IRemoteClient tran);
+
         /// <summary>
         /// 重新执行事务
         /// </summary>

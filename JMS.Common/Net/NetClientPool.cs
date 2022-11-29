@@ -71,7 +71,7 @@ namespace JMS
         {
             return CreateClient(proxy, new NetAddress(ip, port), cert,newClientCallback);
         }
-        public static Task<NetClient> CreateClientAsync(NetAddress proxy, string ip, int port, X509Certificate2 cert, Action<NetClient> newClientCallback = null)
+        public static Task<NetClient> CreateClientAsync(NetAddress proxy, string ip, int port, X509Certificate2 cert, Func<NetClient,Task> newClientCallback = null)
         {
             return CreateClientAsync(proxy, new NetAddress(ip, port), cert, newClientCallback);
         }
@@ -98,7 +98,7 @@ namespace JMS
             return freeitem;
         }
 
-        public static async Task<NetClient> CreateClientAsync(NetAddress proxy, NetAddress addr, X509Certificate2 cert, Action<NetClient> newClientCallback = null)
+        public static async Task<NetClient> CreateClientAsync(NetAddress proxy, NetAddress addr, X509Certificate2 cert, Func<NetClient, Task> newClientCallback = null)
         {
             var key = (addr.Address, addr.Port);
             NetClientSeat[] array;
@@ -114,7 +114,10 @@ namespace JMS
                 freeitem = new ProxyClient(proxy, cert);
                 await freeitem.ConnectAsync(addr.Address, addr.Port);
                 freeitem.KeepAlive = array.Any(m => m.Client == null);
-                newClientCallback?.Invoke(freeitem);
+                if (newClientCallback != null)
+                {
+                    await newClientCallback(freeitem);
+                }
                 CreatedNewClient?.Invoke(null, freeitem);
             }
 

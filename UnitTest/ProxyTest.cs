@@ -1,5 +1,4 @@
-﻿using Extreme.Net.Core.Proxy;
-using Extreme.Net.Core;
+﻿using Extreme.Net.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -11,6 +10,8 @@ using System.Threading;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Net;
+using JMS.Common.Net;
+using Extreme.Net.Core.Proxy;
 
 namespace UnitTest
 {
@@ -124,6 +125,47 @@ Content-Length: 0
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
+        }
+
+        [TestMethod]
+        public void WhiteListTest()
+        {
+            Task.Run(() => {
+                JMS.Proxy.Program.Main(new string[] { "8920", "appsettings-proxy.json" });
+            });
+            Thread.Sleep(1000);
+
+            JMS.ProxyClient client;
+            try
+            {
+                client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8920), null);
+                client.Connect(new JMS.NetAddress("baidu.com", 443));
+                throw new Exception("竟然可以连接");
+            }
+            catch (JMS.Common.Net.ProxyException ex)
+            {
+            }
+
+            client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8920), null);
+            client.Connect(new JMS.NetAddress("mail.qq.com", 443));
+            client.AsSSLClient("mail.qq.com", RemoteCertificateValidationCallback);
+
+            var content = @"GET / HTTP/1.1
+Host: mail.qq.com
+Connection: keep-alive
+User-Agent: JmsInvoker
+Accept: text/html
+Accept-Encoding: deflate, br
+Accept-Language: zh-CN,zh;q=0.9
+Content-Length: 0
+
+";
+            client.Write(Encoding.UTF8.GetBytes(content));
+
+            byte[] data = new byte[40960];
+            var len = client.InnerStream.Read(data, 0, data.Length);
+            var text = Encoding.UTF8.GetString(data, 0, len);
+            client.Dispose();
         }
     }
 }

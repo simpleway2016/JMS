@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Net;
 using System.Reflection.PortableExecutable;
+using System.Linq;
 
 namespace JMS.Proxy
 {
@@ -37,7 +38,7 @@ namespace JMS.Proxy
         /// <summary>
         /// 处理握手
         /// </summary>
-        private async Task shakeHands()
+        private async Task<bool> shakeHands()
         {
             byte[] buffer = new byte[256];
             byte method = 0xFF; //命令不支持
@@ -104,6 +105,13 @@ namespace JMS.Proxy
                 rep = 0x00;
             }
 
+            var result = true;
+            if(_proxy.WhiteList != null && _proxy.WhiteList.Any(m=>m.Address == _header.Address && m.Port == _header.Port) == false)
+            {
+                rep = 0x08;
+                result = false;
+            }
+
             //输出应答
            
             for (int i = 0; i < 10; i++)
@@ -116,12 +124,17 @@ namespace JMS.Proxy
             buffer[3] = (0x01);
 
            _client.InnerStream.Write(buffer, 0, 10);
+            return result;
         }
 
 
         public async Task Start()
         {
-            await shakeHands();
+            if(await shakeHands() == false)
+            {
+                await Task.Delay(2000);
+                return;
+            }
 
             _targetClient = new NetClient();
             await _targetClient.ConnectAsync(_header.Address,_header.Port);

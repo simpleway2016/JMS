@@ -1,4 +1,5 @@
 ﻿using JMS.Common;
+using JMS.Common.Net;
 using JMS.Dtos;
 using Org.BouncyCastle.Bcpg;
 using System;
@@ -129,6 +130,10 @@ namespace JMS
                 this.InnerStream.Write(buffer, 0, len);
 
                 this.ReadData(buffer, 0, 4);
+                if (buffer[1] != 0)
+                {
+                    throw new ProxyException($"{_addr}:{_port}代理服务器不能转发");
+                }
                 if (buffer[3] == 0x1)
                 {
                     this.ReadData(buffer, 0, 6);
