@@ -64,6 +64,7 @@ namespace ServiceStatusViewer.ViewModels
                         var code = service.GetServiceClassCode(model.NamespaceName, model.ClassName);
 
                         var dialog = new SaveFileDialog();
+                        dialog.InitialFileName = model.ClassName + ".cs";
                         dialog.Filters.Add(new FileDialogFilter() { Name = "CSharp文件", Extensions = { "cs" } });
                         var filepath = await dialog.ShowAsync(MainWindow.Instance);
                         if (!string.IsNullOrEmpty(filepath))

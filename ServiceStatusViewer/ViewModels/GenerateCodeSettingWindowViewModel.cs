@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using ReactiveUI;
+using ServiceStatusViewer.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +39,10 @@ namespace ServiceStatusViewer.ViewModels
                         this.NamespaceName = history.Namespace;
                         this.ClassName = history.ClassName;
                     }
+                    else
+                    {
+                        this.ClassName = value;
+                    }
                 }
             }
         }
@@ -67,7 +72,7 @@ namespace ServiceStatusViewer.ViewModels
 
         public void Save()
         {
-            if (!string.IsNullOrEmpty(NamespaceName) && !string.IsNullOrEmpty(ClassName))
+            if (!string.IsNullOrWhiteSpace(NamespaceName) && !string.IsNullOrWhiteSpace(ClassName))
             {
                 using (var db = new SysDBContext())
                 {
@@ -81,6 +86,10 @@ namespace ServiceStatusViewer.ViewModels
 
                     this.Window.Close(true);
                 }
+            }
+            else
+            {
+                MessageBox.Show("请输入命名空间和类名");
             }
         }
     }
