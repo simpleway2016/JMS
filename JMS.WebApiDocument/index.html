@@ -351,6 +351,15 @@
                                 </tr>
                             </table>
                         </div>
+                        <div class="subtitle">axios例子</div>
+                        <div class="subcon">
+                            axios.post("{{item.url}}", [
+                            <span v-for="param,index in item.data.items">
+                                {{param.name}}
+                                <span v-if="index<item.data.items.length-1">,</span>
+                            </span>
+                            ]);
+                        </div>
                     </div>
                     <div v-if="!item.isComment && item.data && item.data.type=='Object' && item.data.items.length">
                         <div class="subtitle">Request 请求 (向服务器post的JSON对象)</div>
@@ -372,6 +381,7 @@
                                 </tr>
                             </table>
                         </div>
+                        
                     </div>
 
                     <div v-if="item.returnData && item.returnData.items && item.returnData.items.length">

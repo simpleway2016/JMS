@@ -115,6 +115,10 @@ namespace UnitTest
         [TestMethod]
         public void Test()
         {
+            var client = new RemoteClient("127.0.0.1",8911,new NetAddress("47.241.20.45", 8916));
+            var service = client.GetMicroService("Internal_PushMessageService");
+            var obj = service.GetServiceInfo();
+
             MicroServiceHost host = new MicroServiceHost(new ServiceCollection());
 
             host.Register<TestController>("testService");
