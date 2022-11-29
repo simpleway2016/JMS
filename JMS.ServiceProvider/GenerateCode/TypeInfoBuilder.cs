@@ -28,11 +28,6 @@ namespace JMS.GenerateCode
             var methods = controllerTypeInfo.Methods.Select(m => m.Method).ToArray();
             foreach (var method in methods)
             {
-                if (method.ReturnType == typeof(Task))
-                    continue;
-                if (method.ReturnType.IsGenericType && method.ReturnType.BaseType == typeof(Task))
-                    continue;
-
                 MethodItemInfo minfo = new MethodItemInfo();
                 controllerInfo.items.Add(minfo);
                 minfo.title = method.Name;
@@ -57,13 +52,14 @@ namespace JMS.GenerateCode
                     }
                 }
 
-                if (method.ReturnType != typeof(void))
+                var returnType = GetReturnType( method.ReturnType);
+                if (returnType != typeof(void))
                 {
                     minfo.returnData = new DataBodyInfo();
-                    minfo.returnData.type = getType(dataTypeInfos, method.ReturnType);
+                    minfo.returnData.type = getType(dataTypeInfos, returnType);
                     if (minfo.returnData.type.EndsWith("[]") == false)
                     {
-                        var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == method.ReturnType);
+                        var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == returnType);
                         if (typeinfo != null)
                         {
                             minfo.returnData.items = typeinfo.members;
@@ -75,9 +71,28 @@ namespace JMS.GenerateCode
             return controllerInfo;
         }
 
+        public static Type GetReturnType(Type type)
+        {
+            if (type == typeof(Task) || type == typeof(ValueTask))
+            {
+                return typeof(void);
+            }
+            else if (type.IsSubclassOf(typeof(Task)) && type.IsGenericType)
+            {
+                Type[] argTypes = type.GetGenericArguments();
+                return GetReturnType(argTypes[0]);
+            }
+            else if (type.IsSubclassOf(typeof(ValueTask)) && type.IsGenericType)
+            {
+                Type[] argTypes = type.GetGenericArguments();
+                return GetReturnType(argTypes[0]);
+            }
+            return type;
+        }
 
         static string getType(List<DataTypeInfo> dataTypeInfos, Type type)
         {
+            
             if (type == typeof(object))
             {
                 return "any";

@@ -8,6 +8,7 @@ using JMS.GenerateCode;
 using Way.Lib;
 using System.Reflection;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace UnitTest
 {
@@ -102,7 +103,7 @@ namespace UnitTest
         {
             return null;
         }
-        public Setting1 Test3()
+        public async Task<Setting1> Test3()
         {
             return null;
         }
@@ -133,20 +134,23 @@ namespace UnitTest
         [TestMethod]
         public void TypeinfoBuilderTest()
         {
+            var baseMethods = typeof(MicroServiceControllerBase).GetMethods().Select(m => m.Name).ToArray();
             var typeinfo = new ControllerTypeInfo()
             {
                 ServiceName = "testService",
                 Type = typeof(TestController),
                 Methods = typeof(TestController).GetTypeInfo().DeclaredMethods.Where(m =>
-                 m.IsStatic == false &&
-                 m.IsPublic &&
-                 m.IsSpecialName == false &&
-                 m.DeclaringType != typeof(MicroServiceControllerBase)
-                 && m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
-                 {
-                     Method = m,
-                     NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
-                 }).ToArray()
+                    m.IsStatic == false &&
+                    m.IsPublic &&
+                    m.IsSpecialName == false &&
+                    m.DeclaringType != typeof(MicroServiceControllerBase) &&
+                    baseMethods.Contains(m.Name) == false &&
+                    m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
+                    {
+                        Method = m,
+                        ResultProperty = m.ReturnType.GetProperty(nameof(Task<int>.Result)),
+                        NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
+                    }).ToArray()
             };
             var code = TypeInfoBuilder.Build(typeinfo).ToJsonString(true);
         }

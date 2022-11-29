@@ -24,7 +24,7 @@ namespace JMS.GenerateCode
             CodeMemberMethod codeMethod = new CodeMemberMethod();
             codeMethod.Attributes = MemberAttributes.Public;
             codeMethod.Name = method.Name;
-            codeMethod.ReturnType = GetTypeCode(method.ReturnType, true);
+            codeMethod.ReturnType = GetTypeCode( TypeInfoBuilder.GetReturnType( method.ReturnType), true);
             foreach (var p in parameters)
             {
                 codeMethod.Parameters.Add(new CodeParameterDeclarationExpression(GetTypeCode(p.ParameterType), p.Name));

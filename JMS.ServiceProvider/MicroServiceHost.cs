@@ -308,8 +308,8 @@ namespace JMS
                 ThreadPool.SetMinThreads(500,500);
             }
             ServiceProvider = serviceProvider;
-            //if (ServicePort == 0)
-            //    return;
+            if (ServicePort == 0 && ServiceAddress == null)
+                return;
 
             _logger = ServiceProvider.GetService<ILogger<MicroServiceHost>>();
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
