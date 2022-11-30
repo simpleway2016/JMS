@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "JMS.TokenServer": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

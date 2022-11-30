@@ -18,6 +18,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Sources;
 using UnitTest.ServiceHosts;
 using Way.Lib;
 
@@ -203,13 +204,44 @@ namespace UnitTest
             }
         }
 
-      
+
+        class MyTask : IValueTaskSource<int>
+        {
+            ValueTaskSourceStatus _status = ValueTaskSourceStatus.Pending;
+            public int GetResult(short token)
+            {
+                return 123;
+            }
+
+            public ValueTaskSourceStatus GetStatus(short token)
+            {
+                return _status;
+            }
+
+            public void OnCompleted(Action<object?> continuation, object? state, short token, ValueTaskSourceOnCompletedFlags flags)
+            {
+                var tid = Thread.CurrentThread.ManagedThreadId;
+                Task.Run(() => {
+                    Thread.Sleep(3000);
+                    _status = ValueTaskSourceStatus.Faulted;
+                    continuation(state);
+                });
+                if (flags == ValueTaskSourceOnCompletedFlags.None)
+                    return;
+                continuation(state);
+            }
+        }
+
         [TestMethod]
         public void SocketTest()
         {
             var line = "09:29:18 AM  all   45.00    0.01    2.75    0.46    0.34    0.35    0.00    0.00    0.00   51.08";
                         string idle = Regex.Match(line, @"[0-9\.]+$").Value;
 
+            var tid = Thread.CurrentThread.ManagedThreadId;
+            var task = new ValueTask<int>(new MyTask(), 999);
+            task.AsTask().Wait();
+            var p = task.Result;
         }
 
         int errcount = 0;
