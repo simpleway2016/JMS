@@ -6,6 +6,8 @@
     <Authors>Jack</Authors>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/simpleway2016/JMS</RepositoryUrl>
+    <Description>让Webapi变成微服务</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
