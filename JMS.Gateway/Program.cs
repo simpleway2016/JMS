@@ -38,8 +38,14 @@ namespace JMS
             }
 
             var builder = new ConfigurationBuilder();
-            AppSettingPath = "appsettings.runtime.json";
-            if(File.Exists(AppSettingPath) == false)
+            AppSettingPath = Environment.GetFolderPath( Environment.SpecialFolder.CommonApplicationData);
+            AppSettingPath = Path.Combine(AppSettingPath, "jms.gateway");
+            if(Directory.Exists(AppSettingPath) == false)
+            {
+                Directory.CreateDirectory(AppSettingPath);
+            }
+            AppSettingPath = Path.Combine(AppSettingPath, "appsettings.json");
+            if (File.Exists(AppSettingPath) == false)
             {
                 File.Copy("./appsettings.json", AppSettingPath);
             }

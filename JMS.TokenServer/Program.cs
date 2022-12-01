@@ -50,7 +50,13 @@ namespace JMS.TokenServer
             }
 
             var builder = new ConfigurationBuilder();
-            var appSettingPath = "appsettings.runtime.json";
+            var appSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+            appSettingPath = Path.Combine(appSettingPath, "jms.tokenserver");
+            if (Directory.Exists(appSettingPath) == false)
+            {
+                Directory.CreateDirectory(appSettingPath);
+            }
+            appSettingPath = Path.Combine(appSettingPath, "appsettings.json");
             if (File.Exists(appSettingPath) == false)
             {
                 File.Copy("./appsettings.json", appSettingPath);
