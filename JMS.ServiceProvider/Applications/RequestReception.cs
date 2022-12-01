@@ -40,9 +40,11 @@ namespace JMS.Applications
                 var handler = (IRequestHandler)microServiceProvider.ServiceProvider.GetService(type);
                 _cache[handler.MatchType] = handler;
             }
+
+            CheckCert = new RemoteCertificateValidationCallback(remoteCertificateValidationCallback);
         }
 
-        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        bool remoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             if (_SSLConfiguration != null)
             {
@@ -72,6 +74,7 @@ namespace JMS.Applications
             }
         }
 
+        RemoteCertificateValidationCallback CheckCert;
         public async void Interview(Socket socket)
         {
             try
@@ -80,7 +83,7 @@ namespace JMS.Applications
                 {
                     if (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     {
-                        await netclient.AsSSLServerAsync(_SSLConfiguration.ServerCertificate, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
+                        await netclient.AsSSLServerAsync(_SSLConfiguration.ServerCertificate, CheckCert, NetClient.SSLProtocols);
                     }
 
                     while (true)

@@ -11,6 +11,8 @@ namespace JMS
 {
     public class CertClient : NetClient
     {
+        public static RemoteCertificateValidationCallback RemoteCertificateValidationCallback = null;
+        internal static RemoteCertificateValidationCallback NOCHECK = new RemoteCertificateValidationCallback(remoteCertificateValidationCallback);
         X509Certificate2 _cert;
 
         public CertClient(X509Certificate2 cert)
@@ -19,7 +21,7 @@ namespace JMS
 
         }
 
-        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        static bool remoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
@@ -30,7 +32,7 @@ namespace JMS
             this.AfterConnect();
             if (_cert != null)
             {
-                SslStream sslStream = new SslStream(this.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
+                SslStream sslStream = new SslStream(this.InnerStream, false, CertClient.RemoteCertificateValidationCallback??NOCHECK, null);
                 X509CertificateCollection certs = new X509CertificateCollection();
                 certs.Add(_cert);
                 sslStream.AuthenticateAsClient("SslSocket", certs, NetClient.SSLProtocols, false);
@@ -44,7 +46,7 @@ namespace JMS
             this.AfterConnect();
             if (_cert != null)
             {
-                SslStream sslStream = new SslStream(this.InnerStream, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), null);
+                SslStream sslStream = new SslStream(this.InnerStream, false, CertClient.RemoteCertificateValidationCallback ?? NOCHECK, null);
                 X509CertificateCollection certs = new X509CertificateCollection();
                 certs.Add(_cert);
                 await sslStream.AuthenticateAsClientAsync("SslSocket", certs, NetClient.SSLProtocols, false);
