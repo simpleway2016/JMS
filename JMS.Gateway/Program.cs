@@ -14,11 +14,13 @@ using Natasha.CSharp;
 using JMS.Applications;
 using JMS.Infrastructures;
 using System.Threading;
+using System.IO;
 
 namespace JMS
 {
     public class GatewayProgram
     {
+        internal static string AppSettingPath;
         static void Main(string[] args)
         {
             if(args.Length > 1&& args[0].EndsWith(".pfx") )
@@ -36,7 +38,13 @@ namespace JMS
             }
 
             var builder = new ConfigurationBuilder();
-            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            AppSettingPath = "appsettings.runtime.json";
+            if(File.Exists(AppSettingPath) == false)
+            {
+                File.Copy("./appsettings.json", AppSettingPath);
+            }
+
+            builder.AddJsonFile(AppSettingPath, optional: true, reloadOnChange: true);
             var configuration = builder.Build();
 
             var port = configuration.GetValue<int>("Port");

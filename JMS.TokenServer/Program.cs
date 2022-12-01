@@ -13,6 +13,7 @@ using System.Linq;
 using System.Threading;
 using JMS.Common.Net;
 using Org.BouncyCastle.Bcpg;
+using System.IO;
 
 namespace JMS.TokenServer
 {
@@ -49,9 +50,15 @@ namespace JMS.TokenServer
             }
 
             var builder = new ConfigurationBuilder();
-            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
+            var appSettingPath = "appsettings.runtime.json";
+            if (File.Exists(appSettingPath) == false)
+            {
+                File.Copy("./appsettings.json", appSettingPath);
+            }
+
+            builder.AddJsonFile(appSettingPath, optional: true, reloadOnChange: true);
             var configuration = builder.Build();
-           
+
             var port = configuration.GetValue<int>("Port");
 
             ServiceCollection services = new ServiceCollection();
@@ -85,7 +92,8 @@ namespace JMS.TokenServer
 
             TcpServer listener = new TcpServer(port);
             listener.Connected += Listener_Connected;
-            Console.WriteLine($"Token server started,port：{port}");
+            Logger?.LogInformation($"配置文件：{appSettingPath}");
+            Logger?.LogInformation($"Token server started,port：{port}");
             listener.Run();
         }
 

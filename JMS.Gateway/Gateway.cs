@@ -36,6 +36,8 @@ namespace JMS
         {
             _Logger = logger;
             _Logger.LogInformation($"版本号：{this.GetType().Assembly.GetName().Version}");
+
+            _Logger?.LogInformation("配置文件:{0}", GatewayProgram.AppSettingPath);
         }
 
         string _id;
@@ -72,6 +74,7 @@ namespace JMS
             _tcpServer = new TcpServer(port);
             _tcpServer.Connected += _tcpServer_Connected;
 
+           
             _Logger?.LogInformation("Gateway started, port:{0}", port);
             if (ServerCert != null)
             {
