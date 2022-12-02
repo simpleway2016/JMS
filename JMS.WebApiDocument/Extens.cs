@@ -106,6 +106,7 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
                 {
+                    context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
                     try
                     {
                         var m = Regex.Match(context.Request.Path.Value, @"\/JMSRedirect\/(?<s>((?![\/]).)+)/(?<m>\w+)");
