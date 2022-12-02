@@ -178,8 +178,6 @@ namespace UnitTest
             }
         }
 
-    
-
         [TestMethod]
         public void UrlParse()
         {
