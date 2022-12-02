@@ -139,6 +139,5 @@ public class ControllerTypeInfo
 public class TypeMethodInfo
 {
     public MethodInfo Method;
-    public PropertyInfo ResultProperty;
     public bool NeedAuthorize;
 }

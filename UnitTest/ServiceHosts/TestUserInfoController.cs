@@ -10,6 +10,13 @@ using System.Threading.Tasks;
 
 namespace UnitTest.ServiceHosts
 {
+    internal class AsyncDemoController : MicroServiceControllerBase
+    {
+        public async void ErrorDemo()
+        {
+            await Task.Delay(10);
+        }
+    }
     internal class TestUserInfoController : MicroServiceControllerBase
     {
         UserInfoDbContext _userInfoDbContext;
@@ -24,6 +31,7 @@ namespace UnitTest.ServiceHosts
             if (string.IsNullOrEmpty(this.TransactionId))
                 throw new Exception("TransactionId为空");
         }
+       
         public async Task SetUserName(string name)
         {
             //启动支持分布式事务

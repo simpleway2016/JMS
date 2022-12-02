@@ -37,6 +37,12 @@ namespace UnitTest.Controllers
             };
             return name;
         }
+
+        [HttpGet]
+        public async void AsyncSetName()
+        {
+            
+        }
     }
 
 }

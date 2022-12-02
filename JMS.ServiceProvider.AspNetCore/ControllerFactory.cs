@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Routing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using static JMS.ServiceProvider.AspNetCore.ApiFaildCommitBuilder;
 using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
@@ -65,6 +67,10 @@ namespace JMS.ServiceProvider.AspNetCore
                    
                     if (paths.Length >= 3 && string.Equals(paths[1], actionDesc.ControllerName, StringComparison.OrdinalIgnoreCase) && string.Equals(paths[2] , actionDesc.ActionName , StringComparison.OrdinalIgnoreCase))
                     {
+                        if (actionDesc.MethodInfo.ReturnType == typeof(void) && actionDesc.MethodInfo.GetCustomAttribute<AsyncStateMachineAttribute>() != null)
+                        {
+                            throw new MethodDefineException($"请把{actionDesc.MethodInfo.DeclaringType.Name}.{actionDesc.MethodInfo.Name}()改为 async Task {actionDesc.MethodInfo.Name} 形式");
+                        }
                         controllerActionDescriptor = actionDesc;
                         break;
                     }

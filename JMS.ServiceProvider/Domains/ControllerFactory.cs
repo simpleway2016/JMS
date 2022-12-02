@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -39,13 +40,7 @@ namespace JMS.Domains
         public void RegisterController(Type contollerType, string serviceName)
         {
             var baseMethods = typeof(MicroServiceControllerBase).GetMethods().Select(m => m.Name).ToArray();
-            _controllerDict[serviceName] = new ControllerTypeInfo()
-            {
-                ServiceName = serviceName,
-                Type = contollerType,
-                Enable = true,
-                NeedAuthorize = contollerType.GetCustomAttribute<AuthorizeAttribute>() != null,
-                Methods = contollerType.GetTypeInfo().DeclaredMethods.Where(m =>
+            var methods = contollerType.GetTypeInfo().DeclaredMethods.Where(m =>
                     m.IsStatic == false &&
                     m.IsPublic &&
                     m.IsSpecialName == false &&
@@ -54,9 +49,24 @@ namespace JMS.Domains
                     m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
                     {
                         Method = m,
-                        ResultProperty = m.ReturnType.GetProperty(nameof(Task<int>.Result)),
                         NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
-                    }).ToArray()
+                    }).ToArray();
+
+            foreach (var method in methods)
+            {
+                if ( method.Method.ReturnType == typeof(void) && method.Method.GetCustomAttribute<AsyncStateMachineAttribute>() != null)
+                {
+                    throw new MethodDefineException($"请把{method.Method.DeclaringType.Name}.{method.Method.Name}()改为 async Task {method.Method.Name} 形式");
+                }
+            }
+
+            _controllerDict[serviceName] = new ControllerTypeInfo()
+            {
+                ServiceName = serviceName,
+                Type = contollerType,
+                Enable = true,
+                NeedAuthorize = contollerType.GetCustomAttribute<AuthorizeAttribute>() != null,
+                Methods = methods
             };
         }
 

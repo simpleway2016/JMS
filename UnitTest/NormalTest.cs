@@ -221,6 +221,22 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void AsyncDefine()
+        {
+            ServiceCollection services = new ServiceCollection();
+
+            var msp = new MicroServiceHost(services);
+            try
+            {
+                msp.Register<AsyncDemoController>("AsyncDemo");
+                throw new Exception("error");
+            }
+            catch (MethodDefineException)
+            {
+            }
+        }
+
+        [TestMethod]
         public void Commit()
         {
             UserInfoDbContext.Reset();

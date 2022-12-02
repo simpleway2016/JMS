@@ -146,7 +146,8 @@ namespace UnitTest
                 };
 
             var clientCount = 0;
-            NetClientPool.CreatedNewClient += (s, c) => {
+            NetClientPool.CreatedNewClient += (s, c) =>
+            {
                 Interlocked.Increment(ref clientCount);
             };
             while (true)
@@ -167,7 +168,7 @@ namespace UnitTest
                     serviceClient.InvokeAsync("SetUserName", "Jack4");
                     client.CommitTransaction();
 
-                    Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName} socket创建数量：{clientCount} 连接池数量：{NetClientPool.GetPoolAliveCount(new NetAddress(serviceClient.ServiceLocation.ServiceAddress , serviceClient.ServiceLocation.Port))}");
+                    Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName} socket创建数量：{clientCount} 连接池数量：{NetClientPool.GetPoolAliveCount(new NetAddress(serviceClient.ServiceLocation.ServiceAddress, serviceClient.ServiceLocation.Port))}");
 
                     if (UserInfoDbContext.FinallyUserName.StartsWith("Jack") == false)
                         throw new Exception("结果不正确");
@@ -197,7 +198,7 @@ namespace UnitTest
             var rawData = cert.RawData;
             var json = new { data = rawData }.ToJsonString();
             var obj = json.FromJson<CertItem>();
-            for(int i = 0; i < obj.data.Length; i++)
+            for (int i = 0; i < obj.data.Length; i++)
             {
                 if (obj.data[i] != rawData[i])
                     throw new Exception("error");
@@ -221,7 +222,8 @@ namespace UnitTest
             public void OnCompleted(Action<object?> continuation, object? state, short token, ValueTaskSourceOnCompletedFlags flags)
             {
                 var tid = Thread.CurrentThread.ManagedThreadId;
-                Task.Run(() => {
+                Task.Run(() =>
+                {
                     Thread.Sleep(3000);
                     _status = ValueTaskSourceStatus.Faulted;
                     continuation(state);
@@ -232,16 +234,52 @@ namespace UnitTest
             }
         }
 
+        public async void test()
+        {
+            await Task.Run(() =>
+            {
+                Thread.Sleep(5000);
+                var tid = Thread.CurrentThread.ManagedThreadId;
+            });
+            int c = 0;
+            var tid = Thread.CurrentThread.ManagedThreadId;
+            c++;
+        }
+
         [TestMethod]
         public void SocketTest()
         {
-            var line = "09:29:18 AM  all   45.00    0.01    2.75    0.46    0.34    0.35    0.00    0.00    0.00   51.08";
-                        string idle = Regex.Match(line, @"[0-9\.]+$").Value;
-
             var tid = Thread.CurrentThread.ManagedThreadId;
-            var task = new ValueTask<int>(new MyTask(), 999);
-            task.AsTask().Wait();
-            var p = task.Result;
+            var previousContext = SynchronizationContext.Current;
+            var currentContext = new AsyncSynchronizationContext();
+            SynchronizationContext.SetSynchronizationContext(currentContext);
+
+            Task.Run(() =>
+            {
+                Thread.Sleep(2000);
+                for (int i = 0; i < 1000; i++)
+                {
+                    Task.Run(() => {
+                        Thread.Sleep(50000);
+                    });
+                }
+            });
+
+            try
+            {
+                var method = this.GetType().GetMethod("test");
+                var result = method.Invoke(this, null);
+                currentContext.WaitForPendingOperationsToComplete();
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(previousContext);
+            }
+
+            var line = "09:29:18 AM  all   45.00    0.01    2.75    0.46    0.34    0.35    0.00    0.00    0.00   51.08";
+            string idle = Regex.Match(line, @"[0-9\.]+$").Value;
+
+
         }
 
         int errcount = 0;
@@ -250,15 +288,16 @@ namespace UnitTest
         public void ClientPoolTest()
         {
             int connecting = 0;
-          
+
             int port = 9000;
-            TcpListener tcpListener = new TcpListener( IPAddress.Any, port);
+            TcpListener tcpListener = new TcpListener(IPAddress.Any, port);
             tcpListener.Start();
             int connectCount = 0;
             ConcurrentDictionary<NetClient, bool> cache = new ConcurrentDictionary<NetClient, bool>();
 
 
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 Thread.Sleep(1000);
 
                 List<NetClient> clients = new List<NetClient>();
@@ -267,13 +306,14 @@ namespace UnitTest
                     var client = NetClientPool.CreateClient(null, new NetAddress("localhost", port), null);
                     clients.Add(client);
                 }
-                foreach ( var client in clients)
+                foreach (var client in clients)
                 {
                     NetClientPool.AddClientToPool(client);
                 }
 
                 var addr = new NetAddress("localhost", port);
-                new Thread(() => {
+                new Thread(() =>
+                {
                     while (true)
                     {
                         Debug.WriteLine($"当前连接数：{connectCount} socket数量{newSocketCount} connecting:{connecting} 错误数量{errcount} {NetClientPool.GetPoolAliveCount(addr)}");
@@ -281,13 +321,14 @@ namespace UnitTest
                     }
                 }).Start();
 
-              
-                Parallel.For(0, 10, i => {
+
+                Parallel.For(0, 10, i =>
+                {
                     var lasttime = DateTime.Now;
                     while (true)
                     {
                         NetClient client;
-                        if((DateTime.Now - lasttime).TotalSeconds > 20)
+                        if ((DateTime.Now - lasttime).TotalSeconds > 20)
                         {
                             lasttime = DateTime.Now;
                             client = new NetClient();
@@ -301,9 +342,9 @@ namespace UnitTest
                         Interlocked.Increment(ref connecting);
                         if (cache.ContainsKey(client))
                             throw new Exception("error");
-                       if( cache.TryAdd(client, true) == false)
+                        if (cache.TryAdd(client, true) == false)
                             throw new Exception("error");
-                 
+
                         Interlocked.Increment(ref connectCount);
 
                         client.Write(new byte[3] { 0x1, 0x2, 0x3 });
@@ -324,7 +365,7 @@ namespace UnitTest
                 });
             });
 
-           
+
 
             while (true)
             {
@@ -332,13 +373,14 @@ namespace UnitTest
                 socket.ReceiveTimeout = -1;
                 Interlocked.Increment(ref newSocketCount);
                 handlesocket(socket);
-                
+
             }
         }
 
         void handlesocket(Socket socket)
         {
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 listenerSocketData(socket);
                 //Interlocked.Decrement(ref newSocketCount);
             });
@@ -384,13 +426,14 @@ namespace UnitTest
             {
                 int used = 0;
                 int done = 0;
-                Parallel.For(0, 10, i => {
+                Parallel.For(0, 10, i =>
+                {
                     if (Interlocked.CompareExchange(ref used, 1, 0) == 0)
                     {
                         Interlocked.Increment(ref done);
                     }
                 });
-                if(done > 1)
+                if (done > 1)
                 {
                     throw new Exception("error");
                 }

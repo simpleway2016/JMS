@@ -152,7 +152,6 @@ namespace UnitTest
                     m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
                     {
                         Method = m,
-                        ResultProperty = m.ReturnType.GetProperty(nameof(Task<int>.Result)),
                         NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
                     }).ToArray()
             };

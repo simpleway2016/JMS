@@ -119,6 +119,51 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void AsyncHttpTest()
+        {
+            var normalTest = new NormalTest();
+            normalTest.StartGateway();
+
+            var app = StartCrashWebApi(normalTest._gateWayPort);
+            app.RunAsync();
+            Thread.Sleep(1000);
+            normalTest.WaitGatewayReady(normalTest._gateWayPort);
+
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = normalTest._gateWayPort
+                   }
+                };
+
+            using (var remoteClient = new RemoteClient(gateways))
+            {
+
+                var service2 = remoteClient.TryGetMicroService("TestCrashService");
+                while (service2 == null)
+                {
+                    Thread.Sleep(100);
+                    service2 = remoteClient.TryGetMicroService("TestCrashService");
+                }
+                try
+                {
+                    service2.Invoke("/Crash/AsyncSetName");
+                    throw new Exception("error");
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message.Contains("改为"))
+                        return;
+                    throw ex;
+                }
+
+            }
+
+          
+        }
+
+        [TestMethod]
         public void MicroServiceTest()
         {
             var normalTest = new NormalTest();
