@@ -38,23 +38,42 @@ namespace JMS.Domains
             _Logger = logger;
             _lockKeyManager = lockKeyManager;
         }
-        public Task HealthyCheck( NetClient netclient, GatewayCommand registerCmd)
+        public Task HealthyCheck(NetClient netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
-            handleRegister(registerCmd , this);
+            handleRegister(registerCmd, this);
             if (this.ServiceInfo == null)
                 return Task.CompletedTask;
 
             return checkState();
         }
 
-        void handleRegister(GatewayCommand registerCmd,MicroServiceReception reception)
+        void handleRegister(GatewayCommand registerCmd, MicroServiceReception reception)
         {
             var serviceItem = registerCmd.Content.FromJson<RegisterServiceInfo>();
+            if (serviceItem.ServiceList == null)
+            {
+                serviceItem.ServiceList = new ServiceDetail[serviceItem.ServiceNames.Length];
+                for (int i = 0; i < serviceItem.ServiceList.Length; i++)
+                {
+                    var detail = new ServiceDetail
+                    {
+                        Name = serviceItem.ServiceNames[i],
+                        Type = ServiceType.JmsService
+                    };
+                    if(serviceItem.Port == 0)
+                    {
+                        detail.Type = ServiceType.WebApi;
+                        detail.AllowGatewayProxy = true;
+                    }
+                    serviceItem.ServiceList[i] = detail;
+                }
+            }
+
 
             if (serviceItem.SingletonService)
             {
-                if (_registerServiceManager.GetAllRegisterServices().Any(m => string.Join(',', m.ServiceNames) == string.Join(',', serviceItem.ServiceNames)))
+                if (_registerServiceManager.GetAllRegisterServices().Any(m => string.Join(',', m.ServiceList.Select(n=>n.Name).ToArray()) == string.Join(',', serviceItem.ServiceList.Select(n => n.Name).ToArray())))
                 {
                     NetClient.WriteServiceData(new InvokeResult
                     {
@@ -79,7 +98,7 @@ namespace JMS.Domains
             _registerServiceManager.AddRegisterService(reception);
 
             _Logger?.LogInformation($"微服务{serviceItem.ServiceNames.ToJsonString()} {serviceItem.Host}:{serviceItem.Port}注册");
-           
+
 
         }
 
@@ -98,11 +117,11 @@ namespace JMS.Domains
         async Task checkState()
         {
             NetClient.ReadTimeout = 30000;
-            while(!_closed)
+            while (!_closed)
             {
                 try
                 {
-                    var command = await NetClient.ReadServiceObjectAsync<GatewayCommand>();                    
+                    var command = await NetClient.ReadServiceObjectAsync<GatewayCommand>();
 
                     if (command.Type == CommandType.ReportClientConnectQuantity)
                     {
@@ -123,9 +142,9 @@ namespace JMS.Domains
                             Success = true
                         });
                     }
-                    else if(command.Type == CommandType.RegisterSerivce)
+                    else if (command.Type == CommandType.RegisterSerivce)
                     {
-                        handleRegister(command , new VirtualServiceReception());
+                        handleRegister(command, new VirtualServiceReception());
                     }
                     else
                     {
@@ -135,7 +154,7 @@ namespace JMS.Domains
                         });
                     }
                 }
-                catch(System.ObjectDisposedException)
+                catch (System.ObjectDisposedException)
                 {
                     _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
                     if (_closed == false)
@@ -144,9 +163,9 @@ namespace JMS.Domains
                     }
                     return;
                 }
-                catch(SocketException)
+                catch (SocketException)
                 {
-                    _Logger?.LogInformation( $"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+                    _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
                     if (_closed == false)
                     {
                         disconnect();

@@ -14,8 +14,8 @@ namespace JMS
     {
         public IRemoteClient ServiceTransaction { get; }
         string _serviceName;
-        RegisterServiceLocation _serviceLocation;
-        public RegisterServiceLocation ServiceLocation => _serviceLocation;
+        ClientServiceDetail _serviceLocation;
+        public ClientServiceDetail ServiceLocation => _serviceLocation;
         bool _IsFromGateway;
         public bool IsFromGateway => _IsFromGateway;
 
@@ -26,12 +26,12 @@ namespace JMS
             _IsFromGateway = true;
         }
 
-        public bool Init(RegisterServiceLocation registerServiceLocation)
+        public bool Init(ClientServiceDetail registerServiceLocation)
         {
             if (registerServiceLocation != null)
             {
                 _IsFromGateway = false;
-                _serviceLocation = registerServiceLocation.ToJsonString().FromJson<RegisterServiceLocation>();
+                _serviceLocation = registerServiceLocation.ToJsonString().FromJson<ClientServiceDetail>();
                 return true;
             }
             //获取服务地址
@@ -48,12 +48,12 @@ namespace JMS
                         ServiceName = _serviceName
                     }.ToJsonString()
                 });
-                var serviceLocation = netclient.ReadServiceObject<RegisterServiceLocation>();
+                var serviceLocation = netclient.ReadServiceObject<ClientServiceDetail>();
 
-                if (serviceLocation.Host == "not master")
+                if (serviceLocation.ServiceAddress == "not master")
                     throw new MissMasterGatewayException("");
 
-                if(serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.Host))
+                if(serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.ServiceAddress))
                 {
                     //网关没有这个服务
                     return false;

@@ -16,19 +16,7 @@ namespace JMS.Dtos
         /// 对外提供微服务的地址
         /// </summary>
         public string ServiceAddress;
-        /// <summary>
-        /// 微服务的自定义描述
-        /// </summary>
-        public string Description;
-        /// <summary>
-        /// 是否允许通过网关反向代理访问此服务器
-        /// 默认可以通过 http://网关域名/服务名称/ 来访问
-        /// </summary>
-        public bool GatewayProxy;
-        /// <summary>
-        /// 代理时，路径需要带上服务名称
-        /// </summary>
-        public bool ProxyWithServiceName;
+        
 
         /// <summary>
         /// 服务器是否启用了ssl证书
@@ -57,7 +45,9 @@ namespace JMS.Dtos
         /// <summary>
         /// 支持的服务
         /// </summary>
+        [Obsolete]
         public string[] ServiceNames;
+        public ServiceDetail[] ServiceList;
         /// <summary>
         /// 本机最多同时并发几个线程
         /// </summary>
@@ -116,13 +106,13 @@ namespace JMS.Dtos
         /// <summary>
         /// 支持的服务
         /// </summary>
-        public string[] ServiceNames;
+        public ServiceDetail[] ServiceList;
         /// <summary>
         /// 本机最多同时并发几个线程
         /// </summary>
         public int MaxThread;
         public string ServiceId;
-        public string Description;
+
         /// <summary>
         /// 当前微服务的负载情况
         /// </summary>

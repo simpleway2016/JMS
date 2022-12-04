@@ -28,14 +28,30 @@ namespace JMS.Applications.CommandHandles
 
         public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
-            var info = cmd.Content.FromJson<RegisterServiceInfo>();
-           var service = _RegisterServiceManager.GetServiceById(info.ServiceId);
+            var serviceItem = cmd.Content.FromJson<RegisterServiceInfo>();
+            if (serviceItem.ServiceList == null)
+            {
+                serviceItem.ServiceList = new ServiceDetail[serviceItem.ServiceNames.Length];
+                for (int i = 0; i < serviceItem.ServiceList.Length; i++)
+                {
+                    var detail = new ServiceDetail
+                    {
+                        Name = serviceItem.ServiceNames[i],
+                        Type = ServiceType.JmsService
+                    };
+                    if (serviceItem.Port == 0)
+                    {
+                        detail.Type = ServiceType.WebApi;
+                        detail.AllowGatewayProxy = true;
+                    }
+                }
+            }
+
+            var service = _RegisterServiceManager.GetServiceById(serviceItem.ServiceId);
            if(service != null)
             {
-                service.ServiceNames = info.ServiceNames;
-                service.Description = info.Description;
-                service.ClientCheckCodeFile = info.ClientCheckCodeFile;
-                service.GatewayProxy = info.GatewayProxy;
+                service.ServiceList = serviceItem.ServiceList;
+                service.ClientCheckCodeFile = serviceItem.ClientCheckCodeFile;
                
             }
 

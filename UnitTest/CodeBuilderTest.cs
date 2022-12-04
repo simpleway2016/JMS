@@ -141,7 +141,9 @@ namespace UnitTest
             var baseMethods = typeof(MicroServiceControllerBase).GetMethods().Select(m => m.Name).ToArray();
             var typeinfo = new ControllerTypeInfo()
             {
-                ServiceName = "testService",
+                Service = new JMS.Dtos.ServiceDetail { 
+                Name = "testService"
+                },
                 Type = typeof(TestController),
                 Methods = typeof(TestController).GetTypeInfo().DeclaredMethods.Where(m =>
                     m.IsStatic == false &&

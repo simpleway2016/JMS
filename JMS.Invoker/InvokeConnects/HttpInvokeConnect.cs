@@ -18,7 +18,7 @@ namespace JMS
         public InvokingInformation InvokingInfo { get; private set; }
         public InvokeCommand Command { get; private set; }
         public Invoker Invoker { get; private set; }
-        public HttpInvokeConnect(string serviceName, RegisterServiceLocation location, Invoker invoker)
+        public HttpInvokeConnect(string serviceName, ClientServiceDetail location, Invoker invoker)
         {
             InvokingInfo = new InvokingInformation();
             InvokingInfo.ServiceName = serviceName;
@@ -347,7 +347,7 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public void RetryTranaction(NetAddress proxyAddress, RegisterServiceLocation serviceLocation, byte[] cert, string tranId,string tranFlag)
+        public void RetryTranaction(NetAddress proxyAddress, ClientServiceDetail serviceLocation, byte[] cert, string tranId,string tranFlag)
         {
             var uri = new Uri(serviceLocation.ServiceAddress);
             _client = NetClientPool.CreateClient(null, uri.Host, uri.Port, null, (client) => {

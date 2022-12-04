@@ -70,20 +70,14 @@ namespace JMS
         }
 
        
-        public RegisterServiceLocation Alloc(GetServiceProviderRequest request)
+        public ClientServiceDetail Alloc(GetServiceProviderRequest request)
         {
             if (_serviceRunningItems == null)
                 return null;
-            var matchServices = _serviceRunningItems.Where(m => m.ServiceInfo.ServiceNames.Contains(request.ServiceName)
+            var matchServices = _serviceRunningItems.Where(m => m.ServiceInfo.ServiceList.Any(n=>n.Name == request.ServiceName && (n.AllowGatewayProxy || request.IsGatewayProxy == false))
             && m.ServiceInfo.MaxThread > 0
             && (m.ServiceInfo.MaxRequestCount == 0 || m.ServiceInfo.RequestQuantity < m.ServiceInfo.MaxRequestCount)
             && (m.ClientChecker == null || m.ClientChecker.Check(request.Header)));
-
-            if (request.IsGatewayProxy)
-            {
-                //如果是来自网关的反向代理访问，只能匹配支持反向代理的服务
-                matchServices = matchServices.Where(m => m.ServiceInfo.GatewayProxy == true);
-            }
 
             IEnumerable<ServiceRunningItem> services = null ;
 
@@ -100,16 +94,9 @@ namespace JMS
                 return null;
 
             Interlocked.Increment(ref item.ServiceInfo.RequestQuantity);
-          
-            return new RegisterServiceLocation
-            {
-                Host = item.ServiceInfo.Host,
-                ServiceAddress = item.ServiceInfo.ServiceAddress,
-                Port = item.ServiceInfo.Port,
-                GatewayProxy = item.ServiceInfo.GatewayProxy,
-                UseSsl = item.ServiceInfo.UseSsl,
-                ProxyWithServiceName = item.ServiceInfo.ProxyWithServiceName,
-            };
+
+            var detail = item.ServiceInfo.ServiceList.FirstOrDefault(n => n.Name == request.ServiceName && (n.AllowGatewayProxy || request.IsGatewayProxy == false));
+            return new ClientServiceDetail(detail, item.ServiceInfo);
         }
 
     }

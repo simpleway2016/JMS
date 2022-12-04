@@ -45,7 +45,7 @@ namespace ServiceStatusViewer.ViewModels
         public string PerformanceInfo => $"当前连接数：{_data.PerformanceInfo.RequestQuantity} CPU利用率:{(int)(_data.PerformanceInfo.CpuUsage.GetValueOrDefault() )}%";
 
         public IReactiveCommand GetCodeClick => ReactiveCommand.Create(async () => {
-            if (_data.ServiceNames.Length == 0)
+            if (_data.ServiceList.Length == 0)
                 return;
 
             _MainWindowViewModel.IsBusy = true;
@@ -57,10 +57,7 @@ namespace ServiceStatusViewer.ViewModels
                 {
                     using (var client = new MicroServiceClient())
                     {
-                        var service = client.GetMicroService(model.SelectedServiceName ,new JMS.Dtos.RegisterServiceLocation { 
-                            ServiceAddress = this._data.ServiceAddress,
-                            Port = this._data.Port
-                        });
+                        var service = client.GetMicroService(model.SelectedServiceName ,new JMS.Dtos.ClientServiceDetail(this._data.ServiceAddress, this._data.Port));
                         var code = service.GetServiceClassCode(model.NamespaceName, model.ClassName);
 
                         var dialog = new SaveFileDialog();
@@ -86,7 +83,7 @@ namespace ServiceStatusViewer.ViewModels
         });
 
         public IReactiveCommand InvokeMethodClick => ReactiveCommand.Create(async () => {
-            if (_data.ServiceNames.Length == 0)
+            if (_data.ServiceList.Length == 0)
                 return;
 
             _MainWindowViewModel.IsBusy = true;
@@ -114,11 +111,11 @@ namespace ServiceStatusViewer.ViewModels
         {
             if (_data.ServiceAddress?.StartsWith("http") == true)
             {
-                return $"{_data.ServiceAddress} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceNames)}";
+                return $"{_data.ServiceAddress} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceList.Select(m=>m.Name).ToArray())}";
             }
             else
             {
-                return $"{_data.ServiceAddress}:{_data.Port} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceNames)}";
+                return $"{_data.ServiceAddress}:{_data.Port} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceList.Select(m => m.Name).ToArray())}";
             }
         }
     }

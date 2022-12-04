@@ -48,7 +48,7 @@ namespace JMS.Infrastructures
                 return;
             }
 
-            if (location.ProxyWithServiceName == false)
+            if (location.Type == ServiceType.WebApi)
             {
                 //去除servicename去代理访问
                 requestPath = requestPath.Substring(servieName.Length + 1);
@@ -180,7 +180,7 @@ namespace JMS.Infrastructures
                 return;
             }
 
-            if (location.ProxyWithServiceName == false)
+            if (location.Type == ServiceType.WebApi)
             {
                 //去除servicename去代理访问
                 requestPath = requestPath.Substring(servieName.Length + 1);

@@ -14,7 +14,7 @@ namespace ServiceStatusViewer.ViewModels
     class InvokeServiceMethodWindowModel : ViewModelBase
     {
 
-        public string[] ServiceNames => _ServiceInformation._data.ServiceNames;
+        public string[] ServiceNames => _ServiceInformation._data.ServiceList.Select(m=>m.Name).ToArray();
 
         private string _SelectedServiceName;
         public string SelectedServiceName
@@ -132,8 +132,8 @@ namespace ServiceStatusViewer.ViewModels
         public InvokeServiceMethodWindowModel(ServiceInformation serviceInfo)
         {
             _ServiceInformation = serviceInfo;
-            if (serviceInfo._data.ServiceNames.Length == 1)
-                this.SelectedServiceName = serviceInfo._data.ServiceNames[0];
+            if (serviceInfo._data.ServiceList.Length == 1)
+                this.SelectedServiceName = serviceInfo._data.ServiceList[0].Name;
            
         }
 
@@ -150,12 +150,7 @@ namespace ServiceStatusViewer.ViewModels
             {
                 using (var client = new MicroServiceClient())
                 {
-                    var service = client.GetMicroService(this.SelectedServiceName, new JMS.Dtos.RegisterServiceLocation
-                    {
-                        Host = this._ServiceInformation._data.Host,
-                        Port = this._ServiceInformation._data.Port,
-                        ServiceAddress = this._ServiceInformation._data.ServiceAddress
-                    });
+                    var service = client.GetMicroService(this.SelectedServiceName, new JMS.Dtos.ClientServiceDetail(this._ServiceInformation._data.ServiceAddress, this._ServiceInformation._data.Port));
 
                     object[] parameters = new object[0];
                     if (!string.IsNullOrEmpty(this.ParameterString))

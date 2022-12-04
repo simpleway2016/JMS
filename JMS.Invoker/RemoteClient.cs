@@ -143,8 +143,7 @@ namespace JMS
                 ret[i] = new RegisterServiceLocation { 
                     Host = info.Host,
                     Port = info.Port,
-                    ServiceAddress = info.ServiceAddress,
-                    Description = info.Description
+                    ServiceAddress = info.ServiceAddress
                 };
             }
             return ret;
@@ -288,7 +287,7 @@ namespace JMS
         /// <typeparam name="T"></typeparam>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual T GetMicroService<T>( RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
+        public virtual T GetMicroService<T>( ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
             var ret = TryGetMicroService<T>( registerServiceLocation);
             if (ret == null)
@@ -306,7 +305,7 @@ namespace JMS
         /// <typeparam name="T"></typeparam>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual T TryGetMicroService<T>( RegisterServiceLocation registerServiceLocation = null) where T : IImplInvoker
+        public virtual T TryGetMicroService<T>( ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
             var classType = typeof(T);
             var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
@@ -342,7 +341,7 @@ namespace JMS
         /// <param name="serviceName"></param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual IMicroService GetMicroService( string serviceName,RegisterServiceLocation registerServiceLocation = null)
+        public virtual IMicroService GetMicroService( string serviceName,ClientServiceDetail registerServiceLocation = null)
         {
             var ret = TryGetMicroService(serviceName,registerServiceLocation);
             if(ret == null)
@@ -357,7 +356,7 @@ namespace JMS
         /// <param name="serviceName"></param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual IMicroService TryGetMicroService(string serviceName, RegisterServiceLocation registerServiceLocation = null)
+        public virtual IMicroService TryGetMicroService(string serviceName, ClientServiceDetail registerServiceLocation = null)
         {
             for (int i = 0; i < 2; i++)
             {

@@ -63,30 +63,30 @@ namespace JMS.TransactionReporters
             try
             {
                 TransactionReporterRoute.Logger?.LogInformation($"重新执行事务{tranId}");
-                ConcurrentQueue<RegisterServiceLocation> failds = new ConcurrentQueue<RegisterServiceLocation>();
+                ConcurrentQueue<ClientServiceDetail> failds = new ConcurrentQueue<ClientServiceDetail>();
 
                 var obj = filecontent.FromJson<FileReportContent>();
-                Parallel.ForEach(obj.Locations, location =>
+                Parallel.ForEach(obj.Services, serviceInfo =>
                 {
                     try
                     {
-                        using (var invokeConnect = InvokeConnectFactory.Create(null, location, null))
+                        using (var invokeConnect = InvokeConnectFactory.Create(null, serviceInfo, null))
                         {
-                            invokeConnect.RetryTranaction(obj.ProxyAddress, location, obj.Cert, tranId , obj.TransactionFlag);
+                            invokeConnect.RetryTranaction(obj.ProxyAddress, serviceInfo, obj.Cert, tranId , obj.TransactionFlag);
                         }
 
                     }
                     catch(Exception ex)
                     {
-                        location.Description = ex.ToString();
-                        failds.Enqueue(location);
+                        serviceInfo.Description = ex.ToString();
+                        failds.Enqueue(serviceInfo);
                     }
                 });
 
                 if (failds.Count > 0)
                 {
-                    obj.Locations = failds.ToArray();
-                    foreach( var location in obj.Locations)
+                    obj.Services = failds.ToArray();
+                    foreach( var location in obj.Services)
                     {
                         TransactionReporterRoute.Logger?.LogInformation($"{location.ServiceAddress}:{location.Port}重新执行事务{tranId}失败");
                     }
@@ -110,7 +110,7 @@ namespace JMS.TransactionReporters
 
             var filepath = Path.Combine(SaveFolder, $"{tranid}.json");
             var obj = new FileReportContent();
-            obj.Locations = remoteClient._Connects.Select(m => m.InvokingInfo.ServiceLocation).ToArray();
+            obj.Services = remoteClient._Connects.Select(m => m.InvokingInfo.ServiceLocation).ToArray();
             obj.ProxyAddress = remoteClient.ProxyAddress;
             obj.TransactionFlag = remoteClient.TransactionFlag;
             if (remoteClient.ServiceClientCertificate != null)
@@ -133,7 +133,7 @@ namespace JMS.TransactionReporters
         class FileReportContent
         {
             public NetAddress ProxyAddress;
-            public RegisterServiceLocation[] Locations;
+            public ClientServiceDetail[] Services;
             public byte[] Cert;
             public string LastError;
             public string TransactionFlag;

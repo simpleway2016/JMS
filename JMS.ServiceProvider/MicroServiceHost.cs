@@ -24,10 +24,11 @@ using JMS.Infrastructures;
 using System.Collections.Concurrent;
 using JMS.Common.Net;
 using Org.BouncyCastle.Bcpg;
+using JMS.Dtos;
 
 namespace JMS
 {
-    public class MicroServiceHost: IMicroServiceOption,IDisposable
+    public class MicroServiceHost : IMicroServiceOption, IDisposable
     {
         bool _disposed;
         TcpServer _tcpServer;
@@ -40,7 +41,7 @@ namespace JMS
         public NetAddress MasterGatewayAddress { internal set; get; }
         public NetAddress[] AllGatewayAddresses { get; private set; }
 
-        internal List<string> ServiceNames = new List<string>();
+       
 
         public IServiceProvider ServiceProvider { private set; get; }
         /// <summary>
@@ -118,7 +119,7 @@ namespace JMS
             get => _RetryCommitPath;
             set
             {
-                if(_RetryCommitPath != value)
+                if (_RetryCommitPath != value)
                 {
                     _RetryCommitPath = value;
                 }
@@ -176,29 +177,57 @@ namespace JMS
         /// </summary>
         /// <param name="webServerUrl">web服务器的根访问路径，如 http://192.168.2.128:8080 </param>
         /// <param name="serverName">服务名称，默认为WebServer</param>
-        public void RegisterWebServer(string webServerUrl,string serverName = "WebServer")
+        public void RegisterWebServer(string webServerUrl, string serverName = "WebServer")
         {
             _isWebServer = true;
             this.ServiceAddress = new NetAddress(webServerUrl, 0);
-            _ControllerFactory.RegisterWebServer(serverName);
+            var serviceDetail = new ServiceDetail()
+            {
+                Name = serverName,
+                Type = ServiceType.WebApi,
+                AllowGatewayProxy = true,
+            };
+            _ControllerFactory.RegisterWebServer(serviceDetail);
         }
 
         /// <summary>
         /// 向网关注册服务
         /// </summary>
-        /// <param name="contollerType">Controller类型</param>
+        /// <param name="controllerType">Controller类型</param>
         /// <param name="serviceName">服务名称</param>
-        public void Register(Type contollerType, string serviceName)
+        public void Register(Type controllerType, string serviceName)
         {
-            if(ServiceNames.Contains(serviceName) == false)
+            if (_ControllerFactory.GetAllControllers().Any(m => m.Service.Name == serviceName))
             {
-                ServiceNames.Add(serviceName);
+                throw new Exception("服务名称已存在");
+
             }
 
-            _services.AddScoped(contollerType);
-            _ControllerFactory.RegisterController(contollerType, serviceName);
 
-            if ( this.GatewayProxy == null && contollerType.IsSubclassOf(typeof(WebSocketController)))
+            ServiceDetail service;
+            if (controllerType.IsSubclassOf(typeof(WebSocketController)))
+            {
+                service = new ServiceDetail
+                {
+                    Name = serviceName,
+                    Type = ServiceType.WebSocket,
+                    AllowGatewayProxy = true,
+                };
+            }
+            else
+            {
+                service = new ServiceDetail
+                {
+                    Name = serviceName,
+                    Type = ServiceType.JmsService,
+                    AllowGatewayProxy = false,
+                };
+            }
+
+            _services.AddScoped(controllerType);
+            _ControllerFactory.RegisterController(controllerType, service);
+
+            if (this.GatewayProxy == null && controllerType.IsSubclassOf(typeof(WebSocketController)))
             {
                 this.GatewayProxy = true;
             }
@@ -221,7 +250,7 @@ namespace JMS
         /// 注册定时任务，任务在MicroServiceHost.Run时，按计划执行
         /// </summary>
         /// <typeparam name="T">定时任务的类，必须实现IScheduleTask（注册的类会自动支持依赖注入）</typeparam>
-        public void RegisterScheduleTask<T>() where T: IScheduleTask
+        public void RegisterScheduleTask<T>() where T : IScheduleTask
         {
             var type = typeof(T);
             _services.AddTransient(type);
@@ -239,10 +268,10 @@ namespace JMS
 
         void registerServices()
         {
-           
-            if(RuntimeInformation.IsOSPlatform( OSPlatform.Linux ))
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                _services.AddSingleton<ICpuInfo,CpuInfoForLinux>();
+                _services.AddSingleton<ICpuInfo, CpuInfoForLinux>();
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -269,15 +298,15 @@ namespace JMS
             _services.AddSingleton<GetAllLockedKeysHandler>();
             _services.AddSingleton<RetryTranactionHandler>();
             _services.AddSingleton<UnLockedKeyAnywayHandler>();
-            _services.AddSingleton<IProcessExitHandler,ProcessExitHandler>();
+            _services.AddSingleton<IProcessExitHandler, ProcessExitHandler>();
             _services.AddSingleton<MicroServiceHost>(this);
             _services.AddSingleton<SafeTaskFactory>();
 
-           
+
             _services.AddSingleton<ControllerFactory>(_ControllerFactory);
         }
 
-        public MicroServiceHost Build(int port,NetAddress[] gatewayAddresses)
+        public MicroServiceHost Build(int port, NetAddress[] gatewayAddresses)
         {
             if (gatewayAddresses == null || gatewayAddresses.Length == 0)
                 throw new Exception("Gateway addres is empty");
@@ -287,13 +316,13 @@ namespace JMS
             return this;
         }
 
-       
+
         /// <summary>
         /// 运行服务
         /// </summary>
         public void Run()
         {
-            Run( _services.BuildServiceProvider());           
+            Run(_services.BuildServiceProvider());
         }
 
         /// <summary>
@@ -303,9 +332,9 @@ namespace JMS
         public void Run(IServiceProvider serviceProvider)
         {
             ThreadPool.GetMinThreads(out int w, out int c);
-            if(c < 500)
+            if (c < 500)
             {
-                ThreadPool.SetMinThreads(500,500);
+                ThreadPool.SetMinThreads(500, 500);
             }
             ServiceProvider = serviceProvider;
             if (ServicePort == 0 && ServiceAddress == null)
@@ -371,7 +400,8 @@ namespace JMS
 
             if (ServiceProviderBuilded != null)
             {
-                new Thread(() => {
+                new Thread(() =>
+                {
                     try
                     {
                         ServiceProviderBuilded(this, this.ServiceProvider);

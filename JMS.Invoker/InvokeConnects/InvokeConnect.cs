@@ -12,7 +12,7 @@ namespace JMS
 {
     public class InvokingInformation
     {
-        public RegisterServiceLocation ServiceLocation { get; internal set; }
+        public ClientServiceDetail ServiceLocation { get; internal set; }
         public string ServiceName
         {
             get;
@@ -29,7 +29,7 @@ namespace JMS
         public InvokingInformation InvokingInfo { get; private set; }
         public InvokeCommand Command { get; private set; }
         public Invoker Invoker { get; private set; }
-        public InvokeConnect(string serviceName, RegisterServiceLocation location, Invoker invoker)
+        public InvokeConnect(string serviceName, ClientServiceDetail location, Invoker invoker)
         {
             InvokingInfo = new InvokingInformation();
             InvokingInfo.ServiceName = serviceName;
@@ -258,7 +258,7 @@ namespace JMS
             }
         }
 
-        public void RetryTranaction(NetAddress proxyAddress, RegisterServiceLocation serviceLocation, byte[] certData, string tranId,string tranFlag)
+        public void RetryTranaction(NetAddress proxyAddress, ClientServiceDetail serviceLocation, byte[] certData, string tranId,string tranFlag)
         {
             X509Certificate2 cert = null;
             if (certData != null)

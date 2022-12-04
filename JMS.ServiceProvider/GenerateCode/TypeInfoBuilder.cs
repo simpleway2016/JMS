@@ -19,7 +19,7 @@ namespace JMS.GenerateCode
             var controllerType = controllerTypeInfo.Type;
             ControllerInfo controllerInfo = new ControllerInfo()
             {
-                name = controllerTypeInfo.ServiceName,
+                name = controllerTypeInfo.Service.Name,
                 desc = GetTypeComment(controllerType),
                 items = new List<MethodItemInfo>(),
                 dataTypeInfos = new List<DataTypeInfo>()

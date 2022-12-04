@@ -121,14 +121,12 @@ namespace JMS.Domains
                     Type = CommandType.ServiceNameListChanged,
                     Content = new RegisterServiceInfo
                     {
-                        ServiceNames = controllers.Where(m => m.Enable).Select(m => m.ServiceName).ToArray(),
+                        ServiceList = controllers.Where(m => m.Enable).Select(m => m.Service).ToArray(),
                         Port = (_microServiceHost.ServiceAddress == null || _microServiceHost.ServiceAddress.Port == 0) ? _microServiceHost.ServicePort : _microServiceHost.ServiceAddress.Port,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
-                        Description = _microServiceHost.Description,
                         ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
                         SingletonService = _microServiceHost.SingletonService,
-                        GatewayProxy = ((IMicroServiceOption)_microServiceHost).GatewayProxy.GetValueOrDefault()
                     }.ToJsonString()
                 });
                 client.ReadServiceObject<InvokeResult>();
@@ -246,17 +244,14 @@ namespace JMS.Domains
                     Type = CommandType.RegisterSerivce,
                     Content = new RegisterServiceInfo
                     {
-                        ServiceNames = controllers.Where(m => m.Enable).Select(m => m.ServiceName).ToArray(),
+                        ServiceList = controllers.Where(m => m.Enable).Select(m => m.Service).ToArray(),
                         Port = (_microServiceHost.ServiceAddress == null || _microServiceHost.ServiceAddress.Port == 0) ? _microServiceHost.ServicePort : _microServiceHost.ServiceAddress.Port,
                         ServiceAddress = _microServiceHost.ServiceAddress == null ? null : _microServiceHost.ServiceAddress.Address,
                         MaxThread = Environment.ProcessorCount,
                         ServiceId = _microServiceHost.Id,
-                        Description = _microServiceHost.Description,
                         MaxRequestCount = _microServiceHost.MaxRequestCount,
                         ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
                         SingletonService = _microServiceHost.SingletonService,
-                        GatewayProxy = _microServiceHost.GatewayProxy.GetValueOrDefault(),
-                        ProxyWithServiceName = controllers.Any(m=>m.Type != null && m.Type.IsSubclassOf(typeof(WebSocketController))) ? true : false,
                         UseSsl = (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     }.ToJsonString()
                 });

@@ -7,7 +7,7 @@ namespace JMS.InvokeConnects
 {
     internal class InvokeConnectFactory
     {
-        public static IInvokeConnect Create(string serviceName,RegisterServiceLocation serviceLocation,Invoker invoker)
+        public static IInvokeConnect Create(string serviceName,ClientServiceDetail serviceLocation,Invoker invoker)
         {
             if(serviceLocation.Port == 0)
             {

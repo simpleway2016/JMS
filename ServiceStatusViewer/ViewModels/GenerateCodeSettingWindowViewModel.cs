@@ -12,7 +12,7 @@ namespace ServiceStatusViewer.ViewModels
     class GenerateCodeSettingWindowViewModel:ViewModelBase
     {
 
-        public string[] ServiceNames => _ServiceInformation._data.ServiceNames;
+        public string[] ServiceNames => _ServiceInformation._data.ServiceList.Select(m=>m.Name).ToArray();
 
         private string _NamespaceName;
         public string NamespaceName
@@ -65,8 +65,8 @@ namespace ServiceStatusViewer.ViewModels
         public GenerateCodeSettingWindowViewModel(ServiceInformation serviceInfo)
         {
             _ServiceInformation = serviceInfo;
-            if (serviceInfo._data.ServiceNames.Length == 1)
-                this.SelectedServiceName = serviceInfo._data.ServiceNames[0];
+            if (serviceInfo._data.ServiceList.Length == 1)
+                this.SelectedServiceName = serviceInfo._data.ServiceList[0].Name;
            
         }
 

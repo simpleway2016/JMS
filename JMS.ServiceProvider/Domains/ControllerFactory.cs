@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using JMS.Dtos;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -25,19 +26,19 @@ namespace JMS.Domains
             _controllerDict[serviceName].Enable = enable;
         }
 
-        public void RegisterWebServer(string serviceName)
+        public void RegisterWebServer(ServiceDetail serviceDetail)
         {
-            _controllerDict[serviceName] = new ControllerTypeInfo()
+            _controllerDict[serviceDetail.Name] = new ControllerTypeInfo()
             {
                 Enable = true,
-                ServiceName = serviceName
+                Service = serviceDetail
             };
         }
 
         /// <summary>
         /// 注册controller
         /// </summary>
-        public void RegisterController(Type contollerType, string serviceName)
+        public void RegisterController(Type contollerType, ServiceDetail service)
         {
             var baseMethods = typeof(MicroServiceControllerBase).GetMethods().Select(m => m.Name).ToArray();
             var methods = contollerType.GetTypeInfo().DeclaredMethods.Where(m =>
@@ -60,9 +61,9 @@ namespace JMS.Domains
                 }
             }
 
-            _controllerDict[serviceName] = new ControllerTypeInfo()
+            _controllerDict[service.Name] = new ControllerTypeInfo()
             {
-                ServiceName = serviceName,
+                Service = service,
                 Type = contollerType,
                 Enable = true,
                 NeedAuthorize = contollerType.GetCustomAttribute<AuthorizeAttribute>() != null,

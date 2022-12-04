@@ -21,11 +21,11 @@ namespace JMS.Applications.CommandHandles
         }
         public CommandType MatchCommandType => CommandType.GetServiceProvider;
 
-        void outputResult(NetClient netclient, GatewayCommand cmd , RegisterServiceLocation location)
+        void outputResult(NetClient netclient, GatewayCommand cmd , ClientServiceDetail location)
         {
             if (cmd.IsHttp)
             {
-                if (location.Host.Length == 0)
+                if (location == null)
                 {
                     var contentBytes = Encoding.UTF8.GetBytes("{}");
                     netclient.OutputHttpContent(contentBytes);
@@ -38,6 +38,10 @@ namespace JMS.Applications.CommandHandles
             }
             else
             {
+                if (location == null)
+                {
+                    location = new ClientServiceDetail("", 0);
+                }
                 netclient.WriteServiceData(location);
             }
         }
@@ -55,11 +59,7 @@ namespace JMS.Applications.CommandHandles
             {
                 if (_gatewayRefereeClient.IsMaster == false)
                 {
-                    outputResult( netclient,cmd, new RegisterServiceLocation
-                    {
-                        Host = "not master",
-                        Port = 0
-                    });
+                    outputResult(netclient, cmd, new ClientServiceDetail("not master", 0));
                 }
                 else
                 {
@@ -67,11 +67,7 @@ namespace JMS.Applications.CommandHandles
                     var location = _serviceProvider.GetService<IServiceProviderAllocator>().Alloc(requestBody);
                     if(location == null)
                     {
-                        outputResult(netclient, cmd, new RegisterServiceLocation
-                        {
-                            Host = "",
-                            Port = 0
-                        });
+                        outputResult(netclient, cmd,null);
                         return;
                     }
 
@@ -80,11 +76,7 @@ namespace JMS.Applications.CommandHandles
             }
             catch
             {
-                outputResult(netclient, cmd, new RegisterServiceLocation
-                {
-                    Host = "",
-                    Port = 0
-                });
+                outputResult(netclient, cmd, null);
             }
 
         }

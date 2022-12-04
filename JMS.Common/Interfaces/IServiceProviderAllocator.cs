@@ -13,7 +13,7 @@ namespace JMS
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        RegisterServiceLocation Alloc(GetServiceProviderRequest request);
+        ClientServiceDetail Alloc(GetServiceProviderRequest request);
 
     }
 }

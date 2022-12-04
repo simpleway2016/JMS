@@ -42,7 +42,7 @@ namespace JMS.Applications.CommandHandles
             var list = _RegisterServiceManager.GetAllRegisterServices();
             if (!string.IsNullOrEmpty(serviceName))
             {
-                list = list.Where(m => m.ServiceNames.Contains(serviceName));
+                list = list.Where(m => m.ServiceList.Any(m=>m.Name == serviceName));
             }
 
             return list.Select(m => new RegisterServiceRunningInfo
@@ -51,8 +51,7 @@ namespace JMS.Applications.CommandHandles
                 ServiceAddress = m.ServiceAddress,
                 Port = m.Port,
                 ServiceId = m.ServiceId,
-                ServiceNames = m.ServiceNames,
-                Description = m.Description,
+                ServiceList = m.ServiceList,
                 MaxThread = m.MaxThread,
                 UseSsl = m.UseSsl,
                 PerformanceInfo = new PerformanceInfo

@@ -127,7 +127,7 @@ public class MicroServiceControllerBase: BaseJmsController
 
 public class ControllerTypeInfo
 {
-    public string ServiceName;
+    public ServiceDetail Service;
     public Type Type;
     public TypeMethodInfo[] Methods;
     public bool Enable;

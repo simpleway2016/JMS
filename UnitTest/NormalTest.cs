@@ -628,10 +628,7 @@ Content-Length: 0
                     serviceClient = client.TryGetMicroService("UserInfoService");
                 }
 
-                var crashService = client.GetMicroService("CrashService",new JMS.Dtos.RegisterServiceLocation { 
-                    ServiceAddress = "127.0.0.1",
-                    Port = _CrashServicePort
-                } );               
+                var crashService = client.GetMicroService("CrashService",new JMS.Dtos.ClientServiceDetail("127.0.0.1" , _CrashServicePort));               
 
                 client.BeginTransaction();
                 tranid = client.TransactionId;
