@@ -89,9 +89,10 @@ namespace JMS.Domains
                 serviceItem.ServiceAddress = serviceItem.Host;
 
 
-            NetClient.WriteServiceData(new InvokeResult
+            NetClient.WriteServiceData(new InvokeResult<string>
             {
-                Success = true
+                Success = true,
+                Data = this.GetType().Assembly.GetName().Version.ToString()
             });
 
             reception.ServiceInfo = serviceItem;

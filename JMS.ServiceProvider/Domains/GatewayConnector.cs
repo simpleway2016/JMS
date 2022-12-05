@@ -255,7 +255,7 @@ namespace JMS.Domains
                         UseSsl = (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     }.ToJsonString()
                 });
-                var ret = _client.ReadServiceObject<InvokeResult>();
+                var ret = _client.ReadServiceObject<InvokeResult<string>>();
                 if (ret.Success == false)
                 {
                     _client.Dispose();
@@ -278,10 +278,17 @@ namespace JMS.Domains
                         throw new Exception("网关不允许连接");
                 }
 
+                if (ret.Data == null)
+                {
+                    throw new Exception("网关版本太旧，服务无法正常注册，请更新网关");
+
+                }
+
+
                 _ready = true;
                 _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1}", _microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
 
-
+               
                 //上传已经lock的key
                 if (_keyLocker.GetLockedKeys().Length > 0)
                 {
