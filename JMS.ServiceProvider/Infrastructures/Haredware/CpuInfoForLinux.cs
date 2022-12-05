@@ -32,7 +32,7 @@ namespace JMS.Infrastructures.Haredware
                 for (int i = 0; i < lines.Length; i++)
                 {
                     var line = lines[i];
-                    if (line.Contains(" AM ") && line.Contains(" CPU "))
+                    if (line.Contains(" CPU ") && line.Contains("%idle"))
                     {
                         line = lines[i + 1];
                         string idle = Regex.Match(line, @"[0-9\.]+$").Value;

@@ -97,7 +97,7 @@ namespace JMS.Domains
             reception.ServiceInfo = serviceItem;
             _registerServiceManager.AddRegisterService(reception);
 
-            _Logger?.LogInformation($"微服务{serviceItem.ServiceNames.ToJsonString()} {serviceItem.Host}:{serviceItem.Port}注册");
+            _Logger?.LogInformation($"微服务{serviceItem.ServiceList.Select(m=>m.Name).ToJsonString()} {serviceItem.Host}:{serviceItem.Port}注册");
 
 
         }
@@ -156,7 +156,7 @@ namespace JMS.Domains
                 }
                 catch (System.ObjectDisposedException)
                 {
-                    _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+                    _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
                     if (_closed == false)
                     {
                         disconnect();
@@ -165,7 +165,7 @@ namespace JMS.Domains
                 }
                 catch (SocketException)
                 {
-                    _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+                    _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
                     if (_closed == false)
                     {
                         disconnect();
@@ -174,7 +174,7 @@ namespace JMS.Domains
                 }
                 catch (Exception ex)
                 {
-                    _Logger?.LogInformation(ex, $"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+                    _Logger?.LogInformation(ex, $"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
 
                     if (_closed == false)
                     {
