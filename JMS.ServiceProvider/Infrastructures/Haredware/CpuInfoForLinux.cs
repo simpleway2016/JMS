@@ -20,7 +20,7 @@ namespace JMS.Infrastructures.Haredware
         {
             try
             {
-                ProcessStartInfo info = new ProcessStartInfo("mpstat", "-P ALL");
+                ProcessStartInfo info = new ProcessStartInfo("mpstat");
                 info.UseShellExecute = false;
                 info.RedirectStandardOutput = true;
                 var process = Process.Start(info);
