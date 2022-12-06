@@ -88,15 +88,14 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="app"></param>
         /// <param name="configuration">配置信息</param>
         /// <param name="clientProviderFunc">RemoteClient创建函数</param>
-        /// <param name="redirectHeaders">需要转发的请求头，默认null，表示转发Authorization</param>
+        /// <param name="redirectHeaders">需要转发的请求头，默认null，表示转发全部</param>
         /// <returns></returns>
         public static IApplicationBuilder UseJmsServiceRedirect(this IApplicationBuilder app, IConfiguration configuration, Func<RemoteClient> clientProviderFunc , string[] redirectHeaders = null)
         {
             if (clientProviderFunc == null)
                 throw new Exception("clientProviderFunc is null");
 
-            if (redirectHeaders == null)
-                redirectHeaders = new string[] { "Authorization" }; 
+
             configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
 
             ServiceRedirects.ClientProviderFunc = clientProviderFunc;
@@ -150,6 +149,7 @@ namespace Microsoft.Extensions.DependencyInjection
                             }.ToJsonString());
                         }
                     }
+                    return;
                 }
                 await next();
             });

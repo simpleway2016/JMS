@@ -41,11 +41,21 @@ namespace JMS.WebApiDocument
             }
             using (var client = ClientProviderFunc())
             {
-                foreach (var header in redirectHeaders)
+                if (redirectHeaders == null)
                 {
-                    if (context.Request.Headers.TryGetValue(header, out StringValues value))
+                    foreach (var header in context.Request.Headers)
                     {
-                        client.SetHeader(header, value.ToString());
+                        client.SetHeader(header.Key, header.Value.ToString());
+                    }
+                }
+                else
+                {
+                    foreach (var header in redirectHeaders)
+                    {
+                        if (context.Request.Headers.TryGetValue(header, out StringValues value))
+                        {
+                            client.SetHeader(header, value.ToString());
+                        }
                     }
                 }
                 var service = client.TryGetMicroService(config.ServiceName);
