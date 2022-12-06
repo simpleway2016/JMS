@@ -30,6 +30,7 @@
     <ProjectReference Include="..\JMS.Proxy\JMS.Proxy.csproj" />
     <ProjectReference Include="..\JMS.ServiceProvider.AspNetCore\JMS.ServiceProvider.AspNetCore.csproj" />
     <ProjectReference Include="..\JMS.ServiceProvider\JMS.ServiceProvider.csproj" />
+    <ProjectReference Include="..\JMS.WebApiDocument\JMS.WebApiDocument.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,6 +47,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="appsettings-proxy.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="serviceConfig.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

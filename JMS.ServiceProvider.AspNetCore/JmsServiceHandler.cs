@@ -195,6 +195,9 @@ namespace JMS.ServiceProvider.AspNetCore
                         }
                         catch (Exception ex)
                         {
+                            while (ex.InnerException != null)
+                                ex = ex.InnerException;
+
                             if (tranDelegate.RollbackAction != null)
                             {
                                 tranDelegate.RollbackAction();

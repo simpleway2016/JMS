@@ -45,6 +45,13 @@ namespace JMS.WebApiDocument
                 {
                     foreach (var header in context.Request.Headers)
                     {
+                        if (header.Key == "TranId")
+                            continue;
+                        else if (header.Key == "Tran")
+                            continue;
+                        else if (header.Key == "TranFlag")
+                            continue;
+
                         client.SetHeader(header.Key, header.Value.ToString());
                     }
                 }

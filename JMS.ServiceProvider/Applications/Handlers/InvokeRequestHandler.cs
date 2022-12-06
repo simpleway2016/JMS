@@ -201,7 +201,7 @@ namespace JMS.Applications
                 }
                 catch (Exception ex)
                 {
-                    if (ex is TargetInvocationException && ex.InnerException != null)
+                    while (ex.InnerException != null)
                         ex = ex.InnerException;
 
                     if (transactionDelegate != null)

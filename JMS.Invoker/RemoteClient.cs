@@ -192,6 +192,8 @@ namespace JMS
                 throw new Exception("key='TranId' is not allow");
             else if (key == "Tran")
                 throw new Exception("key='Tran' is not allow");
+            else if (key == "TranFlag")
+                throw new Exception("key='TranFlag' is not allow");
             _Header[key] = value;
         }
 

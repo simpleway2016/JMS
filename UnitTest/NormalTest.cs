@@ -1,5 +1,6 @@
 ﻿using JMS;
 using JMS.Domains;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Security;
 using System.Net.WebSockets;
 using System.Reflection;
@@ -35,10 +37,43 @@ namespace UnitTest
         public int _UserInfoServicePort = 9801;
         public int _CrashServicePort = 9802;
         public int _UserInfoServicePort_forcluster = 9803;
+        public int _webApiPort = 9901;
         public bool _userInfoServiceReady = false;
 
         Gateway _clusterGateway1;
         Gateway _clusterGateway2;
+
+        WebApplication StartWebApi(int gateWayPort)
+        {
+            var conbuilder = new ConfigurationBuilder();
+            conbuilder.AddJsonFile("./serviceConfig.json", optional: true, reloadOnChange: true);
+            var configuration = conbuilder.Build();
+
+            var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:" + _webApiPort });
+            builder.Services.AddControllers();
+            var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
+
+
+            var app = builder.Build();
+
+            app.UseAuthentication();    //认证
+            app.UseAuthorization();     //授权
+
+            app.UseJmsServiceRedirect(configuration, () =>
+            {
+                var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = gateWayPort
+                   }
+                };
+
+                return new RemoteClient(gateways);
+            });
+
+            app.MapControllers();
+            return app;
+        }
 
         public void StartGateway()
         {
@@ -48,7 +83,7 @@ namespace UnitTest
                 builder.AddJsonFile("appsettings-gateway.json", optional: true, reloadOnChange: true);
                 var configuration = builder.Build();
 
-                JMS.GatewayProgram.Run(configuration, _gateWayPort,out Gateway g);
+                JMS.GatewayProgram.Run(configuration, _gateWayPort, out Gateway g);
             });
         }
 
@@ -237,6 +272,52 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void WebapiRedirect()
+        {
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var app = StartWebApi(_gateWayPort);
+            app.RunAsync();
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            using (var rc = new RemoteClient(gateways))
+            {
+                var serviceClient = rc.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = rc.TryGetMicroService("UserInfoService");
+                }
+            }
+
+            HttpClient client = new HttpClient();
+            //通过网关反向代理访问webapi
+            var ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyName").ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == false)
+                throw new Exception("http访问失败");
+            var text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (text != "{\"code\":200,\"data\":\"Jack\"}")
+                throw new Exception("http返回结果错误");
+
+            ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyNameError").ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == false)
+                throw new Exception("http访问失败");
+            text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (text != "{\"code\":500,\"msg\":\"ErrMsg\"}")
+                throw new Exception("http返回结果错误");
+        }
+
+        [TestMethod]
         public void Commit()
         {
             UserInfoDbContext.Reset();
@@ -363,9 +444,9 @@ namespace UnitTest
 
             }
 
-            if (UserInfoDbContext.FinallyUserName !=  null||
+            if (UserInfoDbContext.FinallyUserName != null ||
                 UserInfoDbContext.FinallyAge != 0 ||
-                UserInfoDbContext.FinallyFather !=null ||
+                UserInfoDbContext.FinallyFather != null ||
                 UserInfoDbContext.FinallyMather != null)
                 throw new Exception("结果不正确");
         }
@@ -399,7 +480,7 @@ Content-Length: 0
 
             for (int i = 0; i < 2; i++)
             {
-               
+
                 client.Write(Encoding.UTF8.GetBytes(content));
 
                 byte[] data = new byte[40960];
@@ -571,7 +652,7 @@ Content-Length: 0
 
                     Debug.WriteLine(ex.Message);
                 }
-               
+
             }
 
             Thread.Sleep(7000);//等待7秒，失败的事务
@@ -583,7 +664,7 @@ Content-Length: 0
         [TestMethod]
         public void TestCrashForLocal()
         {
-          
+
             TestCrashController.CanCrash = true;
             try
             {
@@ -610,16 +691,16 @@ Content-Length: 0
 
             ServiceCollection services = new ServiceCollection();
 
-           services.AddLogging(loggingBuilder =>
-           {
-               loggingBuilder.AddDebug();
-               loggingBuilder.AddConsole(); // 将日志输出到控制台
-               loggingBuilder.SetMinimumLevel(LogLevel.Debug);
+            services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddDebug();
+                loggingBuilder.AddConsole(); // 将日志输出到控制台
+                loggingBuilder.SetMinimumLevel(LogLevel.Debug);
             });
             var serviceProvider = services.BuildServiceProvider();
 
             string tranid;
-            using (var client = new RemoteClient(gateways,null, serviceProvider.GetService<ILogger<RemoteClient>>()))
+            using (var client = new RemoteClient(gateways, null, serviceProvider.GetService<ILogger<RemoteClient>>()))
             {
                 var serviceClient = client.TryGetMicroService("UserInfoService");
                 while (serviceClient == null)
@@ -628,7 +709,7 @@ Content-Length: 0
                     serviceClient = client.TryGetMicroService("UserInfoService");
                 }
 
-                var crashService = client.GetMicroService("CrashService",new JMS.Dtos.ClientServiceDetail("127.0.0.1" , _CrashServicePort));               
+                var crashService = client.GetMicroService("CrashService", new JMS.Dtos.ClientServiceDetail("127.0.0.1", _CrashServicePort));
 
                 client.BeginTransaction();
                 tranid = client.TransactionId;
@@ -647,7 +728,7 @@ Content-Length: 0
 
             }
             DateTime starttime = DateTime.Now;
-            while(File.Exists($"./$$_JMS.Invoker.Transactions/{tranid}.json"))
+            while (File.Exists($"./$$_JMS.Invoker.Transactions/{tranid}.json"))
             {
                 if ((DateTime.Now - starttime).TotalSeconds > 80)
                     throw new Exception("超时");
@@ -686,7 +767,7 @@ Content-Length: 0
                    }
                 };
 
-            var serviceProvider1 =(IServiceProvider) _clusterGateway1.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(_clusterGateway1);
+            var serviceProvider1 = (IServiceProvider)_clusterGateway1.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(_clusterGateway1);
             var clusterGatewayConnector1 = serviceProvider1.GetService<ClusterGatewayConnector>();
 
             var serviceProvider2 = (IServiceProvider)_clusterGateway2.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(_clusterGateway2);
@@ -712,9 +793,9 @@ Content-Length: 0
                 }
                 Debug.WriteLine("查找服务完毕");
 
-                serviceClient.Invoke("LockName",  "abc" , "d","e","f" );
+                serviceClient.Invoke("LockName", "abc", "d", "e", "f");
 
-                if(lockManager.GetAllKeys().Any(k=>k.Key == "abc") == false)
+                if (lockManager.GetAllKeys().Any(k => k.Key == "abc") == false)
                 {
                     throw new Exception("找不到lock key");
                 }
@@ -723,7 +804,7 @@ Content-Length: 0
 
             var slaveGateway = clusterGatewayConnector1.IsMaster ? _clusterGateway2 : _clusterGateway1;
             var slaveLockManager = (clusterGatewayConnector1.IsMaster ? serviceProvider2 : serviceProvider1).GetService<LockKeyManager>();
-            while(slaveLockManager.GetAllKeys().Any(k => k.Key == "f") == false)
+            while (slaveLockManager.GetAllKeys().Any(k => k.Key == "f") == false)
             {
                 Thread.Sleep(1000);
             }
@@ -735,12 +816,12 @@ Content-Length: 0
             var clusterGatewayConnector = serviceProvider.GetService<ClusterGatewayConnector>();
 
             //等待从网关成为主网关
-            while(clusterGatewayConnector.IsMaster == false)
+            while (clusterGatewayConnector.IsMaster == false)
             {
                 Thread.Sleep(100);
             }
 
-            while(slaveLockManager.GetAllKeys().Any(m=>m.RemoveTime != null))
+            while (slaveLockManager.GetAllKeys().Any(m => m.RemoveTime != null))
             {
                 Thread.Sleep(100);
             }
@@ -775,7 +856,7 @@ Content-Length: 0
                     serviceClient = client.TryGetMicroService("TestWebSocketService");
                 }
             }
-                var clientWebsocket = new ClientWebSocket();
+            var clientWebsocket = new ClientWebSocket();
             clientWebsocket.ConnectAsync(new Uri($"ws://127.0.0.1:{_gateWayPort}/TestWebSocketService?name=test"), CancellationToken.None).ConfigureAwait(true).GetAwaiter().GetResult();
             var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
             if (text != "hello")
@@ -789,12 +870,12 @@ Content-Length: 0
             if (text != null)
                 throw new Exception("error");
 
-            if(clientWebsocket.CloseStatus != WebSocketCloseStatus.NormalClosure)
+            if (clientWebsocket.CloseStatus != WebSocketCloseStatus.NormalClosure)
                 throw new Exception("error");
 
             if (clientWebsocket.CloseStatusDescription != "abc")
                 throw new Exception("error");
         }
-      
+
     }
 }

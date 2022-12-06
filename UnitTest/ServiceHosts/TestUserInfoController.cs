@@ -32,6 +32,15 @@ namespace UnitTest.ServiceHosts
                 throw new Exception("TransactionId为空");
         }
        
+        public string GetMyName()
+        {
+            return "Jack";
+        }
+        public string GetMyNameError()
+        {
+            throw new Exception("ErrMsg");
+            return "Jack";
+        }
         public async Task SetUserName(string name)
         {
             //启动支持分布式事务

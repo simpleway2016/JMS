@@ -132,6 +132,9 @@ namespace Microsoft.Extensions.DependencyInjection
                     }
                     catch (Exception ex)
                     {
+                        while (ex.InnerException != null)
+                            ex = ex.InnerException;
+
                         if (ex.Message == "Authentication failed")
                         {
                             await context.Response.WriteAsync(new
