@@ -23,14 +23,14 @@ namespace JMS.WebApiDocument
         /// <param name="context"></param>
         /// <param name="method"></param>
         /// <returns></returns>
-        internal static object InvokeServiceMethod(ServiceRedirectConfig config,HttpContext context,string method, string[] redirectHeaders)
+        internal static async Task<object> InvokeServiceMethod(ServiceRedirectConfig config,HttpContext context,string method, string[] redirectHeaders)
         {
 
             byte[] postContent = null;
             if (context.Request.ContentLength != null)
             {
                 postContent = new byte[(int)context.Request.ContentLength];
-                context.Request.Body.ReadAsync(postContent, 0, postContent.Length).Wait();
+                await context.Request.Body.ReadAsync(postContent, 0, postContent.Length);
             }
 
             object[] _parames = null;
@@ -51,10 +51,10 @@ namespace JMS.WebApiDocument
                 var service = client.TryGetMicroService(config.ServiceName);
                 if (_parames == null)
                 {
-                    return service.Invoke<object>(method);
+                    return await service.InvokeAsync<object>(method);
                 }
                 else
-                    return service.Invoke<object>(method, _parames);
+                    return await service.InvokeAsync<object>(method, _parames);
             }
         }
     }

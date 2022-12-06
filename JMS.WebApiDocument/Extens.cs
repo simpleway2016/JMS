@@ -102,7 +102,7 @@ namespace Microsoft.Extensions.DependencyInjection
             ServiceRedirects.ClientProviderFunc = clientProviderFunc;
             ConfigurationChangeCallback(configuration);
 
-            app.Use((context, next) =>
+            app.Use(async (context, next) =>
             {
                 if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
                 {
@@ -115,7 +115,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         var config = ServiceRedirects.Configs?.FirstOrDefault(m => string.Equals(m.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
                         if (config == null)
                         {
-                            return context.Response.WriteAsync(new
+                            await context.Response.WriteAsync(new
                             {
                                 code = 404,
                                 msg = "Service not found"
@@ -123,8 +123,8 @@ namespace Microsoft.Extensions.DependencyInjection
                         }
                         else
                         {
-                            var ret = ServiceRedirects.InvokeServiceMethod(config, context, method,redirectHeaders);
-                            return context.Response.WriteAsync(new
+                            var ret = await ServiceRedirects.InvokeServiceMethod(config, context, method,redirectHeaders);
+                            await context.Response.WriteAsync(new
                             {
                                 code = 200,
                                 data = ret
@@ -135,7 +135,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         if (ex.Message == "Authentication failed")
                         {
-                            return context.Response.WriteAsync(new
+                            await context.Response.WriteAsync(new
                             {
                                 code = 401,
                                 msg = ex.Message
@@ -143,7 +143,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         }
                         else
                         {
-                            return context.Response.WriteAsync(new
+                            await context.Response.WriteAsync(new
                             {
                                 code = 500,
                                 msg = ex.Message
@@ -151,7 +151,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         }
                     }
                 }
-                return next();
+                await next();
             });
           
 
