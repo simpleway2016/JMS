@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -65,6 +66,22 @@ namespace JMS.WebApiDocument
                         }
                     }
                 }
+                
+               
+                var ip = context.Connection.RemoteIpAddress.ToString();
+                if (client.TryGetHeader("X-Forwarded-For", out string xff))
+                {
+                    if (xff.Contains(ip) == false)
+                    {
+                        xff += $", {ip}";
+                        client.SetHeader("X-Forwarded-For", xff);
+                    }
+                }
+                else
+                {
+                    client.SetHeader("X-Forwarded-For", ip);
+                }
+
                 var service = client.TryGetMicroService(config.ServiceName);
                 if (_parames == null)
                 {

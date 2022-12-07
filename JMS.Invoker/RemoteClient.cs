@@ -186,6 +186,11 @@ namespace JMS
             }
         }
 
+        public bool TryGetHeader(string key,out string value)
+        {
+            return _Header.TryGetValue(key, out value);
+        }
+
         public void SetHeader(string key,string value)
         {
             if (key == "TranId")
