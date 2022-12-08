@@ -52,7 +52,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
             Gateways = gateways;
             MicroServiceHost host = new MicroServiceHost(services);
-            ((IMicroServiceOption)host).GatewayProxy = true;
             host.RegisterWebServer(webServerUrl, serviceName);
             host.UseSSL(sslConfig);
             if (configOption != null)

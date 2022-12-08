@@ -7,11 +7,6 @@ namespace JMS
     public interface IMicroServiceOption
     {
         /// <summary>
-        /// 微服务描述
-        /// </summary>
-        string Description { get; set; }
-
-        /// <summary>
         /// 当提交事务失败后，保存请求数据到哪个目录，默认./$$JMS_RetryCommitPath
         /// </summary>
         string RetryCommitPath { get; set; }
@@ -44,15 +39,6 @@ namespace JMS
         {
             get;
             set;
-        }
-
-        /// <summary>
-        /// 是否允许通过网关反向代理访问此服务器
-        /// 默认可以通过 http://网关域名/服务名称/ 来访问
-        /// </summary>
-        bool? GatewayProxy
-        {
-            get;set;
         }
     }
 }
