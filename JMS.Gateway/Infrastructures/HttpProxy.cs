@@ -195,11 +195,11 @@ namespace JMS.Infrastructures
             }
             else if (location.UseSsl)
             {
-                hostUri = new Uri($"wss://{location.ServiceAddress}:{location.Port}");
+                hostUri = new Uri($"https://{location.ServiceAddress}:{location.Port}");
             }
             else
             {
-                hostUri = new Uri($"ws://{location.ServiceAddress}:{location.Port}");
+                hostUri = new Uri($"http://{location.ServiceAddress}:{location.Port}");
             }
 
             NetClient proxyClient = client.PairClient;
