@@ -123,7 +123,9 @@ namespace JMS.Infrastructures
             //发送头部到服务器
             proxyClient.Write(data);
 
-            readAndSend(proxyClient.InnerStream, client.InnerStream);
+            readAndSend(proxyClient.InnerStream, client.InnerStream).ContinueWith((t) => {
+                client.Dispose();
+            });
 
             await readAndSend(client.InnerStream, proxyClient.InnerStream);
         }
@@ -358,7 +360,7 @@ namespace JMS.Infrastructures
             while (true)
             {
                 int bData = client.InnerStream.ReadByte();
-                if (bData == 13)
+                if (bData == 10)
                 {
                     line = Encoding.UTF8.GetString(lineBuffer.ToArray());
                     lineBuffer.Clear();
@@ -367,9 +369,6 @@ namespace JMS.Infrastructures
 
                     if (line == "")
                     {
-                        bData = client.InnerStream.ReadByte();
-
-
                         break;
                     }
                     else if (line.Contains(":"))
@@ -386,7 +385,7 @@ namespace JMS.Infrastructures
                         }
                     }
                 }
-                else if (bData != 10)
+                else if (bData != 13)
                 {
                     lineBuffer.Add((byte)bData);
                 }

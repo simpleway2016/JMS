@@ -136,7 +136,7 @@ namespace JMS.Applications
             while (true)
             {
                 int bData = client.InnerStream.ReadByte();
-                if (bData == 13)
+                if (bData == 10)
                 {
                     line = Encoding.UTF8.GetString(lineBuffer.ToArray());
                     lineBuffer.Clear();
@@ -145,9 +145,6 @@ namespace JMS.Applications
 
                     if (line == "")
                     {
-                        bData = client.InnerStream.ReadByte();
-
-
                         break;
                     }
                     else if (line.Contains(":"))
@@ -164,7 +161,7 @@ namespace JMS.Applications
                         }
                     }
                 }
-                else if (bData != 10)
+                else if (bData != 13)
                 {
                     lineBuffer.Add((byte)bData);
                 }
