@@ -23,7 +23,6 @@ namespace JMS
         const int CompressionMinSize = 2048;
         public bool KeepAlive { get; set; }
       
-        public NetClient PairClient { get; set; }
         public NetClient(){
             
         }
@@ -36,15 +35,6 @@ namespace JMS
 
         }
 
-        public override void Dispose()
-        {
-            if(PairClient != null)
-            {
-                PairClient.Dispose();
-                PairClient = null;
-            }
-            base.Dispose();
-        }
 
         /// <summary>
         /// 输出http，并等对方接收完毕

@@ -14,7 +14,7 @@ namespace JMS.Infrastructures
 {
     internal class HttpProxy
     {
-        
+
         public static async Task WebSocketProxy(NetClient client, IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, GatewayCommand cmd)
         {
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
@@ -32,7 +32,7 @@ namespace JMS.Infrastructures
             {
                 servieName = servieName.Substring(0, servieName.IndexOf("/"));
             }
-            if(servieName.Contains("?"))
+            if (servieName.Contains("?"))
             {
                 servieName = servieName.Substring(0, servieName.IndexOf("?"));
             }
@@ -69,16 +69,13 @@ namespace JMS.Infrastructures
             {
                 hostUri = new Uri($"ws://{location.ServiceAddress}:{location.Port}");
             }
-            NetClient proxyClient = client.PairClient;
-            if (proxyClient == null)
+            NetClient proxyClient;
+
+            proxyClient = new NetClient();
+            await proxyClient.ConnectAsync(hostUri.Host, hostUri.Port);
+            if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
             {
-                proxyClient = new NetClient();
-                await proxyClient.ConnectAsync(hostUri.Host, hostUri.Port);
-                if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
-                {
-                   await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
-                }
-                client.PairClient = proxyClient;
+                await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
             }
 
             StringBuilder strBuffer = new StringBuilder();
@@ -125,31 +122,31 @@ namespace JMS.Infrastructures
             var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
             //发送头部到服务器
             proxyClient.Write(data);
-           
+
             readAndSend(proxyClient.InnerStream, client.InnerStream);
 
             await readAndSend(client.InnerStream, proxyClient.InnerStream);
         }
 
-        static async Task readAndSend(Stream readStream ,Stream writeStream)
+        static async Task readAndSend(Stream readStream, Stream writeStream)
         {
             byte[] recData = new byte[4096];
             int readed;
             while (true)
             {
                 readed = await readStream.ReadAsync(recData, 0, recData.Length);
-                if(readed <= 0)
+                if (readed <= 0)
                     break;
                 writeStream.Write(recData, 0, readed);
             }
         }
 
 
-        public static async Task Proxy(NetClient client,IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, int inputContentLength, GatewayCommand cmd)
+        public static async Task Proxy(NetClient client, IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, int inputContentLength, GatewayCommand cmd)
         {
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            if (cmd.Header.TryGetValue("X-Forwarded-For",out string xff))
-            {              
+            if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
+            {
                 if (xff.Contains(ip) == false)
                     xff += $", {ip}";
             }
@@ -158,11 +155,11 @@ namespace JMS.Infrastructures
                 cmd.Header["X-Forwarded-For"] = ip;
             }
             var servieName = requestPath.Substring(1);
-            if(servieName.Contains("/") )
+            if (servieName.Contains("/"))
             {
                 servieName = servieName.Substring(0, servieName.IndexOf("/"));
             }
-           
+
 
             var location = serviceProviderAllocator.Alloc(new GetServiceProviderRequest
             {
@@ -170,7 +167,7 @@ namespace JMS.Infrastructures
                 IsGatewayProxy = true,
                 Header = cmd.Header
             });
-            if(location == null)
+            if (location == null)
             {
                 if (inputContentLength > 0)
                 {
@@ -202,28 +199,23 @@ namespace JMS.Infrastructures
                 hostUri = new Uri($"http://{location.ServiceAddress}:{location.Port}");
             }
 
-            NetClient proxyClient = client.PairClient;
-            if (proxyClient == null)
+            using NetClient proxyClient = new NetClient();
+            await proxyClient.ConnectAsync(hostUri.Host, hostUri.Port);
+            if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
             {
-                proxyClient = new NetClient();
-                await proxyClient.ConnectAsync(hostUri.Host, hostUri.Port);
-                if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
-                {
-                    await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
-                }
-                client.PairClient = proxyClient;
+                await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
             }
 
             StringBuilder strBuffer = new StringBuilder();
-           
+
             Uri gatewayUri = new Uri($"http://{cmd.Header["Host"]}");
 
-            var requestLineArgs = requestPathLine.Split(' ').Where(m=>string.IsNullOrWhiteSpace(m) == false).ToArray();
+            var requestLineArgs = requestPathLine.Split(' ').Where(m => string.IsNullOrWhiteSpace(m) == false).ToArray();
             requestLineArgs[1] = requestPath;
             requestPathLine = string.Join(' ', requestLineArgs);
             strBuffer.AppendLine(requestPathLine);
 
-            foreach ( var pair in cmd.Header)
+            foreach (var pair in cmd.Header)
             {
                 if (pair.Key == "Host")
                 {
@@ -258,7 +250,7 @@ namespace JMS.Infrastructures
             var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
             //发送头部到服务器
             proxyClient.Write(data);
-            if(inputContentLength > 0)
+            if (inputContentLength > 0)
             {
                 //发送upload数据到服务器
                 data = new byte[inputContentLength];
@@ -268,7 +260,7 @@ namespace JMS.Infrastructures
 
             //读取服务器发回来的头部
             var headers = new Dictionary<string, string>();
-            requestPathLine = ReadHeaders(null,proxyClient, headers);
+            requestPathLine = ReadHeaders(null, proxyClient, headers);
             inputContentLength = 0;
             if (headers.ContainsKey("Content-Length"))
             {
@@ -294,14 +286,14 @@ namespace JMS.Infrastructures
                 await proxyClient.ReadDataAsync(data, 0, inputContentLength);
                 client.Write(data);
             }
-            else if (headers.TryGetValue("Transfer-Encoding" , out string transferEncoding) && transferEncoding == "chunked")
+            else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
             {
                 while (true)
                 {
                     var line = proxyClient.ReadLine();
                     client.WriteLine(line);
                     inputContentLength = Convert.ToInt32(line, 16);
-                    if(inputContentLength == 0)
+                    if (inputContentLength == 0)
                     {
                         line = proxyClient.ReadLine();
                         client.WriteLine(line);
@@ -311,7 +303,7 @@ namespace JMS.Infrastructures
                     {
                         data = new byte[inputContentLength];
                         await proxyClient.ReadDataAsync(data, 0, inputContentLength);
-                        client.InnerStream.Write(data,0,inputContentLength);
+                        client.InnerStream.Write(data, 0, inputContentLength);
 
                         line = proxyClient.ReadLine();
                         client.WriteLine(line);
@@ -357,12 +349,12 @@ namespace JMS.Infrastructures
             }
         }
 
-        public static string ReadHeaders(string preRequestString, NetClient client, IDictionary<string,string> headers)
+        public static string ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
         {
             List<byte> lineBuffer = new List<byte>(1024);
             string line = null;
             string requestPathLine = null;
-          
+
             while (true)
             {
                 int bData = client.InnerStream.ReadByte();
@@ -376,7 +368,7 @@ namespace JMS.Infrastructures
                     if (line == "")
                     {
                         bData = client.InnerStream.ReadByte();
-                       
+
 
                         break;
                     }
