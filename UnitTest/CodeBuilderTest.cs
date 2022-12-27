@@ -23,6 +23,7 @@ namespace UnitTest
     public class Setting1
     {
         public string Name { get; set; }
+        public Dictionary<string,int> Dict { get; set; }
     }
 
     public class TClass<T>
@@ -82,6 +83,11 @@ namespace UnitTest
         /// </summary>
         /// <returns></returns>
         public List<string> Hellow2()
+        {
+            return null;
+        }
+
+        public Dictionary<string,string> Dict()
         {
             return null;
         }

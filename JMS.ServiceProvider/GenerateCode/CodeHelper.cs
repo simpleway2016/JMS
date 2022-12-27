@@ -24,7 +24,7 @@ namespace JMS.GenerateCode
             CodeMemberMethod codeMethod = new CodeMemberMethod();
             codeMethod.Attributes = MemberAttributes.Public;
             codeMethod.Name = method.Name;
-            codeMethod.ReturnType = GetTypeCode( TypeInfoBuilder.GetReturnType( method.ReturnType), true);
+            codeMethod.ReturnType = GetTypeCode(TypeInfoBuilder.GetReturnType(method.ReturnType), true);
             foreach (var p in parameters)
             {
                 codeMethod.Parameters.Add(new CodeParameterDeclarationExpression(GetTypeCode(p.ParameterType), p.Name));
@@ -44,9 +44,19 @@ namespace JMS.GenerateCode
                 genRet.ArrayElementType = GetTypeCode(type.GetElementType(), findSubClass);
                 return genRet;
             }
-            else if ( type != typeof(string) && type.GetInterface(typeof(IEnumerable).FullName) != null)
+            else if (type != typeof(string) && type.GetInterface(typeof(IEnumerable).FullName) != null)
             {
-                if (type.IsGenericType)
+                if (type.IsGenericType && type.GetInterfaces().Contains(typeof(IDictionary)))
+                {
+                    var eleTypes = type.GetGenericArguments();
+                    var newType = typeof(Dictionary<,>).MakeGenericType(eleTypes);
+                    var ret = new CodeTypeReference(newType);
+                    for (int i = 0; i < ret.TypeArguments.Count; i++)
+                    {
+                        ret.TypeArguments[i] = GetTypeCode(eleTypes[i],findSubClass);
+                    }
+                }
+                else if (type.IsGenericType)
                 {
                     Type[] argTypes = type.GetGenericArguments();
                     CodeTypeReference genRet = new CodeTypeReference();
@@ -116,7 +126,7 @@ namespace JMS.GenerateCode
             }
             var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static);
 
-          
+
 
             foreach (var field in fields)
             {
@@ -129,9 +139,9 @@ namespace JMS.GenerateCode
 
                 if (typeDoc != null)
                 {
-                    var fieldDoc = typeDoc.Fields.FirstOrDefault(m=>m.Name == field.Name);
+                    var fieldDoc = typeDoc.Fields.FirstOrDefault(m => m.Name == field.Name);
 
-                    if(fieldDoc != null)
+                    if (fieldDoc != null)
                     {
                         try
                         {
@@ -195,7 +205,7 @@ namespace JMS.GenerateCode
                     }
                 }
 
-               
+
                 CurrentCreatedSubTypes.Value[type] = typename;
 
 
@@ -227,7 +237,7 @@ namespace JMS.GenerateCode
                         parentType = parentType.BaseType;
                 }
 
-              
+
                 foreach (var pro in properties)
                 {
                     CodeMemberProperty codePro = new CodeMemberProperty();
@@ -243,7 +253,7 @@ namespace JMS.GenerateCode
                     if (typeDoc != null)
                     {
                         var prodoc = typeDoc.Properties.FirstOrDefault(m => m.Name == pro.Name);
-                        if(prodoc != null)
+                        if (prodoc != null)
                         {
                             codePro.Comments.Add(new CodeCommentStatement(prodoc.GetXmlComment(), true));
                         }

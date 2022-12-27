@@ -101,6 +101,10 @@ namespace JMS.GenerateCode
             {
                 return "any";
             }
+            else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IDictionary)))
+            {
+                return "any";
+            }
             else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IList)))
             {
                 type = type.GenericTypeArguments[0];
