@@ -12,6 +12,7 @@ using JMS.Dtos;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Threading.Tasks;
+using System.Net.WebSockets;
 
 namespace JMS.Applications
 {
@@ -115,6 +116,10 @@ namespace JMS.Applications
                             break;
                     }
                 }
+            }
+            catch (WebSocketException)
+            {
+
             }
             catch (SocketException)
             {
