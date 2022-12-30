@@ -16,8 +16,13 @@ namespace JMS.Infrastructures.Haredware
         {
             _logger = logger;
         }
+
+        bool _hasError = false;
         public double GetCpuUsage()
         {
+            if (_hasError)
+                return 0;
+
             try
             {
                 ProcessStartInfo info = new ProcessStartInfo("mpstat");
@@ -43,7 +48,11 @@ namespace JMS.Infrastructures.Haredware
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "获取cpu使用率错误");
+                if (!_hasError)
+                {
+                    _hasError = true;
+                    _logger?.LogError(ex, "获取cpu使用率错误");
+                }
             }
             return 0;
         }
