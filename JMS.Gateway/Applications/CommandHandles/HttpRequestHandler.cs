@@ -45,7 +45,7 @@ namespace JMS.Applications.CommandHandles
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = HttpProxy.ReadHeaders( cmd.Content, client, cmd.Header);
+            var requestPathLine = await HttpProxy.ReadHeaders( cmd.Content, client, cmd.Header);
             int contentLength = 0;
             if (cmd.Header.ContainsKey("Content-Length"))
             {
@@ -66,7 +66,7 @@ namespace JMS.Applications.CommandHandles
             {
                 if (contentLength > 0)
                 {
-                    client.ReadData(new byte[contentLength], 0, contentLength);
+                    await client.ReadDataAsync(new byte[contentLength], 0, contentLength);
                 }
 
                 requestPath = requestPath.Substring(2);

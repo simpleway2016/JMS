@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -262,7 +263,7 @@ namespace JMS.Infrastructures
 
             //读取服务器发回来的头部
             var headers = new Dictionary<string, string>();
-            requestPathLine = ReadHeaders(null, proxyClient, headers);
+            requestPathLine = await ReadHeaders(null, proxyClient, headers);
             inputContentLength = 0;
             if (headers.ContainsKey("Content-Length"))
             {
@@ -351,16 +352,20 @@ namespace JMS.Infrastructures
             }
         }
 
-        public static string ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
+        public static async Task<string> ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
         {
             List<byte> lineBuffer = new List<byte>(1024);
             string line = null;
             string requestPathLine = null;
-
+            byte[] bData = new byte[1];
+            int readed;
             while (true)
             {
-                int bData = client.InnerStream.ReadByte();
-                if (bData == 10)
+               readed = await client.InnerStream.ReadAsync(bData , 0 , 1);
+                if (readed <= 0)
+                    throw new SocketException();
+
+                if (bData[0] == 10)
                 {
                     line = Encoding.UTF8.GetString(lineBuffer.ToArray());
                     lineBuffer.Clear();
@@ -385,9 +390,9 @@ namespace JMS.Infrastructures
                         }
                     }
                 }
-                else if (bData != 13)
+                else if (bData[0] != 13)
                 {
-                    lineBuffer.Add((byte)bData);
+                    lineBuffer.Add(bData[0]);
                 }
             }
             return requestPathLine;

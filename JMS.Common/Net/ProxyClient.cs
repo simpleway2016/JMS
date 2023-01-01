@@ -141,6 +141,8 @@ namespace JMS
                 else if (buffer[3] == 0x3)
                 {
                     len = this.InnerStream.ReadByte();
+                    if (len < 0)
+                        throw new SocketException();
                     this.ReadData(buffer, 0, len + 2);
                 }
                 else if (buffer[3] == 0x4)

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Security.Cryptography;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net.Sockets;
 
 namespace JMS.Applications
 {
@@ -58,7 +59,7 @@ namespace JMS.Applications
         public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
             cmd.Header = new Dictionary<string, string>();
-            var urlLine = ReadHeaders(cmd.Service, netclient, cmd.Header);
+            var urlLine = await ReadHeaders(cmd.Service, netclient, cmd.Header);
 
             
 
@@ -127,16 +128,20 @@ namespace JMS.Applications
         }
 
 
-        public static string ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
+        public static async Task<string> ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
         {
             List<byte> lineBuffer = new List<byte>(1024);
             string line = null;
             string requestPathLine = null;
-
+            byte[] bData = new byte[1];
+            int read;
             while (true)
             {
-                int bData = client.InnerStream.ReadByte();
-                if (bData == 10)
+               read = await client.InnerStream.ReadAsync(bData , 0 , 1);
+                if (read <= 0)
+                    throw new SocketException();
+
+                if (bData[0] == 10)
                 {
                     line = Encoding.UTF8.GetString(lineBuffer.ToArray());
                     lineBuffer.Clear();
@@ -161,9 +166,9 @@ namespace JMS.Applications
                         }
                     }
                 }
-                else if (bData != 13)
+                else if (bData[0] != 13)
                 {
-                    lineBuffer.Add((byte)bData);
+                    lineBuffer.Add(bData[0]);
                 }
             }
             return requestPathLine;

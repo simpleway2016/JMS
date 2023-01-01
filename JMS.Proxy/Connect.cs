@@ -76,6 +76,8 @@ namespace JMS.Proxy
                 case 0x03:
                     //域名
                     int len = _client.InnerStream.ReadByte();
+                    if (len < 0)
+                        throw new SocketException();
                     await _client.ReadDataAsync(buffer, 0, len);
 
                     _header.IsDomain = true;
