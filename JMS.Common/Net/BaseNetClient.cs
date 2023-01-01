@@ -433,21 +433,22 @@ namespace JMS.Common
         }
 
 
-        public string ReadLine()
+        public async Task<string> ReadLineAsync()
         {
             byte[] bs = new byte[1];
             List<byte> lineBuffer = new List<byte>(1024);
-
+            int readed;
             while (true)
             {
-                int readed = _stream.Read(bs, 0, bs.Length);
+                readed = await _stream.ReadAsync(bs, 0, 1);
+                if (readed <= 0)
+                    throw new SocketException();
 
-                if (bs[0] == 0xa)
+                if (bs[0] == 10)
                 {
-                    lineBuffer.RemoveAt(lineBuffer.Count - 1);
                     break;
                 }
-                else
+                else if (bs[0] != 13)
                 {
                     lineBuffer.Add(bs[0]);
                 }

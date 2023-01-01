@@ -84,7 +84,7 @@ namespace JMS.Applications.CommandHandles
                         Content = json,
                         IsHttp = true
                     };
-                    _manager.AllocHandler(cmd)?.Handle(client, cmd);
+                    await _manager.AllocHandler(cmd)?.Handle(client, cmd);
                 }
                 else
                 {
@@ -93,7 +93,7 @@ namespace JMS.Applications.CommandHandles
                         Type = (CommandType)Enum.Parse(typeof(CommandType), requestPath),
                         IsHttp = true
                     };
-                    _manager.AllocHandler(cmd)?.Handle(client, cmd);
+                    await _manager.AllocHandler(cmd)?.Handle(client, cmd);
                 }
             }
             else if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)

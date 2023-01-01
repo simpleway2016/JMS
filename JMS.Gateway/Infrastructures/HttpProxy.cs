@@ -293,12 +293,12 @@ namespace JMS.Infrastructures
             {
                 while (true)
                 {
-                    var line = proxyClient.ReadLine();
+                    var line = await proxyClient.ReadLineAsync();
                     client.WriteLine(line);
                     inputContentLength = Convert.ToInt32(line, 16);
                     if (inputContentLength == 0)
                     {
-                        line = proxyClient.ReadLine();
+                        line = await proxyClient.ReadLineAsync();
                         client.WriteLine(line);
                         break;
                     }
@@ -308,7 +308,7 @@ namespace JMS.Infrastructures
                         await proxyClient.ReadDataAsync(data, 0, inputContentLength);
                         client.InnerStream.Write(data, 0, inputContentLength);
 
-                        line = proxyClient.ReadLine();
+                        line = await proxyClient.ReadLineAsync();
                         client.WriteLine(line);
                     }
                 }
