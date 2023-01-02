@@ -11,11 +11,8 @@ namespace JMS.Proxy
         static Socks5Server _socks5Server;
         public static void Main(string[] args)
         {
-            ThreadPool.GetMinThreads(out int w, out int c);
-            if (c < 500)
-            {
-                ThreadPool.SetMinThreads(500, 500);
-            }
+            ThreadPool.GetMaxThreads(out int w, out int c);
+            ThreadPool.SetMinThreads(w, c);
 
             var builder = new ConfigurationBuilder();
             string appsettingFileName = "appsettings.json";

@@ -31,11 +31,8 @@ namespace JMS
             }
             //固定当前工作目录
             System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-            ThreadPool.GetMinThreads(out int w, out int c);
-            if (c < 500)
-            {
-                ThreadPool.SetMinThreads(500, 500);
-            }
+            ThreadPool.GetMaxThreads(out int w, out int c);
+            ThreadPool.SetMinThreads(w, c);
 
             var builder = new ConfigurationBuilder();
             AppSettingPath = Environment.GetFolderPath( Environment.SpecialFolder.CommonApplicationData);

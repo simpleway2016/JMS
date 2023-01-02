@@ -118,7 +118,11 @@ namespace JMS.Applications
             }
             catch (Exception)
             {
-
+                if(websocket != null)
+                {
+                    await websocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
+                    return;
+                }
                 throw;
             }
             finally

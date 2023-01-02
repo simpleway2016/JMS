@@ -43,11 +43,8 @@ namespace JMS.TokenServer
 
         static void Main(string[] args)
         {
-            ThreadPool.GetMinThreads(out int w, out int c);
-            if (c < 100)
-            {
-                ThreadPool.SetMinThreads(100, 100);
-            }
+            ThreadPool.GetMaxThreads(out int w, out int c);
+            ThreadPool.SetMinThreads(w, c);
 
             var builder = new ConfigurationBuilder();
             var appSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
