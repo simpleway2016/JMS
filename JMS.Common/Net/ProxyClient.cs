@@ -24,7 +24,7 @@ namespace JMS
         /// 
         /// </summary>
         /// <param name="proxyAddr">代理地址，如果为null，则直接访问目标服务器</param>
-        /// <param name="cert">访问代理服务器的客户端证书</param>
+        /// <param name="cert">访问目标服务器的客户端证书</param>
         public ProxyClient(NetAddress proxyAddr, X509Certificate2 cert) : base(cert)
         {
             this.ProxyAddress = proxyAddr;

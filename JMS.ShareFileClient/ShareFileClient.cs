@@ -14,6 +14,7 @@ namespace JMS
 {
     public class ShareFileClient
     {
+        NetAddress _proxy;
         class MapItem
         {
             public string LocalPath;
@@ -25,8 +26,10 @@ namespace JMS
         NetAddress _gatewayAddress;
         X509Certificate2 _gatewayClientCert;
         ILogger _logger;
-        public ShareFileClient(NetAddress gatewayAddress, ILogger logger = null, X509Certificate2 gatewayClientCert = null)
+      
+        public ShareFileClient(NetAddress gatewayAddress, NetAddress proxy = null, ILogger logger = null, X509Certificate2 gatewayClientCert = null)
         {
+            this._proxy = proxy;
 
             this._gatewayAddress = gatewayAddress;
             this._gatewayClientCert = gatewayClientCert;
@@ -40,7 +43,7 @@ namespace JMS
         /// <param name="localFilePath">保存到本地的路径</param>
         public void GetGatewayShareFile( string filepath, string localFilePath )
         {
-            using (var client = new CertClient(_gatewayClientCert))
+            using (var client = new ProxyClient(_proxy, _gatewayClientCert))
             {
                 client.Connect(_gatewayAddress);
                 client.WriteServiceData(new GatewayCommand
@@ -90,7 +93,7 @@ namespace JMS
             {
                 try
                 {
-                    using (var client = new CertClient(_gatewayClientCert))
+                    using (var client = new ProxyClient(_proxy, _gatewayClientCert))
                     {
                         client.Connect(_gatewayAddress);
                         client.WriteServiceData(new GatewayCommand { 
