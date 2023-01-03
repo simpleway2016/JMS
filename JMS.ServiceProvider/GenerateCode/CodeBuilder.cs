@@ -46,7 +46,7 @@ namespace JMS.GenerateCode
             if(isAsync)
             {
                 codeMethod.Name = methodInfo.Name + "Async";
-                if (methodInfo.ReturnType.FullName != "System.Void")
+                if (originalRetType.BaseType != "System.Void")
                 {
                     codeMethod.ReturnType = new CodeTypeReference();
                     codeMethod.ReturnType.TypeArguments.Add(originalRetType);
@@ -60,7 +60,7 @@ namespace JMS.GenerateCode
             var methodRef1 = new CodeMethodReferenceExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_microService"), isAsync? "InvokeAsync" : "Invoke");
             CodeMethodInvokeExpression invokeExp = new CodeMethodInvokeExpression(methodRef1, codeParamExps);
 
-            if (methodInfo.ReturnType.FullName != "System.Void")
+            if (originalRetType.BaseType != "System.Void")
             {
                 methodRef1.TypeArguments.Add(originalRetType);                
                 CodeMethodReturnStatement returnExp = new CodeMethodReturnStatement(invokeExp);

@@ -113,6 +113,11 @@ namespace UnitTest
         {
             return null;
         }
+
+        public async Task AddTemplate(long templateTypeId, string templateTypeName, Dictionary<string, string> templateContent, Dictionary<string, string> templateTitle,  string url)
+        {
+
+        }
     }
 
     [TestClass]
