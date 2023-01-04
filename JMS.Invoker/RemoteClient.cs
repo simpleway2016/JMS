@@ -288,6 +288,7 @@ namespace JMS
                 HistoryMasterAddressList.Add(GatewayAddress);
         }
 
+       
         /// <summary>
         /// 获取指定微服务，获取不到微服务则抛出异常
         /// </summary>
@@ -297,6 +298,24 @@ namespace JMS
         public virtual T GetMicroService<T>( ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
             var ret = TryGetMicroService<T>( registerServiceLocation);
+            if (ret == null)
+            {
+                var classType = typeof(T);
+                var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
+                throw new MissServiceException($"找不到微服务“{att.ServiceName}”");
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// 获取指定微服务，获取不到微服务则抛出异常
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
+        /// <returns></returns>
+        public virtual async Task<T> GetMicroServiceAsync<T>(ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
+        {
+            var ret = await TryGetMicroServiceAsync<T>(registerServiceLocation);
             if (ret == null)
             {
                 var classType = typeof(T);
@@ -343,6 +362,42 @@ namespace JMS
         }
 
         /// <summary>
+        /// 获取指定微服务, 获取不到微服务则返回null
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
+        /// <returns></returns>
+        public virtual async Task<T> TryGetMicroServiceAsync<T>(ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
+        {
+            var classType = typeof(T);
+            var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
+            if (att == null)
+                throw new Exception($"{classType}不是有效的微服务类型");
+
+            for (int i = 0; i < 2; i++)
+            {
+                try
+                {
+                    var invoker = new Invoker(this, att.ServiceName);
+                    if (await invoker.InitAsync(registerServiceLocation))
+                        return (T)Activator.CreateInstance(classType, new object[] { invoker });
+                }
+                catch (MissMasterGatewayException)
+                {
+                    if (i == 1)
+                        throw;
+                    else
+                    {
+                        if (GatewayAddress != null)
+                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
+                    }
+                    findMasterGateway();
+                }
+            }
+            return default(T);
+        }
+
+        /// <summary>
         /// 获取指定微服务, 获取不到微服务则抛出异常
         /// </summary>
         /// <param name="serviceName"></param>
@@ -352,6 +407,21 @@ namespace JMS
         {
             var ret = TryGetMicroService(serviceName,registerServiceLocation);
             if(ret == null)
+                throw new MissServiceException($"找不到微服务“{serviceName}”");
+
+            return ret;
+        }
+
+        /// <summary>
+        /// 获取指定微服务, 获取不到微服务则抛出异常
+        /// </summary>
+        /// <param name="serviceName"></param>
+        /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
+        /// <returns></returns>
+        public virtual async Task<IMicroService> GetMicroServiceAsync(string serviceName, ClientServiceDetail registerServiceLocation = null)
+        {
+            var ret = await TryGetMicroServiceAsync(serviceName, registerServiceLocation);
+            if (ret == null)
                 throw new MissServiceException($"找不到微服务“{serviceName}”");
 
             return ret;
@@ -388,6 +458,40 @@ namespace JMS
 
             return null;
         }
+
+        /// <summary>
+        /// 获取指定微服务, 获取不到微服务则返回null
+        /// </summary>
+        /// <param name="serviceName"></param>
+        /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
+        /// <returns></returns>
+        public virtual async Task<IMicroService> TryGetMicroServiceAsync(string serviceName, ClientServiceDetail registerServiceLocation = null)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                try
+                {
+                    var invoker = new Invoker(this, serviceName);
+                    if (await invoker.InitAsync(registerServiceLocation))
+                        return invoker;
+                }
+                catch (MissMasterGatewayException)
+                {
+                    if (i == 1)
+                        throw;
+                    else
+                    {
+                        if (GatewayAddress != null)
+                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
+                    }
+                    findMasterGateway();
+                }
+            }
+
+            return null;
+        }
+
+
 
 
         void IRemoteClient.AddConnect(IInvokeConnect connect)

@@ -78,6 +78,58 @@ namespace JMS
             return true;
         }
 
+        public async Task<bool> InitAsync(ClientServiceDetail registerServiceLocation)
+        {
+            if (registerServiceLocation != null)
+            {
+                _IsFromGateway = false;
+                _serviceLocation = registerServiceLocation.ToJsonString().FromJson<ClientServiceDetail>();
+                return true;
+            }
+            //获取服务地址
+            var netclient = await NetClientPool.CreateClientAsync(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate);
+            netclient.ReadTimeout = this.ServiceTransaction.Timeout;
+            try
+            {
+                netclient.WriteServiceData(new GatewayCommand()
+                {
+                    Type = CommandType.GetServiceProvider,
+                    Header = ServiceTransaction.GetCommandHeader(),
+                    Content = new GetServiceProviderRequest
+                    {
+                        ServiceName = _serviceName
+                    }.ToJsonString()
+                });
+                var serviceLocation = await netclient.ReadServiceObjectAsync<ClientServiceDetail>();
+
+                if (serviceLocation.ServiceAddress == "not master")
+                    throw new MissMasterGatewayException("");
+
+                if (serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.ServiceAddress))
+                {
+                    //网关没有这个服务
+                    return false;
+                }
+
+                _serviceLocation = serviceLocation;
+
+                NetClientPool.AddClientToPool(netclient);
+            }
+            catch (SocketException ex)
+            {
+                netclient.Dispose();
+                throw new MissMasterGatewayException(ex.Message);
+            }
+            catch (Exception)
+            {
+                netclient.Dispose();
+                throw;
+            }
+
+
+            return true;
+        }
+
         public bool Init()
         {
             return Init(null);
