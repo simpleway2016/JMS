@@ -100,7 +100,6 @@ namespace JMS
 
             //先找到master网关
             _allGateways = gatewayAddresses;
-            findMasterGateway();
         }
 
         /// <summary>
@@ -110,6 +109,10 @@ namespace JMS
         /// <returns></returns>
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
+            if(GatewayAddress == null)
+            {
+                findMasterGateway();
+            }
             using (var netclient = new ProxyClient( this.ProxyAddress, GatewayClientCertificate))
             {
                 netclient.Connect(GatewayAddress);
@@ -134,6 +137,11 @@ namespace JMS
         {
             if (string.IsNullOrEmpty(serviceName))
                 throw new Exception("serviceName is empty");
+
+            if (GatewayAddress == null)
+            {
+                findMasterGateway();
+            }
 
             var infos = ListMicroService(serviceName);
             var ret = new RegisterServiceLocation[infos.Length];
@@ -288,7 +296,29 @@ namespace JMS
                 HistoryMasterAddressList.Add(GatewayAddress);
         }
 
-       
+        async Task findMasterGatewayAsync()
+        {
+            if (_allGateways == null || _allGateways.Length == 1)
+            {
+                if (_allGateways != null)
+                    GatewayAddress = _allGateways[0];
+                return;
+            }
+
+            //先从历史主网关选出一个
+            var historyMaster = HistoryMasterAddressList.FirstOrDefault(m => _allGateways.Any(g => g == m));
+            if (historyMaster != null)
+            {
+                GatewayAddress = historyMaster;
+                return;
+            }
+
+            GatewayAddress = await new ValueTask<NetAddress>(new FindMasterGatewayTask(_allGateways , this.Timeout,this.ProxyAddress , this.GatewayClientCertificate), 0); ;
+
+            if (HistoryMasterAddressList.Any(m => m == GatewayAddress) == false)
+                HistoryMasterAddressList.Add(GatewayAddress);
+        }
+
         /// <summary>
         /// 获取指定微服务，获取不到微服务则抛出异常
         /// </summary>
@@ -333,6 +363,11 @@ namespace JMS
         /// <returns></returns>
         public virtual T TryGetMicroService<T>( ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
+            if (GatewayAddress == null)
+            {
+                findMasterGateway();
+            }
+
             var classType = typeof(T);
             var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
             if (att == null)
@@ -353,7 +388,7 @@ namespace JMS
                     else
                     {
                         if (GatewayAddress != null)
-                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
+                            HistoryMasterAddressList.Remove(GatewayAddress);
                     }
                     findMasterGateway();
                 }
@@ -369,6 +404,11 @@ namespace JMS
         /// <returns></returns>
         public virtual async Task<T> TryGetMicroServiceAsync<T>(ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
+            if (GatewayAddress == null)
+            {
+                await findMasterGatewayAsync();
+            }
+
             var classType = typeof(T);
             var att = classType.GetCustomAttribute<InvokerInfoAttribute>();
             if (att == null)
@@ -391,7 +431,7 @@ namespace JMS
                         if (GatewayAddress != null)
                             HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
                     }
-                    findMasterGateway();
+                    await findMasterGatewayAsync();
                 }
             }
             return default(T);
@@ -435,6 +475,11 @@ namespace JMS
         /// <returns></returns>
         public virtual IMicroService TryGetMicroService(string serviceName, ClientServiceDetail registerServiceLocation = null)
         {
+            if (GatewayAddress == null)
+            {
+                findMasterGateway();
+            }
+
             for (int i = 0; i < 2; i++)
             {
                 try
@@ -467,6 +512,10 @@ namespace JMS
         /// <returns></returns>
         public virtual async Task<IMicroService> TryGetMicroServiceAsync(string serviceName, ClientServiceDetail registerServiceLocation = null)
         {
+            if (GatewayAddress == null)
+            {
+                await findMasterGatewayAsync();
+            }
             for (int i = 0; i < 2; i++)
             {
                 try
@@ -484,7 +533,7 @@ namespace JMS
                         if (GatewayAddress != null)
                             HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
                     }
-                    findMasterGateway();
+                    await findMasterGatewayAsync();
                 }
             }
 
