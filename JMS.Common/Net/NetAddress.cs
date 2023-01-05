@@ -31,10 +31,30 @@ namespace JMS
         public string Address { get; set; }
         public int Port { get; set; }
 
+        bool? _useSsl;
         /// <summary>
         /// 目标地址是否使用ssl加密
         /// </summary>
-        public bool UseSsl { get; set; }
+        public bool UseSsl
+        {
+            get
+            {
+                if(_useSsl == null)
+                {
+                    if (!string.IsNullOrWhiteSpace(this.ClientCertPath))
+                        return true;
+                    else if (this.Certificate != null)
+                        return true;
+                    else
+                        return false;
+                }
+                return _useSsl.GetValueOrDefault();
+            }
+            set
+            {
+                _useSsl = value;
+            }
+        }
 
         /// <summary>
         /// 用指定的pfx证书连接目标地址

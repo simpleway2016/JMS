@@ -101,8 +101,15 @@ namespace JMS.Applications
             }
 
 
-            var responseText = GetResponse(cmd.Header);
-            netclient.InnerStream.Write(Encoding.UTF8.GetBytes(responseText));
+            try
+            {
+                var responseText = GetResponse(cmd.Header);
+                netclient.InnerStream.Write(Encoding.UTF8.GetBytes(responseText));
+            }
+            catch (Exception)
+            {
+                return;
+            }
 
             try
             {
