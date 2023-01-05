@@ -13,7 +13,6 @@ namespace JMS
         NetAddress GatewayAddress { get;  }
         NetAddress ProxyAddress { get; }
         int Timeout { get; set; }
-        X509Certificate2 GatewayClientCertificate { get; set; }
         X509Certificate2 ServiceClientCertificate { get; set; }
         Dictionary<string, string> GetCommandHeader();
         void AddConnect(IInvokeConnect connect);

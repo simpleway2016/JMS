@@ -73,7 +73,7 @@ namespace JMS.Infrastructures
             NetClient proxyClient;
 
             proxyClient = new NetClient();
-            await proxyClient.ConnectAsync(hostUri.Host, hostUri.Port);
+            await proxyClient.ConnectAsync(new NetAddress(hostUri.Host, hostUri.Port));
             if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
             {
                 await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
@@ -203,7 +203,7 @@ namespace JMS.Infrastructures
             }
 
             using NetClient proxyClient = new NetClient();
-            await proxyClient.ConnectAsync(hostUri.Host, hostUri.Port);
+            await proxyClient.ConnectAsync(new NetAddress(hostUri.Host, hostUri.Port));
             if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
             {
                 await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);

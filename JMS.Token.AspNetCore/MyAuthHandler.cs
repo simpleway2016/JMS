@@ -21,9 +21,7 @@ namespace JMS.Token.AspNetCore
         HttpContext _context;
         public static string HeaderName;
         public static Func<AuthenticationParameter, bool> Callback;
-        public static string ServerAddress;
-        public static int ServerPort;
-        public static X509Certificate2 Cert;
+        public static NetAddress ServerAddress;
 
         public MyAuthHandler(ILogger<TokenClient> logger)
         {
@@ -51,7 +49,7 @@ namespace JMS.Token.AspNetCore
             }
 
             var token = _context.Request.Headers[HeaderName].FirstOrDefault();
-            TokenClient client = new TokenClient(ServerAddress,ServerPort , Cert);
+            TokenClient client = new TokenClient(ServerAddress);
             try
             {
                 string strContent = client.Verify(token).ToString();

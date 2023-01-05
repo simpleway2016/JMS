@@ -12,15 +12,12 @@ namespace JMS.Token
     class DisableTokenListener
     {
         static ConcurrentDictionary<(string, int), DisableTokenListener> AllListeners = new ConcurrentDictionary<(string, int), DisableTokenListener>();
-        string _serverAddress;
-        int _serverPort;
+        NetAddress _netAddress;
         X509Certificate2 _cert;
         ConcurrentDictionary<string, long> _disableTokens = new ConcurrentDictionary<string, long>();
-        private DisableTokenListener( string serverAddress, int serverPort, X509Certificate2 cert)
+        private DisableTokenListener(NetAddress serverAddress)
         {
-            this._serverAddress = serverAddress;
-            this._serverPort = serverPort;
-            _cert = cert;
+            _netAddress = serverAddress;
         }
 
         /// <summary>
@@ -35,11 +32,11 @@ namespace JMS.Token
             return true;
         }
 
-        public static DisableTokenListener Listen(string serverAddress, int serverPort, X509Certificate2 cert)
+        public static DisableTokenListener Listen(NetAddress serverAddr)
         {
-            var key = (serverAddress, serverPort);
+            var key = (serverAddr.Address, serverAddr.Port);
             return AllListeners.GetOrAdd(key, (k) => {
-                var obj = new DisableTokenListener(serverAddress, serverPort, cert);
+                var obj = new DisableTokenListener(serverAddr);
                 obj.Start();
                 return obj;
             });
@@ -52,7 +49,7 @@ namespace JMS.Token
 
         void Start()
         {
-            if (string.IsNullOrEmpty(_serverAddress))
+            if (string.IsNullOrEmpty(_netAddress.Address))
                 return;
 
             bool printedErr = false;
@@ -65,8 +62,8 @@ namespace JMS.Token
                         CertClient client = null;
                         try
                         {
-                            client = new CertClient(_cert);
-                            client.Connect(_serverAddress, _serverPort);
+                            client = new CertClient();
+                            client.Connect(_netAddress);
                             client.Write(888);
                             len = client.ReadInt();
                             if (len != 4)
@@ -90,14 +87,14 @@ namespace JMS.Token
                         }
 
 
-                        client = new CertClient(_cert);
-                        client.Connect(_serverAddress, _serverPort);
+                        client = new CertClient();
+                        client.Connect(_netAddress);
                         client.Write(999);
                         len = client.ReadInt();
                         var buffer = new byte[len];
                         client.ReadData(buffer, 0, len);
                         var keyvalue = Encoding.UTF8.GetString(buffer).FromJson<string[]>();
-                        TokenClient.ServerKeys.AddOrUpdate((_serverAddress, _serverPort), keyvalue, (k, o) => keyvalue);
+                        TokenClient.ServerKeys.AddOrUpdate((_netAddress.Address, _netAddress.Port), keyvalue, (k, o) => keyvalue);
 
                         printedErr = false;
                         client.ReadTimeout = 30000;

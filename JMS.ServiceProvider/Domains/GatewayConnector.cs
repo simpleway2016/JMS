@@ -53,7 +53,7 @@ namespace JMS.Domains
 
         public NetClient CreateClient(NetAddress addr)
         {
-            var client = new GatewayClient(_SSLConfiguration);
+            var client = new CertClient();
             client.Connect(addr);
             return client;
         }

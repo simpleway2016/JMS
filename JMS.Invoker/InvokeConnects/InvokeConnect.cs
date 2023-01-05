@@ -52,7 +52,7 @@ namespace JMS
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            _client = NetClientPool.CreateClient(tran.ProxyAddress, InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
+            _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate });
             try
             {
                 _client.ReadTimeout = tran.Timeout;
@@ -126,7 +126,7 @@ namespace JMS
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, tran.ServiceClientCertificate);
+            _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress,new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate });
             try
             {
                 _client.ReadTimeout = tran.Timeout;
@@ -265,7 +265,7 @@ namespace JMS
             {
                 cert = new X509Certificate2(certData);
             }
-            _client = NetClientPool.CreateClient(proxyAddress, serviceLocation.ServiceAddress, serviceLocation.Port, cert);
+            _client = NetClientPool.CreateClient(proxyAddress,new NetAddress(serviceLocation.ServiceAddress, serviceLocation.Port, serviceLocation.UseSsl) { Certificate = cert});
             var command = new InvokeCommand()
             {
                 Type = InvokeType.RetryTranaction,

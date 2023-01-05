@@ -15,7 +15,7 @@ namespace JMS.TransactionReporters
 
         public void ReportTransactionSuccess(RemoteClient remoteClient, string tranid)
         {
-            var netclient = NetClientPool.CreateClient(remoteClient.ProxyAddress, remoteClient.GatewayAddress, remoteClient.GatewayClientCertificate);
+            var netclient = NetClientPool.CreateClient(remoteClient.ProxyAddress, remoteClient.GatewayAddress);
             netclient.ReadTimeout = remoteClient.Timeout;
             try
             {
@@ -53,7 +53,7 @@ namespace JMS.TransactionReporters
 
         public void ReportTransactionCompleted(RemoteClient remoteClient, string tranid)
         {
-            var netclient = NetClientPool.CreateClient(remoteClient.ProxyAddress, remoteClient.GatewayAddress, remoteClient.GatewayClientCertificate);
+            var netclient = NetClientPool.CreateClient(remoteClient.ProxyAddress, remoteClient.GatewayAddress);
             netclient.ReadTimeout = remoteClient.Timeout;
             try
             {

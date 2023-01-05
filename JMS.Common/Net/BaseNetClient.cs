@@ -21,8 +21,8 @@ namespace JMS.Common
     /// </summary>
     public class BaseNetClient : IDisposable
     {
-        public string Address { get; protected set; }
-        public int Port { get; protected set; }
+        public NetAddress NetAddress { get; protected set; }
+
         private Stream _stream;
         public Stream InnerStream
         {
@@ -337,34 +337,21 @@ namespace JMS.Common
             _stream = sslStream;
         }
 
-        public void Connect(NetAddress addr)
-        {
-            this.Connect(addr.Address, addr.Port);
-        }
-
-        public Task ConnectAsync(NetAddress addr)
-        {
-            return this.ConnectAsync(addr.Address, addr.Port);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public virtual void Connect(string address, int port)
+        public virtual void Connect(NetAddress addr)
         {
             EndPoint endPoint;
-            if (IPAddress.TryParse(address, out IPAddress ip))
+            if (IPAddress.TryParse(addr.Address, out IPAddress ip))
             {
-                endPoint = new IPEndPoint(ip, port);
+                endPoint = new IPEndPoint(ip, addr.Port);
             }
             else
             {
-                var ipaddresses = Dns.GetHostAddresses(address);
+                var ipaddresses = Dns.GetHostAddresses(addr.Address);
                 var ipv4address = ipaddresses.FirstOrDefault(m => m.AddressFamily == AddressFamily.InterNetwork);
                 if (ipv4address == null)
                     ipv4address = ipaddresses[0];
 
-                endPoint = new IPEndPoint(ipv4address, port);
+                endPoint = new IPEndPoint(ipv4address, addr.Port);
             }
 
             Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -380,25 +367,24 @@ namespace JMS.Common
             }
             catch { }
 
-            this.Address = address;
-            this.Port = port;
+            this.NetAddress = addr;
         }
 
-        public virtual async Task ConnectAsync(string address, int port)
+        public virtual async Task ConnectAsync(NetAddress addr)
         {
             EndPoint endPoint;
-            if (IPAddress.TryParse(address, out IPAddress ip))
+            if (IPAddress.TryParse(addr.Address, out IPAddress ip))
             {
-                endPoint = new IPEndPoint(ip, port);
+                endPoint = new IPEndPoint(ip, addr.Port);
             }
             else
             {
-                var ipaddresses = await Dns.GetHostAddressesAsync(address);
+                var ipaddresses = await Dns.GetHostAddressesAsync(addr.Address);
                 var ipv4address = ipaddresses.FirstOrDefault(m => m.AddressFamily == AddressFamily.InterNetwork);
                 if (ipv4address == null)
                     ipv4address = ipaddresses[0];
 
-                endPoint = new IPEndPoint(ipv4address, port);
+                endPoint = new IPEndPoint(ipv4address, addr.Port);
             }
 
             Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -414,8 +400,7 @@ namespace JMS.Common
             }
             catch { }
 
-            this.Address = address;
-            this.Port = port;
+            this.NetAddress = addr;
         }
 
         public void Write(byte[] data)

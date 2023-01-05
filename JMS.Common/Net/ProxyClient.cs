@@ -1,7 +1,6 @@
 ﻿using JMS.Common;
 using JMS.Common.Net;
 using JMS.Dtos;
-using Org.BouncyCastle.Bcpg;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -24,47 +23,47 @@ namespace JMS
         /// 
         /// </summary>
         /// <param name="proxyAddr">代理地址，如果为null，则直接访问目标服务器</param>
-        /// <param name="cert">访问目标服务器的客户端证书</param>
-        public ProxyClient(NetAddress proxyAddr, X509Certificate2 cert) : base(cert)
+        public ProxyClient(NetAddress proxyAddr)
         {
             this.ProxyAddress = proxyAddr;
         }
 
-        public override void Connect(string address, int port)
+        public override void Connect(NetAddress addr)
         {
             if (this.ProxyAddress != null)
             {
-                _addr = address;
-                _port = port;
-                base.Connect(this.ProxyAddress.Address, this.ProxyAddress.Port);
-                this.Address = address;
-                this.Port = port;
+                _addr = addr.Address;
+                _port = addr.Port;
+                this.ProxyAddress.UseSsl = addr.UseSsl;
+                this.ProxyAddress.Certificate = addr.Certificate;
+                base.Connect(this.ProxyAddress);
+                this.NetAddress = addr;
             }
             else
             {
-                base.Connect(address, port);
+                base.Connect(addr);
             }
-
         }
 
+        public override async Task ConnectAsync(NetAddress addr)
+        {
+            if (this.ProxyAddress != null)
+            {
+                _addr = addr.Address;
+                _port = addr.Port;
+                this.ProxyAddress.UseSsl = addr.UseSsl;
+                this.ProxyAddress.Certificate = addr.Certificate;
+                await base.ConnectAsync(this.ProxyAddress);
+                this.NetAddress = addr;
+            }
+            else
+            {
+                await base.ConnectAsync(addr);
+            }
+        }
 
         string _addr;
         int _port;
-        public override async Task ConnectAsync(string address, int port)
-        {
-            if (this.ProxyAddress != null)
-            {
-                _addr = address;
-                _port = port;
-                await base.ConnectAsync(this.ProxyAddress.Address, this.ProxyAddress.Port);
-                this.Address = address;
-                this.Port = port;
-            }
-            else
-            {
-                await base.ConnectAsync(address, port);
-            }
-        }
 
         protected override void AfterConnect()
         {

@@ -35,7 +35,7 @@ namespace JMS
                 return true;
             }
             //获取服务地址
-            var netclient = NetClientPool.CreateClient(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate);
+            var netclient = NetClientPool.CreateClient(this.ServiceTransaction.ProxyAddress,this.ServiceTransaction.GatewayAddress);
             netclient.ReadTimeout = this.ServiceTransaction.Timeout;
             try
             {
@@ -87,7 +87,7 @@ namespace JMS
                 return true;
             }
             //获取服务地址
-            var netclient = await NetClientPool.CreateClientAsync(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress, this.ServiceTransaction.GatewayClientCertificate);
+            var netclient = await NetClientPool.CreateClientAsync(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress);
             netclient.ReadTimeout = this.ServiceTransaction.Timeout;
             try
             {
@@ -158,9 +158,9 @@ namespace JMS
 
         public string GetServiceClassCode(string nameSpace, string className)
         {
-            using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress ,ServiceTransaction.ServiceClientCertificate))
+            using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress))
             {
-                netclient.Connect(_serviceLocation.ServiceAddress, _serviceLocation.Port);
+                netclient.Connect(new NetAddress( _serviceLocation.ServiceAddress, _serviceLocation.Port, ServiceTransaction.ServiceClientCertificate));
                 netclient.ReadTimeout = this.ServiceTransaction.Timeout;
                 netclient.WriteServiceData(new InvokeCommand()
                 {
@@ -177,9 +177,9 @@ namespace JMS
 
         public string GetServiceInfo()
         {
-            using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress,  ServiceTransaction.ServiceClientCertificate))
+            using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress))
             {
-                netclient.Connect(_serviceLocation.ServiceAddress, _serviceLocation.Port);
+                netclient.Connect(new NetAddress( _serviceLocation.ServiceAddress, _serviceLocation.Port, ServiceTransaction.ServiceClientCertificate));
                 netclient.ReadTimeout = this.ServiceTransaction.Timeout;
                 netclient.WriteServiceData(new InvokeCommand()
                 {

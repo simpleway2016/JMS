@@ -13,12 +13,9 @@ namespace JMS
     {
         public static RemoteCertificateValidationCallback RemoteCertificateValidationCallback = null;
         internal static RemoteCertificateValidationCallback NOCHECK = new RemoteCertificateValidationCallback(remoteCertificateValidationCallback);
-        X509Certificate2 _cert;
 
-        public CertClient(X509Certificate2 cert)
+        public CertClient()
         {
-            this._cert = cert;
-
         }
 
         static bool remoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
@@ -26,33 +23,48 @@ namespace JMS
             return true;
         }
 
-        public override void Connect(string address, int port)
+        public override void Connect(NetAddress addr)
         {
-            base.Connect(address, port);
+            base.Connect(addr);
             this.AfterConnect();
-            if (_cert != null)
+            if (addr.UseSsl)
             {
-                SslStream sslStream = new SslStream(this.InnerStream, false, CertClient.RemoteCertificateValidationCallback??NOCHECK, null);
-                X509CertificateCollection certs = new X509CertificateCollection();
-                certs.Add(_cert);
-                sslStream.AuthenticateAsClient("SslSocket", certs, NetClient.SSLProtocols, false);
+                SslStream sslStream = new SslStream(this.InnerStream, false, CertClient.RemoteCertificateValidationCallback ?? NOCHECK, null);
+                if (addr.Certificate != null)
+                {
+                    X509CertificateCollection certs = new X509CertificateCollection();
+                    certs.Add(addr.Certificate);
+                    sslStream.AuthenticateAsClient(addr.CertDomain??"", certs, NetClient.SSLProtocols, false);
+                }
+                else
+                {
+                    sslStream.AuthenticateAsClient(addr.CertDomain ?? "");
+                }
                 this.InnerStream = sslStream;
             }
         }
 
-        public override async Task ConnectAsync(string address, int port)
+        public override async Task ConnectAsync(NetAddress addr)
         {
-            await base.ConnectAsync(address, port);
+            await base.ConnectAsync(addr);
             this.AfterConnect();
-            if (_cert != null)
+            if (addr.UseSsl)
             {
                 SslStream sslStream = new SslStream(this.InnerStream, false, CertClient.RemoteCertificateValidationCallback ?? NOCHECK, null);
-                X509CertificateCollection certs = new X509CertificateCollection();
-                certs.Add(_cert);
-                await sslStream.AuthenticateAsClientAsync("SslSocket", certs, NetClient.SSLProtocols, false);
+                if (addr.Certificate != null)
+                {
+                    X509CertificateCollection certs = new X509CertificateCollection();
+                    certs.Add(addr.Certificate);
+                    await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "", certs, NetClient.SSLProtocols, false);
+                }
+                else
+                {
+                    await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "");
+                }
                 this.InnerStream = sslStream;
             }
         }
+
 
         protected virtual void AfterConnect()
         {

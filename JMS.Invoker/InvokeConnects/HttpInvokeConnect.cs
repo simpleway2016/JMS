@@ -69,7 +69,7 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.Parameters = parameters;
 
             var uri = new Uri(InvokingInfo.ServiceLocation.ServiceAddress);
-            _client = NetClientPool.CreateClient(null, uri.Host, uri.Port, null, (client) => {
+            _client = NetClientPool.CreateClient(null, uri.Host, uri.Port, (client) => {
                 if (uri.Scheme == "https")
                 {
                     client.AsSSLClient(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
@@ -141,7 +141,7 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.Parameters = parameters;
 
             var uri = new Uri(InvokingInfo.ServiceLocation.ServiceAddress);
-            _client = await NetClientPool.CreateClientAsync(null, uri.Host, uri.Port, null, (client) => {
+            _client = await NetClientPool.CreateClientAsync(null, uri.Host, uri.Port, (client) => {
                 if (uri.Scheme == "https")
                 {
                     return client.AsSSLClientAsync(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
@@ -350,7 +350,7 @@ Accept-Language: zh-CN,zh;q=0.9
         public void RetryTranaction(NetAddress proxyAddress, ClientServiceDetail serviceLocation, byte[] cert, string tranId,string tranFlag)
         {
             var uri = new Uri(serviceLocation.ServiceAddress);
-            _client = NetClientPool.CreateClient(null, uri.Host, uri.Port, null, (client) => {
+            _client = NetClientPool.CreateClient(null, uri.Host, uri.Port, (client) => {
                 if (uri.Scheme == "https")
                 {
                     client.AsSSLClient(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));

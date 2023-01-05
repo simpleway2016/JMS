@@ -13,16 +13,14 @@ namespace JMS
     {
         int _timeout;
         NetAddress _proxyAddr;
-        X509Certificate2 _gatewayCert;
         NetAddress[] _gatewayAddrs;
         ValueTaskSourceStatus _status = ValueTaskSourceStatus.Pending;
         NetAddress _masterGateway;
         int _done = 0;
-        public FindMasterGatewayTask(NetAddress[] gatewayAddrs, int timeout, NetAddress proxyAddr, X509Certificate2 gatewayCert)
+        public FindMasterGatewayTask(NetAddress[] gatewayAddrs, int timeout, NetAddress proxyAddr)
         {
             this._timeout = timeout;
             this._proxyAddr = proxyAddr;
-            this._gatewayCert = gatewayCert;
             this._gatewayAddrs = gatewayAddrs;
 
         }
@@ -45,7 +43,7 @@ namespace JMS
         {
             try
             {
-                using (var client = new ProxyClient(_proxyAddr, _gatewayCert))
+                using (var client = new ProxyClient(_proxyAddr))
                 {
                     await client.ConnectAsync(addr);
                     client.ReadTimeout = _timeout;

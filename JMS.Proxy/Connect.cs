@@ -139,7 +139,7 @@ namespace JMS.Proxy
             }
 
             _targetClient = new NetClient();
-            await _targetClient.ConnectAsync(_header.Address,_header.Port);
+            await _targetClient.ConnectAsync(new NetAddress(_header.Address, _header.Port));
             _targetClient.ReadTimeout = 0;
             _client.ReadTimeout = 0;
 

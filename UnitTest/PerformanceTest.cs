@@ -51,7 +51,7 @@ namespace UnitTest
                 try
                 {
                     var client = new NetClient();
-                    client.Connect("127.0.0.1", _gateWayPort);
+                    client.Connect(new NetAddress( "127.0.0.1", _gateWayPort));
                     client.Dispose();
 
                     break;

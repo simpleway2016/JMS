@@ -41,7 +41,7 @@ namespace UnitTest
         [TestMethod]
         public void ProxyClientTest()
         {
-            JMS.ProxyClient client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8918), null);
+            JMS.ProxyClient client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8918));
             client.Connect(new JMS.NetAddress("mail.qq.com", 443));
             client.AsSSLClient("mail.qq.com" , RemoteCertificateValidationCallback);
 
@@ -68,7 +68,7 @@ Content-Length: 0
         {
             var ip = Dns.GetHostAddresses("mail.qq.com")[0].ToString();
 
-            JMS.ProxyClient client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8918), null);
+            JMS.ProxyClient client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8918));
             client.Connect(new JMS.NetAddress(ip, 443));
             client.AsSSLClient("mail.qq.com", RemoteCertificateValidationCallback);
             for (int i = 0; i < 2; i++)
@@ -98,7 +98,7 @@ Content-Length: 0
 
             var ip = Dns.GetHostAddresses("localhost").FirstOrDefault(m=>m.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6).ToString();
           
-            JMS.ProxyClient client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8918), null);
+            JMS.ProxyClient client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8918));
             client.Connect(new JMS.NetAddress(ip, 8911));
 
             for (int i = 0; i < 2; i++)
@@ -138,7 +138,7 @@ Content-Length: 0
             JMS.ProxyClient client;
             try
             {
-                client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8920), null);
+                client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8920));
                 client.Connect(new JMS.NetAddress("baidu.com", 443));
                 throw new Exception("竟然可以连接");
             }
@@ -146,7 +146,7 @@ Content-Length: 0
             {
             }
 
-            client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8920), null);
+            client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8920));
             client.Connect(new JMS.NetAddress("mail.qq.com", 443));
             client.AsSSLClient("mail.qq.com", RemoteCertificateValidationCallback);
 

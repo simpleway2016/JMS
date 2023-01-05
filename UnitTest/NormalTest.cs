@@ -131,7 +131,7 @@ namespace UnitTest
                 try
                 {
                     var client = new NetClient();
-                    client.Connect("127.0.0.1", port);
+                    client.Connect(new NetAddress("127.0.0.1", port));
                     client.Dispose();
 
                     break;
@@ -465,7 +465,7 @@ namespace UnitTest
             WaitGatewayReady(_gateWayPortCert);
 
             JMS.NetClient client = new JMS.NetClient();
-            client.Connect("127.0.0.1", _gateWayPortCert);
+            client.Connect(new NetAddress( "127.0.0.1", _gateWayPortCert));
             client.AsSSLClient("127.0.0.1", RemoteCertificateValidationCallback);
             var content = @"GET /?GetAllServiceProviders HTTP/1.1
 Host: 127.0.0.1
@@ -491,8 +491,8 @@ Content-Length: 0
 
             if (true)
             {
-                JMS.CertClient client2 = new JMS.CertClient(new X509Certificate2("../../../../pfx/client.pfx", "123456"));
-                client2.Connect("127.0.0.1", _gateWayPortCert);
+                JMS.CertClient client2 = new JMS.CertClient();
+                client2.Connect(new NetAddress("127.0.0.1", _gateWayPortCert , new X509Certificate2("../../../../pfx/client.pfx", "123456")));
 
                 client2.Write(Encoding.UTF8.GetBytes(content));
 

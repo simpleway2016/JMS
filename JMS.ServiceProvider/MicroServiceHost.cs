@@ -348,9 +348,6 @@ namespace JMS
 
             if (sslConfig != null)
             {
-                if (sslConfig.GatewayClientCertificate != null)
-                    _logger?.LogInformation("Gateway client use ssl,certificate hash:{0}", sslConfig.GatewayClientCertificate.GetCertHashString());
-
                 if (sslConfig.ServerCertificate != null)
                     _logger?.LogInformation("Service host use ssl,certificate hash:{0}", sslConfig.ServerCertificate.GetCertHashString());
             }

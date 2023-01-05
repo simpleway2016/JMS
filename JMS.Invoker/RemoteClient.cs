@@ -60,7 +60,6 @@ namespace JMS
         NetAddress[] _allGateways;
 
         Dictionary<string, string> _Header = new Dictionary<string, string>();
-        public X509Certificate2 GatewayClientCertificate { get;  set; }
         public X509Certificate2 ServiceClientCertificate { get;  set; }
 
         ILogger<RemoteClient> _logger;
@@ -73,11 +72,10 @@ namespace JMS
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public RemoteClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null, X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public RemoteClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null,X509Certificate2 serviceClientCert = null)
         {
             _TransactionId = Guid.NewGuid().ToString("N");
             GatewayAddress = new NetAddress(gatewayAddress, port);
-            GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
             this.ProxyAddress = proxyAddress;
             TransactionReporterRoute.Logger = _logger = logger;
@@ -90,12 +88,11 @@ namespace JMS
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public RemoteClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null,  X509Certificate2 gatewayClientCert = null, X509Certificate2 serviceClientCert = null)
+        public RemoteClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null, X509Certificate2 serviceClientCert = null)
         {
             _TransactionId = Guid.NewGuid().ToString("N");
             TransactionReporterRoute.Logger = _logger = logger;
             this.ProxyAddress = proxyAddress;
-            GatewayClientCertificate = gatewayClientCert;
             ServiceClientCertificate = serviceClientCert;
 
             //先找到master网关
@@ -113,7 +110,7 @@ namespace JMS
             {
                 findMasterGateway();
             }
-            using (var netclient = new ProxyClient( this.ProxyAddress, GatewayClientCertificate))
+            using (var netclient = new ProxyClient( this.ProxyAddress))
             {
                 netclient.Connect(GatewayAddress);
                 netclient.WriteServiceData(new GatewayCommand()
@@ -163,7 +160,8 @@ namespace JMS
         /// <param name="key"></param>
         public void UnLockKeyAnyway(NetAddress serviceAddress,string key)
         {
-            using (var netclient = new ProxyClient(this.ProxyAddress, ServiceClientCertificate))
+            serviceAddress.Certificate = ServiceClientCertificate;
+            using (var netclient = new ProxyClient(this.ProxyAddress))
             {
                 netclient.Connect(serviceAddress);
                 netclient.WriteServiceData(new InvokeCommand()
@@ -182,7 +180,8 @@ namespace JMS
         /// <returns></returns>
         public string[] GetLockedKeys(NetAddress serviceAddress)
         {
-            using (var netclient = new ProxyClient(this.ProxyAddress, ServiceClientCertificate))
+            serviceAddress.Certificate = ServiceClientCertificate;
+            using (var netclient = new ProxyClient(this.ProxyAddress))
             {
                 netclient.Connect(serviceAddress);
                 netclient.WriteServiceData(new InvokeCommand()
@@ -256,7 +255,7 @@ namespace JMS
                     try
                     {
                         var addr = _allGateways[i];
-                        using (var client = new ProxyClient(this.ProxyAddress,GatewayClientCertificate))
+                        using (var client = new ProxyClient(this.ProxyAddress))
                         {
                             client.Connect(addr);
                             client.ReadTimeout = this.Timeout;
@@ -313,7 +312,7 @@ namespace JMS
                 return;
             }
 
-            GatewayAddress = await new ValueTask<NetAddress>(new FindMasterGatewayTask(_allGateways , this.Timeout,this.ProxyAddress , this.GatewayClientCertificate), 0); ;
+            GatewayAddress = await new ValueTask<NetAddress>(new FindMasterGatewayTask(_allGateways , this.Timeout,this.ProxyAddress), 0); ;
 
             if (HistoryMasterAddressList.Any(m => m == GatewayAddress) == false)
                 HistoryMasterAddressList.Add(GatewayAddress);

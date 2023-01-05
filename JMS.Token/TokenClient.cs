@@ -16,24 +16,20 @@ namespace JMS.Token
 {
     public class TokenClient
     {
+        NetAddress _serverAddress;
         internal static ConcurrentDictionary<(string, int), string[]> ServerKeys = new ConcurrentDictionary<(string, int), string[]>();
-        X509Certificate2 _cert;
-        NetAddress _serverAddr;
         DisableTokenListener _DisableTokenListener;
         public static ILogger<TokenClient> Logger;
         /// <summary>
         /// 
         /// </summary>
         /// <param name="serverAddress">Token服务器地址,null表示不需要服务器，本地自行验证</param>
-        /// <param name="serverPort">Token服务器端口</param>
-        /// <param name="cert">与服务器交互的客户端证书</param>
-        public TokenClient(string serverAddress, int serverPort,X509Certificate2 cert = null)
+        public TokenClient(NetAddress serverAddress)
         {
-            _cert = cert;
-           
-            _serverAddr = new NetAddress(serverAddress, serverPort);
-            _DisableTokenListener = DisableTokenListener.Listen(serverAddress, serverPort, cert);
-            var key = (_serverAddr.Address, _serverAddr.Port);
+            this._serverAddress = serverAddress;
+
+            _DisableTokenListener = DisableTokenListener.Listen(_serverAddress);
+            var key = (serverAddress.Address, serverAddress.Port);
             if (ServerKeys.ContainsKey(key) == false)
             {
                 getKeyFromServer(key);
@@ -61,7 +57,7 @@ namespace JMS.Token
         void getKeyFromServer((string addr,int port) key)
         {
             string[] value;
-            if (string.IsNullOrEmpty(_serverAddr.Address))
+            if (string.IsNullOrEmpty(_serverAddress.Address))
             {
                 value = new string[2];
                 value[0] = GetRandomString(32);
@@ -69,8 +65,8 @@ namespace JMS.Token
             }
             else
             {
-                CertClient client = new CertClient( _cert);
-                client.Connect(key.addr, key.port);
+                CertClient client = new CertClient();
+                client.Connect(_serverAddress);
                 client.Write(1);
                 var len = client.ReadInt();
                 var data = new byte[len];
@@ -160,7 +156,7 @@ namespace JMS.Token
         /// <returns></returns>
         string BuildForString(string body)
         {
-            var keys = ServerKeys[(_serverAddr.Address,_serverAddr.Port)];
+            var keys = ServerKeys[(_serverAddress.Address, _serverAddress.Port)];
             var signstr = sign(body , keys);
             var text = new string[] { body, signstr }.ToJsonString(false);
             var bs = Encoding.UTF8.GetBytes(text);
@@ -189,10 +185,10 @@ namespace JMS.Token
 
             expireTime = tokendata.e;
 
-            CertClient client = new CertClient(_cert);
+            CertClient client = new CertClient();
             try
             {
-                client.Connect(_serverAddr);
+                client.Connect(_serverAddress);
                 client.Write(2);
                 client.Write(expireTime);
                 var data = Encoding.UTF8.GetBytes(token);
@@ -291,7 +287,7 @@ namespace JMS.Token
         {
             while (true)
             {
-                var key = (_serverAddr.Address, _serverAddr.Port);
+                var key = (_serverAddress.Address, _serverAddress.Port);
                 if (ServerKeys.TryGetValue(key, out string[] o))
                 {
                     return o;

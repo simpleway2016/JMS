@@ -90,9 +90,9 @@ namespace JMS.Domains
                 {
                     if (_keyChangeQueue.Count > 0)
                     {
-                        using (NetClient client = new CertClient(_gateway.ServerCert))
+                        using (NetClient client = new CertClient())
                         {
-                            client.Connect(_otherGatewayAddress.Address, _otherGatewayAddress.Port);
+                            client.Connect(_otherGatewayAddress);
                             while (_keyChangeQueue.TryDequeue(out (int action, KeyObject keyObject) item))
                             {
                                 _logger.LogDebug($"同步{(item.action == 1 ? "add" : "remove")} {item.keyObject.Key}到其他网关");
@@ -153,9 +153,9 @@ namespace JMS.Domains
                     {
                         try
                         {
-                            using (NetClient client = new CertClient(_gateway.ServerCert))
+                            using (NetClient client = new CertClient())
                             {
-                                client.Connect(_otherGatewayAddress.Address, _otherGatewayAddress.Port);
+                                client.Connect(_otherGatewayAddress);
                                 client.WriteServiceData(new GatewayCommand
                                 {
                                     Type = CommandType.BeGatewayMaster,
@@ -213,7 +213,7 @@ namespace JMS.Domains
 
         NetClient CreateOtherGatewayClient()
         {
-            var client = new CertClient(_gateway.ServerCert);
+            var client = new CertClient();
             client.Connect(_otherGatewayAddress);
             return client;
         }

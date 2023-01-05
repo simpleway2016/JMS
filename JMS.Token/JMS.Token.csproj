@@ -8,7 +8,7 @@
     <Authors>Jack.T</Authors>
     <Company>JMS</Company>
     <Product>JMS</Product>
-    <Version>1.0.0.25</Version>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

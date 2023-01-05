@@ -16,21 +16,18 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="services"></param>
         /// <param name="serverAddress">token服务器地址</param>
-        /// <param name="serverPort">token服务器端口</param>
         /// <param name="headerName">客户端通过哪个头部传递token</param>
         /// <param name="authCallback">验证回调</param>
-        /// <param name="cert">访问token服务器的证书</param>
         /// <returns></returns>
-        public static IServiceCollection UseJmsTokenAuthentication(this IServiceCollection services,  string serverAddress, int serverPort, string headerName = "Authorization", Func<AuthenticationParameter,  bool>  authCallback = null, X509Certificate2 cert = null)
+        public static IServiceCollection UseJmsTokenAuthentication(this IServiceCollection services,  NetAddress serverAddress, string headerName = "Authorization", Func<AuthenticationParameter,  bool>  authCallback = null)
         {
             AuthenticationHandler.HeaderName = headerName;
             AuthenticationHandler.ServerAddress = serverAddress;
-            AuthenticationHandler.ServerPort = serverPort;
-            AuthenticationHandler.Cert = cert;
+          
             AuthenticationHandler.Callback = authCallback;
 
             services.AddSingleton<IAuthenticationHandler, AuthenticationHandler>();
-            services.AddSingleton<TokenClient>(p => new TokenClient(serverAddress, serverPort, cert));
+            services.AddSingleton<TokenClient>(p => new TokenClient(serverAddress));
 
             return services;
         }
