@@ -42,8 +42,9 @@ namespace UnitTest
         public void ProxyClientTest()
         {
             JMS.ProxyClient client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8918));
-            client.Connect(new JMS.NetAddress("mail.qq.com", 443));
-            client.AsSSLClient("mail.qq.com" , RemoteCertificateValidationCallback);
+            client.Connect(new JMS.NetAddress("mail.qq.com", 443, true) {
+                CertDomain = "mail.qq.com"
+            });
 
             var content = @"GET / HTTP/1.1
 Host: mail.qq.com
@@ -60,6 +61,33 @@ Content-Length: 0
             byte[] data = new byte[40960];
             var len = client.InnerStream.Read(data , 0 , data.Length);
             var text = Encoding.UTF8.GetString(data, 0,len);
+            client.Dispose();
+        }
+
+        [TestMethod]
+        public void ProxyClientAsyncTest()
+        {
+            JMS.ProxyClient client = new JMS.ProxyClient(new JMS.NetAddress("127.0.0.1", 8918));
+            client.ConnectAsync(new JMS.NetAddress("mail.qq.com", 443, true)
+            {
+                CertDomain = "mail.qq.com"
+            }).GetAwaiter().GetResult();
+
+            var content = @"GET / HTTP/1.1
+Host: mail.qq.com
+Connection: keep-alive
+User-Agent: JmsInvoker
+Accept: text/html
+Accept-Encoding: deflate, br
+Accept-Language: zh-CN,zh;q=0.9
+Content-Length: 0
+
+";
+            client.Write(Encoding.UTF8.GetBytes(content));
+
+            byte[] data = new byte[40960];
+            var len = client.InnerStream.Read(data, 0, data.Length);
+            var text = Encoding.UTF8.GetString(data, 0, len);
             client.Dispose();
         }
 

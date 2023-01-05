@@ -34,9 +34,11 @@ namespace JMS
             {
                 _addr = addr.Address;
                 _port = addr.Port;
-                this.ProxyAddress.UseSsl = addr.UseSsl;
-                this.ProxyAddress.Certificate = addr.Certificate;
-                base.Connect(this.ProxyAddress);
+                addr.Address = this.ProxyAddress.Address;
+                addr.Port = this.ProxyAddress.Port;
+                base.Connect(addr);
+                addr.Address = _addr;
+                addr.Port = _port;
                 this.NetAddress = addr;
             }
             else
@@ -51,9 +53,11 @@ namespace JMS
             {
                 _addr = addr.Address;
                 _port = addr.Port;
-                this.ProxyAddress.UseSsl = addr.UseSsl;
-                this.ProxyAddress.Certificate = addr.Certificate;
-                await base.ConnectAsync(this.ProxyAddress);
+                addr.Address = this.ProxyAddress.Address;
+                addr.Port = this.ProxyAddress.Port;
+                await base.ConnectAsync(addr);
+                addr.Address = _addr;
+                addr.Port = _port;
                 this.NetAddress = addr;
             }
             else
