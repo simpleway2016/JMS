@@ -10,6 +10,7 @@ namespace JMS.WebApiDocument.Dtos
     {
         public string ServiceName { get; set; }
         public string Description { get; set; }
+        public bool OutputText { get; set; }
         public ServiceRedirectButtonConfig[] Buttons { get; set; }
     }
 

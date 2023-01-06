@@ -105,7 +105,7 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
                 {
-                    context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
+                  
                     try
                     {
                         var m = Regex.Match(context.Request.Path.Value, @"\/JMSRedirect\/(?<s>((?![\/]).)+)/(?<m>\w+)");
@@ -123,11 +123,28 @@ namespace Microsoft.Extensions.DependencyInjection
                         else
                         {
                             var ret = await ServiceRedirects.InvokeServiceMethod(config, context, method,redirectHeaders);
-                            await context.Response.WriteAsync(new
+                            if (config.OutputText)
                             {
-                                code = 200,
-                                data = ret
-                            }.ToJsonString());
+                                if (ret is string)
+                                {
+                                    context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
+                                    await context.Response.WriteAsync((string)ret);
+                                }
+                                else if(ret != null)
+                                {
+                                    context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
+                                    await context.Response.WriteAsync(ret.ToJsonString());
+                                }
+
+                            }
+                            else {
+                                context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
+                                await context.Response.WriteAsync(new
+                                {
+                                    code = 200,
+                                    data = ret
+                                }.ToJsonString());
+                            }
                         }
                     }
                     catch (Exception ex)

@@ -28,7 +28,7 @@ namespace JMS.WebApiDocument
         {
 
             byte[] postContent = null;
-            if (context.Request.ContentLength != null)
+            if (context.Request.ContentLength != null && context.Request.ContentLength > 0)
             {
                 postContent = new byte[(int)context.Request.ContentLength];
                 await context.Request.Body.ReadAsync(postContent, 0, postContent.Length);
@@ -40,6 +40,12 @@ namespace JMS.WebApiDocument
                 var json = Encoding.UTF8.GetString(postContent);
                 _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
             }
+            else if (context.Request.Query.ContainsKey("params"))
+            {
+                var json = context.Request.Query["params"].ToString();
+                _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
+            }
+
             using (var client = ClientProviderFunc())
             {
                 if (redirectHeaders == null)
