@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class Extens
     {
+        static ILogger<JMS.WebApiDocument.WebApiDocAttribute> Logger;
         /// <summary>
         /// 
         /// </summary>
@@ -95,7 +97,7 @@ namespace Microsoft.Extensions.DependencyInjection
             if (clientProviderFunc == null)
                 throw new Exception("clientProviderFunc is null");
 
-
+            Logger = app.ApplicationServices.GetService<ILogger<WebApiDocAttribute>>();
             configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
 
             ServiceRedirects.ClientProviderFunc = clientProviderFunc;
@@ -179,6 +181,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         static void ConfigurationChangeCallback(object p)
         {
+            
             IConfiguration configuration = (IConfiguration)p;
             configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
 
@@ -187,7 +190,10 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 throw new Exception("配置文件中找不到有效的JMS.ServiceRedirects节点");
             }
-            foreach( var config in configs)
+
+            Logger?.LogDebug($"读取配置文件");
+
+            foreach ( var config in configs)
             {
                 if(config.Buttons != null)
                 {
