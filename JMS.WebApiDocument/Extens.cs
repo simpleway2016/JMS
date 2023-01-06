@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
@@ -98,8 +99,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new Exception("clientProviderFunc is null");
 
             Logger = app.ApplicationServices.GetService<ILogger<WebApiDocAttribute>>();
-            configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
-
+            
             ServiceRedirects.ClientProviderFunc = clientProviderFunc;
             ConfigurationChangeCallback(configuration);
 
@@ -183,7 +183,10 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             
             IConfiguration configuration = (IConfiguration)p;
-            configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
+            Task.Run(() => {
+                Thread.Sleep(1000);
+                configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
+            });
 
             var configs = configuration.GetSection("JMS.ServiceRedirects").Get<ServiceRedirectConfig[]>();
             if(configs == null)
