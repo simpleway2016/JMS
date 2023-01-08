@@ -10,7 +10,6 @@ using System.Net.Security;
 using System.Linq;
 using JMS.Common;
 using System.Diagnostics;
-using Natasha.CSharp;
 using JMS.Applications;
 using JMS.Infrastructures;
 using System.Threading;
@@ -89,7 +88,7 @@ namespace JMS
             services.AddTransient<IMicroServiceReception, MicroServiceReception>();
             services.AddSingleton<FileChangeWatcher>();
             services.AddTransient<ListenFileChangeReception>();
-            services.AddSingleton<ClientCheckProxyFactory>();
+            services.AddSingleton<ClientCheckFactory>();
 
             var assembly = Assembly.Load(configuration.GetValue<string>("ServiceProviderAllocator:Assembly"));
             var serviceProviderAllocatorType = assembly.GetType(configuration.GetValue<string>("ServiceProviderAllocator:FullName"));

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Natasha.CSharp;
 using Org.BouncyCastle.Crypto.Engines;
 using System;
 using System.Collections.Generic;

@@ -66,9 +66,6 @@ namespace JMS
 
         public void Run(int port)
         {
-            NatashaInitializer.InitializeAndPreheating();
-            _Logger?.LogInformation("初始化动态代码引擎");
-
             this.Port = port;
             _requestReception = ServiceProvider.GetService<IRequestReception>();
             _tcpServer = new TcpServer(port);

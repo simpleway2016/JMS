@@ -1,7 +1,6 @@
 ﻿using JMS.Dtos;
 using JMS.Domains;
 using Microsoft.Extensions.Logging;
-using Natasha.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,12 +16,12 @@ namespace JMS
     /// </summary>
     class ServiceProviderAllocator : IServiceProviderAllocator
     {
-        ClientCheckProxyFactory _clientCheckProxyFactory;
+        ClientCheckFactory _clientCheckProxyFactory;
         IRegisterServiceManager _registerServiceManager;
         ILogger<ServiceProviderAllocator> _logger;
         ServiceRunningItem[] _serviceRunningItems;
 
-        public ServiceProviderAllocator(ILogger<ServiceProviderAllocator> logger, ClientCheckProxyFactory clientCheckProxyFactory, IRegisterServiceManager registerServiceManager)
+        public ServiceProviderAllocator(ILogger<ServiceProviderAllocator> logger, ClientCheckFactory clientCheckProxyFactory, IRegisterServiceManager registerServiceManager)
         {
             this._clientCheckProxyFactory = clientCheckProxyFactory;
             this._registerServiceManager = registerServiceManager;
