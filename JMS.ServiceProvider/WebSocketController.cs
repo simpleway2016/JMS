@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
@@ -33,18 +34,18 @@ namespace JMS
     {
         public static async Task<string> ReadString(this WebSocket webSocket)
         {
+            byte[] data = ArrayPool<byte>.Shared.Rent(4096);
+            List<byte> list = null;
             try
             {
-                List<byte> list = null;
-                byte[] data = new byte[4096];
                 var buffer = new ArraySegment<byte>(data);
                 int len;
                 while (true)
                 {
                     var ret = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-                    if (webSocket.State != WebSocketState.Open)
+                    if (ret.CloseStatus != null)
                     {
-                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                        await webSocket.CloseAsync(ret.CloseStatus.GetValueOrDefault(), "", CancellationToken.None);
                         return null;
                     }
                     len = ret.Count;
@@ -56,7 +57,7 @@ namespace JMS
                         }
                         break;
                     }
-                    else
+                    else if(len > 0)
                     {
                         if (list == null)
                             list = new List<byte>();
@@ -72,6 +73,11 @@ namespace JMS
             {
                 await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
                 throw;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(data);
+                list?.Clear();
             }
         }
 
