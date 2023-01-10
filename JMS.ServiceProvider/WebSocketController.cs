@@ -45,7 +45,10 @@ namespace JMS
                     var ret = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
                     if (ret.CloseStatus != null)
                     {
-                        await webSocket.CloseAsync(ret.CloseStatus.GetValueOrDefault(), "", CancellationToken.None);
+                        if (webSocket.State == WebSocketState.Open || webSocket.State == WebSocketState.CloseReceived || webSocket.State == WebSocketState.CloseSent)
+                        {
+                            await webSocket.CloseAsync(ret.CloseStatus.GetValueOrDefault(), "", CancellationToken.None);
+                        }
                         return null;
                     }
                     len = ret.Count;
@@ -71,7 +74,10 @@ namespace JMS
             }
             catch (Exception)
             {
-                await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
+                if (webSocket.State == WebSocketState.Open || webSocket.State == WebSocketState.CloseReceived || webSocket.State == WebSocketState.CloseSent)
+                {
+                    await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
+                }
                 throw;
             }
             finally
