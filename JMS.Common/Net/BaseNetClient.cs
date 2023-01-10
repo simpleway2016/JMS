@@ -56,8 +56,6 @@ namespace JMS.Common
         private System.Text.Encoding code = System.Text.Encoding.UTF8;
         bool _closed;
 
-        private const int dataBuffer = 1024;
-
         public System.Text.Encoding Encoding
         {
             get
