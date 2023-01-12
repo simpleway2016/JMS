@@ -107,8 +107,7 @@ namespace JMS.Applications
                             transactionDelegate.RequestCommand = cmd;
                         }
                     }
-
-                    controller.OnBeforeAction(cmd.Method, parameters);
+                    
                     if (parameterInfos.Length > 0)
                     {
                         for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
@@ -121,14 +120,23 @@ namespace JMS.Applications
                             {
                                 parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
-                                _logger?.LogError("转换参数出错，name:{0} cmd:{1}", parameterInfos[i].Name, cmd.ToJsonString());
+                                var msg = $"转换参数出错，name:{parameterInfos[i].Name} value:{pvalue} err:{ex.Message}";
+                                netclient.WriteServiceData(new InvokeResult
+                                {
+                                    Success = false,
+                                    Error = msg
+                                });
+                                return;
                             }
 
                         }
 
                     }
+
+                    controller.OnBeforeAction(cmd.Method, parameters);
+
                     result = methodInfo.Method.Invoke(controller, parameters);
                     if (result is Task || result is ValueTask)
                     {
