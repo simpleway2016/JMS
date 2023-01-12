@@ -66,6 +66,13 @@ namespace JMS.WebApiDocument
                 {
                     foreach (var header in redirectHeaders)
                     {
+                        if (header == "TranId")
+                            continue;
+                        else if (header == "Tran")
+                            continue;
+                        else if (header == "TranFlag")
+                            continue;
+
                         if (context.Request.Headers.TryGetValue(header, out StringValues value))
                         {
                             client.SetHeader(header, value.ToString());
