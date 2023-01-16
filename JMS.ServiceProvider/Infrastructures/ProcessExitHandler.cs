@@ -67,13 +67,17 @@ namespace JMS
             {
                 foreach (var action in _missions)
                 {
-                    try
+                    tasks.Add(Task.Run(() =>
                     {
-                        tasks.Add(Task.Run(action));
-                    }
-                    catch
-                    {
-                    }
+                        try
+                        {
+                            action();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError(ex, "");
+                        }
+                    }));
                 }
                 _missions.Clear();
             }
@@ -131,10 +135,10 @@ namespace JMS
         {
             lock (_missions)
             {
-               for(int i = 0; i < _missions.Count; i ++)
+                for (int i = 0; i < _missions.Count; i++)
                 {
                     var item = _missions[i];
-                    if(item.Target == action.Target && item.Method == action.Method)
+                    if (item.Target == action.Target && item.Method == action.Method)
                     {
                         _missions.RemoveAt(i);
                         i--;
