@@ -48,7 +48,14 @@ namespace JMS
         void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
             AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
-            OnProcessExit();
+            try
+            {
+                OnProcessExit();
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "");
+            }
         }
 
         internal void OnProcessExit()
@@ -70,7 +77,14 @@ namespace JMS
                 }
                 _missions.Clear();
             }
-            Task.WaitAll(tasks.ToArray());
+            try
+            {
+                Task.WaitAll(tasks.ToArray());
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "");
+            }
 
             _logger?.LogInformation("准备断开网关");
             try
