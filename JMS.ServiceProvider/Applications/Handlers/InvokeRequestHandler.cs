@@ -110,6 +110,9 @@ namespace JMS.Applications
                     
                     if (parameterInfos.Length > 0)
                     {
+                        if (cmd.Parameters == null)
+                            throw new Exception("微服务客户端没有正确传递参数");
+
                         for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
                         {
                             string pvalue = cmd.Parameters[index];
