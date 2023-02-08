@@ -7,19 +7,23 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using JMS.Dtos;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace JMS.Applications.CommandHandles
 {
     class GetAllServiceProvidersHandler : ICommandHandler
     {
+        IConfiguration _configuration;
         IServiceProvider _serviceProvider;
         Gateway _Gateway;
         IRegisterServiceManager _RegisterServiceManager;
         public GetAllServiceProvidersHandler(IServiceProvider serviceProvider)
         {
+            
             _serviceProvider = serviceProvider;
             _Gateway = serviceProvider.GetService<Gateway>();
             _RegisterServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
+            this._configuration = serviceProvider.GetService<IConfiguration>();
         }
         public CommandType MatchCommandType => CommandType.GetAllServiceProviders;
 
@@ -28,8 +32,15 @@ namespace JMS.Applications.CommandHandles
             var locations = this.List(cmd.Content);
             if (cmd.IsHttp)
             {
-                var contentBytes = Encoding.UTF8.GetBytes(locations.ToJsonString());               
-                netclient.OutputHttpContent(contentBytes);
+                if (_configuration.GetSection("Http:GetAllServiceProviders").Get<bool>())
+                {
+                    var contentBytes = Encoding.UTF8.GetBytes(locations.ToJsonString());
+                    netclient.OutputHttpContent(contentBytes);
+                }
+                else
+                {
+                    netclient.OutputHttpNotFund();
+                }
             }
             else
             {
