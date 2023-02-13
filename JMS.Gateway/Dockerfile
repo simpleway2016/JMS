@@ -18,4 +18,4 @@ RUN dotnet publish "JMS.Gateway.csproj" -c Release -o /app/publish /p:UseAppHost
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "JMS.Gateway.dll"]
+ENTRYPOINT ["dotnet", "JMS.Gateway.dll","-s:share"]

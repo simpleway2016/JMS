@@ -33,25 +33,34 @@ namespace JMS
             ThreadPool.GetMaxThreads(out int w, out int c);
             ThreadPool.SetMinThreads(w, c);
 
+            CommandArgParser cmdArg = new CommandArgParser(args);
+            AppSettingPath = cmdArg.TryGetValue<string>("-s");
+
+            if (AppSettingPath == null)
+                AppSettingPath = "./appsettings.json";
+
             var builder = new ConfigurationBuilder();
-            AppSettingPath = Environment.GetFolderPath( Environment.SpecialFolder.CommonApplicationData);
-            AppSettingPath = Path.Combine(AppSettingPath, "jms.gateway");
-            if(Directory.Exists(AppSettingPath) == false)
+            if (AppSettingPath == "share")
             {
-                Directory.CreateDirectory(AppSettingPath);
-            }
-            AppSettingPath = Path.Combine(AppSettingPath, "appsettings.json");
-            if (File.Exists(AppSettingPath) == false)
-            {
-                File.Copy("./appsettings.json", AppSettingPath);
+                AppSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                AppSettingPath = Path.Combine(AppSettingPath, "jms.gateway");
+                if (Directory.Exists(AppSettingPath) == false)
+                {
+                    Directory.CreateDirectory(AppSettingPath);
+                }
+                AppSettingPath = Path.Combine(AppSettingPath, "appsettings.json");
+                if (File.Exists(AppSettingPath) == false)
+                {
+                    File.Copy("./appsettings.json", AppSettingPath);
+                }
             }
 
             builder.AddJsonFile(AppSettingPath, optional: true, reloadOnChange: true);
             var configuration = builder.Build();
 
             var port = configuration.GetValue<int>("Port");
-            CommandArgParser cmdArg = new CommandArgParser(args);
-            port = cmdArg.TryGetValue<int>("port", port);
+            
+            port = cmdArg.TryGetValue<int>("-p", port);
 
             Run(configuration,port,out Gateway gatewayInstance);
         }
