@@ -15,7 +15,7 @@ namespace JMS.GenerateCode
     public class TypeInfoBuilder
     {
         public static ControllerInfo Build(ControllerTypeInfo controllerTypeInfo)
-        {           
+        {
             var controllerType = controllerTypeInfo.Type;
             ControllerInfo controllerInfo = new ControllerInfo()
             {
@@ -52,7 +52,7 @@ namespace JMS.GenerateCode
                     }
                 }
 
-                var returnType = GetReturnType( method.ReturnType);
+                var returnType = GetReturnType(method.ReturnType);
                 if (returnType != typeof(void))
                 {
                     minfo.returnData = new DataBodyInfo();
@@ -92,7 +92,12 @@ namespace JMS.GenerateCode
 
         static string getType(List<DataTypeInfo> dataTypeInfos, Type type)
         {
-            
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>))
+            {
+                type = type.GenericTypeArguments[0];
+                return getType(dataTypeInfos, type);
+            }
+
             if (type == typeof(object))
             {
                 return "any";
@@ -142,6 +147,8 @@ namespace JMS.GenerateCode
                 return "number";
             else if (type == typeof(decimal))
                 return "number";
+            else if (type == typeof(bool))
+                return "boolean";
             else if (type == typeof(string))
                 return "string";
             else if (type.IsArray == false && type.IsValueType == false && type != typeof(string))
@@ -197,18 +204,18 @@ namespace JMS.GenerateCode
             return "any";
         }
 
-        static string GetFullName(List<DataTypeInfo> dataTypeInfos,Type type)
+        static string GetFullName(List<DataTypeInfo> dataTypeInfos, Type type)
         {
             var fullname = type.FullName;
             var index = fullname.IndexOf("`");
-            if(index > 0)
+            if (index > 0)
             {
                 fullname = fullname.Substring(0, index);
             }
 
             string ret = fullname;
             index = 1;
-            while( dataTypeInfos.Any(m=>m.typeName == ret && m.type != type))
+            while (dataTypeInfos.Any(m => m.typeName == ret && m.type != type))
             {
                 ret = fullname + index;
                 index++;
