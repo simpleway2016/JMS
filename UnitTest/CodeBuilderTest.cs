@@ -65,6 +65,11 @@ namespace UnitTest
         }
     }
 
+    class DataModel1
+    {
+        public decimal? Amount { get; set; }
+    }
+
     /// <summary>
     /// ≤‚ ‘controller
     /// </summary>
@@ -83,6 +88,11 @@ namespace UnitTest
         /// </summary>
         /// <returns></returns>
         public List<string> Hellow2()
+        {
+            return null;
+        }
+
+        public DataModel1 GetModel()
         {
             return null;
         }
@@ -126,10 +136,6 @@ namespace UnitTest
         [TestMethod]
         public void Test()
         {
-            var client = new RemoteClient("127.0.0.1",8911,new NetAddress("47.241.20.45", 8916));
-            var service = client.GetMicroService("Internal_PushMessageService");
-            var obj = service.GetServiceInfo();
-
             MicroServiceHost host = new MicroServiceHost(new ServiceCollection());
 
             host.Register<TestController>("testService");
