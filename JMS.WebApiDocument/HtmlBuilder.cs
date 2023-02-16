@@ -250,6 +250,12 @@ namespace JMS.WebApiDocument
         }
         static string getType(List<DataTypeInfo> dataTypeInfos, Type type)
         {
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>))
+            {
+                type = type.GenericTypeArguments[0];
+                return getType(dataTypeInfos, type);
+            }
+
             if (type == typeof(object))
             {
                 return "any";
@@ -286,6 +292,8 @@ namespace JMS.WebApiDocument
 
             if (type == typeof(int))
                 return "number";
+            else if (type == typeof(bool))
+                return "boolean";
             else if (type == typeof(long))
                 return "number";
             else if (type == typeof(short))
