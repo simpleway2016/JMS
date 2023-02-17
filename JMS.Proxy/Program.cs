@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace JMS.Proxy
 {
@@ -52,16 +53,21 @@ namespace JMS.Proxy
             var serviceProvider = services.BuildServiceProvider();
 
             _socks5Server = serviceProvider.GetService<Socks5Server>();
-            _socks5Server.WhiteList = configuration.GetSection("WhiteList").Get<NetAddress[]>();
-
-            configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
+            ConfigurationChangeCallback(configuration);
             _socks5Server.Run(port);
         }
 
+        static IDisposable CallbackRegistration;
         static void ConfigurationChangeCallback(object p)
         {
+            CallbackRegistration?.Dispose();
+            CallbackRegistration = null;
+
             IConfiguration configuration = (IConfiguration)p;
-            configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
+            Task.Run(() => {
+                Thread.Sleep(1000);//延迟注册，否则可能每次都回调两次
+                CallbackRegistration = configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
+            });
             _socks5Server.WhiteList = configuration.GetSection("WhiteList").Get<NetAddress[]>();
         }
     }

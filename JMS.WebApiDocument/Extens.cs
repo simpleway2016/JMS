@@ -179,37 +179,50 @@ namespace Microsoft.Extensions.DependencyInjection
             return app;
         }
 
+        static IDisposable CallbackRegistration;
         static void ConfigurationChangeCallback(object p)
         {
-            
+            CallbackRegistration?.Dispose();
+            CallbackRegistration = null;
+
             IConfiguration configuration = (IConfiguration)p;
-            Task.Run(() => {
-                Thread.Sleep(1000);
-                configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
-            });
-
-            var configs = configuration.GetSection("JMS.ServiceRedirects").Get<ServiceRedirectConfig[]>();
-            if(configs == null)
+            try
             {
-                throw new Exception("配置文件中找不到有效的JMS.ServiceRedirects节点");
-            }
-
-            Logger?.LogDebug($"读取配置文件");
-
-            foreach ( var config in configs)
-            {
-                if(config.Buttons != null)
+                var configs = configuration.GetSection("JMS.ServiceRedirects").Get<ServiceRedirectConfig[]>();
+                if (configs == null)
                 {
-                    foreach( var btn in config.Buttons)
+                    throw new Exception("配置文件中找不到有效的JMS.ServiceRedirects节点");
+                }
+
+                Logger?.LogInformation($"读取配置文件JMS.ServiceRedirects 信息");
+
+                foreach (var config in configs)
+                {
+                    if (config.Buttons != null)
                     {
-                        if(btn.Url != null)
+                        foreach (var btn in config.Buttons)
                         {
-                            btn.Url = btn.Url.Replace("$ServiceName$", HttpUtility.UrlEncode(config.ServiceName));
+                            if (btn.Url != null)
+                            {
+                                btn.Url = btn.Url.Replace("$ServiceName$", HttpUtility.UrlEncode(config.ServiceName));
+                            }
                         }
                     }
                 }
+                ServiceRedirects.Configs = configs;
             }
-            ServiceRedirects.Configs = configs;
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                Task.Run(() => {
+                    Thread.Sleep(1000);//延迟注册，否则可能每次都回调两次
+                    CallbackRegistration = configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
+                });
+            }
+           
         }
 
     }
