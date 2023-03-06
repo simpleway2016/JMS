@@ -66,7 +66,7 @@ namespace JMS.Applications
             string subProtocol = null;
             cmd.Header.TryGetValue("Sec-WebSocket-Protocol", out subProtocol);//[Connection, Upgrade] //Upgrade, websocket
 
-            var websocket = WebSocket.CreateFromStream(netclient.InnerStream, true, subProtocol, TimeSpan.FromSeconds(2));
+            var websocket = WebSocket.CreateFromStream(netclient.InnerStream, true, subProtocol, Timeout.InfiniteTimeSpan);
 
             var path = urlLine.Split(' ')[1];
             if (path.StartsWith("/") == false)
