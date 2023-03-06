@@ -53,9 +53,10 @@ namespace JMS.Applications
                 try
                 {
                     var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
+                    var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
 
                     object userContent = null;
-                    if (controllerTypeInfo.NeedAuthorize)
+                    if (controllerTypeInfo.NeedAuthorize && methodInfo.AllowAnonymous == false)
                     {
                         var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
                         if (auth != null)
@@ -80,7 +81,7 @@ namespace JMS.Applications
                         }
                     }
 
-                    var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
+                   
                     if (methodInfo == null)
                         throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
 

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using Way.Lib;
 using System.Net;
+using Microsoft.Extensions.DependencyInjection;
 
 public class MicroServiceControllerBase: BaseJmsController
 {
@@ -81,6 +82,20 @@ public class MicroServiceControllerBase: BaseJmsController
     }
 
     /// <summary>
+    /// 验证当前用户身份，并返回身份信息
+    /// </summary>
+    /// <returns></returns>
+    public virtual object Authenticate()
+    {
+        var auth = ServiceProvider?.GetService<IAuthenticationHandler>();
+        if (auth != null)
+        {
+            return auth.Authenticate(this.Header);
+        }
+        return null;
+    }
+
+    /// <summary>
     /// 申请锁住指定的key，使用完务必保证调用UnLock释放锁定的key
     /// </summary>
     /// <param name="key"></param>
@@ -140,4 +155,5 @@ public class TypeMethodInfo
 {
     public MethodInfo Method;
     public bool NeedAuthorize;
+    public bool AllowAnonymous;
 }

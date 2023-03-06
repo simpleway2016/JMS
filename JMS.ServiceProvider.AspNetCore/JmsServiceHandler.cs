@@ -50,7 +50,7 @@ namespace JMS.ServiceProvider.AspNetCore
                     var controller = controllerFactory.Create(context, context.RequestServices, out ControllerActionDescriptor desc);
 
                     var author = desc.MethodInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
-                    if (author == null)
+                    if (author == null && desc.MethodInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute>() == null)
                         author = desc.ControllerTypeInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
 
                     if (author != null)

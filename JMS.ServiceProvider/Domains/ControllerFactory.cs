@@ -50,7 +50,8 @@ namespace JMS.Domains
                     m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
                     {
                         Method = m,
-                        NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
+                        NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null,
+                        AllowAnonymous = m.GetCustomAttribute<AllowAnonymousAttribute>() != null
                     }).ToArray();
 
             foreach (var method in methods)
