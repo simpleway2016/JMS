@@ -54,16 +54,22 @@ namespace JMS.Applications
                 {
                     var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
                     var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
+                    if (methodInfo == null)
+                        throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
 
                     object userContent = null;
-                    if (controllerTypeInfo.NeedAuthorize && methodInfo.AllowAnonymous == false)
+                    if(methodInfo.AllowAnonymous == false)
                     {
-                        var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
-                        if (auth != null)
+                        if (controllerTypeInfo.NeedAuthorize || methodInfo.NeedAuthorize)
                         {
-                            userContent = auth.Authenticate(cmd.Header);
+                            var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
+                            if (auth != null)
+                            {
+                                userContent = auth.Authenticate(cmd.Header);
+                            }
                         }
                     }
+                   
 
                     MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent);
 
@@ -78,19 +84,6 @@ namespace JMS.Applications
                             LastInvokingMsgStringTime = DateTime.Now;
                             LastInvokingMsgString = str;
                             _logger?.LogTrace(str);
-                        }
-                    }
-
-                   
-                    if (methodInfo == null)
-                        throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
-
-                    if (methodInfo.NeedAuthorize && userContent == null)
-                    {
-                        var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
-                        if (auth != null)
-                        {
-                            userContent = auth.Authenticate(cmd.Header);
                         }
                     }
 
