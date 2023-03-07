@@ -67,78 +67,80 @@ namespace JMS.Applications
             string subProtocol = null;
             cmd.Header.TryGetValue("Sec-WebSocket-Protocol", out subProtocol);//[Connection, Upgrade] //Upgrade, websocket
 
-            var websocket = WebSocket.CreateFromStream(netclient.InnerStream, true, subProtocol, Timeout.InfiniteTimeSpan);
-
-            var path = urlLine.Split(' ')[1];
-            if (path.StartsWith("/") == false)
-                path = "/" + path;
-
-            var route = path.Split('/');
-            cmd.Service = route[1];
-            if (cmd.Service.Contains("?"))
+            using (var websocket = WebSocket.CreateFromStream(netclient.InnerStream, true, subProtocol, Timeout.InfiniteTimeSpan))
             {
-                cmd.Service = cmd.Service.Substring(0, cmd.Service.IndexOf("?"));
-            }
-            var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
-            object userContent = null;
-            if (controllerTypeInfo.NeedAuthorize)
-            {
-                var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
-                if (auth != null)
+                var path = urlLine.Split(' ')[1];
+                if (path.StartsWith("/") == false)
+                    path = "/" + path;
+
+                var route = path.Split('/');
+                cmd.Service = route[1];
+                if (cmd.Service.Contains("?"))
                 {
-                    try
+                    cmd.Service = cmd.Service.Substring(0, cmd.Service.IndexOf("?"));
+                }
+                var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
+
+                object userContent = null;
+                if (controllerTypeInfo.NeedAuthorize)
+                {
+                    var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
+                    if (auth != null)
                     {
-                        userContent = auth.Authenticate(cmd.Header);
+                        try
+                        {
+                            userContent = auth.Authenticate(cmd.Header);
+                        }
+                        catch
+                        {
+                            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 401 NotAllow\r\nAccess-Control-Allow-Origin: *\r\n\r\n");
+                            netclient.Write(data);
+                            Thread.Sleep(2000);
+                            return;
+                        }
                     }
-                    catch
+                }
+
+
+                try
+                {
+                    var responseText = GetResponse(cmd.Header);
+                    netclient.InnerStream.Write(Encoding.UTF8.GetBytes(responseText));
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+
+                try
+                {
+                    netclient.ReadTimeout = 0;
+                    using (IServiceScope serviceScope = _MicroServiceProvider.ServiceProvider.CreateScope())
                     {
-                        var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 401 NotAllow\r\nAccess-Control-Allow-Origin: *\r\n\r\n");
-                        netclient.Write(data);
-                        Thread.Sleep(2000);
-                        return;
+                        MicroServiceControllerBase.RequestingObject.Value =
+                            new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
+
+                        var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
+                        await controller.OnConnected(websocket);
+                    }
+
+                    if (websocket.State == WebSocketState.Open || websocket.State == WebSocketState.CloseReceived)
+                    {
+                        await websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
                     }
                 }
-            }
-
-
-            try
-            {
-                var responseText = GetResponse(cmd.Header);
-                netclient.InnerStream.Write(Encoding.UTF8.GetBytes(responseText));
-            }
-            catch (Exception)
-            {
-                return;
-            }
-
-            try
-            {
-                netclient.ReadTimeout = 0;
-                using (IServiceScope serviceScope = _MicroServiceProvider.ServiceProvider.CreateScope())
+                catch (Exception)
                 {
-                    MicroServiceControllerBase.RequestingObject.Value =
-                        new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
-
-                    var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
-                    await controller.OnConnected(websocket);
+                    if (websocket.State == WebSocketState.Open || websocket.State == WebSocketState.CloseReceived)
+                    {
+                        await websocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
+                    }
                 }
-
-                if (websocket.State == WebSocketState.Open || websocket.State == WebSocketState.CloseReceived)
+                finally
                 {
-                    await websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                    MicroServiceControllerBase.RequestingObject.Value = null;
                 }
-            }
-            catch (Exception)
-            {
-                if (websocket.State == WebSocketState.Open || websocket.State == WebSocketState.CloseReceived)
-                {
-                    await websocket.CloseAsync( WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
-                }
-            }
-            finally
-            {
-                MicroServiceControllerBase.RequestingObject.Value = null;
             }
         }
 

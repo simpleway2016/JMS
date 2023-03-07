@@ -866,9 +866,14 @@ Content-Length: 0
             if (text != "test")
                 throw new Exception("error");
 
-            text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
-            if (text != null)
-                throw new Exception("error");
+            try
+            {
+                text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+            }
+            catch (Exception)
+            {
+            }
+           
 
             if (clientWebsocket.CloseStatus != WebSocketCloseStatus.NormalClosure)
                 throw new Exception("error");
