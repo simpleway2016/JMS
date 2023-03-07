@@ -10,6 +10,7 @@ using System.Threading;
 using System.Security.Cryptography;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Sockets;
+using Org.BouncyCastle.Ocsp;
 
 namespace JMS.Applications
 {
@@ -122,15 +123,18 @@ namespace JMS.Applications
                     var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                     await controller.OnConnected(websocket);
                 }
+
+                if (websocket.State == WebSocketState.Open || websocket.State == WebSocketState.CloseReceived)
+                {
+                    await websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                }
             }
             catch (Exception)
             {
-                if(websocket != null)
+                if (websocket.State == WebSocketState.Open || websocket.State == WebSocketState.CloseReceived)
                 {
-                    await websocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
-                    return;
+                    await websocket.CloseAsync( WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
                 }
-                throw;
             }
             finally
             {
