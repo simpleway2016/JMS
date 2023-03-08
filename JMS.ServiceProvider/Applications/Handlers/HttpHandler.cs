@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Sockets;
 using Org.BouncyCastle.Ocsp;
+using Microsoft.Extensions.Logging;
 
 namespace JMS.Applications
 {
@@ -18,12 +19,13 @@ namespace JMS.Applications
     {
         MicroServiceHost _MicroServiceProvider;
         ControllerFactory _controllerFactory;
+        ILogger<HttpHandler> _logger;
         public InvokeType MatchType => InvokeType.Http;
         public HttpHandler(ControllerFactory controllerFactory, MicroServiceHost microServiceProvider)
         {
             this._MicroServiceProvider = microServiceProvider;
             this._controllerFactory = controllerFactory;
-
+            this._logger = microServiceProvider.ServiceProvider.GetService<ILogger<HttpHandler>>();
         }
 
         /// <summary>
@@ -122,6 +124,9 @@ namespace JMS.Applications
                             new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
 
                         var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
+                        
+                        keepAlive(websocket);
+
                         await controller.OnConnected(websocket);
                     }
 
@@ -144,6 +149,62 @@ namespace JMS.Applications
             }
         }
 
+        async void keepAlive(WebSocket webSocket)
+        {
+            var type = webSocket.GetType();
+
+
+            //ValueTask valueTask = SendFrameAsync(MessageOpcode.Pong, endOfMessage: true, disableCompression: true, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+
+            var method = type.GetMethod("SendFrameAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (method == null)
+            {
+                _logger?.LogError("WebSocket没有SendFrameAsync成员");
+                return;
+            }
+           
+
+            var pObjs = new object[5];
+
+            var parameters = method.GetParameters();
+            if (parameters.Length != pObjs.Length)
+            {
+                _logger?.LogError($"SendFrameAsync参数不是{pObjs.Length}个");
+                return;
+            }
+
+            var opcodes = Enum.GetValues(parameters[0].ParameterType);
+            for (int i = 0; i < opcodes.Length; i++)
+            {
+                if (opcodes.GetValue(i).ToString() == "Ping")
+                {
+                    pObjs[0] = opcodes.GetValue(i);
+                    break;
+                }
+            }
+            pObjs[1] = true;
+            pObjs[2] = true;
+            pObjs[3] = ReadOnlyMemory<byte>.Empty;
+            pObjs[4] = CancellationToken.None;
+
+            try
+            {
+
+                while (webSocket.State == WebSocketState.Open)
+                {
+                    await Task.Delay(5000);
+                    if (webSocket.State == WebSocketState.Open)
+                    {
+                        await (dynamic)method.Invoke(webSocket, pObjs);
+                    }
+
+                }
+            }
+            catch
+            {
+
+            }
+        }
 
         public static async Task<string> ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
         {
