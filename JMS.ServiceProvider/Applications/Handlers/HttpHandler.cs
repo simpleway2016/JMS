@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Net.Sockets;
 using Org.BouncyCastle.Ocsp;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace JMS.Applications
 {
@@ -21,6 +22,9 @@ namespace JMS.Applications
         ControllerFactory _controllerFactory;
         ILogger<HttpHandler> _logger;
         public InvokeType MatchType => InvokeType.Http;
+
+        static MethodInfo PingMethod;
+        static object[] PingMethodParameters;
         public HttpHandler(ControllerFactory controllerFactory, MicroServiceHost microServiceProvider)
         {
             this._MicroServiceProvider = microServiceProvider;
@@ -151,51 +155,54 @@ namespace JMS.Applications
 
         async void keepAlive(WebSocket webSocket)
         {
-            var type = webSocket.GetType();
-
-
-            //ValueTask valueTask = SendFrameAsync(MessageOpcode.Pong, endOfMessage: true, disableCompression: true, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
-
-            var method = type.GetMethod("SendFrameAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (method == null)
+            if (PingMethod == null)
             {
-                _logger?.LogError("WebSocket没有SendFrameAsync成员");
-                return;
-            }
-           
+                var type = webSocket.GetType();
 
-            var pObjs = new object[5];
 
-            var parameters = method.GetParameters();
-            if (parameters.Length != pObjs.Length)
-            {
-                _logger?.LogError($"SendFrameAsync参数不是{pObjs.Length}个");
-                return;
-            }
+                //ValueTask valueTask = SendFrameAsync(MessageOpcode.Pong, endOfMessage: true, disableCompression: true, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
 
-            var opcodes = Enum.GetValues(parameters[0].ParameterType);
-            for (int i = 0; i < opcodes.Length; i++)
-            {
-                if (opcodes.GetValue(i).ToString() == "Ping")
+                PingMethod = type.GetMethod("SendFrameAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (PingMethod == null)
                 {
-                    pObjs[0] = opcodes.GetValue(i);
-                    break;
+                    _logger?.LogError("WebSocket没有SendFrameAsync成员");
+                    return;
                 }
-            }
-            pObjs[1] = true;
-            pObjs[2] = true;
-            pObjs[3] = ReadOnlyMemory<byte>.Empty;
-            pObjs[4] = CancellationToken.None;
 
+
+                var pObjs = new object[5];
+
+                var parameters = PingMethod.GetParameters();
+                if (parameters.Length != pObjs.Length)
+                {
+                    _logger?.LogError($"SendFrameAsync参数不是{pObjs.Length}个");
+                    return;
+                }
+
+                var opcodes = Enum.GetValues(parameters[0].ParameterType);
+                for (int i = 0; i < opcodes.Length; i++)
+                {
+                    if (opcodes.GetValue(i).ToString() == "Ping")
+                    {
+                        pObjs[0] = opcodes.GetValue(i);
+                        break;
+                    }
+                }
+                pObjs[1] = true;
+                pObjs[2] = true;
+                pObjs[3] = ReadOnlyMemory<byte>.Empty;
+                pObjs[4] = CancellationToken.None;
+                PingMethodParameters = pObjs;
+            }
             try
             {
 
-                while (webSocket.State == WebSocketState.Open)
+                while (webSocket.State == WebSocketState.Open && PingMethod != null && PingMethodParameters != null)
                 {
                     await Task.Delay(5000);
                     if (webSocket.State == WebSocketState.Open)
                     {
-                        await (dynamic)method.Invoke(webSocket, pObjs);
+                        await (dynamic)PingMethod.Invoke(webSocket, PingMethodParameters);
                     }
 
                 }
