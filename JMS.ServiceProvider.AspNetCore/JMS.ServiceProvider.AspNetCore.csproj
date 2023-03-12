@@ -16,14 +16,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.2.1" />
   </ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">
-		<PackageReference Include="Microsoft.AspNetCore" Version="2.1.1" />
-		<PackageReference Include="Microsoft.AspNetCore.Connections.Abstractions" Version="2.1.1" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.1.1" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.1.1" />
-		<PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.1.1" />
-	</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\JMS.ServiceProvider\JMS.ServiceProvider.csproj" />
   </ItemGroup>
