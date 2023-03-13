@@ -168,47 +168,6 @@ namespace JMS.Common
             this.InnerStream = stream;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="SocketClient"></param>
-        /// <param name="ssl">ssl证书</param>
-        /// <param name="sslProtocols"></param>
-        [Obsolete("use AsSSLServer")]
-        public BaseNetClient(Socket SocketClient, X509Certificate2 ssl, SslProtocols sslProtocols)
-        {
-            this.Socket = SocketClient;
-            SslStream sslStream = new SslStream(new NetworkStream(this.Socket), false);
-            try
-            {
-               
-                sslStream.AuthenticateAsServer(ssl, false, sslProtocols, true);
-                this._stream = sslStream;
-
-                this.Socket.SendTimeout = 16000;
-                this.Socket.ReceiveTimeout = 16000;
-                this.Socket.ReceiveBufferSize = 1024 * 100;
-            }
-            catch(Exception ex)
-            {
-                sslStream.Close();
-                SocketClient.Close();
-                throw ex;
-            }
-          
-
-            try
-            {
-                this.Socket.IOControl(IOControlCode.KeepAliveValues, GetKeepAliveData(), null);
-            }
-            catch {  }
-        }
-
-        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
-        }
-
 
         /// <summary>
         /// 使用ssl协议作为客户端
