@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1;</TargetFrameworks>
-    <Version>3.0.2.3</Version>
+    <Version>3.0.2.5</Version>
     <Authors>Jack</Authors>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
