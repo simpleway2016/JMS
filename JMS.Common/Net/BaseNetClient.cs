@@ -54,7 +54,7 @@ namespace JMS.Common
         }
         private bool m_Active;
         private System.Text.Encoding code = System.Text.Encoding.UTF8;
-        bool _closed;
+        int _closedFlag = 0;
 
         public System.Text.Encoding Encoding
         {
@@ -107,9 +107,8 @@ namespace JMS.Common
 
         public virtual void Dispose()
         {
-            if (!_closed)
+            if (Interlocked.CompareExchange(ref _closedFlag , 1 , 0) == 0)
             {
-                _closed = true;
                 try
                 {
                     _stream?.Dispose();

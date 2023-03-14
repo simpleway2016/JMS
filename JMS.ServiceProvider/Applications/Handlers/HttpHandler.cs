@@ -129,8 +129,7 @@ namespace JMS.Applications
 
                         var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                         
-                        keepAlive(websocket);
-
+                        
                         await controller.OnConnected(websocket);
                     }
 
@@ -151,66 +150,6 @@ namespace JMS.Applications
                 {
                     MicroServiceControllerBase.RequestingObject.Value = null;
                 }
-            }
-        }
-
-        async void keepAlive(WebSocket webSocket)
-        {
-            if (PingMethod == null)
-            {
-                var type = webSocket.GetType();
-
-
-                //ValueTask valueTask = SendFrameAsync(MessageOpcode.Pong, endOfMessage: true, disableCompression: true, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
-
-                PingMethod = type.GetMethod("SendFrameAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (PingMethod == null)
-                {
-                    _logger?.LogError("WebSocket没有SendFrameAsync成员");
-                    return;
-                }
-
-
-                var pObjs = new object[5];
-
-                var parameters = PingMethod.GetParameters();
-                if (parameters.Length != pObjs.Length)
-                {
-                    _logger?.LogError($"SendFrameAsync参数不是{pObjs.Length}个");
-                    return;
-                }
-
-                var opcodes = Enum.GetValues(parameters[0].ParameterType);
-                for (int i = 0; i < opcodes.Length; i++)
-                {
-                    if (opcodes.GetValue(i).ToString() == "Ping")
-                    {
-                        pObjs[0] = opcodes.GetValue(i);
-                        break;
-                    }
-                }
-                pObjs[1] = true;
-                pObjs[2] = true;
-                pObjs[3] = ReadOnlyMemory<byte>.Empty;
-                pObjs[4] = CancellationToken.None;
-                PingMethodParameters = pObjs;
-            }
-            try
-            {
-
-                while (webSocket.State == WebSocketState.Open && PingMethod != null && PingMethodParameters != null)
-                {
-                    await Task.Delay(5000);
-                    if (webSocket.State == WebSocketState.Open)
-                    {
-                        await (dynamic)PingMethod.Invoke(webSocket, PingMethodParameters);
-                    }
-
-                }
-            }
-            catch
-            {
-
             }
         }
 

@@ -124,23 +124,33 @@ namespace JMS.Infrastructures
             //发送头部到服务器
             proxyClient.Write(data);
 
-            readAndSend(proxyClient.InnerStream, client.InnerStream).ContinueWith((t) => {
-                client.Dispose();
-            });
+            readAndSend(proxyClient, client);
 
-            await readAndSend(client.InnerStream, proxyClient.InnerStream);
+            await readAndSend(client, proxyClient);
         }
 
-        static async Task readAndSend(Stream readStream, Stream writeStream)
+        static async Task readAndSend(NetClient readClient, NetClient writeClient)
         {
-            byte[] recData = new byte[4096];
-            int readed;
-            while (true)
+            try
             {
-                readed = await readStream.ReadAsync(recData, 0, recData.Length);
-                if (readed <= 0)
-                    break;
-                writeStream.Write(recData, 0, readed);
+                byte[] recData = new byte[4096];
+                int readed;
+                while (true)
+                {
+                    readed = await readClient.InnerStream.ReadAsync(recData, 0, recData.Length);
+                    if (readed <= 0)
+                        break;
+                    writeClient.InnerStream.Write(recData, 0, readed);
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                readClient.Dispose();
+                writeClient.Dispose();
             }
         }
 

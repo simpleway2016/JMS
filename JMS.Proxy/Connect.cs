@@ -166,6 +166,11 @@ namespace JMS.Proxy
             catch
             {
             }
+            finally
+            {
+                readClient.Dispose();
+                writeClient.Dispose();
+            }
         }
 
     }
