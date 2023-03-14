@@ -138,14 +138,13 @@ namespace JMS.Applications
                     {
                         await websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
                     }
-                    await Task.Delay(2000);
+                   
                 }
                 catch (Exception)
                 {
                     if (websocket.State == WebSocketState.Open || websocket.State == WebSocketState.CloseReceived)
                     {
                         await websocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "", CancellationToken.None);
-                        await Task.Delay(2000);
                     }
                 }
                 finally

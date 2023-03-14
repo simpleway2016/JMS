@@ -85,6 +85,9 @@ namespace JMS.Applications
                         if (client.HasSocketException || !client.KeepAlive)
                             break;
                     }
+
+                    //对于没有keep alive的连接，等待一会再释放会好一些，防止有些数据发出去对方收不到
+                    await Task.Delay(2000);
                 }
             }
             catch(SocketException)
