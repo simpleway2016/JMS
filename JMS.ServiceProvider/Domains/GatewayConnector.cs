@@ -286,7 +286,7 @@ namespace JMS.Domains
 
 
                 _ready = true;
-                _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1}", _microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port);
+                _logger?.LogInformation("和网关连接成功,网关ip：{0} 网关端口：{1} 网关版本：{2}", _microServiceHost.MasterGatewayAddress.Address, _microServiceHost.MasterGatewayAddress.Port, ret.Data);
 
                
                 //上传已经lock的key
