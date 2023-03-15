@@ -44,7 +44,16 @@ namespace JMS.Applications.CommandHandles
             }
             else
             {
-                netclient.WriteServiceData(locations);
+                if (_configuration.GetSection("Http:GetAllServiceProviders").Get<bool>())
+                {
+                    netclient.WriteServiceData(locations);
+                }
+                else
+                {
+                    netclient.WriteServiceData(new RegisterServiceInfo[] { new RegisterServiceInfo() { 
+                        ServiceList = new ServiceDetail[]{ new ServiceDetail { Name = "Http:GetAllServiceProviders 未开启" } }
+                    } });
+                }
             }
         }
 

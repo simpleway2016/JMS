@@ -37,7 +37,7 @@ namespace JMS
             AppSettingPath = cmdArg.TryGetValue<string>("-s");
 
             if (AppSettingPath == null)
-                AppSettingPath = "./appsettings.json";
+                AppSettingPath = "appsettings.json";
 
             var builder = new ConfigurationBuilder();
             if (AppSettingPath == "share")
