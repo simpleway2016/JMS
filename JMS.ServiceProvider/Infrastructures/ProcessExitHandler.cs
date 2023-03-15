@@ -113,6 +113,11 @@ namespace JMS
             _safeTaskFactory?.WaitAll();
 
             _logger?.LogInformation("等待客户端请求数清零");
+            foreach( var websocket in _connectionCounter.WebSockets)
+            {
+                websocket.Key.Dispose();
+            }
+
             //等待客户连接处理完毕
             while (_connectionCounter.ConnectionCount > 0)
                 Thread.Sleep(1000);
