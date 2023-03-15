@@ -42,7 +42,7 @@ namespace ServiceStatusViewer.ViewModels
         }
 
         public string Text => this.ToString();
-        public string PerformanceInfo => $"当前连接数：{_data.PerformanceInfo.RequestQuantity} CPU利用率:{(int)(_data.PerformanceInfo.CpuUsage.GetValueOrDefault() )}%";
+        public string PerformanceInfo => _data.PerformanceInfo == null ? "" : $"当前连接数：{_data.PerformanceInfo.RequestQuantity} CPU利用率:{(int)(_data.PerformanceInfo.CpuUsage.GetValueOrDefault() )}%";
 
         public IReactiveCommand GetCodeClick => ReactiveCommand.Create(async () => {
             if (_data.ServiceList.Length == 0)
@@ -201,7 +201,10 @@ namespace ServiceStatusViewer.ViewModels
                 if (_isFirstLoad)
                 {
                     _isFirstLoad = false;
-                    _addressProvider.Add(MicroServiceClient.GatewayAddresses, MicroServiceClient.ProxyAddresses);
+                    if (this.ServiceList != null && this.ServiceList.Any(m => m._data.ServiceList.Any(n => n.Name.Contains("password error"))) == false)
+                    {
+                        _addressProvider.Add(MicroServiceClient.GatewayAddresses, MicroServiceClient.ProxyAddresses, MicroServiceClient.UserName, MicroServiceClient.Password);
+                    }
                 }
             }
             catch (Exception ex)
@@ -218,6 +221,8 @@ namespace ServiceStatusViewer.ViewModels
         {
             using (var client = new MicroServiceClient())
             {
+                client.SetHeader("UserName", MicroServiceClient.UserName);
+                client.SetHeader("Password", MicroServiceClient.Password);
                 var list = client.ListMicroService(null);
                 foreach (var item in list)
                 {

@@ -11,6 +11,8 @@ namespace ServiceStatusViewer
     {
         public static NetAddress[] GatewayAddresses;
         public static NetAddress ProxyAddresses;
+        public static string UserName;
+        public static string Password;
       
         public MicroServiceClient():base(GatewayAddresses , ProxyAddresses)
         {

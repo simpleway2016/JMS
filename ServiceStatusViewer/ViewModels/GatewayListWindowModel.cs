@@ -36,6 +36,26 @@ namespace ServiceStatusViewer.ViewModels
             }
         }
 
+        string _UserName;
+        public string UserName
+        {
+            get => _UserName;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _UserName, value);
+            }
+        }
+
+        string _Password;
+        public string Password
+        {
+            get => _Password;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _Password, value);
+            }
+        }
+
         public AddressProvider AddressList => _addressProvider;
 
         AddressProvider _addressProvider;
@@ -73,6 +93,8 @@ namespace ServiceStatusViewer.ViewModels
                     proxy = new NetAddress(arr[0], int.Parse(arr[1]));
                 }
                 MicroServiceClient.ProxyAddresses = proxy;
+                MicroServiceClient.UserName = this.UserName;
+                MicroServiceClient.Password = this.Password;
 
                 var desktop = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
                 desktop.MainWindow = new MainWindow {

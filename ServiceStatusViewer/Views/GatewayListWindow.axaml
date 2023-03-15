@@ -11,6 +11,8 @@
 			<StackPanel Orientation="Horizontal" Margin="10" Spacing="5">
 				<TextBox Watermark="网关ip:端口      双击热备用逗号隔开两个地址" Text="{Binding GatewayAddress}" Width="400"></TextBox>
 				<TextBox Watermark="（可选）代理ip:端口" Text="{Binding ProxyAddress}" Width="200"></TextBox>
+				<TextBox Watermark="用户名" Text="{Binding UserName}" Width="150"></TextBox>
+				<TextBox Watermark="密码" Text="{Binding Password}" Width="150"></TextBox>
 				<Button Width="80" Command="{Binding EnterClick}">  进入  </Button>
 			</StackPanel>
 		</StackPanel>

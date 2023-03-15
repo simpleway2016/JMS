@@ -98,6 +98,7 @@ namespace JMS
             services.AddSingleton<FileChangeWatcher>();
             services.AddTransient<ListenFileChangeReception>();
             services.AddSingleton<ClientCheckFactory>();
+            services.AddSingleton<ErrorUserMarker>();
 
             var assembly = Assembly.Load(configuration.GetValue<string>("ServiceProviderAllocator:Assembly"));
             var serviceProviderAllocatorType = assembly.GetType(configuration.GetValue<string>("ServiceProviderAllocator:FullName"));

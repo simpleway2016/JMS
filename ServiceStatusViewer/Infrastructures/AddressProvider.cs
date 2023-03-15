@@ -23,14 +23,14 @@ namespace ServiceStatusViewer.Infrastructures
             this.Load();
         }
 
-        public void Add(NetAddress[] gateways,NetAddress proxy)
+        public void Add(NetAddress[] gateways,NetAddress proxy,string username,string password)
         {
             var item = _datas.FirstOrDefault(m => m.Proxy == proxy && m.Gateways.ToJsonString() == gateways.ToJsonString());
             if (item != null)
             {
                 _datas.Remove(item);
             }
-            _datas.Insert(0 , new AddressHistory { Gateways = gateways, Proxy = proxy });
+            _datas.Insert(0 , new AddressHistory { Gateways = gateways, Proxy = proxy,UserName = username,Password = password });
             Save();
 
         }
@@ -73,17 +73,19 @@ namespace ServiceStatusViewer.Infrastructures
     {
         public NetAddress[] Gateways { get; set; }
         public NetAddress Proxy { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
 
         public override string ToString()
         {
             var gatewayStr = string.Join(",", Gateways.Select(m => m.ToString()));
             if (Proxy != null)
             {
-                return $"网关：{gatewayStr}  代理：{Proxy}";
+                return $"网关：{gatewayStr}  代理：{Proxy}  {this.UserName}";
             }
             else
             {
-                return $"网关：{gatewayStr}";
+                return $"网关：{gatewayStr}  {this.UserName}";
             }
         }
 
@@ -94,7 +96,8 @@ namespace ServiceStatusViewer.Infrastructures
                 MicroServiceClient.GatewayAddresses = this.Gateways;
 
                 MicroServiceClient.ProxyAddresses = this.Proxy;
-
+                MicroServiceClient.UserName = this.UserName;
+                MicroServiceClient.Password = this.Password;
                 var desktop = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
                 var original = desktop.MainWindow;
                 desktop.MainWindow = new MainWindow
