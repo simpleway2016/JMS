@@ -82,6 +82,7 @@ namespace JMS.Applications.CommandHandles
                     {
                         Type = (CommandType)Enum.Parse(typeof(CommandType), arr[0]),
                         Content = json,
+                        Header = cmd.Header,
                         IsHttp = true
                     };
                     await _manager.AllocHandler(cmd)?.Handle(client, cmd);
@@ -91,6 +92,7 @@ namespace JMS.Applications.CommandHandles
                     cmd = new GatewayCommand
                     {
                         Type = (CommandType)Enum.Parse(typeof(CommandType), requestPath),
+                        Header = cmd.Header,
                         IsHttp = true
                     };
                     await _manager.AllocHandler(cmd)?.Handle(client, cmd);

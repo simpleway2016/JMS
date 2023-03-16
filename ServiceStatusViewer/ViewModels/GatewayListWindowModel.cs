@@ -79,9 +79,17 @@ namespace ServiceStatusViewer.ViewModels
 
                 foreach( var addStr in gatewayAddressItems)
                 {
-                    var arr = addStr.Trim().Split(':');
-                    var gateway = new NetAddress(arr[0], int.Parse(arr[1]));
-                    list.Add(gateway);
+                    if (addStr.StartsWith("http"))
+                    {
+                        var gateway = new NetAddress(addStr, 0);
+                        list.Add(gateway);
+                    }
+                    else
+                    {
+                        var arr = addStr.Trim().Split(':');
+                        var gateway = new NetAddress(arr[0], int.Parse(arr[1]));
+                        list.Add(gateway);
+                    }
                 }
 
                 MicroServiceClient.GatewayAddresses = list.ToArray();

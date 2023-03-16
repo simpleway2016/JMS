@@ -92,6 +92,8 @@ namespace JMS
 
         public override string ToString()
         {
+            if (Port == 0)
+                return Address;
             return $"{Address}:{Port}";
         }
 

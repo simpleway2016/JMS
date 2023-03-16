@@ -4,7 +4,9 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Input.Platform;
 using Avalonia.Native.Interop;
 using Avalonia.Threading;
+using JMS.Dtos;
 using Microsoft.Extensions.DependencyInjection;
+using Pomelo.Data.MySql.Memcached;
 using ReactiveUI;
 using ServiceStatusViewer.Infrastructures;
 using ServiceStatusViewer.Views;
@@ -15,6 +17,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Way.Lib;
 
 namespace ServiceStatusViewer.ViewModels
 {
@@ -217,8 +220,44 @@ namespace ServiceStatusViewer.ViewModels
             }
         }
 
+        void loadServiceDataHttp()
+        {
+            var list = HttpClient.GetContent(MicroServiceClient.GatewayAddresses[0].Address + "/?GetAllServiceProviders", new Dictionary<string, string> {
+                { "UserName" , MicroServiceClient.UserName},
+                 { "Password" , MicroServiceClient.Password}
+            }, 8000).FromJson<RegisterServiceRunningInfo[]>();
+            foreach (var item in list)
+            {
+                if (this.ServiceList.Any(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port) == false)
+                {
+                    Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        this.ServiceList.Add(new ServiceInformation(item, this));
+                    });
+                }
+                else
+                {
+                    var exititem = this.ServiceList.FirstOrDefault(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port);
+                    exititem.IsOnline = true;
+                    exititem._data = item;
+                    exititem.RaisePropertyChanged("PerformanceInfo");
+                }
+            }
+
+            var offlineItems = from m in this.ServiceList
+                               where list.Any(n => n.ServiceAddress == m._data.ServiceAddress && n.Port == m._data.Port) == false
+                               select m;
+            foreach (var item in offlineItems)
+                item.IsOnline = false;
+        }
+
         void loadServiceData()
         {
+            if(MicroServiceClient.GatewayAddresses != null && MicroServiceClient.GatewayAddresses.Length > 0 && MicroServiceClient.GatewayAddresses[0].Address.StartsWith("http"))
+            {
+                loadServiceDataHttp();
+                return;
+            }
             using (var client = new MicroServiceClient())
             {
                 client.SetHeader("UserName", MicroServiceClient.UserName);
