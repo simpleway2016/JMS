@@ -11,6 +11,10 @@ namespace JMS.WebApiDocument.Dtos
         public string ServiceName { get; set; }
         public string Description { get; set; }
         public bool OutputText { get; set; }
+        /// <summary>
+        /// 是否已经被内部程序接管
+        /// </summary>
+        internal bool Handled { get; set; }
         public ServiceRedirectButtonConfig[] Buttons { get; set; }
     }
 

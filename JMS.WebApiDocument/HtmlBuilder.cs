@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Json;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,29 +29,50 @@ namespace JMS.WebApiDocument
                 Build(context, dataTypeInfos, controllerInfos, controllerType);
             }
 
-            if(ServiceRedirects.Configs != null)
+            if (ServiceRedirects.Configs != null)
             {
-                foreach( var config in ServiceRedirects.Configs)
+                foreach (var config in ServiceRedirects.Configs)
                 {
-                    using ( var client = ServiceRedirects.ClientProviderFunc())
+                    using (var client = ServiceRedirects.ClientProviderFunc())
                     {
                         var service = client.TryGetMicroService(config.ServiceName);
                         if (service != null)
                         {
                             try
                             {
-                                var jsonContent = service.GetServiceInfo();
-                                var controllerInfo = jsonContent.FromJson<ControllerInfo>();
-                                controllerInfo.desc = config.Description;
-                                foreach( var method in controllerInfo.items)
-                                {                                   
-                                    method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}/{method.title}";
+                                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
+                                {
+                                    var jsonContent = service.GetServiceInfo();
+                                    var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                                    controllerInfo.desc = config.Description;
+                                    foreach (var method in controllerInfo.items)
+                                    {
+                                        method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}/{method.title}";
+                                    }
+                                    controllerInfo.buttons = config.Buttons?.Select(m => new ButtonInfo
+                                    {
+                                        name = m.Name,
+                                        url = m.Url
+                                    }).ToList();
+                                    controllerInfos.Add(controllerInfo);
                                 }
-                                controllerInfo.buttons = config.Buttons?.Select(m=>new ButtonInfo { 
-                                    name = m.Name,
-                                    url = m.Url
-                                }).ToList();
-                                controllerInfos.Add(controllerInfo);
+                                else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
+                                {
+                                    var controllerInfo = new ControllerInfo()
+                                    {
+                                        name = config.ServiceName,
+                                        desc = config.Description,
+                                    };
+                                    controllerInfo.items = new List<MethodItemInfo>();
+                                    controllerInfo.items.Add(new MethodItemInfo
+                                    {
+                                        title = "WebSocket接口",
+                                        method = "",
+                                        desc = "WebSocket接口",
+                                        url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}"
+                                    });
+                                    controllerInfos.Add(controllerInfo);
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -70,17 +92,17 @@ namespace JMS.WebApiDocument
                 context.Response.ContentType = "text/html; charset=utf-8";
                 var bs = new byte[ms.Length];
                 ms.Read(bs, 0, bs.Length);
-                var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.OrderBy(m=>m.desc).ToJsonString()).Replace("$$Types$$", dataTypeInfos.ToJsonString());
+                var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.OrderBy(m => m.desc).ToJsonString()).Replace("$$Types$$", dataTypeInfos.ToJsonString());
                 return context.Response.WriteAsync(text);
             }
         }
 
-        static void Build(HttpContext context, List<DataTypeInfo> dataTypeInfos , List<ControllerInfo> controllerInfos, Type controllerType)
+        static void Build(HttpContext context, List<DataTypeInfo> dataTypeInfos, List<ControllerInfo> controllerInfos, Type controllerType)
         {
             WebApiDocAttribute attr = controllerType.GetCustomAttribute<WebApiDocAttribute>();
             var btnAttrs = controllerType.GetCustomAttributes<WebApiDocButtonAttribute>();
 
-           
+
 
             var route = controllerType.GetCustomAttribute<RouteAttribute>();
             ControllerInfo controllerInfo = new ControllerInfo();
@@ -89,9 +111,10 @@ namespace JMS.WebApiDocument
             if (btnAttrs.Count() > 0)
             {
                 controllerInfo.buttons = new List<ButtonInfo>();
-                foreach( var btnattr in btnAttrs)
+                foreach (var btnattr in btnAttrs)
                 {
-                    controllerInfo.buttons.Add(new ButtonInfo() { 
+                    controllerInfo.buttons.Add(new ButtonInfo()
+                    {
                         name = btnattr.Name,
                         url = btnattr.Url,
                     });
@@ -103,12 +126,12 @@ namespace JMS.WebApiDocument
             if (controllerInfo.name.EndsWith("Controller"))
                 controllerInfo.name = controllerInfo.name.Substring(0, controllerInfo.name.Length - "Controller".Length);
             controllerInfo.desc = attr.Description;
-            
 
-         
-            if(attr.MicroServiceType != null)
+
+
+            if (attr.MicroServiceType != null)
             {
-           
+
                 var methods = attr.MicroServiceType.GetMethods().Where(m => m.IsSpecialName == false && m.DeclaringType == attr.MicroServiceType).ToArray();
                 foreach (var method in methods)
                 {
@@ -171,7 +194,7 @@ namespace JMS.WebApiDocument
                     minfo.isComment = method.GetCustomAttribute<IsCommentAttribute>() != null;
                     minfo.title = method.Name;
                     minfo.desc = GetMethodComment(controllerType, method);
-                    minfo.method = httpPostAttr != null ? "POST" :"GET";
+                    minfo.method = httpPostAttr != null ? "POST" : "GET";
                     minfo.url = route.Template.Replace("[controller]", controllerInfo.name).Replace("[action]", method.Name);
 
                     minfo.query = new List<ParameterInformation>();
@@ -267,7 +290,7 @@ namespace JMS.WebApiDocument
             else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IList)))
             {
                 type = type.GenericTypeArguments[0];
-                return getType(dataTypeInfos , type) + "[]";
+                return getType(dataTypeInfos, type) + "[]";
             }
             else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IEnumerable)))
             {
@@ -284,7 +307,7 @@ namespace JMS.WebApiDocument
                 return getType(dataTypeInfos, type) + "[]";
             }
 
-            if (dataTypeInfos.Any(m=>m.type == type))
+            if (dataTypeInfos.Any(m => m.type == type))
             {
                 return "#" + dataTypeInfos.FirstOrDefault(m => m.type == type).typeName;
             }
@@ -334,7 +357,7 @@ namespace JMS.WebApiDocument
                 dataTypeInfo.members = new List<ParameterInformation>();
                 dataTypeInfos.Add(dataTypeInfo);
 
-                for(int i = 0; i < names.Length; i ++)
+                for (int i = 0; i < names.Length; i++)
                 {
                     var pinfo = new ParameterInformation();
                     dataTypeInfo.members.Add(pinfo);
@@ -398,7 +421,7 @@ namespace JMS.WebApiDocument
             }
 
         }
-        static string GetPropertyComment(Type type,PropertyInfo pro)
+        static string GetPropertyComment(Type type, PropertyInfo pro)
         {
             try
             {
@@ -411,12 +434,12 @@ namespace JMS.WebApiDocument
             }
         }
 
-        static string GetParameterComment(Type type, MethodInfo method,ParameterInfo parameter)
+        static string GetParameterComment(Type type, MethodInfo method, ParameterInfo parameter)
         {
             try
             {
                 var typeDoc = DocumentReader.GetTypeDocument(type);
-                return typeDoc.Methods.FirstOrDefault(m => m.Name == method.Name).Parameters.FirstOrDefault(m=>m.Name == parameter.Name).Comment;
+                return typeDoc.Methods.FirstOrDefault(m => m.Name == method.Name).Parameters.FirstOrDefault(m => m.Name == parameter.Name).Comment;
             }
             catch (Exception)
             {

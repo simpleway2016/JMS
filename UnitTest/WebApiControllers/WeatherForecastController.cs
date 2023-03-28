@@ -40,6 +40,12 @@ namespace UnitTest.Controllers
             })
             .ToArray();
         }
+
+        [HttpPost]
+        public string Post([FromForm]string name, [FromForm]int age)
+        {
+            return name + age;
+        }
     }
 
     public class WeatherForecast

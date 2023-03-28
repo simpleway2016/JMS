@@ -93,13 +93,13 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="clientProviderFunc">RemoteClient创建函数</param>
         /// <param name="redirectHeaders">需要转发的请求头，默认null，表示转发全部</param>
         /// <returns></returns>
-        public static IApplicationBuilder UseJmsServiceRedirect(this IApplicationBuilder app, IConfiguration configuration, Func<RemoteClient> clientProviderFunc , string[] redirectHeaders = null)
+        public static IApplicationBuilder UseJmsServiceRedirect(this IApplicationBuilder app, IConfiguration configuration, Func<RemoteClient> clientProviderFunc, string[] redirectHeaders = null)
         {
             if (clientProviderFunc == null)
                 throw new Exception("clientProviderFunc is null");
 
             Logger = app.ApplicationServices.GetService<ILogger<WebApiDocAttribute>>();
-            
+
             ServiceRedirects.ClientProviderFunc = clientProviderFunc;
             ConfigurationChangeCallback(configuration);
 
@@ -108,73 +108,93 @@ namespace Microsoft.Extensions.DependencyInjection
                 if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
                 {
                     context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
+                    var m = Regex.Match(context.Request.Path.Value, @"\/JMSRedirect\/(?<s>((?![\/]).)+)/(?<m>\w+)");
+                    var servicename = m.Groups["s"].Value;
+                    var method = m.Groups["m"].Value;
+                    var config = ServiceRedirects.Configs?.FirstOrDefault(m => string.Equals(m.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
+                    if (config == null)
+                    {
+                        await context.Response.WriteAsync(new
+                        {
+                            code = 404,
+                            msg = $"请检查[JMS.ServiceRedirects]节点里是否配置了{servicename}"
+                        }.ToJsonString());
+                        return;
+
+                    }
+
                     try
                     {
-                        var m = Regex.Match(context.Request.Path.Value, @"\/JMSRedirect\/(?<s>((?![\/]).)+)/(?<m>\w+)");
-                        var servicename = m.Groups["s"].Value;
-                        var method = m.Groups["m"].Value;
-                        var config = ServiceRedirects.Configs?.FirstOrDefault(m => string.Equals(m.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
-                        if (config == null)
+                        var ret = await ServiceRedirects.InvokeServiceMethod(config, context, method, redirectHeaders);
+                        if (config.Handled)
+                            return;
+
+                        if (config.OutputText)
                         {
-                            await context.Response.WriteAsync(new
+                            if (ret is string)
                             {
-                                code = 404,
-                                msg = "Service not found"
-                            }.ToJsonString());
+                                context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
+                                await context.Response.WriteAsync((string)ret);
+                            }
+                            else if (ret != null)
+                            {
+                                await context.Response.WriteAsync(ret.ToJsonString());
+                            }
+
                         }
                         else
                         {
-                            var ret = await ServiceRedirects.InvokeServiceMethod(config, context, method,redirectHeaders);
-                            if (config.OutputText)
-                            {
-                                if (ret is string)
-                                {
-                                    context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                                    await context.Response.WriteAsync((string)ret);
-                                }
-                                else if(ret != null)
-                                {
-                                    await context.Response.WriteAsync(ret.ToJsonString());
-                                }
 
-                            }
-                            else {
-                                
-                                await context.Response.WriteAsync(new
-                                {
-                                    code = 200,
-                                    data = ret
-                                }.ToJsonString());
-                            }
+                            await context.Response.WriteAsync(new
+                            {
+                                code = 200,
+                                data = ret
+                            }.ToJsonString());
                         }
+
                     }
                     catch (Exception ex)
                     {
                         while (ex.InnerException != null)
                             ex = ex.InnerException;
-
-                        if (ex.Message == "Authentication failed")
+                        if (config.OutputText)
                         {
-                            await context.Response.WriteAsync(new
+                            if (ex.Message == "Authentication failed")
                             {
-                                code = 401,
-                                msg = ex.Message
-                            }.ToJsonString());
+                                context.Response.StatusCode = 401;
+                                await context.Response.WriteAsync(ex.Message);
+                            }
+                            else
+                            {
+                                context.Response.StatusCode = 500;
+                                await context.Response.WriteAsync(ex.Message);
+                            }
                         }
                         else
                         {
-                            await context.Response.WriteAsync(new
+                            if (ex.Message == "Authentication failed")
                             {
-                                code = 500,
-                                msg = ex.Message
-                            }.ToJsonString());
+                                await context.Response.WriteAsync(new
+                                {
+                                    code = 401,
+                                    msg = ex.Message
+                                }.ToJsonString());
+                            }
+                            else
+                            {
+                                await context.Response.WriteAsync(new
+                                {
+                                    code = 500,
+                                    msg = ex.Message
+                                }.ToJsonString());
+                            }
                         }
                     }
                     return;
                 }
                 await next();
             });
-          
+
 
             return app;
         }
@@ -217,12 +237,13 @@ namespace Microsoft.Extensions.DependencyInjection
             }
             finally
             {
-                Task.Run(() => {
+                Task.Run(() =>
+                {
                     Thread.Sleep(1000);//延迟注册，否则可能每次都回调两次
                     CallbackRegistration = configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
                 });
             }
-           
+
         }
 
     }

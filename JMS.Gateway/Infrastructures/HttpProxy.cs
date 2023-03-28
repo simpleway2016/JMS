@@ -18,6 +18,13 @@ namespace JMS.Infrastructures
 
         public static async Task WebSocketProxy(NetClient client, IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, GatewayCommand cmd)
         {
+            if (requestPath.Contains("../"))
+            {
+                client.KeepAlive = false;
+                client.OutputHttpNotFund();
+                return;
+            }
+
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
             if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
             {
@@ -157,6 +164,13 @@ namespace JMS.Infrastructures
 
         public static async Task Proxy(NetClient client, IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, int inputContentLength, GatewayCommand cmd)
         {
+            if (requestPath.Contains(".."))
+            {
+                client.KeepAlive = false;
+                client.OutputHttpNotFund();
+                return;
+            }
+
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
             if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
             {
@@ -212,116 +226,154 @@ namespace JMS.Infrastructures
                 hostUri = new Uri($"http://{location.ServiceAddress}:{location.Port}");
             }
 
-            using NetClient proxyClient = new NetClient();
-            await proxyClient.ConnectAsync(new NetAddress(hostUri.Host, hostUri.Port));
-            if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
+            NetClient proxyClient = await NetClientPool.CreateClientAsync(null, new NetAddress(hostUri.Host, hostUri.Port, hostUri.Scheme == "https" || hostUri.Scheme == "wss")
             {
-                await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
-            }
-
-            StringBuilder strBuffer = new StringBuilder();
-
-            Uri gatewayUri = new Uri($"http://{cmd.Header["Host"]}");
-
-            var requestLineArgs = requestPathLine.Split(' ').Where(m => string.IsNullOrWhiteSpace(m) == false).ToArray();
-            requestLineArgs[1] = requestPath;
-            requestPathLine = string.Join(' ', requestLineArgs);
-            strBuffer.AppendLine(requestPathLine);
-
-            foreach (var pair in cmd.Header)
+                CertDomain = hostUri.Host
+            });
+            try
             {
-                if (pair.Key == "Host")
+                StringBuilder strBuffer = new StringBuilder();
+
+                Uri gatewayUri = new Uri($"http://{cmd.Header["Host"]}");
+
+                var requestLineArgs = requestPathLine.Split(' ').Where(m => string.IsNullOrWhiteSpace(m) == false).ToArray();
+                requestLineArgs[1] = requestPath;
+                requestPathLine = string.Join(' ', requestLineArgs);
+                strBuffer.AppendLine(requestPathLine);
+
+                foreach (var pair in cmd.Header)
                 {
-                    strBuffer.AppendLine($"Host: {hostUri.Host}");
-                }
-                else if (pair.Key == "Origin")
-                {
-                    try
+                    if (pair.Key == "Host")
                     {
-                        var uri = new Uri(pair.Value);
-                        if (uri.Host == gatewayUri.Host)
+                        strBuffer.AppendLine($"Host: {hostUri.Host}");
+                    }
+                    else if (pair.Key == "Origin")
+                    {
+                        try
                         {
-                            strBuffer.AppendLine($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}");
+                            var uri = new Uri(pair.Value);
+                            if (uri.Host == gatewayUri.Host)
+                            {
+                                strBuffer.AppendLine($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}");
+                            }
+                            else
+                            {
+                                strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
+                            }
                         }
-                        else
+                        catch
                         {
                             strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
                         }
                     }
-                    catch
+                    else
                     {
                         strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
                     }
                 }
-                else
+
+                strBuffer.AppendLine("");
+                var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
+                //发送头部到服务器
+                proxyClient.Write(data);
+                if (inputContentLength > 0)
+                {
+                    //发送upload数据到服务器
+                    data = new byte[inputContentLength];
+                    await client.ReadDataAsync(data, 0, inputContentLength);
+                    proxyClient.Write(data);
+                }
+                else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
+                {
+                    while (true)
+                    {
+                        var line = await client.ReadLineAsync();
+                        proxyClient.WriteLine(line);
+                        inputContentLength = Convert.ToInt32(line, 16);
+                        if (inputContentLength == 0)
+                        {
+                            line = await client.ReadLineAsync();
+                            proxyClient.WriteLine(line);
+                            break;
+                        }
+                        else
+                        {
+                            data = new byte[inputContentLength];
+                            await client.ReadDataAsync(data, 0, inputContentLength);
+                            proxyClient.InnerStream.Write(data, 0, inputContentLength);
+
+                            line = await client.ReadLineAsync();
+                            proxyClient.WriteLine(line);
+                        }
+                    }
+                }
+
+                //读取服务器发回来的头部
+                var headers = new Dictionary<string, string>();
+                requestPathLine = await ReadHeaders(null, proxyClient, headers);
+                inputContentLength = 0;
+                if (headers.ContainsKey("Content-Length"))
+                {
+                    int.TryParse(headers["Content-Length"], out inputContentLength);
+                }
+
+                strBuffer.Clear();
+                strBuffer.AppendLine(requestPathLine);
+
+                foreach (var pair in headers)
                 {
                     strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
                 }
-            }
 
-            strBuffer.AppendLine("");
-            var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
-            //发送头部到服务器
-            proxyClient.Write(data);
-            if (inputContentLength > 0)
-            {
-                //发送upload数据到服务器
-                data = new byte[inputContentLength];
-                await client.ReadDataAsync(data, 0, inputContentLength);
-                proxyClient.Write(data);
-            }
-
-            //读取服务器发回来的头部
-            var headers = new Dictionary<string, string>();
-            requestPathLine = await ReadHeaders(null, proxyClient, headers);
-            inputContentLength = 0;
-            if (headers.ContainsKey("Content-Length"))
-            {
-                int.TryParse(headers["Content-Length"], out inputContentLength);
-            }
-
-            strBuffer.Clear();
-            strBuffer.AppendLine(requestPathLine);
-
-            foreach (var pair in headers)
-            {
-                strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
-            }
-
-            strBuffer.AppendLine("");
-            data = Encoding.UTF8.GetBytes(strBuffer.ToString());
-            //发送头部给浏览器
-            client.Write(data);
-
-            if (inputContentLength > 0)
-            {
-                data = new byte[inputContentLength];
-                await proxyClient.ReadDataAsync(data, 0, inputContentLength);
+                strBuffer.AppendLine("");
+                data = Encoding.UTF8.GetBytes(strBuffer.ToString());
+                //发送头部给浏览器
                 client.Write(data);
-            }
-            else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
-            {
-                while (true)
-                {
-                    var line = await proxyClient.ReadLineAsync();
-                    client.WriteLine(line);
-                    inputContentLength = Convert.ToInt32(line, 16);
-                    if (inputContentLength == 0)
-                    {
-                        line = await proxyClient.ReadLineAsync();
-                        client.WriteLine(line);
-                        break;
-                    }
-                    else
-                    {
-                        data = new byte[inputContentLength];
-                        await proxyClient.ReadDataAsync(data, 0, inputContentLength);
-                        client.InnerStream.Write(data, 0, inputContentLength);
 
-                        line = await proxyClient.ReadLineAsync();
+                if (inputContentLength > 0)
+                {
+                    data = new byte[inputContentLength];
+                    await proxyClient.ReadDataAsync(data, 0, inputContentLength);
+                    client.Write(data);
+                }
+                else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
+                {
+                    while (true)
+                    {
+                        var line = await proxyClient.ReadLineAsync();
                         client.WriteLine(line);
+                        inputContentLength = Convert.ToInt32(line, 16);
+                        if (inputContentLength == 0)
+                        {
+                            line = await proxyClient.ReadLineAsync();
+                            client.WriteLine(line);
+                            break;
+                        }
+                        else
+                        {
+                            data = new byte[inputContentLength];
+                            await proxyClient.ReadDataAsync(data, 0, inputContentLength);
+                            client.InnerStream.Write(data, 0, inputContentLength);
+
+                            line = await proxyClient.ReadLineAsync();
+                            client.WriteLine(line);
+                        }
                     }
                 }
+
+                if (client.KeepAlive)
+                {
+                    NetClientPool.AddClientToPool(proxyClient);
+                }
+                else
+                {
+                    proxyClient.Dispose();
+                }
+            }
+            catch (Exception)
+            {
+                proxyClient.Dispose();
+                throw;
             }
         }
 
@@ -371,7 +423,7 @@ namespace JMS.Infrastructures
             int readed;
             while (true)
             {
-               readed = await client.InnerStream.ReadAsync(bData , 0 , 1);
+                readed = await client.InnerStream.ReadAsync(bData, 0, 1);
                 if (readed <= 0)
                     throw new SocketException();
 
