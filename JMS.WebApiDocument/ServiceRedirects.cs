@@ -53,7 +53,7 @@ namespace JMS.WebApiDocument
 
         static async Task ReadSend(WebSocket reader,WebSocket sender)
         {
-            byte[] data = ArrayPool<byte>.Shared.Rent(40960);
+            byte[] data = ArrayPool<byte>.Shared.Rent(65535);
             try
             {
                 var buffer = new ArraySegment<byte>(data);
