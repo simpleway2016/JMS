@@ -268,7 +268,7 @@
 </head>
 
 <body>
-    <div class="main display-flex flex-direction-row" @click.stop="nothing">
+    <div style="display:none;" class="main display-flex flex-direction-row" @click.stop="nothing">
         <div class="leftmenu">
             <div class="lefttop">接口文档</div>
             <div class="lefttitle display-flex flex-direction-row align-items-center" :class="{actived:index==selectedControllerIndex}" @click="selectedControllerIndex=index" v-for="controller,index in controllers">
@@ -621,6 +621,7 @@
             }
         }
     });
+    vue.$el.style.display = "";
     vue.__childVues = [];
 </script>
 </html>
