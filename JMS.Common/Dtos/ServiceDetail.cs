@@ -15,16 +15,16 @@ namespace JMS.Dtos
         /// <summary>
         /// 服务名称
         /// </summary>
-        public string Name;
+        public string Name { get; set; }
         /// <summary>
         /// 服务描述
         /// </summary>
-        public string Description;
+        public string Description { get; set; }
         /// <summary>
         /// 是否允许通过网关反向代理访问此服务器
         /// 默认可以通过 http://网关域名/服务名称/ 来访问
         /// </summary>
-        public bool AllowGatewayProxy;
-        public ServiceType Type;
+        public bool AllowGatewayProxy { get; set; }
+        public ServiceType Type { get; set; }
     }
 }

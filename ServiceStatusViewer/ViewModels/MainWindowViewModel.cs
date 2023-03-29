@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input.Platform;
+using Avalonia.Media;
 using Avalonia.Native.Interop;
 using Avalonia.Threading;
 using JMS.Dtos;
@@ -44,10 +45,14 @@ namespace ServiceStatusViewer.ViewModels
             }
         }
 
-        public string Text => this.ToString();
-        public string PerformanceInfo => _data.PerformanceInfo == null ? "" : $"当前连接数：{_data.PerformanceInfo.RequestQuantity} CPU利用率:{(int)(_data.PerformanceInfo.CpuUsage.GetValueOrDefault() )}%";
+        public ServiceDetail[] Services => _data.ServiceList;
 
-        public IReactiveCommand GetCodeClick => ReactiveCommand.Create(async () => {
+
+        public string Text => this.ToString();
+        public string PerformanceInfo => _data.PerformanceInfo == null ? "" : $"当前连接数：{_data.PerformanceInfo.RequestQuantity} CPU利用率:{(int)(_data.PerformanceInfo.CpuUsage.GetValueOrDefault())}%";
+
+        public IReactiveCommand GetCodeClick => ReactiveCommand.Create(async () =>
+        {
             if (_data.ServiceList.Length == 0)
                 return;
 
@@ -56,11 +61,11 @@ namespace ServiceStatusViewer.ViewModels
             {
                 var model = new GenerateCodeSettingWindowViewModel(this);
                 var window = new GenerateCodeSettingWindow() { DataContext = model };
-                if ( await window.ShowDialog<bool>(MainWindow.Instance) )
+                if (await window.ShowDialog<bool>(MainWindow.Instance))
                 {
                     using (var client = new MicroServiceClient())
                     {
-                        var service = client.GetMicroService(model.SelectedServiceName ,new JMS.Dtos.ClientServiceDetail(this._data.ServiceAddress, this._data.Port));
+                        var service = client.GetMicroService(model.SelectedServiceName, new JMS.Dtos.ClientServiceDetail(this._data.ServiceAddress, this._data.Port));
                         var code = service.GetServiceClassCode(model.NamespaceName, model.ClassName);
 
                         var dialog = new SaveFileDialog();
@@ -73,7 +78,7 @@ namespace ServiceStatusViewer.ViewModels
                         }
                     }
                 }
-               
+
             }
             catch (Exception ex)
             {
@@ -85,7 +90,8 @@ namespace ServiceStatusViewer.ViewModels
             }
         });
 
-        public IReactiveCommand InvokeMethodClick => ReactiveCommand.Create(async () => {
+        public IReactiveCommand InvokeMethodClick => ReactiveCommand.Create(async () =>
+        {
             if (_data.ServiceList.Length == 0)
                 return;
 
@@ -96,7 +102,7 @@ namespace ServiceStatusViewer.ViewModels
                 var window = new InvokeServiceMethodWindow() { DataContext = model };
                 if (await window.ShowDialog<bool>(MainWindow.Instance))
                 {
-                    
+
                 }
 
             }
@@ -114,7 +120,7 @@ namespace ServiceStatusViewer.ViewModels
         {
             if (_data.ServiceAddress?.StartsWith("http") == true)
             {
-                return $"{_data.ServiceAddress} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceList.Select(m=>m.Name).ToArray())}";
+                return $"{_data.ServiceAddress} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceList.Select(m => m.Name).ToArray())}";
             }
             else
             {
@@ -164,43 +170,49 @@ namespace ServiceStatusViewer.ViewModels
         {
             _addressProvider = Global.ServiceProvider.GetService<AddressProvider>();
 
+            resetTitle();
+            this.ServiceList = new System.Collections.ObjectModel.ObservableCollection<ServiceInformation>();
+            
+            this.checkState();
+        }
+
+        void resetTitle()
+        {
             if (MicroServiceClient.ProxyAddresses == null)
-            { 
+            {
                 this.Title = $"微服务状态浏览器 网关：{string.Join(",", MicroServiceClient.GatewayAddresses.Select(m => m.ToString()).ToArray())}";
             }
             else
             {
                 this.Title = $"微服务状态浏览器 网关：{string.Join(",", MicroServiceClient.GatewayAddresses.Select(m => m.ToString()).ToArray())}  代理：{MicroServiceClient.ProxyAddresses}";
             }
-            this.ServiceList = new System.Collections.ObjectModel.ObservableCollection<ServiceInformation>();
-            this.loadServiceList();
-            this.checkState();
         }
 
-        void checkState()
+        async void checkState()
         {
-            Task.Run(()=> { 
-                while(true)
+            await this.loadServiceList();
+            while (true)
+            {
+                await Task.Delay(2000);
+                try
                 {
-                    Thread.Sleep(2000);
-                    try
-                    {
-                        this.loadServiceData();
-                    }
-                    catch (Exception ex)
-                    {
- 
-                    }
+                    await this.loadServiceData();
                 }
-            });
+                catch (Exception ex)
+                {
+
+                }
+                
+            }
         }
 
-        async void loadServiceList()
+        async Task loadServiceList()
         {
             this.IsBusy = true;
             try
             {
-                loadServiceData();
+                this.Title = "loading...";
+                await loadServiceData();
                 if (_isFirstLoad)
                 {
                     _isFirstLoad = false;
@@ -209,9 +221,11 @@ namespace ServiceStatusViewer.ViewModels
                         _addressProvider.Add(MicroServiceClient.GatewayAddresses, MicroServiceClient.ProxyAddresses, MicroServiceClient.UserName, MicroServiceClient.Password);
                     }
                 }
+                resetTitle();
             }
             catch (Exception ex)
             {
+                this.Title = ex.Message;
                 this.Error = ex.Message;
             }
             finally
@@ -220,20 +234,21 @@ namespace ServiceStatusViewer.ViewModels
             }
         }
 
-        void loadServiceDataHttp()
+        async Task loadServiceDataHttp()
         {
-            var list = HttpClient.GetContent(MicroServiceClient.GatewayAddresses[0].Address + "/?GetAllServiceProviders", new Dictionary<string, string> {
+            RegisterServiceRunningInfo[] list = null;
+            await Task.Run(() =>
+            {
+                list = HttpClient.GetContent(MicroServiceClient.GatewayAddresses[0].Address + "/?GetAllServiceProviders", new Dictionary<string, string> {
                 { "UserName" , MicroServiceClient.UserName},
                  { "Password" , MicroServiceClient.Password}
             }, 8000).FromJson<RegisterServiceRunningInfo[]>();
+            });
             foreach (var item in list)
             {
                 if (this.ServiceList.Any(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port) == false)
                 {
-                    Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        this.ServiceList.Add(new ServiceInformation(item, this));
-                    });
+                    this.ServiceList.Add(new ServiceInformation(item, this));
                 }
                 else
                 {
@@ -251,32 +266,34 @@ namespace ServiceStatusViewer.ViewModels
                 item.IsOnline = false;
         }
 
-        void loadServiceData()
+        async Task loadServiceData()
         {
-            if(MicroServiceClient.GatewayAddresses != null && MicroServiceClient.GatewayAddresses.Length > 0 && MicroServiceClient.GatewayAddresses[0].Address.StartsWith("http"))
+            if (MicroServiceClient.GatewayAddresses != null && MicroServiceClient.GatewayAddresses.Length > 0 && MicroServiceClient.GatewayAddresses[0].Address.StartsWith("http"))
             {
-                loadServiceDataHttp();
+                await loadServiceDataHttp();
                 return;
             }
             using (var client = new MicroServiceClient())
             {
                 client.SetHeader("UserName", MicroServiceClient.UserName);
                 client.SetHeader("Password", MicroServiceClient.Password);
-                var list = client.ListMicroService(null);
+                var list = await client.ListMicroServiceAsync(null);
                 foreach (var item in list)
                 {
                     if (this.ServiceList.Any(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port) == false)
                     {
-                        Dispatcher.UIThread.InvokeAsync(() => {
-                            this.ServiceList.Add(new ServiceInformation(item, this));
-                        });                       
+                        this.ServiceList.Add(new ServiceInformation(item, this));
                     }
                     else
                     {
                         var exititem = this.ServiceList.FirstOrDefault(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port);
-                        exititem.IsOnline = true;
                         exititem._data = item;
                         exititem.RaisePropertyChanged("PerformanceInfo");
+                        if (exititem.IsOnline == false)
+                        {
+                            exititem.IsOnline = true;
+                            exititem.RaisePropertyChanged("Services");
+                        }
                     }
                 }
 

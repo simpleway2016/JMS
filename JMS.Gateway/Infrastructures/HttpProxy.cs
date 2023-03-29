@@ -1,4 +1,7 @@
-﻿using JMS.Dtos;
+﻿using JMS.Domains;
+using JMS.Dtos;
+using JMS.WebApiDocument;
+using JMS.WebApiDocument.Dtos;
 using Org.BouncyCastle.Crypto.Tls;
 using System;
 using System.Collections.Generic;
@@ -10,6 +13,11 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
+using Way.Lib;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
+using static Org.BouncyCastle.Math.EC.ECCurve;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace JMS.Infrastructures
 {
@@ -77,9 +85,9 @@ namespace JMS.Infrastructures
             {
                 hostUri = new Uri($"ws://{location.ServiceAddress}:{location.Port}");
             }
-            NetClient proxyClient;
 
-            proxyClient = new NetClient();
+
+            using NetClient proxyClient = new NetClient();
             await proxyClient.ConnectAsync(new NetAddress(hostUri.Host, hostUri.Port));
             if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
             {
@@ -161,8 +169,169 @@ namespace JMS.Infrastructures
             }
         }
 
+        static async Task ProxyJmsService(ClientServiceDetail location, string serviceName, NetClient client, string requestPath, int inputContentLength, GatewayCommand cmd)
+        {
+            //获取方法名
+            try
+            {
+                var method = requestPath.Substring(serviceName.Length + 2);
+                object[] _parames = null;
+                if (inputContentLength > 0)
+                {
+                    var data = new byte[inputContentLength];
+                    await client.ReadDataAsync(data, 0, inputContentLength);
+                    var json = Encoding.UTF8.GetString(data);
+                    _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
+                }
 
-        public static async Task Proxy(NetClient client, IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, int inputContentLength, GatewayCommand cmd)
+                using (var proxyRemoteClient = new RemoteClient(new[] { new NetAddress("127.0.0.1", ((IPEndPoint)client.Socket.LocalEndPoint).Port) }))
+                {
+                    var service = proxyRemoteClient.GetMicroService(serviceName, location);
+
+                    foreach (var header in cmd.Header)
+                    {
+                        if (header.Key == "TranId")
+                            continue;
+                        else if (header.Key == "Tran")
+                            continue;
+                        else if (header.Key == "TranFlag")
+                            continue;
+
+                        proxyRemoteClient.SetHeader(header.Key, header.Value.ToString());
+                    }
+
+                    object ret = null;
+                    if (_parames == null)
+                    {
+                        ret = await service.InvokeAsync<object>(method);
+                    }
+                    else
+                        ret = await service.InvokeAsync<object>(method, _parames);
+
+                    if (ret == null)
+                    {
+                        client.OutputHttp200(null);
+                    }
+                    else if(ret is string)
+                    {
+                        client.OutputHttp200((string)ret);
+                    }
+                    else
+                    {                     
+                        if (ret.GetType().IsValueType)
+                        {
+                            client.OutputHttp200(ret.ToString());
+                        }
+                        else
+                        {
+                            client.OutputHttp200(ret.ToJsonString());
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message == "Authentication failed")
+                {
+                    client.OutputHttp401();
+                }
+                else
+                {
+                    client.OutputHttp500(ex.Message);
+                }
+            }
+        }
+
+        static async Task ProxyJmsDoc(IRegisterServiceManager registerServiceManager , IServiceProviderAllocator serviceProviderAllocator, NetClient client,string requestPath,GatewayCommand cmd)
+        {
+            if(registerServiceManager.SupportJmsDoc == false)
+            {
+                client.OutputHttpNotFund();
+                return;
+            }
+
+            if(requestPath.StartsWith("/JmsDoc/vue.js" , StringComparison.OrdinalIgnoreCase))
+            {
+                if (cmd.Header.ContainsKey("If-Modified-Since"))
+                {
+                    client.OutputHttpCode(304, "NotModified");
+                    return;
+                }
+
+                using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.js"))
+                {
+                    var bs = new byte[ms.Length];
+                    ms.Read(bs, 0, bs.Length);
+                    var text = Encoding.UTF8.GetString(bs);
+
+                    client.OutputHttp200(text, "text/javascript", "Last-Modified: Fri , 12 May 2006 18:53:33 GMT");
+                }
+                return;
+            }
+
+            List<ControllerInfo> controllerInfos = new List<ControllerInfo>();
+            var serviceInfos = registerServiceManager.GetAllRegisterServices().ToArray();
+            foreach( var serviceInfo in serviceInfos)
+            {
+                foreach( var serviceItem in serviceInfo.ServiceList)
+                {
+                    if (serviceItem.AllowGatewayProxy == false || controllerInfos.Any(m=>m.name == serviceItem.Name))
+                        continue;
+
+                    using (var proxyRemoteClient = new RemoteClient(new[] { new NetAddress("127.0.0.1", ((IPEndPoint)client.Socket.LocalEndPoint).Port) }))
+                    {
+                        var location = new ClientServiceDetail(serviceItem, serviceInfo);
+
+                        var service = proxyRemoteClient.GetMicroService(serviceItem.Name, location);
+                        if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
+                        {
+                            var jsonContent = service.GetServiceInfo();
+                            var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                            controllerInfo.name = serviceItem.Name;
+                            controllerInfo.desc = string.IsNullOrWhiteSpace( serviceItem.Description) ? serviceItem.Name : serviceItem.Description;
+                            foreach (var method in controllerInfo.items)
+                            {
+                                method.url = $"/{HttpUtility.UrlEncode(serviceItem.Name)}/{method.title}";
+                            }
+                            if (controllerInfo.items.Count == 1)
+                                controllerInfo.items[0].opened = true;
+                            controllerInfos.Add(controllerInfo);
+                        }
+                        else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
+                        {
+                            var jsonContent = service.GetServiceInfo();
+                            var serviceinfo = jsonContent.FromJson<ControllerInfo>();
+                            var controllerInfo = new ControllerInfo()
+                            {
+                                name = serviceItem.Name,
+                                desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description,
+                            };
+                            controllerInfo.items = new List<MethodItemInfo>();
+                            controllerInfo.items.Add(new MethodItemInfo
+                            {
+                                title = "WebSocket接口",
+                                method = serviceinfo.desc,
+                                isComment = true,
+                                isWebSocket = true,
+                                opened = true,
+                                url = $"/{HttpUtility.UrlEncode(serviceItem.Name)}"
+                            });
+                            controllerInfos.Add(controllerInfo);
+                        }
+                    }
+                }
+            }
+
+            using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.index.html"))
+            {
+                var bs = new byte[ms.Length];
+                ms.Read(bs, 0, bs.Length);
+                var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.OrderBy(m => m.desc).ToJsonString()).Replace("$$Types$$", "[]");
+                client.OutputHttp200(text);
+            }
+        }
+
+        public static async Task Proxy(IRegisterServiceManager registerServiceManager,NetClient client, IServiceProviderAllocator serviceProviderAllocator, string requestPathLine, string requestPath, int inputContentLength, GatewayCommand cmd)
         {
             if (requestPath.Contains(".."))
             {
@@ -170,6 +339,13 @@ namespace JMS.Infrastructures
                 client.OutputHttpNotFund();
                 return;
             }
+
+            if (requestPath.StartsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
+            {
+                await ProxyJmsDoc(registerServiceManager ,serviceProviderAllocator, client, requestPath,cmd);
+                return;
+            }
+
 
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
             if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
@@ -181,16 +357,16 @@ namespace JMS.Infrastructures
             {
                 cmd.Header["X-Forwarded-For"] = ip;
             }
-            var servieName = requestPath.Substring(1);
-            if (servieName.Contains("/"))
+           
+            var serviceName = requestPath.Substring(1);
+            if (serviceName.Contains("/"))
             {
-                servieName = servieName.Substring(0, servieName.IndexOf("/"));
-            }
-
+                serviceName = serviceName.Substring(0, serviceName.IndexOf("/"));
+            }           
 
             var location = serviceProviderAllocator.Alloc(new GetServiceProviderRequest
             {
-                ServiceName = servieName,
+                ServiceName = serviceName,
                 IsGatewayProxy = true,
                 Header = cmd.Header
             });
@@ -207,9 +383,14 @@ namespace JMS.Infrastructures
             if (location.Type == ServiceType.WebApi)
             {
                 //去除servicename去代理访问
-                requestPath = requestPath.Substring(servieName.Length + 1);
+                requestPath = requestPath.Substring(serviceName.Length + 1);
                 if (requestPath.Length == 0)
                     requestPath = "/";
+            }
+            else if (location.Type == ServiceType.JmsService)
+            {
+                await ProxyJmsService(location, serviceName, client, requestPath, inputContentLength, cmd);
+                return;
             }
 
             Uri hostUri = null;

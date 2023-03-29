@@ -24,11 +24,13 @@ namespace JMS.Applications.CommandHandles
         IServiceProvider _serviceProvider;
         ICommandHandlerRoute _manager;
         IServiceProviderAllocator _serviceProviderAllocator;
+        IRegisterServiceManager _registerServiceManager;
         public HttpRequestHandler(IServiceProvider serviceProvider)
         {
             this._serviceProvider = serviceProvider;
 
             _serviceProviderAllocator = serviceProvider.GetService<IServiceProviderAllocator>();
+            _registerServiceManager = _serviceProvider.GetService<IRegisterServiceManager>();
         }
         public CommandType MatchCommandType => CommandType.HttpRequest;
 
@@ -107,7 +109,7 @@ namespace JMS.Applications.CommandHandles
             else
             {
                 //以代理形式去做中转
-                await HttpProxy.Proxy(client, _serviceProviderAllocator, requestPathLine, requestPath, contentLength, cmd);
+                await HttpProxy.Proxy( _registerServiceManager, client, _serviceProviderAllocator, requestPathLine, requestPath, contentLength, cmd);
                 //HttpProxy.Redirect(client ,_serviceProviderAllocator, requestPath);
             }
         }

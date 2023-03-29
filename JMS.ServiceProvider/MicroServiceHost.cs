@@ -161,9 +161,21 @@ namespace JMS
         /// <typeparam name="T">Controller</typeparam>
         /// <param name="serviceName">服务名称</param>
         /// <param name="allowGatewayProxy">允许通过网关反向代理</param>
-        public void Register<T>(string serviceName,bool? allowGatewayProxy = null) where T : BaseJmsController
+        public void Register<T>(string serviceName,  bool? allowGatewayProxy = null) where T : BaseJmsController
         {
-            this.Register(typeof(T), serviceName,allowGatewayProxy);
+            this.Register(typeof(T), serviceName,null,allowGatewayProxy);
+        }
+
+        /// <summary>
+        /// 向网关注册服务
+        /// </summary>
+        /// <typeparam name="T">Controller</typeparam>
+        /// <param name="serviceName">服务名称</param>
+        /// <param name="description">服务描述</param>
+        /// <param name="allowGatewayProxy">允许通过网关反向代理</param>
+        public void Register<T>(string serviceName,string description, bool? allowGatewayProxy = null) where T : BaseJmsController
+        {
+            this.Register(typeof(T), serviceName, description, allowGatewayProxy);
         }
 
         bool _isWebServer;
@@ -172,14 +184,16 @@ namespace JMS
         /// </summary>
         /// <param name="webServerUrl">web服务器的根访问路径，如 http://192.168.2.128:8080 </param>
         /// <param name="serverName">服务名称，默认为WebServer</param>
+        /// <param name="description">服务描述</param>
         /// <param name="allowGatewayProxy">允许通过网关反向代理</param>
-        public void RegisterWebServer(string webServerUrl, string serverName = "WebServer", bool? allowGatewayProxy = null)
+        public void RegisterWebServer(string webServerUrl, string serverName = "WebServer",string description = null, bool? allowGatewayProxy = null)
         {
             _isWebServer = true;
             this.ServiceAddress = new NetAddress(webServerUrl, 0);
             var serviceDetail = new ServiceDetail()
             {
                 Name = serverName,
+                Description = description,
                 Type = ServiceType.WebApi,
                 AllowGatewayProxy = allowGatewayProxy??true,
             };
@@ -190,8 +204,9 @@ namespace JMS
         /// 向网关注册服务
         /// </summary>
         /// <param name="controllerType">Controller类型</param>
+        /// <param name="description">服务描述</param>
         /// <param name="serviceName">服务名称</param>
-        public void Register(Type controllerType, string serviceName , bool? allowGatewayProxy = null)
+        public void Register(Type controllerType, string serviceName , string description, bool? allowGatewayProxy = null)
         {
             if (_ControllerFactory.GetAllControllers().Any(m => m.Service.Name == serviceName))
             {
@@ -206,6 +221,7 @@ namespace JMS
                 service = new ServiceDetail
                 {
                     Name = serviceName,
+                    Description = description,
                     Type = ServiceType.WebSocket,
                     AllowGatewayProxy = allowGatewayProxy??true,
                 };
@@ -215,6 +231,7 @@ namespace JMS
                 service = new ServiceDetail
                 {
                     Name = serviceName,
+                    Description = description,
                     Type = ServiceType.JmsService,
                     AllowGatewayProxy = allowGatewayProxy??false,
                 };

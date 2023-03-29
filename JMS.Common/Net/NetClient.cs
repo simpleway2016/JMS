@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Text;
@@ -66,6 +67,37 @@ namespace JMS
         {
             var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 401 NotAllow\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nConnection: keep-alive\r\n\r\n");
             this.Write(data);
+        }
+
+        public void OutputHttpCode(int code,string desc)
+        {
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 {code} {desc}\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nConnection: keep-alive\r\n\r\n");
+            this.Write(data);
+        }
+
+        public void OutputHttp500(string message)
+        {
+            var content = Encoding.UTF8.GetBytes(message);
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 500 Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {content.Length}\r\nConnection: keep-alive\r\n\r\n");
+            this.Write(data);
+            this.Write(content);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="contentType"></param>
+        /// <param name="headers">输入更多header,多个header用\r\n隔开，如: Name: Jack\r\nId: 1</param>
+        public void OutputHttp200(string message,string contentType = "text/html",string headers = null)
+        {
+            byte[] content = message == null ? null : Encoding.UTF8.GetBytes(message);
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n{headers}{(headers != null ? "\r\n":"")}Content-Type: {contentType}; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: keep-alive\r\n\r\n");
+            this.Write(data);
+            if (content != null)
+            {
+                this.Write(content);
+            }
         }
 
         /// <summary>

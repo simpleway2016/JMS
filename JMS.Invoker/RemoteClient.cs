@@ -126,6 +126,32 @@ namespace JMS
         }
 
         /// <summary>
+        /// 获取当前微服务列表
+        /// </summary>
+        /// <param name="serviceName">服务名称，空表示所有服务</param>
+        /// <returns></returns>
+        public async Task<RegisterServiceRunningInfo[]> ListMicroServiceAsync(string serviceName)
+        {
+            if (GatewayAddress == null)
+            {
+                await findMasterGatewayAsync();
+            }
+            using (var netclient = new ProxyClient(this.ProxyAddress))
+            {
+                await netclient.ConnectAsync(GatewayAddress);
+                netclient.WriteServiceData(new GatewayCommand()
+                {
+                    Type = CommandType.GetAllServiceProviders,
+                    Content = serviceName,
+                    Header = this.GetCommandHeader(),
+                });
+                var serviceLocations = await netclient.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();
+
+                return serviceLocations;
+            }
+        }
+
+        /// <summary>
         /// 获取指定某个微服务的地址列表
         /// </summary>
         /// <param name="serviceName">服务名称</param>
@@ -153,6 +179,37 @@ namespace JMS
             }
             return ret;
         }
+
+        /// <summary>
+        /// 获取指定某个微服务的地址列表
+        /// </summary>
+        /// <param name="serviceName">服务名称</param>
+        /// <returns></returns>
+        public async Task<RegisterServiceLocation[]> ListMicroServiceLocationsAsync(string serviceName)
+        {
+            if (string.IsNullOrEmpty(serviceName))
+                throw new Exception("serviceName is empty");
+
+            if (GatewayAddress == null)
+            {
+                await findMasterGatewayAsync();
+            }
+
+            var infos = await ListMicroServiceAsync(serviceName);
+            var ret = new RegisterServiceLocation[infos.Length];
+            for (int i = 0; i < infos.Length; i++)
+            {
+                var info = infos[i];
+                ret[i] = new RegisterServiceLocation
+                {
+                    Host = info.Host,
+                    Port = info.Port,
+                    ServiceAddress = info.ServiceAddress
+                };
+            }
+            return ret;
+        }
+
         /// <summary>
         /// 强行要求微服务释放锁定的key（慎用）
         /// </summary>

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Ocsp;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -30,7 +31,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class Extens
     {
-        static MicroServiceHost Host;
+        static ConcurrentDictionary<IServiceCollection, MicroServiceHost> Hosts = new ConcurrentDictionary<IServiceCollection, MicroServiceHost>();
         static NetAddress[] Gateways;
         static IConnectionCounter ConnectionCounter;
         /// <summary>
@@ -45,20 +46,42 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName, NetAddress[] gateways, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
         {
-            services.AddScoped<ApiTransactionDelegate>();
-            services.AddSingleton<ApiRetryCommitMission>();
-            services.AddSingleton<ApiFaildCommitBuilder>();
-            services.AddSingleton<ControllerFactory>();
+           return RegisterJmsService(services,webServerUrl,serviceName,null,gateways , configOption,sslConfig);
+        }
 
-            Gateways = gateways;
-            MicroServiceHost host = new MicroServiceHost(services);
-            host.RegisterWebServer(webServerUrl, serviceName);
-            host.UseSSL(sslConfig);
-            if (configOption != null)
+        /// <summary>
+        /// 把web server注册为JMS微服务
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="webServerUrl">web服务器的根访问路径，如 http://192.168.2.128:8080</param>
+        /// <param name="serviceName">服务名称</param>
+        /// <param name="description">服务描述</param>
+        /// <param name="gateways">网关地址</param>
+        /// <param name="configOption">配置更多可选项</param>
+        /// <param name="sslConfig">配置ssl证书</param>
+        /// <returns></returns>
+        public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName,string description, NetAddress[] gateways, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
+        {
+            if (Hosts.ContainsKey(services) == false)
             {
-                configOption(host);
+                services.AddScoped<ApiTransactionDelegate>();
+                services.AddSingleton<ApiRetryCommitMission>();
+                services.AddSingleton<ApiFaildCommitBuilder>();
+                services.AddSingleton<ControllerFactory>();
+               
+
+                Gateways = gateways;
+                MicroServiceHost host = new MicroServiceHost(services);
+                services.AddSingleton<MicroServiceHost>(host);
+
+                host.UseSSL(sslConfig);
+                if (configOption != null)
+                {
+                    configOption(host);
+                }
+                Hosts[services] = host;
             }
-            Host = host;
+            Hosts[services].RegisterWebServer(webServerUrl, serviceName,description);
             return services;
         }
 
@@ -70,18 +93,21 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IApplicationBuilder UseJmsService(this IApplicationBuilder app,Action onRegister = null)
         {
-            if (Host == null)
+           
+            var host = app.ApplicationServices.GetService<MicroServiceHost>();
+            if (host == null)
             {
                 throw new Exception("请先调用services.RegisterJmsService() 注册服务");
             }
 
-            Host.ServiceProviderBuilded += (s, e) => {
+
+            host.ServiceProviderBuilded += (s, e) => {
                 var retryEngine = app.ApplicationServices.GetService<ApiRetryCommitMission>();
                 retryEngine.OnGatewayReady();
                 onRegister?.Invoke();
             };
 
-            Host.Build(0, Gateways).Run(app.ApplicationServices);
+            host.Build(0, Gateways).Run(app.ApplicationServices);
             app.Use(async (context, next) =>
             {
                 if (ConnectionCounter == null)

@@ -46,6 +46,17 @@ namespace UnitTest.Controllers
         {
             return name + age;
         }
+
+        [HttpPut]
+        public FileContentResult Put()
+        {
+            byte[] bs = new byte[Request.Form.Files[0].Length];
+            using (var ts = Request.Form.Files[0].OpenReadStream())
+            {
+                ts.Read(bs , 0 , bs.Length);
+            }
+            return new FileContentResult(bs, "application/stream");
+        }
     }
 
     public class WeatherForecast

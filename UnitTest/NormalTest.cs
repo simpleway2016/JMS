@@ -1,4 +1,5 @@
-﻿using JMS;
+﻿using Extreme.Net.Core.Proxy;
+using JMS;
 using JMS.Domains;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +14,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -22,6 +25,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnitTest.ServiceHosts;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UnitTest
 {
@@ -37,10 +41,38 @@ namespace UnitTest
         public int _CrashServicePort = 9802;
         public int _UserInfoServicePort_forcluster = 9803;
         public int _webApiPort = 9901;
+        public int _webApiServicePort = 9902;
         public bool _userInfoServiceReady = false;
 
         Gateway _clusterGateway1;
         Gateway _clusterGateway2;
+
+        WebApplication StartWebApiService(int gateWayPort)
+        {
+            var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:"+ _webApiServicePort });
+            builder.Services.AddControllers();
+            var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
+
+
+            builder.Services.AddMvcCore()
+.ConfigureApplicationPartManager(manager =>
+{
+    var featureProvider = new MyFeatureProvider();
+    manager.FeatureProviders.Add(featureProvider);
+});
+            builder.Services.RegisterJmsService("http://127.0.0.1:"+ _webApiServicePort, "TestWebService", gateways, option => {
+                option.RetryCommitPath += "9902";
+            });
+            var app = builder.Build();
+
+            app.UseAuthentication();    //认证
+            app.UseAuthorization();     //授权
+
+            app.UseJmsService();
+
+            app.MapControllers();
+            return app;
+        }
 
         WebApplication StartWebApi(int gateWayPort)
         {
@@ -169,7 +201,7 @@ namespace UnitTest
                 var msp = new MicroServiceHost(services);
                 msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + _UserInfoServicePort;
                 msp.ClientCheckCodeFile = "./code1.txt";
-                msp.Register<TestUserInfoController>("UserInfoService");
+                msp.Register<TestUserInfoController>("UserInfoService" , "用户服务" , true);
                 msp.Register<TestWebSocketController>("TestWebSocketService");
                 msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
                 msp.Build(_UserInfoServicePort, gateways)
@@ -282,6 +314,9 @@ namespace UnitTest
             var app = StartWebApi(_gateWayPort);
             app.RunAsync();
 
+            var app2 = StartWebApiService(_gateWayPort);
+            app2.RunAsync();
+
             var gateways = new NetAddress[] {
                    new NetAddress{
                         Address = "localhost",
@@ -297,14 +332,111 @@ namespace UnitTest
                     Thread.Sleep(10);
                     serviceClient = rc.TryGetMicroService("UserInfoService");
                 }
+
+                serviceClient = rc.TryGetMicroService("TestWebService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = rc.TryGetMicroService("TestWebService");
+                }
             }
 
+            ClientWebSocket clientWebsocket = new ClientWebSocket();
+            clientWebsocket.Options.SetRequestHeader("X-Forwarded-For", "::1");
+            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiPort}/JMSRedirect/TestWebSocketService?q=1") , CancellationToken.None).GetAwaiter().GetResult();
+            var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+            if (text != "hello")
+                throw new Exception("error");
+            clientWebsocket.SendString("test").ConfigureAwait(true).GetAwaiter().GetResult();
+            text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+            if (text != "test")
+                throw new Exception("error");
+
+
             HttpClient client = new HttpClient();
+            HttpResponseMessage? ret = null;
+            for (int i = 0; i < 5; i++)
+            {
+                List<KeyValuePair<string, string>> param = new List<KeyValuePair<string, string>>();
+                param.Add(new KeyValuePair<string, string>("name", "jack"));
+                param.Add(new KeyValuePair<string, string>("age", "1"));
+
+                //通过webapi反向代理访问webapi微服务
+                ret = client.PostAsync($"http://localhost:{_webApiPort}/JMSRedirect/TestWebService/WeatherForecast", new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
+                if (ret.IsSuccessStatusCode == false)
+                    throw new Exception("http访问失败");
+                text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                if (text != "jack1")
+                    throw new Exception("http返回结果错误");
+
+                //测试一下上传文件
+                string Boundary = "EAD567A8E8524B2FAC2E0628ABB6DF6E";
+                var requestContent = new MultipartFormDataContent(Boundary);
+                requestContent.Headers.Remove("Content-Type");
+                requestContent.Headers.TryAddWithoutValidation("Content-Type", $"multipart/form-data; boundary={Boundary}");
+                var fileContent = File.ReadAllBytes("./serviceConfig.json");
+                var byteArrayContent = new ByteArrayContent(fileContent);
+                byteArrayContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/png");
+                requestContent.Add(byteArrayContent, "avatar", "Unbenannt.PNG");
+
+                ret = client.PutAsync($"http://localhost:{_webApiPort}/JMSRedirect/TestWebService/WeatherForecast", requestContent).ConfigureAwait(false).GetAwaiter().GetResult();
+                if (ret.IsSuccessStatusCode == false)
+                    throw new Exception("http访问失败");
+                text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            }
+
+            //用同一个连接，通过webapi反向代理访问webapi微服务
+            JMS.NetClient netclient = new NetClient();
+            netclient.Connect(new NetAddress("localhost", _webApiPort));
+            for(int i = 0; i < 10; i++)
+            {
+                netclient.WriteLine("GET /JMSRedirect/TestWebService/WeatherForecast HTTP/1.1");
+                netclient.WriteLine("Host: localhost");
+                netclient.WriteLine("");
+
+                Dictionary<string, string> headers = new Dictionary<string, string>();
+                var content = ReadHeaders(null, netclient, headers).GetAwaiter().GetResult();
+                if (!content.StartsWith("HTTP/1.1 200 OK"))
+                    throw new Exception("结果不对");
+                if(content.Contains("Transfer-Encoding: chunked") == false)
+                    throw new Exception("结果不对");
+            }
+            netclient.Dispose();
+
             //通过网关反向代理访问webapi
-            var ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyName").ConfigureAwait(false).GetAwaiter().GetResult();
+            netclient = new NetClient();
+            netclient.Connect(new NetAddress("localhost", _gateWayPort));
+            for (int i = 0; i < 3; i++)
+            {
+                netclient.WriteLine("GET /UserInfoService/GetMyName HTTP/1.1");
+                netclient.WriteLine("Host: localhost");
+                netclient.WriteLine("");
+
+                Dictionary<string, string> headers = new Dictionary<string, string>();
+                var content = ReadHeaders(null, netclient, headers).GetAwaiter().GetResult();
+                if (!content.StartsWith("HTTP/1.1 200 OK"))
+                    throw new Exception("结果不对");
+                if (content.Contains("Content-Length: 4") == false)
+                    throw new Exception("结果不对");
+
+                netclient.WriteLine("GET /TestWebService/WeatherForecast HTTP/1.1");
+                netclient.WriteLine("Host: localhost");
+                netclient.WriteLine("");
+
+                headers = new Dictionary<string, string>();
+                content = ReadHeaders(null, netclient, headers).GetAwaiter().GetResult();
+                if (!content.StartsWith("HTTP/1.1 200 OK"))
+                    throw new Exception("结果不对");
+                if (content.Contains("Transfer-Encoding: chunked") == false)
+                    throw new Exception("结果不对");
+
+            }
+            netclient.Dispose();
+
+            ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyName").ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
-            var text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             if (text != "{\"code\":200,\"data\":\"Jack\"}")
                 throw new Exception("http返回结果错误");
 
@@ -882,5 +1014,101 @@ Content-Length: 0
                 throw new Exception("error");
         }
 
+
+        public static async Task<string> ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
+        {
+            List<byte> lineBuffer = new List<byte>(1024);
+            string line = null;
+            string requestPathLine = null;
+            byte[] bData = new byte[1];
+            int readed;
+            while (true)
+            {
+                readed = await client.InnerStream.ReadAsync(bData, 0, 1);
+                if (readed <= 0)
+                    throw new SocketException();
+
+                if (bData[0] == 10)
+                {
+                    line = Encoding.UTF8.GetString(lineBuffer.ToArray());
+                    lineBuffer.Clear();
+                    if (requestPathLine == null)
+                        requestPathLine = preRequestString + line;
+
+                    if (line == "")
+                    {
+                        break;
+                    }
+                    else if (line.Contains(":"))
+                    {
+                        var arr = line.Split(':');
+                        if (arr.Length >= 2)
+                        {
+                            var key = arr[0].Trim();
+                            var value = arr[1].Trim();
+                            if (headers.ContainsKey(key) == false)
+                            {
+                                headers[key] = value;
+                            }
+                        }
+                    }
+                }
+                else if (bData[0] != 13)
+                {
+                    lineBuffer.Add(bData[0]);
+                }
+            }
+
+
+            var inputContentLength = 0;
+            if (headers.ContainsKey("Content-Length"))
+            {
+                int.TryParse(headers["Content-Length"], out inputContentLength);
+            }
+
+            var strBuffer = new StringBuilder();
+            strBuffer.AppendLine(requestPathLine);
+
+            foreach (var pair in headers)
+            {
+                strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
+            }
+
+            strBuffer.AppendLine("");
+
+
+            if (inputContentLength > 0)
+            {
+                var data = new byte[inputContentLength];
+                await client.ReadDataAsync(data, 0, inputContentLength);
+                strBuffer.AppendLine(Encoding.UTF8.GetString(data));
+            }
+            else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
+            {
+                while (true)
+                {
+                    line = await client.ReadLineAsync();
+                    strBuffer.AppendLine(line);
+
+                    inputContentLength = Convert.ToInt32(line, 16);
+                    if (inputContentLength == 0)
+                    {
+                        line = await client.ReadLineAsync();
+                        strBuffer.AppendLine(line);
+                        break;
+                    }
+                    else
+                    {
+                        var data = new byte[inputContentLength];
+                        await client.ReadDataAsync(data, 0, inputContentLength);
+                        strBuffer.AppendLine(Encoding.UTF8.GetString(data));
+
+                        line = await client.ReadLineAsync();
+                        strBuffer.AppendLine(line);
+                    }
+                }
+            }
+            return strBuffer.ToString();
+        }
     }
 }

@@ -15,6 +15,7 @@ namespace JMS.Domains
     {
         public event EventHandler<RegisterServiceInfo> ServiceConnect;
         public event EventHandler<RegisterServiceInfo> ServiceDisconnect;
+        bool SupportJmsDoc { get; }
         public IEnumerable<RegisterServiceInfo> GetAllRegisterServices();
         void AddRegisterService(IMicroServiceReception reception);
         void RemoveRegisterService(RegisterServiceInfo registerServiceInfo);

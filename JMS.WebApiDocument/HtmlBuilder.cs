@@ -49,6 +49,9 @@ namespace JMS.WebApiDocument
                                     {
                                         method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}/{method.title}";
                                     }
+                                    if (controllerInfo.items.Count == 1)
+                                        controllerInfo.items[0].opened = true;
+
                                     controllerInfo.buttons = config.Buttons?.Select(m => new ButtonInfo
                                     {
                                         name = m.Name,
@@ -58,6 +61,9 @@ namespace JMS.WebApiDocument
                                 }
                                 else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
                                 {
+                                    var jsonContent = service.GetServiceInfo();
+                                    var serviceinfo = jsonContent.FromJson<ControllerInfo>();
+
                                     var controllerInfo = new ControllerInfo()
                                     {
                                         name = config.ServiceName,
@@ -67,8 +73,10 @@ namespace JMS.WebApiDocument
                                     controllerInfo.items.Add(new MethodItemInfo
                                     {
                                         title = "WebSocket接口",
-                                        method = "",
-                                        desc = "WebSocket接口",
+                                        method = serviceinfo.desc,
+                                        isComment = true,
+                                        isWebSocket = true,
+                                        opened = true,
                                         url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}"
                                     });
                                     controllerInfos.Add(controllerInfo);

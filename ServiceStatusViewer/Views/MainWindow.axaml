@@ -7,38 +7,57 @@
         x:Class="ServiceStatusViewer.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="{Binding Title}">
-  <Window.Styles>
-    <Style Selector="TextBlock.list[IsEnabled=true]">
-      <Setter Property="Foreground" Value="#000000"/>
-      <Setter Property="FontWeight" Value="Bold"/>
-    </Style>
-    <Style Selector="TextBlock.list[IsEnabled=false]">
-      <Setter Property="Foreground" Value="#cccccc"/>
-    </Style>
-  </Window.Styles>
-    <Design.DataContext>
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
-  <StackPanel Orientation="Vertical">
-    <TextBlock Margin="10">在线的服务：</TextBlock>
-    <ListBox Items="{Binding ServiceList}">
-      <ListBox.ItemTemplate>
-        <DataTemplate>
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="120"/>
-              <ColumnDefinition Width="120"/>
-              <ColumnDefinition/>
-              <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding GetCodeClick}">获取客户端代码</Button>
-            <Button Grid.Column="1" Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding InvokeMethodClick}">调用方法</Button>
-            <TextBlock Grid.Column="2" Classes="list" VerticalAlignment="Center" IsEnabled="{Binding IsOnline}" Text="{Binding Text}"/>
-            <TextBlock Grid.Column="3" Text="{Binding PerformanceInfo}" VerticalAlignment="Center" HorizontalAlignment="Right"></TextBlock>
-          </Grid>
-        </DataTemplate>
-      </ListBox.ItemTemplate>
-    </ListBox>
-  </StackPanel>
-   
+	<Window.Styles>	
+		<Style Selector="TextBlock.list">
+			<Setter Property="Foreground" Value="#42b883"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+		</Style>
+		<Style Selector="TextBlock.list2">
+			<Setter Property="Foreground" Value="#000000"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+		</Style>
+		<Style Selector="ItemsRepeater[IsEnabled=false]">
+			<Setter Property="Opacity" Value="0.3"/>
+		</Style>
+	</Window.Styles>
+	<Design.DataContext>
+		<vm:MainWindowViewModel/>
+	</Design.DataContext>
+	<DockPanel>
+		<TextBlock DockPanel.Dock="Top" Margin="10">在线的服务：</TextBlock>
+		<ListBox DockPanel.Dock="Top" Items="{Binding ServiceList}">
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="120"/>
+							<ColumnDefinition Width="120"/>
+							<ColumnDefinition/>
+							<ColumnDefinition Width="*"/>
+						</Grid.ColumnDefinitions>
+						<Button Grid.Column="0" Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding GetCodeClick}">获取客户端代码</Button>
+						<Button Grid.Column="1" Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding InvokeMethodClick}">调用方法</Button>
+
+						<ItemsRepeater Grid.Column="2" Items="{Binding Services}" IsEnabled="{Binding IsOnline}" >
+							<ItemsRepeater.Layout>
+								<StackLayout Spacing="10" Orientation="Horizontal" />
+							</ItemsRepeater.Layout>
+							<ItemsRepeater.ItemTemplate>
+								<DataTemplate>
+									<TextBlock
+											   Classes.list="{Binding AllowGatewayProxy}"
+											   Classes.list2="{Binding !AllowGatewayProxy}"
+											   VerticalAlignment="Center" Text="{Binding Name}">
+									</TextBlock>
+								</DataTemplate>
+							</ItemsRepeater.ItemTemplate>
+						</ItemsRepeater>
+
+						<TextBlock Grid.Column="3" Text="{Binding PerformanceInfo}" VerticalAlignment="Center" HorizontalAlignment="Right"></TextBlock>
+					</Grid>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+	</DockPanel>
+
 </Window>

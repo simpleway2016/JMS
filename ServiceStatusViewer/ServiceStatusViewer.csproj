@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
 	  <NoWarn>$(NoWarn);NU1605</NoWarn>
-	  <Version>3.0.0.2</Version>
+	  <Version>3.0.0.3</Version>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Models\" />

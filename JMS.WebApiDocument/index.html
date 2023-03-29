@@ -284,6 +284,11 @@
 
                 <div class="title" @click="openClick(item)">{{item.title}} {{item.desc}}</div>
                 <div class="subitem" v-show="item.opened">
+                    <div class="subtitle" v-if="item.isWebSocket">请求路径url</div>
+                    <div class="subcon" v-if="item.isWebSocket" @click="selectDiv" style="cursor:pointer;">{{item.url}}</div>
+                    <div class="subtitle" v-if="item.isWebSocket&&item.method">说明：</div>
+                    <div class="subcon" v-if="item.isWebSocket&&item.method" v-html="item.method.replace(/\r/g,'').replace(/\n/g,'<br>')"></div>
+
                     <div class="subtitle" v-if="!item.isComment">{{item.method}} (请求路径url)</div>
                     <div class="subcon" v-if="!item.isComment" @click="selectDiv" style="cursor:pointer;">{{item.url}}</div>
 
@@ -381,7 +386,7 @@
                                 </tr>
                             </table>
                         </div>
-                        
+
                     </div>
 
                     <div v-if="item.returnData && item.returnData.items && item.returnData.items.length">

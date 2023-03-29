@@ -107,13 +107,18 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
                 {
-                    context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
+                    
                     var m = Regex.Match(context.Request.Path.Value, @"\/JMSRedirect\/(?<s>((?![\/]).)+)/(?<m>\w+)");
+                    if(m.Length == 0)
+                    {
+                        m = Regex.Match(context.Request.Path.Value, @"\/JMSRedirect\/(?<s>((?![\/]).)+)");
+                    }
                     var servicename = m.Groups["s"].Value;
                     var method = m.Groups["m"].Value;
                     var config = ServiceRedirects.Configs?.FirstOrDefault(m => string.Equals(m.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
                     if (config == null)
                     {
+                        context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
                         await context.Response.WriteAsync(new
                         {
                             code = 404,
@@ -137,14 +142,23 @@ namespace Microsoft.Extensions.DependencyInjection
                                 await context.Response.WriteAsync((string)ret);
                             }
                             else if (ret != null)
-                            {
-                                await context.Response.WriteAsync(ret.ToJsonString());
+                            {                              
+                                if (ret.GetType().IsValueType)
+                                {
+                                    context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
+                                    await context.Response.WriteAsync(ret.ToString());
+                                }
+                                else
+                                {
+                                    context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
+                                    await context.Response.WriteAsync(ret.ToJsonString());
+                                }
                             }
 
                         }
                         else
                         {
-
+                            context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
                             await context.Response.WriteAsync(new
                             {
                                 code = 200,
@@ -159,6 +173,7 @@ namespace Microsoft.Extensions.DependencyInjection
                             ex = ex.InnerException;
                         if (config.OutputText)
                         {
+                            context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
                             if (ex.Message == "Authentication failed")
                             {
                                 context.Response.StatusCode = 401;
@@ -172,6 +187,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         }
                         else
                         {
+                            context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
                             if (ex.Message == "Authentication failed")
                             {
                                 await context.Response.WriteAsync(new

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace JMS.WebApiDocument.Dtos
 {
-    class ControllerInfo
+    public class ControllerInfo
     {
         public string name { get; set; }
         public string desc { get; set; }
@@ -16,13 +16,13 @@ namespace JMS.WebApiDocument.Dtos
         public List<DataTypeInfo> dataTypeInfos { get; set; }
     }
 
-    class ButtonInfo
+    public class ButtonInfo
     {
         public string name { get; set; }
         public string url { get; set; }
     }
 
-    class DataTypeInfo
+    public class DataTypeInfo
     {
         [Newtonsoft.Json.JsonIgnore]
         public Type type { get; set; }
@@ -36,7 +36,7 @@ namespace JMS.WebApiDocument.Dtos
         }
     }
 
-    class MethodItemInfo
+    public class MethodItemInfo
     {
         public bool isComment { get; set; }
         public string title { get; set; }
@@ -44,6 +44,7 @@ namespace JMS.WebApiDocument.Dtos
         public string desc { get; set; }
         public string url { get; set; }
         public bool opened { get; set; }
+        public bool isWebSocket { get; set; }
 
         public List<ParameterInformation> query { get; set; }
         public List<ParameterInformation> form { get; set; }
@@ -51,14 +52,14 @@ namespace JMS.WebApiDocument.Dtos
         public DataBodyInfo returnData { get; set; }
 
     }
-    class ParameterInformation
+    public class ParameterInformation
     {
         public string name { get; set; }
         public string desc { get; set; }
         public string type { get; set; }
         public bool isNullable { get; set; }
     }
-    class DataBodyInfo
+    public class DataBodyInfo
     {
         public string type { get; set; }
         public string desc { get; set; }

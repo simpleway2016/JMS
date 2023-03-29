@@ -1,5 +1,6 @@
 ﻿using JMS.Domains;
 using JMS.Dtos;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
@@ -12,12 +13,19 @@ namespace JMS.Domains
 {
     internal class RegisterServiceManager : IRegisterServiceManager
     {
+        IConfiguration _configuration;
         public event EventHandler<RegisterServiceInfo> ServiceConnect;
         public event EventHandler<RegisterServiceInfo> ServiceDisconnect;
 
         ConcurrentDictionary<string, IMicroServiceReception> _allServiceReceptions = new ConcurrentDictionary<string, IMicroServiceReception>();
 
+        public bool SupportJmsDoc => _configuration.GetSection("Http:SupportJmsDoc").Get<bool>();
 
+        public RegisterServiceManager(IConfiguration configuration)
+        {
+            this._configuration = configuration;
+
+        }
 
         public void AddRegisterService(IMicroServiceReception reception)
         {
