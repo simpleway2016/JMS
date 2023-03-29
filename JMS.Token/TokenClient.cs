@@ -26,6 +26,10 @@ namespace JMS.Token
         /// <param name="serverAddress">Token服务器地址,null表示不需要服务器，本地自行验证</param>
         public TokenClient(NetAddress serverAddress)
         {
+            if(serverAddress == null)
+            {
+                serverAddress = new NetAddress(null, 0);
+            }
             this._serverAddress = serverAddress;
 
             _DisableTokenListener = DisableTokenListener.Listen(_serverAddress);
@@ -188,18 +192,21 @@ namespace JMS.Token
             CertClient client = new CertClient();
             try
             {
-                client.Connect(_serverAddress);
-                client.Write(2);
-                client.Write(expireTime);
-                var data = Encoding.UTF8.GetBytes(token);
-                client.Write(data.Length);
-                client.Write(data);
-                try
+                if (_serverAddress.Address != null)
                 {
-                    client.ReadBoolean();
-                }
-                catch
-                {
+                    client.Connect(_serverAddress);
+                    client.Write(2);
+                    client.Write(expireTime);
+                    var data = Encoding.UTF8.GetBytes(token);
+                    client.Write(data.Length);
+                    client.Write(data);
+                    try
+                    {
+                        client.ReadBoolean();
+                    }
+                    catch
+                    {
+                    }
                 }
                 _DisableTokenListener.AddDisableToken(token, expireTime);
             }
