@@ -5,14 +5,16 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Jack</Authors>
     <Description>基于JMS.Token的身份验证
-services.AddJmsTokenAuthentication("127.0.0.1", 9911);
+services.AddJmsTokenAuthentication(new NetAddress("127.0.0.1", 9911));
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 如果通过验证，controller中通过下面代码获取token内容：
-this.User.FindFirstValue("Content")</Description>
-    <Version>2.0.1.6</Version>
+this.User.FindFirstValue("Content")
+
+用依赖注入获取TokenClient实例，生成token</Description>
+    <Version>2.0.1.7</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
