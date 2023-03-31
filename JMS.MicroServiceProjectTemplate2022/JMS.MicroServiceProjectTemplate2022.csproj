@@ -51,6 +51,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="发布地址.txt" />
     <Content Include="如何生成项目模板.txt" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
