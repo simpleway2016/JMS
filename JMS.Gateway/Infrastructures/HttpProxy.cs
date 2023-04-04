@@ -424,7 +424,13 @@ namespace JMS.Infrastructures
 
                 foreach (var pair in cmd.Header)
                 {
-                    if (pair.Key == "Host")
+                    if (pair.Key == "TranId")
+                        continue;
+                    else if (pair.Key == "Tran")
+                        continue;
+                    else if (pair.Key == "TranFlag")
+                        continue;
+                    else if (pair.Key == "Host")
                     {
                         strBuffer.AppendLine($"Host: {hostUri.Host}");
                     }

@@ -173,7 +173,9 @@ namespace JMS.WebApiDocument
 
                 foreach (var pair in headers)
                 {
-                    if(pair.Key == "Host" || pair.Key == "Transfer-Encoding" || pair.Key == "Content-Length")
+                    if (pair.Key == "TranId" || pair.Key == "Tran" || pair.Key == "TranFlag")
+                        continue;
+                    else if (pair.Key == "Host" || pair.Key == "Transfer-Encoding" || pair.Key == "Content-Length")
                     {
                         continue;
                     }
