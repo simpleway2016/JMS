@@ -41,12 +41,13 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="webServerUrl">web服务器的根访问路径，如 http://192.168.2.128:8080</param>
         /// <param name="serviceName">服务名称</param>
         /// <param name="gateways">网关地址</param>
+        /// <param name="allowGatewayProxy">允许通过网关反向代理访问此服务</param>
         /// <param name="configOption">配置更多可选项</param>
         /// <param name="sslConfig">配置ssl证书</param>
         /// <returns></returns>
-        public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName, NetAddress[] gateways, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
+        public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName, NetAddress[] gateways,bool allowGatewayProxy = false, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
         {
-           return RegisterJmsService(services,webServerUrl,serviceName,null,gateways , configOption,sslConfig);
+           return RegisterJmsService(services,webServerUrl,serviceName,null,gateways ,allowGatewayProxy, configOption,sslConfig);
         }
 
         /// <summary>
@@ -57,10 +58,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="serviceName">服务名称</param>
         /// <param name="description">服务描述</param>
         /// <param name="gateways">网关地址</param>
+        /// <param name="allowGatewayProxy">允许通过网关反向代理访问此服务</param>
         /// <param name="configOption">配置更多可选项</param>
         /// <param name="sslConfig">配置ssl证书</param>
         /// <returns></returns>
-        public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName,string description, NetAddress[] gateways, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
+        public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName,string description, NetAddress[] gateways, bool allowGatewayProxy = false, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
         {
             if (Hosts.ContainsKey(services) == false)
             {
@@ -81,7 +83,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 }
                 Hosts[services] = host;
             }
-            Hosts[services].RegisterWebServer(webServerUrl, serviceName,description);
+            Hosts[services].RegisterWebServer(webServerUrl, serviceName,description , allowGatewayProxy);
             return services;
         }
 

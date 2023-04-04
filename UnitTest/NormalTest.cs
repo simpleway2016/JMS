@@ -60,7 +60,7 @@ namespace UnitTest
     var featureProvider = new MyFeatureProvider();
     manager.FeatureProviders.Add(featureProvider);
 });
-            builder.Services.RegisterJmsService("http://127.0.0.1:"+ _webApiServicePort, "TestWebService", gateways, option => {
+            builder.Services.RegisterJmsService("http://127.0.0.1:"+ _webApiServicePort, "TestWebService", gateways, true,option => {
                 option.RetryCommitPath += "9902";
             });
             var app = builder.Build();

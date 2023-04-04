@@ -35,7 +35,7 @@ namespace UnitTest
     var featureProvider = new MyFeatureProvider();
     manager.FeatureProviders.Add(featureProvider);
 });
-            builder.Services.RegisterJmsService("http://127.0.0.1:9000", "TestWebService", gateways , option => {
+            builder.Services.RegisterJmsService("http://127.0.0.1:9000", "TestWebService", gateways ,true, option => {
                 option.RetryCommitPath += "9000";
             });
             var app = builder.Build();
@@ -62,7 +62,7 @@ namespace UnitTest
     var featureProvider = new MyCrashFeatureProvider();
     manager.FeatureProviders.Add(featureProvider);
 });
-            builder.Services.RegisterJmsService("http://127.0.0.1:9001", "TestCrashService", gateways, option => {
+            builder.Services.RegisterJmsService("http://127.0.0.1:9001", "TestCrashService", gateways, true, option => {
                 option.RetryCommitPath += "9001";
             });
             var app = builder.Build();
