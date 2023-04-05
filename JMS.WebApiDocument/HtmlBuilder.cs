@@ -15,12 +15,13 @@ using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 using Way.Lib;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace JMS.WebApiDocument
 {
     public class HtmlBuilder
     {
-        public static Task Build(HttpContext context, List<Type> controllerTypes)
+        public static async Task Build(HttpContext context, List<Type> controllerTypes)
         {
             List<ControllerInfo> controllerInfos = new List<ControllerInfo>();
             List<DataTypeInfo> dataTypeInfos = new List<DataTypeInfo>();
@@ -35,7 +36,7 @@ namespace JMS.WebApiDocument
                 {
                     using (var client = ServiceRedirects.ClientProviderFunc())
                     {
-                        var service = client.TryGetMicroService(config.ServiceName);
+                        var service = await client.TryGetMicroServiceAsync(config.ServiceName);
                         if (service != null)
                         {
                             try
@@ -94,6 +95,76 @@ namespace JMS.WebApiDocument
                     }
                 }
             }
+            else
+            {
+                List<string> doneList = new List<string>();
+                using (var client = ServiceRedirects.ClientProviderFunc())
+                {
+                    var allServices = await client.ListMicroServiceAsync(null);
+                    foreach( var serviceRunningInfo in allServices)
+                    {
+                        foreach( var serviceInfo in serviceRunningInfo.ServiceList)
+                        {
+                            if (serviceInfo.AllowGatewayProxy == false || doneList.Contains(serviceInfo.Name))
+                                continue;
+
+                            try
+                            {
+                                doneList.Add(serviceInfo.Name);
+
+                                var service = await client.TryGetMicroServiceAsync(serviceInfo.Name);
+                                if (service == null)
+                                    continue;
+
+                                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
+                                {
+                                    var jsonContent = service.GetServiceInfo();
+                                    var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                                    if (!string.IsNullOrWhiteSpace(serviceInfo.Description))
+                                    {
+                                        controllerInfo.desc = serviceInfo.Description;
+                                    }
+                                    foreach (var method in controllerInfo.items)
+                                    {
+                                        method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}/{method.title}";
+                                    }
+                                    if (controllerInfo.items.Count == 1)
+                                        controllerInfo.items[0].opened = true;
+
+                                    controllerInfo.buttons = null;
+                                    controllerInfos.Add(controllerInfo);
+                                }
+                                else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
+                                {
+                                    var jsonContent = service.GetServiceInfo();
+                                    var cInfo = jsonContent.FromJson<ControllerInfo>();
+
+                                    var controllerInfo = new ControllerInfo()
+                                    {
+                                        name = serviceInfo.Name,
+                                        desc = string.IsNullOrWhiteSpace(serviceInfo.Description) ? serviceInfo.Name : serviceInfo.Description,
+                                    };
+                                    controllerInfo.items = new List<MethodItemInfo>();
+                                    controllerInfo.items.Add(new MethodItemInfo
+                                    {
+                                        title = "WebSocket接口",
+                                        method = cInfo.desc,
+                                        isComment = true,
+                                        isWebSocket = true,
+                                        opened = true,
+                                        url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}"
+                                    });
+                                    controllerInfos.Add(controllerInfo);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogError(ex, "");
+                            }
+                        }
+                    }
+                }
+            }
 
             using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.index.html"))
             {
@@ -101,7 +172,7 @@ namespace JMS.WebApiDocument
                 var bs = new byte[ms.Length];
                 ms.Read(bs, 0, bs.Length);
                 var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.OrderBy(m => m.desc).ToJsonString()).Replace("$$Types$$", dataTypeInfos.ToJsonString());
-                return context.Response.WriteAsync(text);
+                await context.Response.WriteAsync(text);
             }
         }
 

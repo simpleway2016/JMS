@@ -34,7 +34,6 @@ namespace Microsoft.Extensions.DependencyInjection
         /// 
         /// </summary>
         /// <param name="app"></param>
-        /// <param name="xmlpaths">包含注释的xml文档路径</param>
         /// <returns></returns>
         public static IApplicationBuilder UseJMSWebApiDocument(this IApplicationBuilder app)
         {
@@ -86,10 +85,20 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         /// <summary>
+        /// 启用微服务的反向代理
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="clientProviderFunc">RemoteClient创建函数</param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseJmsServiceRedirect(this IApplicationBuilder app, Func<RemoteClient> clientProviderFunc)
+        {
+            return UseJmsServiceRedirect(app, null, clientProviderFunc, null);
+        }
+        /// <summary>
         /// 根据配置文件的JMS.ServiceRedirects节点配置，直接转接访问到指定的微服务
         /// </summary>
         /// <param name="app"></param>
-        /// <param name="configuration">配置信息</param>
+        /// <param name="configuration">配置信息,如果为null，则表示所有允许网关反向代理的微服务</param>
         /// <param name="clientProviderFunc">RemoteClient创建函数</param>
         /// <param name="redirectHeaders">需要转发的请求头，默认null，表示转发全部</param>
         /// <returns></returns>
@@ -101,7 +110,10 @@ namespace Microsoft.Extensions.DependencyInjection
             Logger = app.ApplicationServices.GetService<ILogger<WebApiDocAttribute>>();
 
             ServiceRedirects.ClientProviderFunc = clientProviderFunc;
-            ConfigurationChangeCallback(configuration);
+            if (configuration != null)
+            {
+                ConfigurationChangeCallback(configuration);
+            }
 
             app.Use(async (context, next) =>
             {
@@ -116,7 +128,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     var servicename = m.Groups["s"].Value;
                     var method = m.Groups["m"].Value;
                     var config = ServiceRedirects.Configs?.FirstOrDefault(m => string.Equals(m.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
-                    if (config == null)
+                    if (ServiceRedirects.Configs != null && config == null)
                     {
                         context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
                         await context.Response.WriteAsync(new
@@ -126,6 +138,13 @@ namespace Microsoft.Extensions.DependencyInjection
                         }.ToJsonString());
                         return;
 
+                    }
+                    else if(config == null)
+                    {
+                        config = new ServiceRedirectConfig() { 
+                            ServiceName = servicename,
+                            OutputText = true
+                        };
                     }
 
                     try

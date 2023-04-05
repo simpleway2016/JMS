@@ -312,6 +312,14 @@ namespace JMS.WebApiDocument
             using (var client = ClientProviderFunc())
             {
                 var service = await client.GetMicroServiceAsync(config.ServiceName);
+                if(ServiceRedirects.Configs == null && service.ServiceLocation.AllowGatewayProxy == false)
+                {
+                    //不允许反向代理
+                    config.Handled = true;
+                    context.Response.StatusCode = 404;
+                    await context.Response.WriteAsync("not found");
+                    return null;
+                }
                 if( service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
                 {
                     config.Handled = true;
