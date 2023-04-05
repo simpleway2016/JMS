@@ -377,8 +377,14 @@ namespace JMS
 
             if (_tcpServer != null)
             {
+                _tcpServer.OnError += _tcpServer_OnError;
                 _tcpServer.Run();
             }
+        }
+
+        private void _tcpServer_OnError(object sender, Exception e)
+        {
+            _logger?.LogError(e, "");
         }
 
         private void _tcpServer_Connected(object sender, Socket socket)
