@@ -47,6 +47,22 @@ namespace JMS
             this.Write(data.Concat(contentBytes).ToArray());
         }
 
+        public void OutputHttp204(IDictionary<string,string> requestHeaders)
+        {
+            StringBuilder otherHeaders = new StringBuilder();
+            if (requestHeaders.ContainsKey("Access-Control-Request-Headers"))
+                otherHeaders.Append($"Access-Control-Allow-Headers: {requestHeaders["Access-Control-Request-Headers"]}\r\n");
+
+            if (requestHeaders.ContainsKey("Access-Control-Request-Method"))
+                otherHeaders.Append($"Access-Control-Allow-Methods: {requestHeaders["Access-Control-Request-Method"]}\r\n");
+
+            if (requestHeaders.ContainsKey("Origin"))
+                otherHeaders.Append($"Access-Control-Allow-Origin: {requestHeaders["Origin"]}\r\nVary: Origin\r\n");
+            var body = $"HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Credentials: true\r\n{otherHeaders}\r\n";
+            var data = System.Text.Encoding.UTF8.GetBytes(body);
+            this.Write(data);
+        }
+
         /// <summary>
         /// 输出重定向头，并等对方接收完毕
         /// </summary>

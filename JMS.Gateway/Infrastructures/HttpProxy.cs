@@ -231,6 +231,9 @@ namespace JMS.Infrastructures
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                    ex = ex.InnerException;
+
                 if (ex.Message == "Authentication failed")
                 {
                     client.OutputHttp401();
@@ -608,6 +611,7 @@ namespace JMS.Infrastructures
             string requestPathLine = null;
             byte[] bData = new byte[1];
             int readed;
+            int indexFlag;
             while (true)
             {
                 readed = await client.InnerStream.ReadAsync(bData, 0, 1);
@@ -625,17 +629,13 @@ namespace JMS.Infrastructures
                     {
                         break;
                     }
-                    else if (line.Contains(":"))
+                    else if ((indexFlag = line.IndexOf(":")) > 0 && indexFlag < line.Length - 1)
                     {
-                        var arr = line.Split(':');
-                        if (arr.Length >= 2)
+                        var key = line.Substring(0, indexFlag);
+                        var value = line.Substring(indexFlag + 1).Trim();
+                        if (headers.ContainsKey(key) == false)
                         {
-                            var key = arr[0].Trim();
-                            var value = arr[1].Trim();
-                            if (headers.ContainsKey(key) == false)
-                            {
-                                headers[key] = value;
-                            }
+                            headers[key] = value;
                         }
                     }
                 }

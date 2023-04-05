@@ -46,7 +46,7 @@ namespace JMS.Applications
             await client.ReadDataAsync(data, 0, data.Length);
 
             var text = Encoding.UTF8.GetString(data);
-            if( text == "GET " || text == "POST")
+            if( text == "GET " || text == "POST" || text == "PUT" || text == "OPTI")
             {
                 return new GatewayCommand { Type = CommandType.HttpRequest , Content = text };
             }

@@ -14,6 +14,7 @@ namespace JMS.Common.Net
         TcpListener _tcpListener;
         TcpListener _tcpListenerV6;
         public event EventHandler<Socket> Connected;
+        public event EventHandler<Exception> OnError;
         public TcpServer(int port)
         {
             this._port = port;
@@ -50,9 +51,9 @@ namespace JMS.Common.Net
                     }
                 }
             }
-            catch
+            catch(Exception ex)
             {
-
+                OnError?.Invoke(this, ex);
             }
         }
     }

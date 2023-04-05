@@ -70,8 +70,8 @@ namespace JMS
             _requestReception = ServiceProvider.GetService<IRequestReception>();
             _tcpServer = new TcpServer(port);
             _tcpServer.Connected += _tcpServer_Connected;
+            _tcpServer.OnError += _tcpServer_OnError;
 
-           
             _Logger?.LogInformation("Gateway started, port:{0}", port);
             if (ServerCert != null)
             {
@@ -82,6 +82,11 @@ namespace JMS
             ServiceProvider.GetService<ClusterGatewayConnector>().BeMaster();
 
             _tcpServer.Run();
+        }
+
+        private void _tcpServer_OnError(object sender, Exception e)
+        {
+            _Logger?.LogError(e , "");
         }
 
         private void _tcpServer_Connected(object sender, Socket socket)
