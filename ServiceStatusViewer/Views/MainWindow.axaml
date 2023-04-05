@@ -32,13 +32,14 @@
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="120"/>
 							<ColumnDefinition Width="120"/>
+							<ColumnDefinition Width="auto"/>
 							<ColumnDefinition/>
 							<ColumnDefinition Width="*"/>
 						</Grid.ColumnDefinitions>
 						<Button Grid.Column="0" Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding GetCodeClick}">获取客户端代码</Button>
 						<Button Grid.Column="1" Margin="0,0,10,0" IsEnabled="{Binding IsOnline}" Command="{Binding InvokeMethodClick}">调用方法</Button>
-
-						<ItemsRepeater Grid.Column="2" Items="{Binding Services}" IsEnabled="{Binding IsOnline}" >
+						<TextBlock Grid.Column="2" Text="{Binding}" VerticalAlignment="Center" Margin="0,0,10,0"></TextBlock>
+						<ItemsRepeater Grid.Column="3" Items="{Binding Services}" IsEnabled="{Binding IsOnline}" >
 							<ItemsRepeater.Layout>
 								<StackLayout Spacing="10" Orientation="Horizontal" />
 							</ItemsRepeater.Layout>
@@ -53,7 +54,7 @@
 							</ItemsRepeater.ItemTemplate>
 						</ItemsRepeater>
 
-						<TextBlock Grid.Column="3" Text="{Binding PerformanceInfo}" VerticalAlignment="Center" HorizontalAlignment="Right"></TextBlock>
+						<TextBlock Grid.Column="4" Text="{Binding PerformanceInfo}" VerticalAlignment="Center" HorizontalAlignment="Right"></TextBlock>
 					</Grid>
 				</DataTemplate>
 			</ListBox.ItemTemplate>

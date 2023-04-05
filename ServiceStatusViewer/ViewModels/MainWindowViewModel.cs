@@ -120,11 +120,11 @@ namespace ServiceStatusViewer.ViewModels
         {
             if (_data.ServiceAddress?.StartsWith("http") == true)
             {
-                return $"{_data.ServiceAddress} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceList.Select(m => m.Name).ToArray())}";
+                return $"{_data.ServiceAddress} {(this.IsOnline ? "在线" : "离线")}";
             }
             else
             {
-                return $"{_data.ServiceAddress}:{_data.Port} {(this.IsOnline ? "在线" : "离线")} 支持的服务：{string.Join(',', _data.ServiceList.Select(m => m.Name).ToArray())}";
+                return $"{_data.ServiceAddress}:{_data.Port} {(this.IsOnline ? "在线" : "离线")}";
             }
         }
     }
