@@ -20,7 +20,6 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.2.0" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\JMS.Common\JMS.Common.csproj" />
 		<ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
 		<ProjectReference Include="..\JMS.WebApiDocument\JMS.WebApiDocument.csproj" />
 	</ItemGroup>
