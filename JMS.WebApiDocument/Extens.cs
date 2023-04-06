@@ -115,6 +115,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 ConfigurationChangeCallback(configuration);
             }
 
+            ThreadPool.GetMaxThreads(out int w, out int c);
+            ThreadPool.SetMinThreads(w, c);
+
             app.Use(async (context, next) =>
             {
                 if (context.Request.Path.Value.Contains("/JMSRedirect/", StringComparison.OrdinalIgnoreCase))
