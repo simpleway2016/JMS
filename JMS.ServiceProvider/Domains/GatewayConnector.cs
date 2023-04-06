@@ -33,7 +33,7 @@ namespace JMS.Domains
         IKeyLocker _keyLocker;
         SSLConfiguration _SSLConfiguration;
         ICpuInfo _cpuInfo;
-        public event EventHandler ConnectCompleted;
+        public event EventHandler<System.Version> ConnectCompleted;
         string _singletonErrorMsg = "相同的服务已经在运行，连接等待中...";
         public GatewayConnector(MicroServiceHost microServiceHost,
             ICpuInfo cpuInfo,
@@ -314,7 +314,8 @@ namespace JMS.Domains
                     }
                 }
 
-                ConnectCompleted?.Invoke(this, null);
+
+                ConnectCompleted?.Invoke(this, new Version(ret.Data));
 
                 //保持心跳，并且定期发送ClientConnected
                 _client.KeepHeartBeating(() =>

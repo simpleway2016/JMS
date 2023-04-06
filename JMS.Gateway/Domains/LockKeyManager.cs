@@ -219,6 +219,18 @@ namespace JMS.Domains
                 }
             }
         }
+        public void UnLockServiceAllKey(RegisterServiceInfo service)
+        {
+            KeyObject o;
+            foreach( var pair in _cache)
+            {
+                if(pair.Value.Locker == service.ServiceId)
+                {
+                    _cache.TryRemove(pair.Key, out o);
+                }
+            }
+        }
+
 
         public bool UnLock(string key, RegisterServiceInfo service)
         {

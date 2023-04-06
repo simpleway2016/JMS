@@ -8,7 +8,7 @@ namespace JMS
 {
     public interface IGatewayConnector
     {
-        event EventHandler ConnectCompleted;
+        event EventHandler<System.Version> ConnectCompleted;
         NetClient CreateClient(NetAddress addr);
         void DisconnectGateway();
         void ConnectAsync();

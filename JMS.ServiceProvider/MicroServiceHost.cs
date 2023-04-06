@@ -398,7 +398,7 @@ namespace JMS
             Task.Run(() => _RequestReception.Interview(socket));
         }
 
-        private void _GatewayConnector_ConnectCompleted(object sender, EventArgs e)
+        private void _GatewayConnector_ConnectCompleted(object sender, Version gatewayVersion)
         {
             _GatewayConnector.ConnectCompleted -= _GatewayConnector_ConnectCompleted;
 
@@ -406,6 +406,12 @@ namespace JMS
             if (!_isWebServer)
             {
                 ServiceProvider.GetService<RetryCommitMission>().OnGatewayReady();
+            }
+
+            if(gatewayVersion > new Version("3.1.0.2"))
+            {
+                //重启服务器，为防止上次可能崩溃，网关还留有分布式锁，所以这里应该清空一下
+                ServiceProvider.GetService<IKeyLocker>().UnLockAllKeys();
             }
 
             if (ServiceProviderBuilded != null)

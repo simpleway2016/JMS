@@ -55,10 +55,21 @@ namespace JMS.Applications.CommandHandles
             {
                 if (info.IsUnlock)
                 {
-                    netclient.WriteServiceData(new InvokeResult
+                    if (info.Key == null)
                     {
-                        Success = _lockKeyManager.UnLock(info.Key, service)
-                    });
+                        _lockKeyManager.UnLockServiceAllKey(service);
+                        netclient.WriteServiceData(new InvokeResult
+                        {
+                            Success = true
+                        });
+                    }
+                    else
+                    {
+                        netclient.WriteServiceData(new InvokeResult
+                        {
+                            Success = _lockKeyManager.UnLock(info.Key, service)
+                        });
+                    }
                     return;
                 }
 

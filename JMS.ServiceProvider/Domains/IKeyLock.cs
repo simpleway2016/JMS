@@ -43,6 +43,9 @@ namespace JMS
         string[] GetLockedKeys();
 
         void RemoveKeyFromLocal(string key);
-        
+        /// <summary>
+        /// 释放本服务所有key
+        /// </summary>
+        void UnLockAllKeys();
     }
 }

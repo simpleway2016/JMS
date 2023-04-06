@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Transactions;
 
 namespace JMS.Domains
 {
@@ -151,8 +152,40 @@ namespace JMS.Domains
             return false;
         }
 
+        /// <summary>
+        /// unlock本服务所有key
+        /// </summary>
+        public void UnLockAllKeys()
+        {
+            using (var netclient = GatewayConnector.CreateClient(_microServiceHost.MasterGatewayAddress))
+            {
+                netclient.WriteServiceData(new GatewayCommand
+                {
+                    Type = CommandType.LockKey,
+                    Content = new LockKeyInfo
+                    {
+                        Key = null,
+                        MicroServiceId = _microServiceHost.Id,
+                        IsUnlock = true
+                    }.ToJsonString()
+                });
+
+                var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+                if (ret.Success)
+                {
+                    LockedKeyDict.Clear();
+                    RemovingKeyDict.Clear();
+                }
+
+                if (!ret.Success && ret.Data != null)
+                    throw new Exception(ret.Data);
+            }
+        }
+
         public bool TryUnLock(string transactionId, string key)
         {
+            if(key == null)
+                throw new Exception("key is null");
             if (_microServiceHost.MasterGatewayAddress == null)
                 throw new MissMasterGatewayException("未连接上主网关");
             if (string.IsNullOrEmpty(transactionId))
@@ -217,6 +250,8 @@ namespace JMS.Domains
 
         public async Task<bool> TryUnLockAsync(string transactionId, string key)
         {
+            if (key == null)
+                throw new Exception("key is null");
             if (_microServiceHost.MasterGatewayAddress == null)
                 throw new MissMasterGatewayException("未连接上主网关");
             if (string.IsNullOrEmpty(transactionId))
@@ -281,6 +316,8 @@ namespace JMS.Domains
 
         public void UnLockAnyway(string key)
         {
+            if (key == null)
+                throw new Exception("key is null");
             if (_microServiceHost.MasterGatewayAddress == null)
                 throw new MissMasterGatewayException("未连接上主网关");
 
@@ -333,6 +370,8 @@ namespace JMS.Domains
 
         public async Task UnLockAnywayAsync(string key)
         {
+            if (key == null)
+                throw new Exception("key is null");
             if (_microServiceHost.MasterGatewayAddress == null)
                 throw new MissMasterGatewayException("未连接上主网关");
 
