@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS
@@ -27,7 +28,7 @@ namespace JMS
     class AuthenticationHandler : IAuthenticationHandler
     {
         public static Func<AuthenticationParameter, bool> Callback;
-        public static string HeaderName;
+        public static string[] HeaderNames;
         public static NetAddress ServerAddress;
 
         public AuthenticationHandler(ILogger<TokenClient> logger)
@@ -37,10 +38,22 @@ namespace JMS
 
         public object Authenticate(IDictionary<string, string> headers)
         {
-            if (headers.ContainsKey(HeaderName) == false)
-                throw new AuthenticationException("Authentication failed");
-
-            var token = headers[HeaderName];
+            string token = null;
+            foreach (var header in HeaderNames)
+            {
+                if (headers.TryGetValue(header, out string val))
+                {
+                    if (!string.IsNullOrWhiteSpace(val))
+                    {
+                        token = val;
+                        break;
+                    }
+                }
+            }
+            if (token == null)
+            {
+                throw new AuthenticationException("Authentication failed, no token.");
+            }
             TokenClient client = new TokenClient(ServerAddress);
 
             try

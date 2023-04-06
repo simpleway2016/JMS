@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +21,7 @@ namespace JMS.Token.AspNetCore
         public const string SchemeName = "JMS.Token";
         AuthenticationScheme _scheme;
         HttpContext _context;
-        public static string HeaderName;
+        public static string[] HeaderNames;
         public static Func<AuthenticationParameter, bool> Callback;
         public static NetAddress ServerAddress;
 
@@ -43,12 +45,24 @@ namespace JMS.Token.AspNetCore
         /// </summary>
         public Task<AuthenticateResult> AuthenticateAsync()
         {
-            if (_context.Request.Headers.ContainsKey(HeaderName) == false)
+            string token = null;
+            foreach( var header in HeaderNames)
+            {
+                if (_context.Request.Headers.TryGetValue(header,out StringValues values))
+                {
+                    string val = values.FirstOrDefault();
+                    if (!string.IsNullOrWhiteSpace(val))
+                    {
+                        token = val;
+                        break;
+                    }
+                }
+            }
+            if (token == null)
             {
                 return Task.FromResult(AuthenticateResult.Fail(""));
             }
-
-            var token = _context.Request.Headers[HeaderName].FirstOrDefault();
+           
             TokenClient client = new TokenClient(ServerAddress);
             try
             {

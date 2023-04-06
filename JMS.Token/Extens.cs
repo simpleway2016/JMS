@@ -21,9 +21,22 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection UseJmsTokenAuthentication(this IServiceCollection services,  NetAddress serverAddress, string headerName = "Authorization", Func<AuthenticationParameter,  bool>  authCallback = null)
         {
-            AuthenticationHandler.HeaderName = headerName;
+            return UseJmsTokenAuthentication(services, serverAddress, new string[] { headerName }, authCallback);
+        }
+
+        /// <summary>
+        /// 使用JMS.Token进行身份验证（此方法在微服务端有效）
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="serverAddress">token服务器地址</param>
+        /// <param name="headerNames">客户端通过哪个头部传递token，可以同时定义多个头，如 ['Authorization','Sec-WebSocket-Protocol']，任何一个头验证通过都是可以的</param>
+        /// <param name="authCallback">验证回调</param>
+        /// <returns></returns>
+        public static IServiceCollection UseJmsTokenAuthentication(this IServiceCollection services, NetAddress serverAddress, string[] headerNames, Func<AuthenticationParameter, bool> authCallback = null)
+        {
+            AuthenticationHandler.HeaderNames = headerNames;
             AuthenticationHandler.ServerAddress = serverAddress;
-          
+
             AuthenticationHandler.Callback = authCallback;
 
             services.AddSingleton<IAuthenticationHandler, AuthenticationHandler>();
