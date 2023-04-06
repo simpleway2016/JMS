@@ -19,21 +19,20 @@ namespace JMS.Applications
 {
     class RequestReception : IRequestReception
     {
+        WebApi _webApi;
+        HttpRequestHandler _httpRequestHandler;
         ILogger<RequestReception> _logger;
-        ICommandHandlerRoute _manager;
-        WebApi _gateway;
-        public RequestReception(ILogger<RequestReception> logger,
-            WebApi gateway,
-            ICommandHandlerRoute manager)
+        public RequestReception(ILogger<RequestReception> logger, WebApi webApi,
+            HttpRequestHandler httpRequestHandler)
         {
+            this._webApi = webApi;
+            this._httpRequestHandler = httpRequestHandler;
             _logger = logger;
-            _manager = manager;
-            _gateway = gateway;
         }
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (_gateway.AcceptCertHash != null && _gateway.AcceptCertHash.Length >0 && _gateway.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
+            if (_webApi.AcceptCertHash != null && _webApi.AcceptCertHash.Length >0 && _webApi.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
             {
                 return false;
             }
@@ -51,9 +50,9 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
-                    if (_gateway.ServerCert != null)
+                    if (_webApi.ServerCert != null)
                     {
-                        await client.AsSSLServerAsync(_gateway.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
+                        await client.AsSSLServerAsync(_webApi.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
 
                     }
 
@@ -61,7 +60,7 @@ namespace JMS.Applications
                     {
                         var cmd = await GetRequestCommand(client);
 
-                        await _manager.AllocHandler(cmd)?.Handle(client, cmd);
+                        await _httpRequestHandler.Handle(client, cmd);
 
                         if (client.HasSocketException || !client.KeepAlive)
                             break;

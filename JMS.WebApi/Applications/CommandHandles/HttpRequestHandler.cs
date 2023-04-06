@@ -19,31 +19,18 @@ namespace JMS.Applications.CommandHandles
     /// <summary>
     /// 处理http请求
     /// </summary>
-    class HttpRequestHandler : ICommandHandler
+    class HttpRequestHandler 
     {
-        IServiceProvider _serviceProvider;
-        ICommandHandlerRoute _manager;
-        public HttpRequestHandler(IServiceProvider serviceProvider)
-        {
-            this._serviceProvider = serviceProvider;
-
-        }
-        public CommandType MatchCommandType => CommandType.HttpRequest;
 
         public async Task Handle(NetClient client, GatewayCommand cmd)
         {
-            if (_manager == null)
-            {
-                //不能在构造函数获取_manager
-                _manager = _serviceProvider.GetService<ICommandHandlerRoute>();
-            }
 
             if (cmd.Header == null)
             {
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = await HttpProxy.ReadHeaders( cmd.Content, client, cmd.Header);
+            var requestPathLine = await HttpProxy.ReadHeaders( client, cmd.Header);
             var method = requestPathLine.Split(' ')[0];
            
             int contentLength = 0;

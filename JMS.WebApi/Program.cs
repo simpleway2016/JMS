@@ -14,6 +14,7 @@ using JMS.Applications;
 using JMS.Infrastructures;
 using System.Threading;
 using System.IO;
+using JMS.Applications.CommandHandles;
 
 namespace JMS
 {
@@ -77,7 +78,7 @@ namespace JMS
             });
             services.AddSingleton<IConfiguration>(configuration);
             services.AddSingleton<IRequestReception, RequestReception>();
-            services.AddSingleton<ICommandHandlerRoute, CommandHandlerRoute>();
+            services.AddSingleton<HttpRequestHandler>();
             services.AddSingleton<WebApi>();
 
           
