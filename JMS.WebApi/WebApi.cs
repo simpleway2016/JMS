@@ -15,6 +15,7 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using JMS.Common.Net;
 using Org.BouncyCastle.Bcpg;
+using Way.Lib;
 
 namespace JMS
 {
@@ -36,6 +37,7 @@ namespace JMS
             _Logger.LogInformation($"版本号：{this.GetType().Assembly.GetName().Version}");
 
             _Logger?.LogInformation("配置文件:{0}", WebApiProgram.AppSettingPath);
+            _Logger?.LogInformation($"网关地址：{WebApiProgram.GatewayAddresses.ToJsonString()}");
         }
 
         string _id;
