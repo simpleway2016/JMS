@@ -81,6 +81,8 @@ namespace UnitTest
         {
             var normalTest = new NormalTest();
             normalTest.StartGateway();
+            normalTest.StartJmsWebApi();
+            normalTest.StartWebApi(normalTest._gateWayPort).RunAsync();
 
             var app = StartWebApi(normalTest._gateWayPort);
             app.RunAsync();
@@ -119,6 +121,23 @@ namespace UnitTest
             var text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             if (text != "jack1")
                 throw new Exception("http返回结果错误");
+
+
+            //通过webapi反向代理访问webapi
+            ret = client.PostAsync($"http://localhost:{normalTest._webApiPort}/JMSRedirect/TestWebService/WeatherForecast", new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == false)
+                throw new Exception("http访问失败");
+            text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (text != "jack1")
+                throw new Exception("http返回结果错误");
+
+            //通过jmswebapi反向代理访问webapi
+            ret = client.PostAsync($"http://localhost:{normalTest._jmsWebapiPort}/TestWebService/WeatherForecast", new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == false)
+                throw new Exception("http访问失败");
+            text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (text != "jack1")
+                throw new Exception("http返回结果错误");
             //app.StopAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
@@ -133,6 +152,7 @@ namespace UnitTest
         {
             var normalTest = new NormalTest();
             normalTest.StartGateway();
+            normalTest.StartJmsWebApi();
 
             var app = StartWebApi(normalTest._gateWayPort);
             app.RunAsync();
@@ -174,7 +194,29 @@ namespace UnitTest
                 if (text.StartsWith("[{\"date\":") == false)
                     throw new Exception("http返回结果错误");
             }
-            if (createCount > 1)
+            for (int i = 0; i < 10; i++)
+            {
+                HttpClient client = new HttpClient();
+                //通过网关反向代理访问webapi
+                var ret = client.GetAsync($"http://localhost:{normalTest._jmsWebapiPort}/TestWebService/WeatherForecast").ConfigureAwait(false).GetAwaiter().GetResult();
+                if (ret.IsSuccessStatusCode == false)
+                    throw new Exception("http访问失败");
+                var text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                if (text.StartsWith("[{\"date\":") == false)
+                    throw new Exception("http返回结果错误");
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                HttpClient client = new HttpClient();
+                //通过网关反向代理访问webapi
+                var ret = client.GetAsync($"http://localhost:{normalTest._jmsWebapiPort}/TestWebService/WeatherForecast").ConfigureAwait(false).GetAwaiter().GetResult();
+                if (ret.IsSuccessStatusCode == false)
+                    throw new Exception("http访问失败");
+                var text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                if (text.StartsWith("[{\"date\":") == false)
+                    throw new Exception("http返回结果错误");
+            }
+            if (createCount > 2)
                 throw new Exception("多次创建client连接");
         }
 

@@ -35,6 +35,7 @@ namespace UnitTest
     {
         public int _gateWayPort = 9800;
         public int _gateWayPortCert = 9805;
+        public int _jmsWebapiPort = 9806;
         public int _clusterGateWayPort1 = 10001;
         public int _clusterGateWayPort2 = 10002;
         public int _UserInfoServicePort = 9801;
@@ -74,7 +75,7 @@ namespace UnitTest
             return app;
         }
 
-        WebApplication StartWebApi(int gateWayPort)
+        public WebApplication StartWebApi(int gateWayPort)
         {
             var conbuilder = new ConfigurationBuilder();
             conbuilder.AddJsonFile("./serviceConfig.json", optional: true, reloadOnChange: true);
@@ -115,6 +116,18 @@ namespace UnitTest
                 var configuration = builder.Build();
 
                 JMS.GatewayProgram.Run(configuration, _gateWayPort, out Gateway g);
+            });
+        }
+
+        public void StartJmsWebApi()
+        {
+            Task.Run(() =>
+            {
+                var builder = new ConfigurationBuilder();
+                builder.AddJsonFile("appsettings-webapi.json", optional: true, reloadOnChange: true);
+                var configuration = builder.Build();
+
+                JMS.WebApiProgram.Run(configuration, _jmsWebapiPort, out WebApi g);
             });
         }
 
@@ -306,6 +319,7 @@ namespace UnitTest
         public void WebapiRedirect()
         {
             StartGateway();
+            StartJmsWebApi();
             StartUserInfoServiceHost();
 
             //等待网关就绪
@@ -406,6 +420,36 @@ namespace UnitTest
             //通过网关反向代理访问webapi
             netclient = new NetClient();
             netclient.Connect(new NetAddress("localhost", _gateWayPort));
+            for (int i = 0; i < 3; i++)
+            {
+                netclient.WriteLine("GET /UserInfoService/GetMyName HTTP/1.1");
+                netclient.WriteLine("Host: localhost");
+                netclient.WriteLine("");
+
+                Dictionary<string, string> headers = new Dictionary<string, string>();
+                var content = ReadHeaders(null, netclient, headers).GetAwaiter().GetResult();
+                if (!content.StartsWith("HTTP/1.1 200 OK"))
+                    throw new Exception("结果不对");
+                if (content.Contains("Content-Length: 4") == false)
+                    throw new Exception("结果不对");
+
+                netclient.WriteLine("GET /TestWebService/WeatherForecast HTTP/1.1");
+                netclient.WriteLine("Host: localhost");
+                netclient.WriteLine("");
+
+                headers = new Dictionary<string, string>();
+                content = ReadHeaders(null, netclient, headers).GetAwaiter().GetResult();
+                if (!content.StartsWith("HTTP/1.1 200 OK"))
+                    throw new Exception("结果不对");
+                if (content.Contains("Transfer-Encoding: chunked") == false)
+                    throw new Exception("结果不对");
+
+            }
+            netclient.Dispose();
+
+            //通过jmswebapi反向代理访问webapi
+            netclient = new NetClient();
+            netclient.Connect(new NetAddress("localhost", _jmsWebapiPort));
             for (int i = 0; i < 3; i++)
             {
                 netclient.WriteLine("GET /UserInfoService/GetMyName HTTP/1.1");
@@ -968,6 +1012,7 @@ Content-Length: 0
         {
             UserInfoDbContext.Reset();
             StartGateway();
+            StartJmsWebApi();
             StartUserInfoServiceHost();
 
             //等待网关就绪
@@ -988,30 +1033,36 @@ Content-Length: 0
                     serviceClient = client.TryGetMicroService("TestWebSocketService");
                 }
             }
-            var clientWebsocket = new ClientWebSocket();
-            clientWebsocket.ConnectAsync(new Uri($"ws://127.0.0.1:{_gateWayPort}/TestWebSocketService?name=test"), CancellationToken.None).ConfigureAwait(true).GetAwaiter().GetResult();
-            var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
-            if (text != "hello")
-                throw new Exception("error");
-            clientWebsocket.SendString("test").ConfigureAwait(true).GetAwaiter().GetResult();
-            text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
-            if (text != "test")
-                throw new Exception("error");
 
-            try
+            var serverPorts = new int[] { _gateWayPort, _jmsWebapiPort };
+
+            foreach (var port in serverPorts)
             {
+                var clientWebsocket = new ClientWebSocket();
+                clientWebsocket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/TestWebSocketService?name=test"), CancellationToken.None).ConfigureAwait(true).GetAwaiter().GetResult();
+                var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+                if (text != "hello")
+                    throw new Exception("error");
+                clientWebsocket.SendString("test").ConfigureAwait(true).GetAwaiter().GetResult();
                 text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
-            }
-            catch (Exception)
-            {
-            }
-           
+                if (text != "test")
+                    throw new Exception("error");
 
-            if (clientWebsocket.CloseStatus != WebSocketCloseStatus.NormalClosure)
-                throw new Exception("error");
+                try
+                {
+                    text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+                }
+                catch (Exception)
+                {
+                }
 
-            if (clientWebsocket.CloseStatusDescription != "abc")
-                throw new Exception("error");
+
+                if (clientWebsocket.CloseStatus != WebSocketCloseStatus.NormalClosure)
+                    throw new Exception("error");
+
+                if (clientWebsocket.CloseStatusDescription != "abc")
+                    throw new Exception("error");
+            }
         }
 
 
