@@ -41,7 +41,7 @@ namespace JMS.Applications.CommandHandles
             if (cmd.Header.TryGetValue("Host", out string host) == false)
                 return;
 
-            var config = HttpProxyServer.ProxyConfigs.FirstOrDefault(m => m.Host == host);
+            var config = HttpProxyServer.ProxyConfigs.FirstOrDefault(m =>string.Equals( m.Host , host, StringComparison.OrdinalIgnoreCase));
             if (config == null)
                 return;
 
@@ -85,12 +85,14 @@ namespace JMS.Applications.CommandHandles
             }
             buffer.AppendLine("");
             var data = Encoding.UTF8.GetBytes(buffer.ToString());
-         
+
             var proxyClient = await NetClientPool.CreateClientAsync(null, new NetAddress(targetUri.Host, targetUri.Port) { 
-                UseSsl = targetUri.Scheme =="https" || targetUri.Scheme == "wss",
+                UseSsl = string.Equals(targetUri.Scheme, "https", StringComparison.OrdinalIgnoreCase) || string.Equals(targetUri.Scheme, "wss", StringComparison.OrdinalIgnoreCase),
                 CertDomain = targetUri.Host
             });
+
             proxyClient.InnerStream.Write(data, 0, data.Length);
+
             if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)
                && cmd.Header.TryGetValue("Upgrade", out string upgrade)
                && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
