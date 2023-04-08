@@ -5,9 +5,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-namespace JMS.Common.Net
+namespace JMS.ServerCore
 {
-    public class TcpServer
+    public class MulitTcpListener
     {
         int _port;
         public int Port => _port;
@@ -15,7 +15,7 @@ namespace JMS.Common.Net
         TcpListener _tcpListenerV6;
         public event EventHandler<Socket> Connected;
         public event EventHandler<Exception> OnError;
-        public TcpServer(int port)
+        public MulitTcpListener(int port)
         {
             this._port = port;
             _tcpListener = new TcpListener(IPAddress.Any, port);

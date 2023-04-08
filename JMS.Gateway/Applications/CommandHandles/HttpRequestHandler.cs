@@ -47,7 +47,7 @@ namespace JMS.Applications.CommandHandles
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = await HttpProxy.ReadHeaders( cmd.Content, client, cmd.Header);
+            var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders( cmd.Content, client.InnerStream, cmd.Header);
             var method = requestPathLine.Split(' ')[0];
            
             int contentLength = 0;

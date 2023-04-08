@@ -16,6 +16,8 @@ using System.Net.Http;
 using JMS;
 using static System.Net.Mime.MediaTypeNames;
 using UnitTest.ServiceHosts;
+using JMS.ServerCore;
+using System.IO;
 
 namespace UnitTest
 {
@@ -74,6 +76,57 @@ namespace UnitTest
 
             app.MapControllers();
             return app;
+        }
+
+        [TestMethod]
+        public void TestHttpHeader()
+        {
+            var headers = new Dictionary<string, string>();
+            var content = @"GET / HTTP/1.1
+Host: mail.qq.com
+Connection: keep-alive
+User-Agent: JmsInvoker
+Accept: text/html
+Accept-Encoding: deflate, br
+Accept-Language: zh-CN,zh;q=0.9
+Content-Length: 0
+Host2: mail.qq.com
+Connection2: keep-alive
+User-Agent2: JmsInvoker
+Accept2: text/html
+Accept-Encoding2: deflate, br
+Accept-Language2: zh-CN,zh;q=0.9
+Content-Length2: 0
+
+";
+            StringBuilder strRet = new StringBuilder();
+            long? time = null;
+            Task.Run(async () => {
+               
+                var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                var line = await HttpHelper.ReadHeaders(null, stream, headers);
+                sw.Stop();
+                time = sw.ElapsedMilliseconds;
+                strRet.AppendLine(line);
+            });
+            while(time == null)
+            Thread.Sleep(100);
+
+            if (time > 2)
+                throw new Exception("解析时间太长");
+
+           
+            foreach( var pair in headers)
+            {
+                strRet.AppendLine($"{pair.Key}: {pair.Value}");
+            }
+            strRet.AppendLine("");
+            if(strRet.ToString() != content)
+            {
+                throw new Exception("解析后内容不正确");
+            }
         }
 
         [TestMethod]

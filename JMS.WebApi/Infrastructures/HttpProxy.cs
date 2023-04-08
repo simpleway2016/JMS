@@ -506,7 +506,7 @@ namespace JMS.Infrastructures
 
                 //读取服务器发回来的头部
                 var headers = new Dictionary<string, string>();
-                requestPathLine = await ReadHeaders(proxyClient, headers);
+                requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null,proxyClient.InnerStream, headers);
                 inputContentLength = 0;
                 if (headers.ContainsKey("Content-Length"))
                 {
@@ -610,47 +610,5 @@ namespace JMS.Infrastructures
             }
         }
 
-        public static async Task<string> ReadHeaders( NetClient client, IDictionary<string, string> headers)
-        {
-            List<byte> lineBuffer = new List<byte>(1024);
-            string line = null;
-            string requestPathLine = null;
-            byte[] bData = new byte[1];
-            int readed;
-            int indexFlag;
-            while (true)
-            {
-                readed = await client.InnerStream.ReadAsync(bData, 0, 1);
-                if (readed <= 0)
-                    throw new SocketException();
-
-                if (bData[0] == 10)
-                {
-                    line = Encoding.UTF8.GetString(lineBuffer.ToArray());
-                    lineBuffer.Clear();
-                    if (requestPathLine == null)
-                        requestPathLine = line;
-
-                    if (line == "")
-                    {
-                        break;
-                    }
-                    else if ((indexFlag = line.IndexOf(":")) > 0 && indexFlag < line.Length - 1)
-                    {
-                        var key = line.Substring(0, indexFlag);
-                        var value = line.Substring(indexFlag + 1).Trim();
-                        if (headers.ContainsKey(key) == false)
-                        {
-                            headers[key] = value;
-                        }
-                    }
-                }
-                else if (bData[0] != 13)
-                {
-                    lineBuffer.Add(bData[0]);
-                }
-            }
-            return requestPathLine;
-        }
     }
 }

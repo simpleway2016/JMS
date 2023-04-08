@@ -6,7 +6,7 @@
     <AssemblyName>JMS.ServiceProvider</AssemblyName>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/simpleway2016/JMS</RepositoryUrl>
-    <Version>3.0.2.18</Version>
+    <Version>3.0.2.19</Version>
     <Authors>Jack.T</Authors>
     <Company>JMS</Company>
     <Product>JMS</Product>
@@ -31,6 +31,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AssemblyDocumentReader\JMS.AssemblyDocumentReader.csproj" />
     <ProjectReference Include="..\JMS.Common\JMS.Common.csproj" />
+    <ProjectReference Include="..\JMS.ServerCore\JMS.ServerCore.csproj" />
   </ItemGroup>
 
 </Project>

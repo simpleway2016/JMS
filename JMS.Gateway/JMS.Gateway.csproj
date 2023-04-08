@@ -4,7 +4,7 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<RootNamespace>JMS</RootNamespace>
 		<AssemblyName>JMS.Gateway</AssemblyName>
-		<Version>3.1.0.3</Version>
+		<Version>3.1.0.5</Version>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>
 	<ItemGroup>
@@ -21,6 +21,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
+		<ProjectReference Include="..\JMS.ServerCore\JMS.ServerCore.csproj" />
 		<ProjectReference Include="..\JMS.WebApiDocument\JMS.WebApiDocument.csproj" />
 	</ItemGroup>
 	<ItemGroup>

@@ -27,7 +27,7 @@ namespace JMS.Proxy
         public void Run(int port)
         {
             _requestHandler = ServiceProvider.GetService<RequestHandler>();
-            var _tcpListener = new TcpServer(port);
+            var _tcpListener = new JMS.ServerCore.MulitTcpListener(port);
             _tcpListener.Connected += _tcpListener_Connected;
              _logger?.LogInformation("Proxy started, port:{0}", port);
             _tcpListener.Run();

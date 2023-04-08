@@ -31,7 +31,7 @@ namespace JMS
     public class MicroServiceHost : IMicroServiceOption, IDisposable
     {
         bool _disposed;
-        TcpServer _tcpServer;
+        JMS.ServerCore.MulitTcpListener _tcpServer;
         public string Id { get; private set; }
         ILogger<MicroServiceHost> _logger;
         IGatewayConnector _GatewayConnector;
@@ -357,7 +357,7 @@ namespace JMS
 
             if (ServicePort != 0 && !_isWebServer)
             {
-                _tcpServer = new TcpServer(ServicePort);
+                _tcpServer = new JMS.ServerCore.MulitTcpListener(ServicePort);
                 _tcpServer.Connected += _tcpServer_Connected;
                 _logger?.LogInformation("Service host started , port:{0}", ServicePort);
             }

@@ -22,7 +22,7 @@ namespace JMS
 {
     public class Gateway : IDisposable
     {
-        TcpServer _tcpServer;
+        JMS.ServerCore.MulitTcpListener _tcpServer;
         ILogger<Gateway> _Logger;
         IRequestReception _requestReception;
         internal int Port;
@@ -68,7 +68,7 @@ namespace JMS
         {
             this.Port = port;
             _requestReception = ServiceProvider.GetService<IRequestReception>();
-            _tcpServer = new TcpServer(port);
+            _tcpServer = new JMS.ServerCore.MulitTcpListener(port);
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 
