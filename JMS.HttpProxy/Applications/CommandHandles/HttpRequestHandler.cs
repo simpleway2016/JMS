@@ -91,106 +91,113 @@ namespace JMS.Applications.CommandHandles
                 CertDomain = targetUri.Host
             });
 
-            proxyClient.InnerStream.Write(data, 0, data.Length);
+            try
+            {
+                proxyClient.InnerStream.Write(data, 0, data.Length);
 
-            if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)
-               && cmd.Header.TryGetValue("Upgrade", out string upgrade)
-               && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
-            {
-                await WebSocketProxy(client, proxyClient, cmd);
-                return;
-            }
-
-            if (inputContentLength > 0)
-            {
-                //发送upload数据到服务器
-                data = new byte[inputContentLength];
-                await client.ReadDataAsync(data, 0, inputContentLength);
-                proxyClient.Write(data);
-            }
-            else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
-            {
-                while (true)
+                if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)
+                   && cmd.Header.TryGetValue("Upgrade", out string upgrade)
+                   && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
                 {
-                    var line = await client.ReadLineAsync();
-                    proxyClient.WriteLine(line);
-                    inputContentLength = Convert.ToInt32(line, 16);
-                    if (inputContentLength == 0)
-                    {
-                        line = await client.ReadLineAsync();
-                        proxyClient.WriteLine(line);
-                        break;
-                    }
-                    else
-                    {
-                        data = new byte[inputContentLength];
-                        await client.ReadDataAsync(data, 0, inputContentLength);
-                        proxyClient.InnerStream.Write(data, 0, inputContentLength);
+                    await WebSocketProxy(client, proxyClient, cmd);
+                    return;
+                }
 
-                        line = await client.ReadLineAsync();
+                if (inputContentLength > 0)
+                {
+                    //发送upload数据到服务器
+                    data = new byte[inputContentLength];
+                    await client.ReadDataAsync(data, 0, inputContentLength);
+                    proxyClient.Write(data);
+                }
+                else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
+                {
+                    while (true)
+                    {
+                        var line = await client.ReadLineAsync();
                         proxyClient.WriteLine(line);
+                        inputContentLength = Convert.ToInt32(line, 16);
+                        if (inputContentLength == 0)
+                        {
+                            line = await client.ReadLineAsync();
+                            proxyClient.WriteLine(line);
+                            break;
+                        }
+                        else
+                        {
+                            data = new byte[inputContentLength];
+                            await client.ReadDataAsync(data, 0, inputContentLength);
+                            proxyClient.InnerStream.Write(data, 0, inputContentLength);
+
+                            line = await client.ReadLineAsync();
+                            proxyClient.WriteLine(line);
+                        }
                     }
                 }
-            }
 
-            //读取服务器发回来的头部
-            cmd.Header.Clear();
-            requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null, proxyClient.InnerStream, cmd.Header);
-            inputContentLength = 0;
-            if (cmd.Header.ContainsKey("Content-Length"))
-            {
-                int.TryParse(cmd.Header["Content-Length"], out inputContentLength);
-            }
+                //读取服务器发回来的头部
+                cmd.Header.Clear();
+                requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null, proxyClient.InnerStream, cmd.Header);
+                inputContentLength = 0;
+                if (cmd.Header.ContainsKey("Content-Length"))
+                {
+                    int.TryParse(cmd.Header["Content-Length"], out inputContentLength);
+                }
 
-            buffer.Clear();
-            buffer.AppendLine(requestPathLine);
+                buffer.Clear();
+                buffer.AppendLine(requestPathLine);
 
-            foreach (var pair in cmd.Header)
-            {
-                buffer.AppendLine($"{pair.Key}: {pair.Value}");
-            }
+                foreach (var pair in cmd.Header)
+                {
+                    buffer.AppendLine($"{pair.Key}: {pair.Value}");
+                }
 
-            buffer.AppendLine("");
-            data = Encoding.UTF8.GetBytes(buffer.ToString());
-            //发送头部给浏览器
-            client.Write(data);
-
-            if (inputContentLength > 0)
-            {
-                data = new byte[inputContentLength];
-                await proxyClient.ReadDataAsync(data, 0, inputContentLength);
+                buffer.AppendLine("");
+                data = Encoding.UTF8.GetBytes(buffer.ToString());
+                //发送头部给浏览器
                 client.Write(data);
-            }
-            else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
-            {
-                while (true)
-                {
-                    var line = await proxyClient.ReadLineAsync();
-                    client.WriteLine(line);
-                    inputContentLength = Convert.ToInt32(line, 16);
-                    if (inputContentLength == 0)
-                    {
-                        line = await proxyClient.ReadLineAsync();
-                        client.WriteLine(line);
-                        break;
-                    }
-                    else
-                    {
-                        data = new byte[inputContentLength];
-                        await proxyClient.ReadDataAsync(data, 0, inputContentLength);
-                        client.InnerStream.Write(data, 0, inputContentLength);
 
-                        line = await proxyClient.ReadLineAsync();
+                if (inputContentLength > 0)
+                {
+                    data = new byte[inputContentLength];
+                    await proxyClient.ReadDataAsync(data, 0, inputContentLength);
+                    client.Write(data);
+                }
+                else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
+                {
+                    while (true)
+                    {
+                        var line = await proxyClient.ReadLineAsync();
                         client.WriteLine(line);
+                        inputContentLength = Convert.ToInt32(line, 16);
+                        if (inputContentLength == 0)
+                        {
+                            line = await proxyClient.ReadLineAsync();
+                            client.WriteLine(line);
+                            break;
+                        }
+                        else
+                        {
+                            data = new byte[inputContentLength];
+                            await proxyClient.ReadDataAsync(data, 0, inputContentLength);
+                            client.InnerStream.Write(data, 0, inputContentLength);
+
+                            line = await proxyClient.ReadLineAsync();
+                            client.WriteLine(line);
+                        }
                     }
                 }
-            }
 
-            if (client.KeepAlive)
-            {
-                NetClientPool.AddClientToPool(proxyClient);
+                if (client.KeepAlive)
+                {
+                    NetClientPool.AddClientToPool(proxyClient);
+                }
+                else
+                {
+                    proxyClient.Dispose();
+                }
             }
-            else
+            catch
             {
                 proxyClient.Dispose();
             }
