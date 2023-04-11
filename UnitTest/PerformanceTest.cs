@@ -246,41 +246,65 @@ namespace UnitTest
             c++;
         }
 
+        async void rec2(Socket socket, CancellationTokenSource cancelsource)
+        {
+            Memory<byte> memory2 = new Memory<byte>(new byte[100]);
+            await Task.Delay(1000);
+            cancelsource.Cancel();
+            var len2 = await socket.ReceiveAsync(memory2, SocketFlags.None); 
+            Debug.WriteLine($"收到" + len2 + "  " + Process.GetCurrentProcess().Threads.Count + "," + ThreadPool.PendingWorkItemCount);
+            socket.Dispose();
+        }
+
+        async void handleSocket(Socket socket)
+        {
+            Memory<byte> memory = new Memory<byte>(new byte[1]);
+           
+            var cancelsource = new CancellationTokenSource();
+            rec2(socket, cancelsource);
+            try
+            {
+                var len = await socket.ReceiveAsync(memory, SocketFlags.Peek, cancelsource.Token);
+            }
+            catch (Exception ex)
+            {
+ 
+            }
+
+
+        }
+
         [TestMethod]
         public void SocketTest()
         {
-            var tid = Thread.CurrentThread.ManagedThreadId;
-            var previousContext = SynchronizationContext.Current;
-            var currentContext = new AsyncSynchronizationContext();
-            SynchronizationContext.SetSynchronizationContext(currentContext);
-
-            Task.Run(() =>
-            {
-                Thread.Sleep(2000);
-                for (int i = 0; i < 1000; i++)
+            ThreadPool.SetMinThreads(10000, 500);
+            var tcpServer = new TcpListener(9000);
+            tcpServer.Start();
+            Task.Run(() => {
+               
+              
+                while (true)
                 {
-                    Task.Run(() =>
-                    {
-                        Thread.Sleep(50000);
-                    });
+                    var socket = tcpServer.AcceptSocket();
+                    handleSocket(socket);
                 }
             });
 
-            try
-            {
-                var method = this.GetType().GetMethod("test");
-                var result = method.Invoke(this, null);
-                currentContext.WaitForPendingOperationsToComplete();
-            }
-            finally
-            {
-                SynchronizationContext.SetSynchronizationContext(previousContext);
-            }
+            Thread.Sleep(1000);
+            Parallel.For(0, 100000, index => {
+                try
+                {
+                    using var client = new NetClient();
+                    client.Connect(new NetAddress("127.0.0.1", 9000));
+                    Thread.Sleep(2000);
+                    client.Write(new byte[] { 0x1, 0x2 });
+                    Thread.Sleep(200);
+                }
+                catch 
+                {
 
-            var line = "09:29:18 AM  all   45.00    0.01    2.75    0.46    0.34    0.35    0.00    0.00    0.00   51.08";
-            string idle = Regex.Match(line, @"[0-9\.]+$").Value;
-
-
+                }
+            });
         }
 
         int errcount = 0;
