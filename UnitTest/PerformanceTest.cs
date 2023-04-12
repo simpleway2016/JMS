@@ -300,9 +300,12 @@ namespace UnitTest
                     client.Write(new byte[] { 0x1, 0x2 });
                     Thread.Sleep(200);
                 }
-                catch 
+                catch(SocketException ex)
                 {
+                    if(ex.ErrorCode != 10061)
+                    {
 
+                    }
                 }
             });
         }
