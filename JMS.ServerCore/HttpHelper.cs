@@ -130,12 +130,16 @@ namespace JMS.ServerCore
                         if (headers.ContainsKey(key) == false)
                         {
                             headers[key] = value;
+                            if(headers.Count > 100)
+                                throw new Exception("too many header keys");
                         }
                     }
                 }
                 else if (bData[0] != 13)
                 {
                     lineBuffer.Add(bData[0]);
+                    if (lineBuffer.Count > 10240)
+                        throw new Exception("header too big");
                 }
             }
             return requestPathLine;
