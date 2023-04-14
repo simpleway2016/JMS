@@ -227,7 +227,7 @@ namespace JMS.Infrastructures
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
 
-                if (ex.Message == "Authentication failed")
+                if (ex.Message.StartsWith("Authentication failed"))
                 {
                     client.OutputHttp401();
                 }

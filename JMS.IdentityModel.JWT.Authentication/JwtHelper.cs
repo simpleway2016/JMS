@@ -58,13 +58,13 @@ namespace JMS.IdentityModel.JWT.Authentication
                     var utcnow = DateTimeOffset.Now.ToUnixTimeSeconds();
 
                     if (Convert.ToInt64(expValue) < utcnow)
-                        throw new AuthenticationException("Out of date");
+                        throw new AuthenticationException("Authentication failed, out of date.");
                 }
                 return principal;
             }
             else
             {
-                throw new AuthenticationException("Invalid token");
+                throw new AuthenticationException("Authentication failed, invalid token.");
             }
 
 
