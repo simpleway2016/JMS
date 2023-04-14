@@ -41,54 +41,56 @@ namespace JMS.WebApiDocument
                 hostUri = new Uri($"ws://{location.ServiceAddress}:{location.Port}");
             }
 
-            using NetClient proxyClient = new NetClient();
-            await proxyClient.ConnectAsync(new NetAddress(hostUri.Host, hostUri.Port));
-            if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
+            using (NetClient proxyClient = new NetClient())
             {
-                await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
-            }
-
-            StringBuilder strBuffer = new StringBuilder();
-            var path = context.Request.GetEncodedPathAndQuery();
-            var index = path.IndexOf("/JMSRedirect/");
-            path = path.Substring(index + 12);
-            strBuffer.AppendLine($"GET {path} HTTP/1.1");
-
-            var ip = context.Connection.RemoteIpAddress.ToString();
-            string strForwared = null;
-            if ( context.Request.Headers.TryGetValue("X-Forwarded-For" , out StringValues forwardedFor))
-            {
-                context.Request.Headers.Remove("X-Forwarded-For");
-                strForwared = $"{forwardedFor}, {ip}";
-
-            }
-            else
-            {
-                strForwared = ip;
-            }
-            foreach (var pair in context.Request.Headers)
-            {
-                if (pair.Key == "Host")
+                await proxyClient.ConnectAsync(new NetAddress(hostUri.Host, hostUri.Port));
+                if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
                 {
-                    strBuffer.AppendLine($"Host: {hostUri.Host}");
+                    await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
+                }
+
+                StringBuilder strBuffer = new StringBuilder();
+                var path = context.Request.GetEncodedPathAndQuery();
+                var index = path.IndexOf("/JMSRedirect/");
+                path = path.Substring(index + 12);
+                strBuffer.AppendLine($"GET {path} HTTP/1.1");
+
+                var ip = context.Connection.RemoteIpAddress.ToString();
+                string strForwared = null;
+                if (context.Request.Headers.TryGetValue("X-Forwarded-For", out StringValues forwardedFor))
+                {
+                    context.Request.Headers.Remove("X-Forwarded-For");
+                    strForwared = $"{forwardedFor}, {ip}";
+
                 }
                 else
                 {
-                    strBuffer.AppendLine($"{pair.Key}: {pair.Value.ToString()}");
+                    strForwared = ip;
                 }
+                foreach (var pair in context.Request.Headers)
+                {
+                    if (pair.Key == "Host")
+                    {
+                        strBuffer.AppendLine($"Host: {hostUri.Host}");
+                    }
+                    else
+                    {
+                        strBuffer.AppendLine($"{pair.Key}: {pair.Value.ToString()}");
+                    }
+                }
+
+                strBuffer.AppendLine($"X-Forwarded-For: {strForwared}");
+                strBuffer.AppendLine("");
+                var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
+                //发送头部到服务器
+                proxyClient.Write(data);
+
+                NetClient client = new NetClient(new ConnectionStream(context));
+
+                readAndSend(proxyClient, client);
+
+                await readAndSend(client, proxyClient);
             }
-
-            strBuffer.AppendLine($"X-Forwarded-For: {strForwared}");
-            strBuffer.AppendLine("");
-            var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
-            //发送头部到服务器
-            proxyClient.Write(data);
-
-            NetClient client = new NetClient(new ConnectionStream(context));
-
-            readAndSend(proxyClient, client);
-
-            await readAndSend(client, proxyClient);
         }
 
         /// <summary>

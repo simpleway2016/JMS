@@ -11,10 +11,12 @@ using System.Linq;
 using JMS.Common;
 using System.Diagnostics;
 using JMS.Applications;
-using JMS.Infrastructures;
 using System.Threading;
 using System.IO;
 using JMS.Applications.CommandHandles;
+using JMS.ServerCore;
+using JMS.ServerCore.Http;
+using JMS.Applications.HttpMiddlewares;
 
 namespace JMS
 {
@@ -70,7 +72,7 @@ namespace JMS
 
         public static void Run(IConfiguration configuration,int port,out WebApi webapiInstance)
         {
-            ServiceCollection services = new ServiceCollection();
+            JmsServiceCollection services = new JmsServiceCollection();
             services.AddLogging(loggingBuilder =>
             {
                 loggingBuilder.AddConfiguration(configuration.GetSection("Logging"));
@@ -80,9 +82,14 @@ namespace JMS
             services.AddSingleton<IRequestReception, RequestReception>();
             services.AddSingleton<HttpRequestHandler>();
             services.AddSingleton<WebApi>();
+            services.UseHttp()
+                .AddHttpMiddleware<WebSocketMiddleware>()
+                .AddHttpMiddleware<JmsDocMiddleware>()
+                .AddHttpMiddleware<ProxyMiddleware>();
 
-          
             var serviceProvider = services.BuildServiceProvider();
+
+            serviceProvider.GetService<IHttpMiddlewareManager>().PrepareMiddlewares(serviceProvider);
 
             GatewayAddresses = configuration.GetSection("Gateways").Get<NetAddress[]>();
             var server = serviceProvider.GetService<WebApi>();

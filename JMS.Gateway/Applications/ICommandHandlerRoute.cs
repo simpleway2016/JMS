@@ -13,5 +13,6 @@ namespace JMS.Applications
         /// <param name="cmd"></param>
         /// <returns></returns>
         ICommandHandler AllocHandler(GatewayCommand cmd);
+        void Init();
     }
 }

@@ -11,12 +11,12 @@ namespace JMS.WebApiDocument
         public Type MicroServiceType
         {
             get;
-            init;
+            private set;
         }
         public string Description
         {
             get;
-            init;
+            private set;
         }
         /// <summary>
         /// 

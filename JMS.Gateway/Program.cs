@@ -14,6 +14,10 @@ using JMS.Applications;
 using JMS.Infrastructures;
 using System.Threading;
 using System.IO;
+using JMS.ServerCore;
+using JMS.ServerCore.Http.Middlewares;
+using JMS.ServerCore.Http;
+using JMS.Applications.HttpMiddlewares;
 
 namespace JMS
 {
@@ -80,7 +84,7 @@ namespace JMS
                 System.IO.Directory.CreateDirectory(datafolder);
             }
 
-            ServiceCollection services = new ServiceCollection();
+            JmsServiceCollection services = new JmsServiceCollection();
             services.AddLogging(loggingBuilder =>
             {
                 loggingBuilder.AddConfiguration(configuration.GetSection("Logging"));
@@ -100,6 +104,12 @@ namespace JMS
             services.AddSingleton<ClientCheckFactory>();
             services.AddSingleton<ErrorUserMarker>();
 
+            services.UseHttp()
+                .AddHttpMiddleware<WebSocketMiddleware>()
+                .AddHttpMiddleware<NormalHttpRequestMiddleware>()
+                .AddHttpMiddleware<JmsDocMiddleware>()
+                .AddHttpMiddleware<ProxyMiddleware>();
+
             var assembly = Assembly.Load(configuration.GetValue<string>("ServiceProviderAllocator:Assembly"));
             var serviceProviderAllocatorType = assembly.GetType(configuration.GetValue<string>("ServiceProviderAllocator:FullName"));
 
@@ -108,8 +118,9 @@ namespace JMS
             serviceProvider.GetService<LockKeyManager>();
             serviceProvider.GetService<FileChangeWatcher>();
             serviceProvider.GetService<TransactionStatusManager>();
+            serviceProvider.GetService<ICommandHandlerRoute>().Init();
 
-           
+            serviceProvider.GetService<IHttpMiddlewareManager>().PrepareMiddlewares(serviceProvider);
 
             var gateway = serviceProvider.GetService<Gateway>();
 

@@ -6,11 +6,60 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Security.Cryptography;
+using System.Buffers;
 
 namespace JMS.ServerCore
 {
     public class HttpHelper
     {
+        public static async Task ReadAndSendForLoop(NetClient readClient, NetClient writeClient)
+        {
+            try
+            {
+                byte[] recData = new byte[4096];
+                int readed;
+                while (true)
+                {
+                    readed = await readClient.InnerStream.ReadAsync(recData, 0, recData.Length);
+                    if (readed <= 0)
+                        break;
+                    writeClient.InnerStream.Write(recData, 0, readed);
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                readClient.Dispose();
+                writeClient.Dispose();
+            }
+        }
+
+        public static async Task ReadAndSend(NetClient readClient, NetClient writeClient,int totalLength)
+        {
+            int readed;
+            int size = 2048;
+            byte[] recData = ArrayPool<byte>.Shared.Rent(size);
+            try
+            {
+                while (totalLength > 0)
+                {
+                    readed = await readClient.InnerStream.ReadAsync(recData, 0, Math.Min(size, totalLength));
+                    if (readed <= 0)
+                        throw new SocketException();
+
+                    totalLength -= readed;
+                    writeClient?.InnerStream.Write(recData, 0, readed);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(recData);
+            }
+        }
+
         /// <summary>
         /// 获取websocket响应串
         /// </summary>

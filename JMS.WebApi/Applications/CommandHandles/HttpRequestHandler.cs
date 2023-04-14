@@ -11,17 +11,22 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Web;
 using Microsoft.CodeAnalysis;
-using JMS.Infrastructures;
 using System.Reflection.PortableExecutable;
+using JMS.ServerCore.Http;
 
 namespace JMS.Applications.CommandHandles
 {
     /// <summary>
     /// 处理http请求
     /// </summary>
-    class HttpRequestHandler 
+    class HttpRequestHandler
     {
+        IHttpMiddlewareManager _httpMiddlewareManager;
+        public HttpRequestHandler(IHttpMiddlewareManager httpMiddlewareManager)
+        {
+            this._httpMiddlewareManager = httpMiddlewareManager;
 
+        }
         public async Task Handle(NetClient client, GatewayCommand cmd)
         {
 
@@ -33,12 +38,7 @@ namespace JMS.Applications.CommandHandles
             var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null, client.InnerStream, cmd.Header);
             var requestPathLineArr = requestPathLine.Split(' ');
             var method = requestPathLineArr[0];
-           
-            int contentLength = 0;
-            if (cmd.Header.ContainsKey("Content-Length"))
-            {
-                int.TryParse(cmd.Header["Content-Length"], out contentLength);
-            }
+            var requestPath = requestPathLineArr[1];
 
             if (cmd.Header.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {
@@ -48,24 +48,8 @@ namespace JMS.Applications.CommandHandles
             {
                 client.KeepAlive = true;
             }
-            if (method == "OPTIONS")
-            {
-                client.OutputHttp204(cmd.Header);
-                return;
-            }
-            var requestPath = requestPathLineArr[1];
-            if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)
-                && cmd.Header.TryGetValue("Upgrade",out string upgrade) 
-                && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
-            {
-                await HttpProxy.WebSocketProxy(client,  requestPathLine, requestPath, cmd);
-            }
-            else
-            {
-                //以代理形式去做中转
-                await HttpProxy.Proxy(client, requestPathLine, requestPath, contentLength, cmd);
-                //HttpProxy.Redirect(client ,_serviceProviderAllocator, requestPath);
-            }
+
+            await _httpMiddlewareManager.Handle(client, method, requestPath, cmd.Header);
         }
 
       

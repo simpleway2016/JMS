@@ -13,6 +13,7 @@ using System.Web;
 using Microsoft.CodeAnalysis;
 using JMS.Infrastructures;
 using System.Reflection.PortableExecutable;
+using JMS.ServerCore.Http;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -25,23 +26,20 @@ namespace JMS.Applications.CommandHandles
         ICommandHandlerRoute _manager;
         IServiceProviderAllocator _serviceProviderAllocator;
         IRegisterServiceManager _registerServiceManager;
+        IHttpMiddlewareManager _httpMiddlewareManager;
         public HttpRequestHandler(IServiceProvider serviceProvider)
         {
             this._serviceProvider = serviceProvider;
 
             _serviceProviderAllocator = serviceProvider.GetService<IServiceProviderAllocator>();
             _registerServiceManager = _serviceProvider.GetService<IRegisterServiceManager>();
+            _manager = _serviceProvider.GetService<ICommandHandlerRoute>();
+            _httpMiddlewareManager = _serviceProvider.GetService<IHttpMiddlewareManager>();
         }
         public CommandType MatchCommandType => CommandType.HttpRequest;
 
         public async Task Handle(NetClient client, GatewayCommand cmd)
         {
-            if (_manager == null)
-            {
-                //不能在构造函数获取_manager
-                _manager = _serviceProvider.GetService<ICommandHandlerRoute>();
-            }
-
             if (cmd.Header == null)
             {
                 cmd.Header = new Dictionary<string, string>();
@@ -50,12 +48,13 @@ namespace JMS.Applications.CommandHandles
             var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders( cmd.Content, client.InnerStream, cmd.Header);
             var requestPathLineArr = requestPathLine.Split(' ');
             var method = requestPathLineArr[0];
-           
-            int contentLength = 0;
-            if (cmd.Header.ContainsKey("Content-Length"))
-            {
-                int.TryParse(cmd.Header["Content-Length"], out contentLength);
-            }
+            var requestPath = requestPathLineArr[1];
+
+            //int contentLength = 0;
+            //if (cmd.Header.ContainsKey("Content-Length"))
+            //{
+            //    int.TryParse(cmd.Header["Content-Length"], out contentLength);
+            //}
 
             if (cmd.Header.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {
@@ -65,60 +64,8 @@ namespace JMS.Applications.CommandHandles
             {
                 client.KeepAlive = true;
             }
-            if (method == "OPTIONS")
-            {
-                client.OutputHttp204(cmd.Header);
-                return;
-            }
-            var requestPath = requestPathLineArr[1];
-            if (requestPath.StartsWith("/?GetServiceProvider=") || requestPath.StartsWith("/?GetAllServiceProviders") || requestPath.StartsWith("/?FindMaster"))
-            {
-                if (contentLength > 0)
-                {
-                    await client.ReadDataAsync(new byte[contentLength], 0, contentLength);
-                }
 
-                requestPath = requestPath.Substring(2);
-                if (requestPath.Contains("="))
-                {
-                    var arr = requestPath.Split('=');
-                    var json = HttpUtility.UrlDecode(arr[1], Encoding.UTF8);
-                    if (!json.StartsWith("{"))
-                    {
-                        json = new GetServiceProviderRequest { ServiceName = json }.ToJsonString();
-                    }
-                    cmd = new GatewayCommand
-                    {
-                        Type = (CommandType)Enum.Parse(typeof(CommandType), arr[0]),
-                        Content = json,
-                        Header = cmd.Header,
-                        IsHttp = true
-                    };
-                    await _manager.AllocHandler(cmd)?.Handle(client, cmd);
-                }
-                else
-                {
-                    cmd = new GatewayCommand
-                    {
-                        Type = (CommandType)Enum.Parse(typeof(CommandType), requestPath),
-                        Header = cmd.Header,
-                        IsHttp = true
-                    };
-                    await _manager.AllocHandler(cmd)?.Handle(client, cmd);
-                }
-            }
-            else if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)
-                && cmd.Header.TryGetValue("Upgrade",out string upgrade) 
-                && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
-            {
-                await HttpProxy.WebSocketProxy(client, _serviceProviderAllocator, requestPathLine, requestPath, cmd);
-            }
-            else
-            {
-                //以代理形式去做中转
-                await HttpProxy.Proxy( _registerServiceManager, client, _serviceProviderAllocator, requestPathLine, requestPath, contentLength, cmd);
-                //HttpProxy.Redirect(client ,_serviceProviderAllocator, requestPath);
-            }
+            await _httpMiddlewareManager.Handle(client, method, requestPath, cmd.Header);            
         }
 
       

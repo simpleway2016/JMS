@@ -130,7 +130,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     }
                     var servicename = m.Groups["s"].Value;
                     var method = m.Groups["m"].Value;
-                    var config = ServiceRedirects.Configs?.FirstOrDefault(m => string.Equals(m.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
+                    var config = ServiceRedirects.Configs?.FirstOrDefault(n => string.Equals(n.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
                     if (ServiceRedirects.Configs != null && config == null)
                     {
                         context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
