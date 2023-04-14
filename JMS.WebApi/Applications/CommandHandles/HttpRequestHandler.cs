@@ -44,7 +44,7 @@ namespace JMS.Applications.CommandHandles
             {
                 client.KeepAlive = true;
             }
-            else if(cmd.Header.ContainsKey("Connection") == false)
+            else if(connection == null)
             {
                 client.KeepAlive = true;
             }

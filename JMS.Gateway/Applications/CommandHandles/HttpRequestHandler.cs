@@ -50,17 +50,11 @@ namespace JMS.Applications.CommandHandles
             var method = requestPathLineArr[0];
             var requestPath = requestPathLineArr[1];
 
-            //int contentLength = 0;
-            //if (cmd.Header.ContainsKey("Content-Length"))
-            //{
-            //    int.TryParse(cmd.Header["Content-Length"], out contentLength);
-            //}
-
             if (cmd.Header.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {
                 client.KeepAlive = true;
             }
-            else if(cmd.Header.ContainsKey("Connection") == false)
+            else if(connection == null)
             {
                 client.KeepAlive = true;
             }
