@@ -24,7 +24,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="headerName">客户端通过哪个头部传递token</param>
         /// <param name="authCallback">验证回调</param>
         /// <returns></returns>
-        [Obsolete("use UseIdentityServerAndJwtAuthentication", false)]
+        [Obsolete("use AddIdentityServerAndJwtAuthentication", false)]
         public static IServiceCollection UseIdentityServerTokenAuthentication(this IServiceCollection services,  string identityServerUrl,int refreshPublicKeySeconds = 60, string headerName = "Authorization", Func<AuthenticationParameter,  bool>  authCallback = null)
         {
             AuthenticationHandler.HeaderNames = new string[] { headerName};
@@ -53,7 +53,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="headerNames">客户端通过哪些头部传递token，默认：Authorization</param>
         /// <param name="authCallback">验证回调</param>
         /// <returns></returns>
-        public static IServiceCollection UseIdentityServerAndJwtAuthentication(this IServiceCollection services, string identityServerUrl, int refreshPublicKeySeconds = 60, string[] headerNames = null, Func<AuthenticationParameter, bool> authCallback = null)
+        public static IServiceCollection AddIdentityServerAndJwtAuthentication(this IServiceCollection services, string identityServerUrl, int refreshPublicKeySeconds = 60, string[] headerNames = null, Func<AuthenticationParameter, bool> authCallback = null)
         {
             if(headerNames == null)
             {
@@ -86,7 +86,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="headerNames">客户端通过哪些头部传递token，默认：Authorization</param>
         /// <param name="authCallback">验证回调</param>
         /// <returns></returns>
-        public static IServiceCollection UseJwtTokenAuthentication(this IServiceCollection services, string jwtSecretKey,  string[] headerNames = null, Func<AuthenticationParameter, bool> authCallback = null)
+        public static IServiceCollection AddJwtTokenAuthentication(this IServiceCollection services, string jwtSecretKey,  string[] headerNames = null, Func<AuthenticationParameter, bool> authCallback = null)
         {
             if (headerNames == null)
             {

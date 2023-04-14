@@ -48,7 +48,8 @@ namespace JMS.Applications.CommandHandles
             }
 
             var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders( cmd.Content, client.InnerStream, cmd.Header);
-            var method = requestPathLine.Split(' ')[0];
+            var requestPathLineArr = requestPathLine.Split(' ');
+            var method = requestPathLineArr[0];
            
             int contentLength = 0;
             if (cmd.Header.ContainsKey("Content-Length"))
@@ -69,7 +70,7 @@ namespace JMS.Applications.CommandHandles
                 client.OutputHttp204(cmd.Header);
                 return;
             }
-            var requestPath = requestPathLine.Split(' ')[1];
+            var requestPath = requestPathLineArr[1];
             if (requestPath.StartsWith("/?GetServiceProvider=") || requestPath.StartsWith("/?GetAllServiceProviders") || requestPath.StartsWith("/?FindMaster"))
             {
                 if (contentLength > 0)

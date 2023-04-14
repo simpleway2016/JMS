@@ -31,7 +31,8 @@ namespace JMS.Applications.CommandHandles
             }
 
             var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null, client.InnerStream, cmd.Header);
-            var method = requestPathLine.Split(' ')[0];
+            var requestPathLineArr = requestPathLine.Split(' ');
+            var method = requestPathLineArr[0];
            
             int contentLength = 0;
             if (cmd.Header.ContainsKey("Content-Length"))
@@ -52,7 +53,7 @@ namespace JMS.Applications.CommandHandles
                 client.OutputHttp204(cmd.Header);
                 return;
             }
-            var requestPath = requestPathLine.Split(' ')[1];
+            var requestPath = requestPathLineArr[1];
             if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)
                 && cmd.Header.TryGetValue("Upgrade",out string upgrade) 
                 && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
