@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AssemblyDocumentReader\JMS.AssemblyDocumentReader.csproj" />
     <ProjectReference Include="..\JMS.Gateway\JMS.Gateway.csproj" />
+    <ProjectReference Include="..\JMS.IdentityModel.JWT.Authentication\JMS.IdentityModel.JWT.Authentication.csproj" />
     <ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
     <ProjectReference Include="..\JMS.Proxy\JMS.Proxy.csproj" />
     <ProjectReference Include="..\JMS.ServiceProvider.AspNetCore\JMS.ServiceProvider.AspNetCore.csproj" />

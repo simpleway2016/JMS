@@ -16,65 +16,22 @@ using Way.Lib;
 
 namespace JMS.IdentityModel.JWT.Authentication
 {
-    public class AuthenticationParameter
+
+    class JwtAuthenticationHandler : IAuthenticationHandler
     {
-        /// <summary>
-        /// 待验证的token
-        /// </summary>
-        public string Token { get; }
-        /// <summary>
-        /// token解码后内容，可在回调中修改
-        /// </summary>
-        public object Content { get; set; }
-        public AuthenticationParameter(string token)
-        {
-            this.Token = token;
-        }
-    }
-    class AuthenticationHandler : IAuthenticationHandler
-    {
-        static ILogger<AuthenticationHandler> _logger;
+        static ILogger<JwtAuthenticationHandler> _logger;
         public static Func<AuthenticationParameter, bool> Callback;
         public static string[] HeaderNames;
-        public static string ServerUrl;
-        
-        public static int RefreshPublicKeySeconds;
-        static RsaSecurityKey rsaSecurityKey;
-        public AuthenticationHandler(ILogger<AuthenticationHandler> logger)
+        public static string JwtKey;
+        public JwtAuthenticationHandler(ILogger<JwtAuthenticationHandler> logger)
         {
             _logger = logger;
 
         }
 
-        internal static void GetPublicKey()
-        {
-            while(true)
-            {
-                try
-                {
-                    if (ServerUrl.EndsWith("/") == false)
-                        ServerUrl += "/";
-                  
-                    rsaSecurityKey = IdentityModelHelper.GetSecurityKey(ServerUrl);
-
-                    Thread.Sleep(RefreshPublicKeySeconds*1000);
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, "");
-                    Thread.Sleep(1000);
-                    continue;
-                }
-            }
-        }
 
         public object Authenticate(IDictionary<string, string> headers)
         {
-            for(int i = 0; i < 8 && rsaSecurityKey == null; i ++)
-            {
-                Thread.Sleep(1000);
-            }
-
             string token = null;
             foreach (var header in HeaderNames)
             {
@@ -93,8 +50,8 @@ namespace JMS.IdentityModel.JWT.Authentication
                 {
                     token = token.Substring(7);
                 }
-                
-                var ret = JwtHelper.Authenticate(rsaSecurityKey,token);
+               
+                var ret = JwtHelper.Authenticate(JwtKey , token);
 
                 if (Callback != null)
                 {

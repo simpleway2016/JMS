@@ -16,7 +16,7 @@ using Way.Lib;
 namespace JMS.Token.AspNetCore
 {
 
-    class MyAuthHandler : Microsoft.AspNetCore.Authentication.IAuthenticationHandler
+    class AuthHandler : Microsoft.AspNetCore.Authentication.IAuthenticationHandler
     {
         public const string SchemeName = "JMS.Token";
         AuthenticationScheme _scheme;
@@ -25,7 +25,7 @@ namespace JMS.Token.AspNetCore
         public static Func<AuthenticationParameter, bool> Callback;
         public static NetAddress ServerAddress;
 
-        public MyAuthHandler(ILogger<TokenClient> logger)
+        public AuthHandler(ILogger<TokenClient> logger)
         {
             TokenClient.Logger = logger;
         }

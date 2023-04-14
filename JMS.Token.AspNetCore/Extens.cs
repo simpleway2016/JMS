@@ -37,18 +37,18 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </param>
         public static AuthenticationBuilder AddJmsTokenAuthentication(this IServiceCollection services, NetAddress serverAddress, string[] headerNames, Func<AuthenticationParameter, bool> authCallback = null)
         {
-            MyAuthHandler.HeaderNames = headerNames;
-            MyAuthHandler.ServerAddress = serverAddress;
-            MyAuthHandler.Callback = authCallback;
+            AuthHandler.HeaderNames = headerNames;
+            AuthHandler.ServerAddress = serverAddress;
+            AuthHandler.Callback = authCallback;
 
             services.AddSingleton<TokenClient>(p => new TokenClient(serverAddress));
 
             return services.AddAuthentication(options =>
             {
 
-                options.AddScheme<MyAuthHandler>(MyAuthHandler.SchemeName, "default scheme");
-                options.DefaultAuthenticateScheme = MyAuthHandler.SchemeName;
-                options.DefaultChallengeScheme = MyAuthHandler.SchemeName;
+                options.AddScheme<AuthHandler>(AuthHandler.SchemeName, "default scheme");
+                options.DefaultAuthenticateScheme = AuthHandler.SchemeName;
+                options.DefaultChallengeScheme = AuthHandler.SchemeName;
             });
         }
     }
