@@ -43,7 +43,7 @@ namespace JMS
         /// <param name="contentBytes"></param>
         public void OutputHttpContent(byte[] contentBytes)
         {
-            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {contentBytes.Length}\r\nConnection: keep-alive\r\n\r\n");
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {contentBytes.Length}\r\nConnection: keep-alive\r\n\r\n");
             this.Write(data.Concat(contentBytes).ToArray());
         }
 
@@ -214,6 +214,31 @@ namespace JMS
             var isgzip = (flag & 1) == 1;
             this.KeepAlive = (flag & 2) == 2;
             var len = flag >> 2;
+            var datas = new byte[len];
+            await this.ReadDataAsync(datas, 0, datas.Length);
+
+            if (isgzip)
+                datas = GZipHelper.Decompress(datas);
+            return datas;
+        }
+
+        public async Task<byte[]> ReadServiceDataBytesAsync(int flag,int maxLength)
+        {
+            if (flag == 1179010630)
+                return new byte[0];
+
+            var isgzip = (flag & 1) == 1;
+            this.KeepAlive = (flag & 2) == 2;
+            var len = flag >> 2;
+            if(len > maxLength)
+            {
+                this.WriteServiceData(new InvokeResult
+                {
+                    Success = false,
+                    Error = "Command is too big"
+                });
+                throw new Exception("Command is too big");
+            }
             var datas = new byte[len];
             await this.ReadDataAsync(datas, 0, datas.Length);
 

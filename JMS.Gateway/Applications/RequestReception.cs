@@ -53,7 +53,7 @@ namespace JMS.Applications
             else
             {
                 var len = BitConverter.ToInt32(data);
-                data = await client.ReadServiceDataBytesAsync(len);
+                data = await client.ReadServiceDataBytesAsync(len , 102400);
                 return Encoding.UTF8.GetString(data).FromJson<GatewayCommand>();
             }    
         }

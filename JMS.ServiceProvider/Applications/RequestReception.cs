@@ -70,7 +70,7 @@ namespace JMS.Applications
             }
             else
             {
-                data = await client.ReadServiceDataBytesAsync(BitConverter.ToInt32(data));
+                data = await client.ReadServiceDataBytesAsync(BitConverter.ToInt32(data), _MicroServiceProvider.CommandMaxSize);
                 return Encoding.UTF8.GetString(data).FromJson<InvokeCommand>();
             }
         }

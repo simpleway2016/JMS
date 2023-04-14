@@ -15,6 +15,7 @@ using System.Reflection.PortableExecutable;
 using System.Net;
 using System.Buffers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using JMS.ServerCore;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -106,9 +107,8 @@ namespace JMS.Applications.CommandHandles
                 if (inputContentLength > 0)
                 {
                     //发送upload数据到服务器
-                    data = new byte[inputContentLength];
-                    await client.ReadDataAsync(data, 0, inputContentLength);
-                    proxyClient.Write(data);
+                    await HttpHelper.ReadAndSend(client, proxyClient, inputContentLength);
+
                 }
                 else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
                 {
@@ -125,9 +125,7 @@ namespace JMS.Applications.CommandHandles
                         }
                         else
                         {
-                            data = new byte[inputContentLength];
-                            await client.ReadDataAsync(data, 0, inputContentLength);
-                            proxyClient.InnerStream.Write(data, 0, inputContentLength);
+                            await HttpHelper.ReadAndSend(client, proxyClient, inputContentLength);
 
                             line = await client.ReadLineAsync();
                             proxyClient.WriteLine(line);
@@ -159,9 +157,7 @@ namespace JMS.Applications.CommandHandles
 
                 if (inputContentLength > 0)
                 {
-                    data = new byte[inputContentLength];
-                    await proxyClient.ReadDataAsync(data, 0, inputContentLength);
-                    client.Write(data);
+                    await HttpHelper.ReadAndSend(proxyClient, client, inputContentLength);
                 }
                 else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
                 {
@@ -178,9 +174,7 @@ namespace JMS.Applications.CommandHandles
                         }
                         else
                         {
-                            data = new byte[inputContentLength];
-                            await proxyClient.ReadDataAsync(data, 0, inputContentLength);
-                            client.InnerStream.Write(data, 0, inputContentLength);
+                            await HttpHelper.ReadAndSend(proxyClient, client, inputContentLength);
 
                             line = await proxyClient.ReadLineAsync();
                             client.WriteLine(line);
