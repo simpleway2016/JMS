@@ -106,7 +106,7 @@ namespace JMS
 
             services.UseHttp()
                 .AddHttpMiddleware<WebSocketMiddleware>()
-                .AddHttpMiddleware<NormalHttpRequestMiddleware>()
+                .AddHttpMiddleware<FunctionRequestMiddleware>()
                 .AddHttpMiddleware<JmsDocMiddleware>()
                 .AddHttpMiddleware<ProxyMiddleware>();
 

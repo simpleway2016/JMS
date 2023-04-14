@@ -10,10 +10,10 @@ using Way.Lib;
 
 namespace JMS.Applications.HttpMiddlewares
 {
-    internal class NormalHttpRequestMiddleware : IHttpMiddleware
+    internal class FunctionRequestMiddleware : IHttpMiddleware
     {
         ICommandHandlerRoute _commandHandlerRoute;
-        public NormalHttpRequestMiddleware(ICommandHandlerRoute commandHandlerRoute)
+        public FunctionRequestMiddleware(ICommandHandlerRoute commandHandlerRoute)
         {
             this._commandHandlerRoute = commandHandlerRoute;
 
