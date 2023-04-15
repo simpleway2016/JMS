@@ -61,8 +61,12 @@ namespace ServiceStatusViewer.ViewModels
                             {
                                 if (history.Header != null)
                                     this.Header = System.Text.Encoding.UTF8.GetString(history.Header);
-                                if(history.Parameters != null)
+                                else
+                                    this.Header = "";
+                                if (history.Parameters != null)
                                     this.ParameterString = System.Text.Encoding.UTF8.GetString(history.Parameters);
+                                else
+                                    this.ParameterString = "[]";
                             }
                         }
                     }
