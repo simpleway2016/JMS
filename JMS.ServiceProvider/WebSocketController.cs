@@ -67,6 +67,11 @@ namespace JMS
                         if (list == null)
                             list = new List<byte>();
                         list.AddRange(buffer.Slice(0, ret.Count));
+                        if (list.Count > 102400)
+                        {
+                            list.Clear();
+                            throw new Exception("websocket data is too big");
+                        }
                     }
                 }
                 if (list != null)
