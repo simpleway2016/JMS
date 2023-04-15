@@ -63,7 +63,7 @@ namespace JMS.ServerCore
         /// <summary>
         /// 获取websocket响应串
         /// </summary>
-        public static string GetWebSocketResponse(IDictionary<string, string> header)
+        public static string GetWebSocketResponse(IDictionary<string, string> header,ref string subProtocol)
         {
             string secWebSocketKey = header["Sec-WebSocket-Key"].ToString();
             string m_Magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -83,6 +83,14 @@ namespace JMS.ServerCore
             if (header.ContainsKey("Host"))
             {
                 response.AppendFormat("WebSocket-Location: {0}\r\n", header["Host"]);
+            }
+            if(subProtocol != null)
+            {
+                if (subProtocol.Contains(","))
+                {
+                    subProtocol = subProtocol.Split(',')[0];
+                }
+                response.AppendFormat("Sec-WebSocket-Protocol: {0}\r\n", subProtocol);
             }
 
             response.Append("\r\n");

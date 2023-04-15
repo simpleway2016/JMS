@@ -27,6 +27,12 @@ namespace JMS
             }
         }
 
+        public string SubProtocol
+        {
+            get;
+            internal set;
+        }
+
         public abstract Task OnConnected(WebSocket webSocket);
     }
 

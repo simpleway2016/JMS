@@ -1039,6 +1039,8 @@ Content-Length: 0
             foreach (var port in serverPorts)
             {
                 var clientWebsocket = new ClientWebSocket();
+                clientWebsocket.Options.AddSubProtocol("chat");
+                clientWebsocket.Options.AddSubProtocol("jjdoc");
                 clientWebsocket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/TestWebSocketService?name=test"), CancellationToken.None).ConfigureAwait(true).GetAwaiter().GetResult();
                 var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
                 if (text != "hello")

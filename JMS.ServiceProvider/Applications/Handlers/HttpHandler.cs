@@ -83,7 +83,7 @@ namespace JMS.Applications
 
             try
             {
-                var responseText = JMS.ServerCore.HttpHelper.GetWebSocketResponse(cmd.Header);
+                var responseText = JMS.ServerCore.HttpHelper.GetWebSocketResponse(cmd.Header , ref subProtocol);
                 netclient.InnerStream.Write(Encoding.UTF8.GetBytes(responseText));
             }
             catch (Exception)
@@ -104,7 +104,7 @@ namespace JMS.Applications
                         new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
 
                     var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
-
+                    controller.SubProtocol = subProtocol;
 
                     await controller.OnConnected(websocket);
                 }
