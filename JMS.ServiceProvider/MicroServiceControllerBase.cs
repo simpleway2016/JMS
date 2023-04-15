@@ -59,7 +59,7 @@ public class MicroServiceControllerBase: BaseJmsController
         {
             if(_transactionid == null)
             {
-                _transactionid = this.Header["TranId"];
+                _transactionid = this.Headers["TranId"];
             }
             return _transactionid;
         }
@@ -90,7 +90,7 @@ public class MicroServiceControllerBase: BaseJmsController
         var auth = ServiceProvider?.GetService<IAuthenticationHandler>();
         if (auth != null)
         {
-            return auth.Authenticate(this.Header);
+            return auth.Authenticate(this.Headers);
         }
         return null;
     }

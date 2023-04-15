@@ -10,19 +10,19 @@ namespace JMS
     {
         internal static AsyncLocal<LocalObject> RequestingObject = new AsyncLocal<LocalObject>();
 
-        private IDictionary<string, string> _Header;
+        private IDictionary<string, string> _Headers;
         /// <summary>
         /// 请求的头
         /// </summary>
-        public IDictionary<string, string> Header
+        public IDictionary<string, string> Headers
         {
             get
             {
-                if (_Header == null && RequestingObject.Value != null)
+                if (_Headers == null && RequestingObject.Value != null)
                 {
-                    _Header = RequestingObject.Value.Command.Header;
+                    _Headers = RequestingObject.Value.Command.Header;
                 }
-                return _Header;
+                return _Headers;
             }
         }
 

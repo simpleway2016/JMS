@@ -26,9 +26,9 @@ namespace JMS
         {
             this.AgreeCommit = true;
             this.TransactionId = controller.TransactionId;
-            if (controller.Header.ContainsKey("TranFlag"))
+            if (controller.Headers.ContainsKey("TranFlag"))
             {
-                this.TransactionFlag = controller.Header["TranFlag"];
+                this.TransactionFlag = controller.Headers["TranFlag"];
             }
         }
 
