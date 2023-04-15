@@ -50,7 +50,14 @@ namespace JMS.TokenServer
             _disabledTokens.TryAdd(token, utcExpireTime);
             foreach ( var pair in _clients )
             {
-                pair.Key.OnTokenDisabled(token, utcExpireTime);
+                try
+                {
+                    pair.Key.OnTokenDisabled(token, utcExpireTime);
+                }
+                catch (Exception)
+                {
+                    _clients.TryRemove(pair.Key, out bool o);
+                }
             }
         }
     }
