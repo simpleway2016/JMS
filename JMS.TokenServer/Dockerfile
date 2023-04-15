@@ -18,4 +18,4 @@ RUN dotnet publish "JMS.TokenServer.csproj" -c Release -o /app/publish /p:UseApp
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "JMS.TokenServer.dll"]
+ENTRYPOINT ["dotnet", "JMS.TokenServer.dll","-s:share"]

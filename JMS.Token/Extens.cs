@@ -19,9 +19,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="headerName">客户端通过哪个头部传递token</param>
         /// <param name="authCallback">验证回调</param>
         /// <returns></returns>
-        public static IServiceCollection UseJmsTokenAuthentication(this IServiceCollection services,  NetAddress serverAddress, string headerName = "Authorization", Func<AuthenticationParameter,  bool>  authCallback = null)
+        public static IServiceCollection AddJmsTokenAuthentication(this IServiceCollection services,  NetAddress serverAddress, string headerName = "Authorization", Func<AuthenticationParameter,  bool>  authCallback = null)
         {
-            return UseJmsTokenAuthentication(services, serverAddress, new string[] { headerName }, authCallback);
+            return AddJmsTokenAuthentication(services, serverAddress, new string[] { headerName }, authCallback);
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="headerNames">客户端通过哪个头部传递token，可以同时定义多个头，如 ['Authorization','Sec-WebSocket-Protocol']，任何一个头验证通过都是可以的</param>
         /// <param name="authCallback">验证回调</param>
         /// <returns></returns>
-        public static IServiceCollection UseJmsTokenAuthentication(this IServiceCollection services, NetAddress serverAddress, string[] headerNames, Func<AuthenticationParameter, bool> authCallback = null)
+        public static IServiceCollection AddJmsTokenAuthentication(this IServiceCollection services, NetAddress serverAddress, string[] headerNames, Func<AuthenticationParameter, bool> authCallback = null)
         {
             AuthenticationHandler.HeaderNames = headerNames;
             AuthenticationHandler.ServerAddress = serverAddress;

@@ -14,6 +14,7 @@ using System.Threading;
 using JMS.Common.Net;
 using Org.BouncyCastle.Bcpg;
 using System.IO;
+using JMS.Common;
 
 namespace JMS.TokenServer
 {
@@ -47,16 +48,25 @@ namespace JMS.TokenServer
             ThreadPool.SetMinThreads(w, c);
 
             var builder = new ConfigurationBuilder();
-            var appSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-            appSettingPath = Path.Combine(appSettingPath, "jms.tokenserver");
-            if (Directory.Exists(appSettingPath) == false)
+
+            CommandArgParser cmdArg = new CommandArgParser(args);
+            var appSettingPath = cmdArg.TryGetValue<string>("-s");
+
+            if (appSettingPath == null)
+                appSettingPath = "appsettings.json";
+            if (appSettingPath == "share")
             {
-                Directory.CreateDirectory(appSettingPath);
-            }
-            appSettingPath = Path.Combine(appSettingPath, "appsettings.json");
-            if (File.Exists(appSettingPath) == false)
-            {
-                File.Copy("./appsettings.json", appSettingPath);
+                appSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                appSettingPath = Path.Combine(appSettingPath, "jms.tokenserver");
+                if (Directory.Exists(appSettingPath) == false)
+                {
+                    Directory.CreateDirectory(appSettingPath);
+                }
+                appSettingPath = Path.Combine(appSettingPath, "appsettings.json");
+                if (File.Exists(appSettingPath) == false)
+                {
+                    File.Copy("./appsettings.json", appSettingPath);
+                }
             }
 
             builder.AddJsonFile(appSettingPath, optional: true, reloadOnChange: true);
