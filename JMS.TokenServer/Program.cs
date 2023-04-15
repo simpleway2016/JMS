@@ -176,6 +176,12 @@ namespace JMS.TokenServer
             }
             catch (Exception ex)
             {
+                while (ex.InnerException != null)
+                    ex = ex.InnerException;
+
+                if (ex is SocketException)
+                    return;
+
                 Logger.LogError(ex, ex.Message);
             }
             finally
