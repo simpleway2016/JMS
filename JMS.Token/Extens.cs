@@ -34,6 +34,9 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddJmsTokenAuthentication(this IServiceCollection services, NetAddress serverAddress, string[] headerNames, Func<AuthenticationParameter, bool> authCallback = null)
         {
+            if (headerNames == null)
+                headerNames = new string[] { "Authorization" };
+
             AuthenticationHandler.HeaderNames = headerNames;
             AuthenticationHandler.ServerAddress = serverAddress;
 

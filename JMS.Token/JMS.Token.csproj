@@ -8,11 +8,12 @@
     <Authors>Jack.T</Authors>
     <Company>JMS</Company>
     <Product>JMS</Product>
-    <Version>1.0.2</Version>
+    <Version>1.0.2.2</Version>
     <Description>基于JMS.Token的身份验证
 services.AddJmsTokenAuthentication(new NetAddress("127.0.0.1", 9911));
 
 用依赖注入获取TokenClient实例，生成token</Description>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
