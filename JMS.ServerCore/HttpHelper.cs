@@ -130,17 +130,13 @@ namespace JMS.ServerCore
                     lineBuffer.Clear();
                     if (requestPathLine == null)
                         requestPathLine = preRequestString + line;
-
-                    if ((indexFlag = line.IndexOf(':',0)) > 0 && indexFlag < line.Length - 1)
+                    else  if ((indexFlag = line.IndexOf(':',0)) > 0 && indexFlag < line.Length - 1)
                     {
                         var key = line.Substring(0, indexFlag);
                         var value = line.Substring(indexFlag + 1).Trim();
-                        if (headers.ContainsKey(key) == false)
-                        {
-                            headers[key] = value;
-                            if(headers.Count > 100)
-                                throw new Exception("too many header keys");
-                        }
+                        headers[key] = value;
+                        if (headers.Count > 100)
+                            throw new Exception("too many header keys");
                     }
                 }
                 else if (bData[0] != 13)
