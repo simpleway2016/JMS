@@ -14,7 +14,7 @@ app.UseAuthorization();
 this.User.FindFirstValue("Content")
 
 用依赖注入获取TokenClient实例，生成token</Description>
-    <Version>2.0.3.1</Version>
+    <Version>2.0.3.2</Version>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
