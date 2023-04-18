@@ -22,6 +22,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
 		<ProjectReference Include="..\JMS.ServerCore\JMS.ServerCore.csproj" />
+		<ProjectReference Include="..\JMS.WebApiDocument\JMS.WebApiDocument.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Update="appsettings.json">

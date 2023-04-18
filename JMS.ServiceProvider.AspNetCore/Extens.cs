@@ -64,6 +64,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName,string description, NetAddress[] gateways, bool allowGatewayProxy = false, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
         {
+            MicroServiceHost host = null;
             if (Hosts.ContainsKey(services) == false)
             {
                 services.AddScoped<ApiTransactionDelegate>();
@@ -73,17 +74,25 @@ namespace Microsoft.Extensions.DependencyInjection
                
 
                 Gateways = gateways;
-                MicroServiceHost host = new MicroServiceHost(services);
+                host = new MicroServiceHost(services);
                 services.AddSingleton<MicroServiceHost>(host);
-
-                host.UseSSL(sslConfig);
-                if (configOption != null)
-                {
-                    configOption(host);
-                }
+               
                 Hosts[services] = host;
             }
-            Hosts[services].RegisterWebServer(webServerUrl, serviceName,description , allowGatewayProxy);
+            else
+            {
+                host = Hosts[services];
+            }
+
+            if(sslConfig != null)
+            {
+                host.UseSSL(sslConfig);                
+            }
+            if (configOption != null)
+            {
+                configOption(host);
+            }
+            host.RegisterWebServer(webServerUrl, serviceName,description , allowGatewayProxy);
             return services;
         }
 
