@@ -20,6 +20,7 @@ namespace JMS.Token
         internal static ConcurrentDictionary<(string, int), string[]> ServerKeys = new ConcurrentDictionary<(string, int), string[]>();
         DisableTokenListener _DisableTokenListener;
         public static ILogger<TokenClient> Logger;
+        static Random RandomObj = new Random();
         /// <summary>
         /// 
         /// </summary>
@@ -149,7 +150,8 @@ namespace JMS.Token
             {
                 throw new AuthenticationException("token is invalid");
             }
-
+            if (token.Contains("."))
+                token = token.Replace(".", "");
             return VerifyString(token);
         }
 
@@ -164,7 +166,10 @@ namespace JMS.Token
             var signstr = sign(body , keys);
             var text = new string[] { body, signstr }.ToJsonString(false);
             var bs = Encoding.UTF8.GetBytes(text);
-            return Convert.ToBase64String(bs);
+            var token = Convert.ToBase64String(bs);
+            var index = RandomObj.Next(1, token.Length / 2);
+            token = $"{token.Substring(0,index)}.{token.Substring(index)}";
+            return token;
         }
 
         class StringToken
