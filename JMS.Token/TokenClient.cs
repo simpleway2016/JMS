@@ -152,6 +152,10 @@ namespace JMS.Token
             }
             if (token.Contains("."))
                 token = token.Replace(".", "");
+            if (token.Contains("_"))
+                token = token.Replace("_", "=");
+            if (token.Contains("-"))
+                token = token.Replace("-", "/");
             return VerifyString(token);
         }
 
@@ -166,7 +170,7 @@ namespace JMS.Token
             var signstr = sign(body , keys);
             var text = new string[] { body, signstr }.ToJsonString(false);
             var bs = Encoding.UTF8.GetBytes(text);
-            var token = Convert.ToBase64String(bs);
+            var token = Convert.ToBase64String(bs).Replace("=" , "_").Replace("/", "-");
             var index = RandomObj.Next(1, token.Length / 2);
             token = $"{token.Substring(0,index)}.{token.Substring(index)}";
             return token;

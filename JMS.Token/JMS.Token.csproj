@@ -8,7 +8,7 @@
     <Authors>Jack.T</Authors>
     <Company>JMS</Company>
     <Product>JMS</Product>
-    <Version>1.0.2.6</Version>
+    <Version>1.0.2.7</Version>
     <Description>基于JMS.Token的身份验证
 services.AddJmsTokenAuthentication(new NetAddress("127.0.0.1", 9911));
 
