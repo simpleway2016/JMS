@@ -57,7 +57,7 @@ namespace JMS.ServiceProvider.AspNetCore
                     {
                         try
                         {
-                            var authRet = context.AuthenticateAsync(author.AuthenticationSchemes).ConfigureAwait(false).GetAwaiter().GetResult();
+                            var authRet = await context.AuthenticateAsync(author.AuthenticationSchemes);
 
                             if (authRet.Succeeded == false)
                             {
