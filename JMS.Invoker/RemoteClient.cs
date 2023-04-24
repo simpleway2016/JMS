@@ -70,7 +70,6 @@ namespace JMS
         /// <param name="port">网关端口</param>
         /// <param name="proxyAddress"></param>
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
-        /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
         public RemoteClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null,X509Certificate2 serviceClientCert = null)
         {
@@ -86,7 +85,6 @@ namespace JMS
         /// <param name="gatewayAddresses">多个集群网关地址</param>
         /// <param name="proxyAddress"></param>
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
-        /// <param name="gatewayClientCert">与网关互通的证书</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
         public RemoteClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null, X509Certificate2 serviceClientCert = null)
         {

@@ -69,7 +69,7 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.Parameters = parameters;
 
             var uri = new Uri(InvokingInfo.ServiceLocation.ServiceAddress);
-            _client = NetClientPool.CreateClient(null, uri.Host, uri.Port, (client) => {
+            _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) => {
                 if (uri.Scheme == "https")
                 {
                     client.AsSSLClient(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
@@ -141,7 +141,7 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.Parameters = parameters;
 
             var uri = new Uri(InvokingInfo.ServiceLocation.ServiceAddress);
-            _client = await NetClientPool.CreateClientAsync(null, uri.Host, uri.Port, (client) => {
+            _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) => {
                 if (uri.Scheme == "https")
                 {
                     return client.AsSSLClientAsync(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
@@ -347,10 +347,15 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public void RetryTranaction(NetAddress proxyAddress, ClientServiceDetail serviceLocation, byte[] cert, string tranId,string tranFlag)
+        public void RetryTranaction(NetAddress proxyAddress, ClientServiceDetail serviceLocation, byte[] certData, string tranId,string tranFlag)
         {
+            X509Certificate2 cert = null;
+            if (certData != null)
+            {
+                cert = new X509Certificate2(certData);
+            }
             var uri = new Uri(serviceLocation.ServiceAddress);
-            _client = NetClientPool.CreateClient(null, uri.Host, uri.Port, (client) => {
+            _client = NetClientPool.CreateClient(proxyAddress,new NetAddress(uri.Host, uri.Port) { Certificate = cert }, (client) => {
                 if (uri.Scheme == "https")
                 {
                     client.AsSSLClient(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
