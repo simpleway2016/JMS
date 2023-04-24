@@ -273,9 +273,17 @@ Content-Length2: 0
                 throw new Exception("多次创建client连接");
         }
 
+        void startSocket5Proxy()
+        {
+            Task.Run(() => {
+                JMS.Proxy.Program.Main(new string[] { "8918" });
+            });
+        }
+
         [TestMethod]
         public void AsyncHttpTest()
         {
+            startSocket5Proxy();
             var normalTest = new NormalTest();
             normalTest.StartGateway();
 
@@ -309,13 +317,25 @@ Content-Length2: 0
                 catch (Exception ex)
                 {
                     if (ex.Message.Contains("改为"))
-                        return;
-                    throw ex;
+                    { }
+                    else
+                    {
+                        throw ex;
+                    }
                 }
 
             }
 
-          
+            using (var remoteClient = new RemoteClient(gateways, new NetAddress("127.0.0.1", 8918)))
+            {
+
+                var service2 = remoteClient.TryGetMicroService("TestCrashService");
+
+                var name = service2.Invoke<string>("/Crash/GetName");
+                Debug.Assert(name == "Jack", "结果错误");
+            }
+
+
         }
 
         [TestMethod]

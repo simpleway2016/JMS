@@ -43,6 +43,12 @@ namespace UnitTest.Controllers
         {
             
         }
+
+        [HttpGet]
+        public string GetName()
+        {
+            return "Jack";
+        }
     }
 
 }
