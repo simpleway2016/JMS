@@ -48,7 +48,17 @@ namespace JMS.ServiceProvider.AspNetCore
                     var controllerFactory = app.ApplicationServices.GetService<ControllerFactory>();
 
                     var controller = controllerFactory.Create(context, context.RequestServices, out ControllerActionDescriptor desc);
+                    if(desc == null)
+                    {
+                        netClient.WriteServiceData(new InvokeResult
+                        {
+                            Success = false,
+                            Error = $"找不到{context.Request.Path.Value}对应的action",
 
+                        });
+                        releaseNetClient(netClient);
+                        return true;
+                    }
                     var author = desc.MethodInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
                     if (author == null && desc.MethodInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute>() == null)
                         author = desc.ControllerTypeInfo.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();

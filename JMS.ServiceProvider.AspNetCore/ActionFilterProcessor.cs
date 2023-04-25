@@ -30,7 +30,8 @@ namespace JMS.ServiceProvider.AspNetCore
             if (desc.Properties.TryGetValue("jms_filters", out object o) == false)
             {
                 var filters = (from m in desc.FilterDescriptors
-                               where m.Filter.GetType() != typeof(UnsupportedContentTypeFilter) &&
+                               where !(m.Filter is UnsupportedContentTypeFilter) &&
+                               !(m.Filter is Microsoft.AspNetCore.Mvc.Infrastructure.ModelStateInvalidFilter) &&
                                (m.Filter is TypeFilterAttribute || m.Filter.GetType().GetInterface(typeof(IActionFilter).FullName) != null)
                                select (m.Filter is TypeFilterAttribute) ? ((TypeFilterAttribute)m.Filter).ImplementationType : m.Filter.GetType()).ToArray();
                 _actionfilters = new IActionFilter[filters.Length];

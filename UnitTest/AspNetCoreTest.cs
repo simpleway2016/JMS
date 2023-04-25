@@ -369,7 +369,7 @@ Content-Length2: 0
                         service = remoteClient.TryGetMicroService("TestWebService");
                     }
 
-                    var ret = service.Invoke<WeatherForecast[]>("/WeatherForecast/Get");
+                    var ret = service.Invoke<WeatherForecast[]>("/MyWeatherForecast/Get");
                     if (ret.Length != 5)
                         throw new Exception("返回结果错误");
                 }
@@ -425,7 +425,7 @@ Content-Length2: 0
 
                     remoteClient.BeginTransaction();
 
-                    var ret = service.Invoke<WeatherForecast[]>("/WeatherForecast/Get");
+                    var ret = service.Invoke<WeatherForecast[]>("/MyWeatherForecast/Get");
                     if (ret.Length != 5)
                         throw new Exception("返回结果错误");
 
@@ -461,6 +461,7 @@ Content-Length2: 0
         public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
         {
             feature.Controllers.Add(typeof(WeatherForecastController).GetTypeInfo());
+            feature.Controllers.Add(typeof(MyWeatherForecastController).GetTypeInfo());
         }
     }
     class MyCrashFeatureProvider : IApplicationFeatureProvider<ControllerFeature>

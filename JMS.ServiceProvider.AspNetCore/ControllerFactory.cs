@@ -58,14 +58,16 @@ namespace JMS.ServiceProvider.AspNetCore
         public object Create(HttpContext context, IServiceProvider serviceProvider,out ControllerActionDescriptor controllerActionDescriptor)
         {
             controllerActionDescriptor = null;
-            var paths = context.Request.Path.Value.Split('/');
+            var path = context.Request.Path.Value;
+            if (path.StartsWith("/"))
+                path = path.Substring(1);
 
             foreach (var descitem in _actionDescriptorCollectionProvider.ActionDescriptors.Items)
             {
                 if (descitem is ControllerActionDescriptor actionDesc)
                 {
                    
-                    if (paths.Length >= 3 && string.Equals(paths[1], actionDesc.ControllerName, StringComparison.OrdinalIgnoreCase) && string.Equals(paths[2] , actionDesc.ActionName , StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(actionDesc.AttributeRouteInfo.Template, path, StringComparison.OrdinalIgnoreCase) )
                     {
                         if (actionDesc.MethodInfo.ReturnType == typeof(void) && actionDesc.MethodInfo.GetCustomAttribute<AsyncStateMachineAttribute>() != null)
                         {
@@ -79,6 +81,25 @@ namespace JMS.ServiceProvider.AspNetCore
             if (controllerActionDescriptor == null)
                 return null;
 
+            var type = controllerActionDescriptor.ControllerTypeInfo.AsType();
+            var controller = serviceProvider.GetService(type);
+            if (controller == null)
+            {
+                var constructor = type.GetConstructors().FirstOrDefault(m => m.IsPublic);
+                var parameters = constructor.GetParameters();
+                var pObjs = new object[parameters.Length];
+                for (int i = 0; i < pObjs.Length; i++)
+                {
+                    pObjs[i] = serviceProvider.GetService(parameters[i].ParameterType);
+                }
+                controller = Activator.CreateInstance(type, pObjs);
+
+            }
+            return controller;
+        }
+
+        public object CreateByActionDescriptor(HttpContext context, IServiceProvider serviceProvider, ControllerActionDescriptor controllerActionDescriptor)
+        {
             var type = controllerActionDescriptor.ControllerTypeInfo.AsType();
             var controller = serviceProvider.GetService(type);
             if (controller == null)
