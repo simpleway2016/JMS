@@ -39,13 +39,14 @@ namespace WebApiTest2
                 app.UseDeveloperExceptionPage();
             }
             app.UseJmsService();
+
             Task.Run(() =>
             {
                 Thread.Sleep(2000);
                 using (var rc = new RemoteClient(gateways))
                 {
                     var service = rc.GetMicroService("DemoService");
-                    var name = service.Invoke<string>("/api/demo/Test", "Jack");
+                    var name = service.Invoke<string>("api/demo/Test", "Jack");
                     Console.WriteLine($"name:{name}");
                 }
             });

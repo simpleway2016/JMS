@@ -26,7 +26,7 @@ namespace JMS
             Invoker = invoker;
         }
 
-        byte[] createHttpDatas(IRemoteClient tran, Uri uri,string protocol , string method)
+        byte[] createHttpDatas(IRemoteClient tran, Uri uri,string protocol)
         {
             StringBuilder headerStr = new StringBuilder();
             if (tran != null)
@@ -41,7 +41,8 @@ namespace JMS
             {
                 headerStr.AppendLine("");
             }
-            var content = @"GET " + method + @" HTTP/1.1
+
+            var content = @"GET " + uri.AbsolutePath + @" HTTP/1.1
 Host: " + uri.Authority + @"
 Connection: keep-alive
 Protocol: "+protocol+@"
@@ -59,6 +60,18 @@ Accept-Language: zh-CN,zh;q=0.9
             return Invoke<T>(method, tran, tran.GetCommandHeader(), parameters);
         }
 
+        Uri getServiceUri(string serviceAddress , string method)
+        {
+            if(serviceAddress.EndsWith('/') == false && method.StartsWith('/') == false)
+            {
+                return new Uri($"{serviceAddress}/{method}");
+            }
+            else
+            {
+                return new Uri($"{serviceAddress}{method}");
+            }
+        }
+
         public T Invoke<T>(string method, IRemoteClient tran, Dictionary<string, string> headers, params object[] parameters)
         {
             if (tran == null)
@@ -68,7 +81,7 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            var uri = new Uri(InvokingInfo.ServiceLocation.ServiceAddress);
+            var uri = getServiceUri(InvokingInfo.ServiceLocation.ServiceAddress , method);
             _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) => {
                 if (uri.Scheme == "https")
                 {
@@ -79,7 +92,7 @@ Accept-Language: zh-CN,zh;q=0.9
             {
 
                 _client.ReadTimeout = tran.Timeout;
-                var data = createHttpDatas(tran, uri, "JmsService", method);
+                var data = createHttpDatas(tran, uri, "JmsService");
                 _client.Write(data);
 
                 _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
@@ -140,7 +153,7 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            var uri = new Uri(InvokingInfo.ServiceLocation.ServiceAddress);
+            var uri = getServiceUri(InvokingInfo.ServiceLocation.ServiceAddress , method);
             _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) => {
                 if (uri.Scheme == "https")
                 {
@@ -152,7 +165,7 @@ Accept-Language: zh-CN,zh;q=0.9
             {
 
                 _client.ReadTimeout = tran.Timeout;
-                var data = createHttpDatas(tran, uri, "JmsService", method);
+                var data = createHttpDatas(tran, uri, "JmsService");
                 _client.Write(data);
 
                 _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
@@ -354,7 +367,7 @@ Accept-Language: zh-CN,zh;q=0.9
             {
                 cert = new X509Certificate2(certData);
             }
-            var uri = new Uri(serviceLocation.ServiceAddress);
+            var uri = getServiceUri(serviceLocation.ServiceAddress, $"/{tranId},{tranFlag}");
             _client = NetClientPool.CreateClient(proxyAddress,new NetAddress(uri.Host, uri.Port) { Certificate = cert }, (client) => {
                 if (uri.Scheme == "https")
                 {
@@ -362,7 +375,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 }
             });
 
-            var data = createHttpDatas(null, uri, "JmsRetry", "/" + tranId + "," + tranFlag);
+            var data = createHttpDatas(null, uri, "JmsRetry");
             _client.Write(data);
 
             var result = _client.ReadServiceObject<InvokeResult<int>>();
