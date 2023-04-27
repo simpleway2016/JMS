@@ -47,7 +47,7 @@ namespace JMS
                         for (int i = 0; i < seatCollection.Connects.Length; i++)
                         {
                             var item = seatCollection.Connects[i];
-                            if (item.Used == 2 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS)
+                            if ( item != null && item.Used == 2 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS)
                             {
                                 if (Interlocked.CompareExchange(ref item.Used, 3, 2) == 2)
                                 {
@@ -61,7 +61,7 @@ namespace JMS
                         for (int i = seatCollection.Connects.Length - 1; i >= 0; i--)
                         {
                             var item = seatCollection.Connects[i];
-                            if (item.Used != 0)
+                            if ( item != null && item.Used != 0)
                             {
                                 seatCollection.MaxIndex = i + 10;
                                 break;
@@ -95,7 +95,7 @@ namespace JMS
                 seatCollection = Dict[key];
             }
 
-            var freeitem = GetFree(seatCollection);
+            var freeitem = seatCollection.GetFree();
             if (freeitem == null)
             {
                 freeitem = new ProxyClient(proxy);
@@ -118,7 +118,7 @@ namespace JMS
                 seatCollection = Dict[key];
             }
 
-            var freeitem = GetFree(seatCollection);
+            var freeitem = seatCollection.GetFree();
             if (freeitem == null)
             {
                 freeitem = new ProxyClient(proxy);
@@ -159,6 +159,13 @@ namespace JMS
             for (int i = 0; i < seatCollection.Connects.Length; i++)
             {
                 var item = seatCollection.Connects[i];
+                if (item == null)
+                {
+                    //当前位置没有初始化，初始化位置
+                    seatCollection.InitSeats(i + 100);
+                    item = seatCollection.Connects[i];
+                }
+
                 if (item.Used == 0)
                 {
                     if (seatCollection.MaxIndex < i + 10)
@@ -190,7 +197,7 @@ namespace JMS
             for (int i = 0; i < seatCollection.Connects.Length; i++)
             {
                 var item = seatCollection.Connects[i];
-                if (item.Client != null)
+                if ( item != null && item.Client != null)
                 {
                     count++;
                 }
@@ -198,12 +205,50 @@ namespace JMS
             return count;
         }
 
-        static NetClient GetFree(NetClientSeatCollection seatCollection)
+      
+    }
+
+    class NetClientSeatCollection
+    {
+        public NetClientSeat[] Connects;
+        public int MaxIndex;
+        public NetClientSeatCollection()
         {
-            for (int i = 0; i < seatCollection.Connects.Length && i < seatCollection.MaxIndex; i++)
+            Connects = new NetClientSeat[NetClientPool.POOLSIZE];
+            for (int i = 0; i < 100; i++)
             {
-                var item = seatCollection.Connects[i];
-                if (item.Used == 2)
+                Connects[i] = new NetClientSeat();
+            }
+        }
+
+        public void InitSeats(int maxIndex)
+        {
+            lock (this)
+            {
+                var endIndex = Math.Min(Connects.Length - 1 , maxIndex);
+                if (Connects[endIndex] != null)
+                    return;
+
+                for(int i = endIndex; i >= 0; i--)
+                {
+                    if (Connects[i] == null)
+                    {
+                        Connects[i] = new NetClientSeat();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        public NetClient GetFree()
+        {
+            for (int i = 0; i < this.Connects.Length && i < this.MaxIndex; i++)
+            {
+                var item = this.Connects[i];
+                if (item != null && item.Used == 2)
                 {
                     if (Interlocked.CompareExchange(ref item.Used, 3, 2) == 2)
                     {
@@ -225,20 +270,6 @@ namespace JMS
                 }
             }
             return null;
-        }
-    }
-
-    class NetClientSeatCollection
-    {
-        public NetClientSeat[] Connects;
-        public int MaxIndex;
-        public NetClientSeatCollection()
-        {
-            Connects = new NetClientSeat[NetClientPool.POOLSIZE];
-            for (int i = 0; i < Connects.Length; i++)
-            {
-                Connects[i] = new NetClientSeat();
-            }
         }
     }
 
