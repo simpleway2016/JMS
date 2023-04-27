@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
@@ -67,6 +68,9 @@ namespace JMS
                                 break;
                             }
                         }
+
+                        //释放seat
+                        seatCollection.FreeSeats();
                     }
                 }
                 catch
@@ -156,34 +160,7 @@ namespace JMS
                 seatCollection = Dict[key];
             }
 
-            for (int i = 0; i < seatCollection.Connects.Length; i++)
-            {
-                var item = seatCollection.Connects[i];
-                if (item == null)
-                {
-                    //当前位置没有初始化，初始化位置
-                    seatCollection.InitSeats(i + 100);
-                    item = seatCollection.Connects[i];
-                }
-
-                if (item.Used == 0)
-                {
-                    if (seatCollection.MaxIndex < i + 10)
-                        seatCollection.MaxIndex = i + 10;
-
-                    if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
-                    {
-                        item.OnSeatTime = DateTime.Now;
-                        item.Client = client;
-                        client.ReadTimeout = 16000;
-                        item.Used = 2;
-                        return;
-                    }
-                }
-            }
-
-            //没有位置，这个释放掉
-            client.Dispose();
+            seatCollection.AddClient(client);
         }
 
 
@@ -270,6 +247,59 @@ namespace JMS
                 }
             }
             return null;
+        }
+
+        public void AddClient(NetClient client)
+        {
+            for (int i = 0; i < this.Connects.Length; i++)
+            {
+                var item = this.Connects[i];
+                if (item == null)
+                {
+                    //当前位置没有初始化，初始化位置
+                    this.InitSeats(i + 50);
+                    item = this.Connects[i];
+                }
+
+                if (item.Used == 0)
+                {
+                    if (this.MaxIndex < i + 10)
+                        this.MaxIndex = i + 10;
+
+                    if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
+                    {
+                        item.OnSeatTime = DateTime.Now;
+                        item.Client = client;
+                        client.ReadTimeout = 16000;
+                        item.Used = 2;
+                        return;
+                    }
+                }
+            }
+
+            //没有位置，这个释放掉
+            client.Dispose();
+        }
+
+        /// <summary>
+        /// 释放位置
+        /// </summary>
+        public void FreeSeats() {
+            for (int i = Connects.Length - 1; i > MaxIndex + 100; i--)
+            {
+                var item = Connects[i];
+                if (item != null)
+                {
+                    if (item.Used == 0 && Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
+                    {                        
+                        Connects[i] = null;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
         }
     }
 
