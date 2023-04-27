@@ -13,9 +13,9 @@ namespace JMS
 {
     public class NetClientPool
     {
-        static int POOLSIZE = 5000;
+        internal static int POOLSIZE = 65535;
         const int RELEASESECONDS = 10;
-        static ConcurrentDictionary<(string,int), NetClientSeat[]> Dict = new ConcurrentDictionary<(string, int), NetClientSeat[]>();
+        static ConcurrentDictionary<(string, int), NetClientSeatCollection> Dict = new ConcurrentDictionary<(string, int), NetClientSeatCollection>();
         static NetClientPool()
         {
             new Thread(checkTime).Start();
@@ -36,18 +36,18 @@ namespace JMS
 
         static void checkTime()
         {
-            while(true)
+            while (true)
             {
                 try
                 {
                     var keys = Dict.Keys.ToArray();
-                    foreach( var key in keys )
+                    foreach (var key in keys)
                     {
-                        var array = Dict[key];
-                        for (int i = 0; i < array.Length; i++)
+                        var seatCollection = Dict[key];
+                        for (int i = 0; i < seatCollection.Connects.Length; i++)
                         {
-                            var item = array[i];
-                            if ( item.Used == 2 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS)
+                            var item = seatCollection.Connects[i];
+                            if (item.Used == 2 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS)
                             {
                                 if (Interlocked.CompareExchange(ref item.Used, 3, 2) == 2)
                                 {
@@ -55,6 +55,16 @@ namespace JMS
                                     item.Client = null;
                                     item.Used = 0;
                                 }
+                            }
+                        }
+
+                        for (int i = seatCollection.Connects.Length - 1; i >= 0; i--)
+                        {
+                            var item = seatCollection.Connects[i];
+                            if (item.Used != 0)
+                            {
+                                seatCollection.MaxIndex = i + 10;
+                                break;
                             }
                         }
                     }
@@ -67,30 +77,30 @@ namespace JMS
             }
         }
 
-        public static NetClient CreateClient( NetAddress proxy, string ip,int port, Action<NetClient> newClientCallback = null)
+        public static NetClient CreateClient(NetAddress proxy, string ip, int port, Action<NetClient> newClientCallback = null)
         {
             return CreateClient(proxy, new NetAddress(ip, port), newClientCallback);
         }
-        public static Task<NetClient> CreateClientAsync(NetAddress proxy, string ip, int port, Func<NetClient,Task> newClientCallback = null)
+        public static Task<NetClient> CreateClientAsync(NetAddress proxy, string ip, int port, Func<NetClient, Task> newClientCallback = null)
         {
             return CreateClientAsync(proxy, new NetAddress(ip, port), newClientCallback);
         }
         public static NetClient CreateClient(NetAddress proxy, NetAddress addr, Action<NetClient> newClientCallback = null)
         {
-            var key = (addr.Address,addr.Port);
-            NetClientSeat[] array;
-            if (Dict.TryGetValue(key, out array) == false)
+            var key = (addr.Address, addr.Port);
+            NetClientSeatCollection seatCollection;
+            if (Dict.TryGetValue(key, out seatCollection) == false)
             {
-                Dict.TryAdd(key, GetArray());
-                array = Dict[key];
+                Dict.TryAdd(key, new NetClientSeatCollection());
+                seatCollection = Dict[key];
             }
 
-            var freeitem = GetFree(array);
+            var freeitem = GetFree(seatCollection);
             if (freeitem == null)
             {
                 freeitem = new ProxyClient(proxy);
                 freeitem.Connect(addr);
-                freeitem.KeepAlive = array.Any(m => m.Client == null);
+                freeitem.KeepAlive = true;
                 newClientCallback?.Invoke(freeitem);
                 CreatedNewClient?.Invoke(null, freeitem);
             }
@@ -98,22 +108,22 @@ namespace JMS
             return freeitem;
         }
 
-        public static async Task<NetClient> CreateClientAsync(NetAddress proxy, NetAddress addr,Func<NetClient, Task> newClientCallback = null)
+        public static async Task<NetClient> CreateClientAsync(NetAddress proxy, NetAddress addr, Func<NetClient, Task> newClientCallback = null)
         {
             var key = (addr.Address, addr.Port);
-            NetClientSeat[] array;
-            if (Dict.TryGetValue(key, out array) == false)
+            NetClientSeatCollection seatCollection;
+            if (Dict.TryGetValue(key, out seatCollection) == false)
             {
-                Dict.TryAdd(key, GetArray());
-                array = Dict[key];
+                Dict.TryAdd(key, new NetClientSeatCollection());
+                seatCollection = Dict[key];
             }
 
-            var freeitem = GetFree(array);
+            var freeitem = GetFree(seatCollection);
             if (freeitem == null)
             {
                 freeitem = new ProxyClient(proxy);
                 await freeitem.ConnectAsync(addr);
-                freeitem.KeepAlive = array.Any(m => m.Client == null);
+                freeitem.KeepAlive = true;
                 if (newClientCallback != null)
                 {
                     await newClientCallback(freeitem);
@@ -128,7 +138,7 @@ namespace JMS
             if (client == null)
                 return;
 
-            if(client.HasSocketException)
+            if (client.HasSocketException)
             {
                 client.Dispose();
                 return;
@@ -138,19 +148,22 @@ namespace JMS
                 client.Dispose();
                 return;
             }
-            var key = (client.NetAddress.Address , client.NetAddress.Port);
-            NetClientSeat[] array;
-            if (Dict.TryGetValue(key, out array) == false)
+            var key = (client.NetAddress.Address, client.NetAddress.Port);
+            NetClientSeatCollection seatCollection;
+            if (Dict.TryGetValue(key, out seatCollection) == false)
             {
-                Dict.TryAdd(key, GetArray());
-                array = Dict[key];
+                Dict.TryAdd(key, new NetClientSeatCollection());
+                seatCollection = Dict[key];
             }
 
-            for (int i = 0; i < array.Length; i++)
+            for (int i = 0; i < seatCollection.Connects.Length; i++)
             {
-                var item = array[i];
+                var item = seatCollection.Connects[i];
                 if (item.Used == 0)
                 {
+                    if (seatCollection.MaxIndex < i + 10)
+                        seatCollection.MaxIndex = i + 10;
+
                     if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
                     {
                         item.OnSeatTime = DateTime.Now;
@@ -166,27 +179,18 @@ namespace JMS
             client.Dispose();
         }
 
-        static NetClientSeat[] GetArray()
-        {
-            var ret = new NetClientSeat[POOLSIZE];
-            for(int i = 0; i < ret.Length; i ++)
-            {
-                ret[i] = new NetClientSeat();
-            }
-            return ret;
-        }
 
         public static int GetPoolAliveCount(NetAddress addr)
         {
             var key = (addr.Address, addr.Port);
             if (Dict.ContainsKey(key) == false)
                 return 0;
-            var queue = Dict[key];
+            var seatCollection = Dict[key];
             int count = 0;
-            for (int i = 0; i < queue.Length; i++)
+            for (int i = 0; i < seatCollection.Connects.Length; i++)
             {
-                var item = queue[i];
-                if (item.Client != null )
+                var item = seatCollection.Connects[i];
+                if (item.Client != null)
                 {
                     count++;
                 }
@@ -194,14 +198,14 @@ namespace JMS
             return count;
         }
 
-        static NetClient GetFree(NetClientSeat[] source)
+        static NetClient GetFree(NetClientSeatCollection seatCollection)
         {
-            for(int i = 0; i < source.Length; i ++)
+            for (int i = 0; i < seatCollection.Connects.Length && i < seatCollection.MaxIndex; i++)
             {
-                var item = source[i];
-                if(item.Used == 2)
+                var item = seatCollection.Connects[i];
+                if (item.Used == 2)
                 {
-                    if( Interlocked.CompareExchange(ref item.Used , 3 , 2) == 2)
+                    if (Interlocked.CompareExchange(ref item.Used, 3, 2) == 2)
                     {
                         var ret = item.Client;
                         item.Client = null;
@@ -221,6 +225,20 @@ namespace JMS
                 }
             }
             return null;
+        }
+    }
+
+    class NetClientSeatCollection
+    {
+        public NetClientSeat[] Connects;
+        public int MaxIndex;
+        public NetClientSeatCollection()
+        {
+            Connects = new NetClientSeat[NetClientPool.POOLSIZE];
+            for (int i = 0; i < Connects.Length; i++)
+            {
+                Connects[i] = new NetClientSeat();
+            }
         }
     }
 
