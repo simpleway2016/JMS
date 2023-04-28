@@ -50,6 +50,12 @@ namespace JMS
                     }
                 }
             }
+
+            return VerifyToken(token);
+        }
+
+        public object VerifyToken(string token)
+        {
             if (token == null)
             {
                 throw new AuthenticationException("Authentication failed, no token.");
@@ -72,7 +78,7 @@ namespace JMS
                 }
                 return ret;
             }
-            catch(AuthenticationException e)
+            catch (AuthenticationException e)
             {
                 if (Callback != null)
                 {
@@ -80,7 +86,7 @@ namespace JMS
                     if (Callback(authParameter))
                     {
                         return authParameter.Content;
-                    }                   
+                    }
                 }
 
                 throw e;

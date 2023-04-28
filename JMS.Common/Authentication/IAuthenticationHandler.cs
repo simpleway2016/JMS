@@ -12,5 +12,12 @@ namespace JMS
         /// <param name="headers"></param>
         /// <returns></returns>
         object Authenticate(IDictionary<string, string> headers);
+
+        /// <summary>
+        /// 验证身份令牌
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns>身份信息</returns>
+        object VerifyToken(string token);
     }
 }

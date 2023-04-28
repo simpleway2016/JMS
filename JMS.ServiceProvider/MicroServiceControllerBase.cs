@@ -81,19 +81,7 @@ public class MicroServiceControllerBase: BaseJmsController
         throw new ResponseEndException();
     }
 
-    /// <summary>
-    /// 验证当前用户身份，并返回身份信息
-    /// </summary>
-    /// <returns></returns>
-    public virtual object Authenticate()
-    {
-        var auth = ServiceProvider?.GetService<IAuthenticationHandler>();
-        if (auth != null)
-        {
-            return auth.Authenticate(this.Headers);
-        }
-        return null;
-    }
+
 
     /// <summary>
     /// 申请锁住指定的key，使用完务必保证调用UnLock释放锁定的key

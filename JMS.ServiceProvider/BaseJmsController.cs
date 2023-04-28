@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using static MicroServiceControllerBase;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace JMS
 {
@@ -56,6 +57,20 @@ namespace JMS
                 }
                 return _ServiceProvider;
             }
+        }
+
+        /// <summary>
+        /// 验证当前用户身份，并返回身份信息
+        /// </summary>
+        /// <returns></returns>
+        public virtual object Authenticate(string token)
+        {
+            var auth = ServiceProvider?.GetService<IAuthenticationHandler>();
+            if (auth != null)
+            {
+                return auth.VerifyToken(token);
+            }
+            return null;
         }
     }
 }

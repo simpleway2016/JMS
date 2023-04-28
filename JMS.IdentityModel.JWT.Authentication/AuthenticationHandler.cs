@@ -84,17 +84,22 @@ namespace JMS.IdentityModel.JWT.Authentication
                 }
             }
 
+            return VerifyToken(token);
+        }
+
+        public object VerifyToken(string token)
+        {
             if (string.IsNullOrEmpty(token))
                 throw new AuthenticationException("Authentication failed");
 
             try
             {
-                if(token.StartsWith("Bearer "))
+                if (token.StartsWith("Bearer "))
                 {
                     token = token.Substring(7);
                 }
-                
-                var ret = JwtHelper.Authenticate(rsaSecurityKey,token);
+
+                var ret = JwtHelper.Authenticate(rsaSecurityKey, token);
 
                 if (Callback != null)
                 {
@@ -118,14 +123,14 @@ namespace JMS.IdentityModel.JWT.Authentication
                     if (Callback(authParameter))
                     {
                         return authParameter.Content;
-                    }                   
+                    }
                 }
 
                 throw ex;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                _logger?.LogDebug("身份验证发生异常:{0}",ex.Message);
+                _logger?.LogDebug("身份验证发生异常:{0}", ex.Message);
                 if (Callback != null)
                 {
                     AuthenticationParameter authParameter = new AuthenticationParameter(token);
