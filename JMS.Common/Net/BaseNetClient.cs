@@ -49,7 +49,7 @@ namespace JMS.Common
                 else
                 {
                     _PipeReader = System.IO.Pipelines.PipeReader.Create(value, new System.IO.Pipelines.StreamPipeReaderOptions(null,-1,-1,true));
-                    _pipeStream = new PipeControlStream(_PipeReader , _innerStream);
+                    _pipeStream = new PipeLineStream(_PipeReader , _innerStream);
                 }
             }
         }

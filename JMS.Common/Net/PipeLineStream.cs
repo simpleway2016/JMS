@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace JMS.Common.Net
 {
-    internal class PipeControlStream : Stream
+    internal class PipeLineStream : Stream
     {
         Stream _input;
         Stream _output;
-        public PipeControlStream(PipeReader reader,Stream outputStream)
+        public PipeLineStream(PipeReader reader,Stream outputStream)
         {
             _input = reader.AsStream();
             _output = outputStream;
