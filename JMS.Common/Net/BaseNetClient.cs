@@ -393,6 +393,10 @@ namespace JMS.Common
             while (true)
             {
                 ret = await _PipeReader.ReadAsync();
+                if (ret.IsCompleted)
+                {
+                    throw new SocketException();
+                }
                 var buffer = ret.Buffer;
 
                 position = buffer.PositionOf(n);
@@ -415,16 +419,13 @@ namespace JMS.Common
                 }
                 else
                 {
-                    if (ret.IsCompleted)
-                    {
-                        throw new SocketException();
-                    }
+                   
 
-                    if (maxLength > 0 && ret.Buffer.Length > maxLength)
+                    if (maxLength > 0 && buffer.Length > maxLength)
                         throw new SizeLimitException("line is too long");
 
                     // 告诉PipeReader已经处理多少缓冲
-                    _PipeReader.AdvanceTo(buffer.Start);
+                    _PipeReader.AdvanceTo(buffer.Start,buffer.End);
                 }               
 
             }

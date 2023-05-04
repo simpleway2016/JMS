@@ -155,6 +155,10 @@ namespace JMS.ServerCore
             while (true)
             {
                 ret = await reader.ReadAsync();
+                if (ret.IsCompleted)
+                {
+                    throw new SocketException();
+                }
                 buffer = ret.Buffer;
 
                 do
@@ -202,19 +206,16 @@ namespace JMS.ServerCore
                     }
                     else
                     {
-                        if (ret.Buffer.Length > 10240)
+                        if (buffer.Length > 10240)
                             throw new SizeLimitException("header too big");
                     }
                 }
                 while (position != null);
 
-                if (ret.IsCompleted)
-                {
-                    throw new SocketException();
-                }
+              
 
                 // 告诉PipeReader已经处理多少缓冲
-                reader.AdvanceTo(buffer.Start);
+                reader.AdvanceTo(buffer.Start,buffer.End);
 
             }
         }

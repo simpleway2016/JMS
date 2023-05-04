@@ -18,6 +18,7 @@ using static System.Net.Mime.MediaTypeNames;
 using UnitTest.ServiceHosts;
 using JMS.ServerCore;
 using System.IO;
+using System.Net.Sockets;
 
 namespace UnitTest
 {
@@ -76,6 +77,139 @@ namespace UnitTest
 
             app.MapControllers();
             return app;
+        }
+
+      
+        [TestMethod]
+        public void PipelineHeaderTest()
+        {
+            var headers = new Dictionary<string, string>();
+            string reqline = null;
+            var actionAccept = new Action<Socket>(async socket => {
+                var serverClient = new NetClient(socket);
+              
+                reqline = await HttpHelper.ReadHeaders(serverClient.PipeReader, headers);
+            });
+            Task.Run(() => {
+                var tcplistener = new TcpListener(10001);
+                tcplistener.Start();
+
+                while (true)
+                {
+                    var socket = tcplistener.AcceptSocket();
+                    actionAccept(socket);
+                }
+            });
+
+            Thread.Sleep(500);
+            var client = new NetClient();
+            client.Connect(new NetAddress("127.0.0.1",10001));
+            var data = Encoding.UTF8.GetBytes("GET /test");
+            client.InnerStream.Write(data , 0 , data.Length);
+            Thread.Sleep(2000);
+           
+            for(int i = 0;i < 6000; i ++)
+            {
+                client.InnerStream.Write(new byte[1] { (byte)'a'}, 0, 1);
+
+            }
+            data = Encoding.UTF8.GetBytes(@"1awefijawofjewaofjawojfeowajfoawjoefoawjfijoaw9
+Host: abc.com
+");
+            client.InnerStream.Write(data, 0, data.Length);
+
+            data = Encoding.UTF8.GetBytes(@"Ca");
+            client.InnerStream.Write(data, 0, data.Length);
+
+            Thread.Sleep(2000);
+            data = Encoding.UTF8.GetBytes(@": true
+
+");
+            client.InnerStream.Write(data, 0, data.Length);
+
+            while (reqline == null)
+                Thread.Sleep(500);
+
+            if(reqline.Length > 6000 && reqline.EndsWith("aw9"))
+            {
+
+            }
+            else
+            {
+                throw new Exception("结果不对");
+            }
+
+            if (headers["Ca"] != "true")
+                throw new Exception("结果不对");
+        }
+
+        [TestMethod]
+        public void PipelineTest()
+        {
+            var headers = new Dictionary<string, string>();
+            string reqline1 = null;
+            string reqline2 = null;
+            string reqline3 = null;
+            var actionAccept = new Action<Socket>(async socket => {
+                var serverClient = new NetClient(socket);
+
+                reqline1 = await serverClient.ReadLineAsync();
+                reqline2 = await serverClient.ReadLineAsync();
+                reqline3 = await serverClient.ReadLineAsync();
+            });
+            Task.Run(() => {
+                var tcplistener = new TcpListener(10001);
+                tcplistener.Start();
+
+                while (true)
+                {
+                    var socket = tcplistener.AcceptSocket();
+                    actionAccept(socket);
+                }
+            });
+
+            Thread.Sleep(500);
+            var client = new NetClient();
+            client.Connect(new NetAddress("127.0.0.1", 10001));
+            var data = Encoding.UTF8.GetBytes("GET /test");
+            client.InnerStream.Write(data, 0, data.Length);
+            Thread.Sleep(2000);
+
+            for (int i = 0; i < 6000; i++)
+            {
+                client.InnerStream.Write(new byte[1] { (byte)'a' }, 0, 1);
+
+            }
+            data = Encoding.UTF8.GetBytes(@"1awefijawofjewaofjawojfeowajfoawjoefoawjfijoaw9
+Host: abc.com
+");
+            client.InnerStream.Write(data, 0, data.Length);
+
+            data = Encoding.UTF8.GetBytes(@"Ca");
+            client.InnerStream.Write(data, 0, data.Length);
+
+            Thread.Sleep(2000);
+            data = Encoding.UTF8.GetBytes(@": true
+
+");
+            client.InnerStream.Write(data, 0, data.Length);
+
+            while (reqline3 == null)
+                Thread.Sleep(500);
+
+            if (reqline1.Length > 6000 && reqline1.EndsWith("aw9"))
+            {
+
+            }
+            else
+            {
+                throw new Exception("结果不对");
+            }
+            if (reqline2 != "Host: abc.com")
+                throw new Exception("结果不对");
+            if (reqline3 != "Ca: true")
+                throw new Exception("结果不对");
+
         }
 
         [TestMethod]
