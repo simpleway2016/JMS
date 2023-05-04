@@ -139,12 +139,12 @@ namespace JMS.Applications.HttpMiddlewares
                 {
                     while (true)
                     {
-                        var line = await client.ReadLineAsync();
+                        var line = await client.ReadLineAsync(512);
                         proxyClient.WriteLine(line);
                         contentLength = Convert.ToInt32(line, 16);
                         if (contentLength == 0)
                         {
-                            line = await client.ReadLineAsync();
+                            line = await client.ReadLineAsync(512);
                             proxyClient.WriteLine(line);
                             break;
                         }
@@ -152,7 +152,7 @@ namespace JMS.Applications.HttpMiddlewares
                         {
                             await HttpHelper.ReadAndSend(client, proxyClient, contentLength);
 
-                            line = await client.ReadLineAsync();
+                            line = await client.ReadLineAsync(512);
                             proxyClient.WriteLine(line);
                         }
                     }
@@ -188,12 +188,12 @@ namespace JMS.Applications.HttpMiddlewares
                 {
                     while (true)
                     {
-                        var line = await proxyClient.ReadLineAsync();
+                        var line = await proxyClient.ReadLineAsync(512);
                         client.WriteLine(line);
                         contentLength = Convert.ToInt32(line, 16);
                         if (contentLength == 0)
                         {
-                            line = await proxyClient.ReadLineAsync();
+                            line = await proxyClient.ReadLineAsync(512);
                             client.WriteLine(line);
                             break;
                         }
@@ -201,7 +201,7 @@ namespace JMS.Applications.HttpMiddlewares
                         {
                             await HttpHelper.ReadAndSend(proxyClient, client, contentLength);
 
-                            line = await proxyClient.ReadLineAsync();
+                            line = await proxyClient.ReadLineAsync(512);
                             client.WriteLine(line);
                         }
                     }

@@ -399,6 +399,33 @@ namespace JMS.Common
             return this.code.GetString(lineBuffer.ToArray());
         }
 
+        public async Task<string> ReadLineAsync(int maxLength)
+        {
+            byte[] bs = new byte[1];
+            List<byte> lineBuffer = new List<byte>(1024);
+            int readed;
+            while (true)
+            {
+                readed = await _stream.ReadAsync(bs, 0, 1);
+                if (readed <= 0)
+                    throw new SocketException();
+
+                if (bs[0] == 10)
+                {
+                    break;
+                }
+                else if (bs[0] != 13)
+                {
+                    lineBuffer.Add(bs[0]);
+                    if (lineBuffer.Count > maxLength)
+                        throw new Exception("content is too big");
+                }
+            }
+
+
+            return this.code.GetString(lineBuffer.ToArray());
+        }
+
 
         public void WriteLine(string text)
         {

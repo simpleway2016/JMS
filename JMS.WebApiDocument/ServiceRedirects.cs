@@ -198,11 +198,11 @@ namespace JMS.WebApiDocument
                 {
                     while (true)
                     {
-                        var line = await proxyClient.ReadLineAsync();
+                        var line = await proxyClient.ReadLineAsync(512);
                         inputContentLength = Convert.ToInt32(line, 16);
                         if (inputContentLength == 0)
                         {
-                            line = await proxyClient.ReadLineAsync();
+                            line = await proxyClient.ReadLineAsync(512);
                             break;
                         }
                         else
@@ -211,7 +211,7 @@ namespace JMS.WebApiDocument
                             await proxyClient.ReadDataAsync(data, 0, inputContentLength);
                             await context.Response.WriteAsync(Encoding.UTF8.GetString(data));
 
-                            line = await proxyClient.ReadLineAsync();
+                            line = await proxyClient.ReadLineAsync(512);
                         }
                     }
                 }
