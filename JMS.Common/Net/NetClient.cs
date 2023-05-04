@@ -203,7 +203,7 @@ namespace JMS
             var len = flag >> 2;
 
             if (len > 102400)
-                throw new ArgumentException("command size is too big");
+                throw new SizeLimitException("command size is too big");
             var ret = await this.PipeReader.ReadAtLeastAsync(len);
             if (ret.IsCompleted && ret.Buffer.Length < len)
                 throw new SocketException();

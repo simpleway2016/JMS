@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using JMS.Applications.CommandHandles;
 using System.Threading.Tasks;
 using System.Net;
+using JMS.Common;
 
 namespace JMS.Applications
 {
@@ -71,6 +72,10 @@ namespace JMS.Applications
                 }
             }
             catch(SocketException)
+            {
+
+            }
+            catch (SizeLimitException)
             {
 
             }

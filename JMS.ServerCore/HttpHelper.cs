@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Buffers;
 using System.IO.Pipelines;
 using System.Reflection.PortableExecutable;
+using JMS.Common;
 
 namespace JMS.ServerCore
 {
@@ -196,13 +197,13 @@ namespace JMS.ServerCore
                             var value = line.Substring(indexFlag + 1).Trim();
                             headers[key] = value;
                             if (headers.Count > 100)
-                                throw new Exception("too many header keys");
+                                throw new SizeLimitException("too many header keys");
                         }
                     }
                     else
                     {
                         if (ret.Buffer.Length > 10240)
-                            throw new Exception("header too big");
+                            throw new SizeLimitException("header too big");
                     }
                 }
                 while (position != null);

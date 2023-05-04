@@ -421,7 +421,7 @@ namespace JMS.Common
                     }
 
                     if (maxLength > 0 && ret.Buffer.Length > maxLength)
-                        throw new Exception("line is too long");
+                        throw new SizeLimitException("line is too long");
                 }               
 
             }
