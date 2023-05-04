@@ -422,6 +422,9 @@ namespace JMS.Common
 
                     if (maxLength > 0 && ret.Buffer.Length > maxLength)
                         throw new SizeLimitException("line is too long");
+
+                    // 告诉PipeReader已经处理多少缓冲
+                    _PipeReader.AdvanceTo(buffer.Start);
                 }               
 
             }
