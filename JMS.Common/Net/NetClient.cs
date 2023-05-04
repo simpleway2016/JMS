@@ -1,6 +1,7 @@
 ﻿using JMS.Common;
 using JMS.Dtos;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -191,7 +192,8 @@ namespace JMS
             }
         }
 
-        public byte[] ReadServiceDataBytes(int flag)
+
+        async Task<byte[]> ReadServiceDataBytesAsync(int flag)
         {
             if (flag == 1179010630)
                 return new byte[0];
@@ -199,70 +201,24 @@ namespace JMS
             var isgzip = (flag & 1) == 1;
             this.KeepAlive = (flag & 2) == 2;
             var len = flag >> 2;
-            var datas = new byte[len];
-            this.ReadData(datas, 0, len);
-            if (isgzip)
-                datas = GZipHelper.Decompress(datas);
-            return datas;
-        }
 
-        public async Task<byte[]> ReadServiceDataBytesAsync(int flag)
-        {
-            if (flag == 1179010630)
-                return new byte[0];
+            if (len > 102400)
+                throw new ArgumentException("command size is too big");
+            var ret = await this.PipeReader.ReadAtLeastAsync(len);
+            if (ret.IsCompleted && ret.Buffer.Length < len)
+                throw new SocketException();
 
-            var isgzip = (flag & 1) == 1;
-            this.KeepAlive = (flag & 2) == 2;
-            var len = flag >> 2;
-            var datas = new byte[len];
-            await this.ReadDataAsync(datas, 0, datas.Length);
+            var buffer = ret.Buffer.Slice(0, len);
+            
+            var datas = buffer.ToArray();
+            this.PipeReader.AdvanceTo(buffer.End);
 
             if (isgzip)
                 datas = GZipHelper.Decompress(datas);
             return datas;
         }
 
-        public async Task<byte[]> ReadServiceDataBytesAsync(int flag,int maxLength)
-        {
-            if (flag == 1179010630)
-                return new byte[0];
-
-            var isgzip = (flag & 1) == 1;
-            this.KeepAlive = (flag & 2) == 2;
-            var len = flag >> 2;
-            if(len > maxLength)
-            {
-                this.WriteServiceData(new InvokeResult
-                {
-                    Success = false,
-                    Error = "Command is too big"
-                });
-                throw new Exception("Command is too big");
-            }
-            var datas = new byte[len];
-            await this.ReadDataAsync(datas, 0, datas.Length);
-
-            if (isgzip)
-                datas = GZipHelper.Decompress(datas);
-            return datas;
-        }
-
-        public byte[] ReadServiceDataBytes()
-        {
-            try
-            {
-                byte[] data = new byte[4];
-                this.ReadData(data, 0, data.Length);
-                var flag = BitConverter.ToInt32(data);
-                return ReadServiceDataBytes(flag);
-            }
-            catch(System.IO.IOException ex)
-            {
-                if (ex.InnerException is SocketException)
-                    throw ex.InnerException;
-                throw ex;
-            }
-        }
+     
         public int ReadInt()
         {
             byte[] data = new byte[4];
@@ -275,17 +231,20 @@ namespace JMS
             await this.ReadDataAsync(data, 0, data.Length);
             return BitConverter.ToInt32(data);
         }
+
+        public bool ReadBoolean()
+        {
+            byte[] data = new byte[1];
+            this.ReadData(data, 0, data.Length);
+            return data[0] == 1;
+        }
         public long ReadLong()
         {
             byte[] data = new byte[8];
             this.ReadData(data, 0, data.Length);
             return BitConverter.ToInt64(data);
         }
-        public bool ReadBoolean()
-        {
-            return this.InnerStream.ReadByte() == 1;
-        }
-
+     
         public void Write(bool value)
         {
             this.InnerStream.WriteByte(value ? (byte)0x1:(byte)0x0);
@@ -300,29 +259,19 @@ namespace JMS
         /// <returns></returns>
         public virtual async Task ReadDataAsync(byte[] data,int offset,int count)
         {
-            int readed;
-            while(count > 0)
-            {
-                readed = await this.InnerStream.ReadAsync(data, offset, count);
-                if (readed <= 0)
-                    throw new SocketException();
-                count -= readed;
-                offset += readed;
-            }
+            var ret = await this.PipeReader.ReadAtLeastAsync(count);
+            if (ret.IsCompleted && ret.Buffer.Length < count)
+                throw new SocketException();
+
+            var buffer = ret.Buffer.Slice(0, count);
+            buffer.CopyTo(new Span<byte>(data,offset,count));
+            this.PipeReader.AdvanceTo(buffer.End);
+
         }
 
         public virtual void ReadData(byte[] data, int offset, int count)
         {
-            int readed;
-            while (count > 0)
-            {
-                readed = this.InnerStream.Read(data, offset, count);
-                if (readed <= 0)
-                    throw new SocketException();
-
-                count -= readed;
-                offset += readed;
-            }
+           ReadDataAsync(data,offset,count).GetAwaiter().GetResult();
         }
 
 
@@ -330,9 +279,14 @@ namespace JMS
         {
             try
             {
-                byte[] data = new byte[4];
-                await this.ReadDataAsync(data, 0, data.Length);
-                var flag = BitConverter.ToInt32(data);
+                var ret = await this.PipeReader.ReadAtLeastAsync(4);
+                if (ret.IsCompleted && ret.Buffer.Length < 4)
+                    throw new SocketException();
+
+                var buffer = ret.Buffer.Slice(0, 4);
+                var flag = BitConverter.ToInt32(buffer.First.Span);
+                this.PipeReader.AdvanceTo(buffer.End);
+
                 return await ReadServiceDataBytesAsync(flag);
             }
             catch (System.IO.IOException ex)
@@ -345,10 +299,7 @@ namespace JMS
 
         public  string ReadServiceData()
         {
-            var data = ReadServiceDataBytes();
-            if (data.Length == 0)
-                return null;
-            return Encoding.UTF8.GetString(data);
+            return ReadServiceDataAsync().GetAwaiter().GetResult();
         }
 
         public async Task<string> ReadServiceDataAsync()
@@ -361,18 +312,11 @@ namespace JMS
 
         public  T ReadServiceObject<T>()
         {
-            var datas = ReadServiceDataBytes();
-            string str = Encoding.UTF8.GetString(datas);
-            try
-            {
-                return str.FromJson<T>();
-            }
-            catch (Exception ex)
-            {
-                throw new ConvertException(str, $"无法将{str}实例化为{typeof(T).FullName}，" + ex.ToString());
-            }
+            return ReadServiceObjectAsync<T>().GetAwaiter().GetResult();
 
         }
+
+
 
         public async Task<T> ReadServiceObjectAsync<T>()
         {

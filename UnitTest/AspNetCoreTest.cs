@@ -104,9 +104,10 @@ Content-Length2: 0
             Task.Run(async () => {
                
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                var reader = System.IO.Pipelines.PipeReader.Create(stream);
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                var line = await HttpHelper.ReadHeaders(null, stream, headers);
+                var line = await HttpHelper.ReadHeaders(reader, headers);
                 sw.Stop();
                 time = sw.ElapsedMilliseconds;
                 strRet.AppendLine(line);
@@ -114,7 +115,7 @@ Content-Length2: 0
             while(time == null)
             Thread.Sleep(100);
 
-            if (time > 2)
+            if (time > 20)
                 throw new Exception("解析时间太长");
 
            

@@ -13,6 +13,8 @@ using System.Web;
 using Microsoft.CodeAnalysis;
 using System.Reflection.PortableExecutable;
 using JMS.ServerCore.Http;
+using System.IO.Pipelines;
+using System.Buffers;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -27,6 +29,7 @@ namespace JMS.Applications.CommandHandles
             this._httpMiddlewareManager = httpMiddlewareManager;
 
         }
+
         public async Task Handle(NetClient client, GatewayCommand cmd)
         {
 
@@ -35,7 +38,7 @@ namespace JMS.Applications.CommandHandles
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null, client.InnerStream, cmd.Header);
+            var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(client.PipeReader, cmd.Header);
             var requestPathLineArr = requestPathLine.Split(' ');
             var method = requestPathLineArr[0];
             var requestPath = requestPathLineArr[1];

@@ -107,6 +107,7 @@ namespace JMS
 
                 if (serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.ServiceAddress))
                 {
+                    NetClientPool.AddClientToPool(netclient);
                     //网关没有这个服务
                     return false;
                 }

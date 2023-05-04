@@ -20,6 +20,7 @@ namespace JMS
         static NetClientPool()
         {
             new Thread(checkTime).Start();
+
         }
 
         public static event EventHandler<NetClient> CreatedNewClient;

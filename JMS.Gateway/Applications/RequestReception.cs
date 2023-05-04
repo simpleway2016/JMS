@@ -42,19 +42,20 @@ namespace JMS.Applications
 
         async Task<GatewayCommand> GetRequestCommand(NetClient client)
         {
-            byte[] data = new byte[4];
-            await client.ReadDataAsync(data, 0, data.Length);
+            var ret = await client.PipeReader.ReadAtLeastAsync(4);
+            if (ret.IsCompleted && ret.Buffer.Length < 4)
+                throw new SocketException();
 
-            var text = Encoding.UTF8.GetString(data);
-            if( text == "GET " || text == "POST" || text == "PUT " || text == "OPTI")
+            var text = Encoding.UTF8.GetString(ret.Buffer.Slice(0,4));
+            client.PipeReader.AdvanceTo(ret.Buffer.Start);//好像在做无用功，但是没有这句，有可能往下再读数据会卡住
+
+            if ( text == "GET " || text == "POST" || text == "PUT " || text == "OPTI")
             {
-                return new GatewayCommand { Type = CommandType.HttpRequest , Content = text };
+                return new GatewayCommand { Type = CommandType.HttpRequest};
             }
             else
             {
-                var len = BitConverter.ToInt32(data);
-                data = await client.ReadServiceDataBytesAsync(len , 102400);
-                return Encoding.UTF8.GetString(data).FromJson<GatewayCommand>();
+               return await client.ReadServiceObjectAsync<GatewayCommand>();
             }    
         }
 

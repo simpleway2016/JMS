@@ -160,7 +160,7 @@ namespace JMS.Applications.HttpMiddlewares
 
                 //读取服务器发回来的头部
                 var headers = new Dictionary<string, string>();
-                var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null, proxyClient.InnerStream, headers);
+                var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders( proxyClient.PipeReader, headers);
                 contentLength = 0;
                 if (headers.ContainsKey("Content-Length"))
                 {

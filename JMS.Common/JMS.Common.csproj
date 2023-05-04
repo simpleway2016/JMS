@@ -36,4 +36,7 @@
 		<PackageReference Include="Way.Lib" Version="2.0.10.13" />
 
 	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+	</ItemGroup>
 </Project>
