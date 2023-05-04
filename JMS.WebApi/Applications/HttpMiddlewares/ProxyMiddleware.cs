@@ -27,7 +27,7 @@ namespace JMS.Applications.HttpMiddlewares
             }
 
             using var rc = new RemoteClient(WebApiProgram.GatewayAddresses);
-            var service = rc.TryGetMicroService(serviceName);
+            var service = await rc.TryGetMicroServiceAsync(serviceName);
 
             if (service == null || service.ServiceLocation.AllowGatewayProxy == false)
             {
