@@ -374,29 +374,9 @@ namespace JMS.Common
         }
 
 
-        public async Task<string> ReadLineAsync()
+        public Task<string> ReadLineAsync()
         {
-            byte[] bs = new byte[1];
-            List<byte> lineBuffer = new List<byte>(1024);
-            int readed;
-            while (true)
-            {
-                readed = await _stream.ReadAsync(bs, 0, 1);
-                if (readed <= 0)
-                    throw new SocketException();
-
-                if (bs[0] == 10)
-                {
-                    break;
-                }
-                else if (bs[0] != 13)
-                {
-                    lineBuffer.Add(bs[0]);
-                }
-            }
-
-
-            return this.code.GetString(lineBuffer.ToArray());
+            return ReadLineAsync(0);
         }
 
         public async Task<string> ReadLineAsync(int maxLength)
@@ -417,7 +397,7 @@ namespace JMS.Common
                 else if (bs[0] != 13)
                 {
                     lineBuffer.Add(bs[0]);
-                    if (lineBuffer.Count > maxLength)
+                    if ( maxLength > 0 && lineBuffer.Count > maxLength)
                         throw new Exception("content is too big");
                 }
             }
