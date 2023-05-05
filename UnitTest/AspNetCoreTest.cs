@@ -236,12 +236,15 @@ Content-Length2: 0
             StringBuilder strRet = new StringBuilder();
             long? time = null;
             Task.Run(async () => {
-               
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 var reader = System.IO.Pipelines.PipeReader.Create(stream);
+                var line = await HttpHelper.ReadHeaders(reader, headers);
+
+                stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                reader = System.IO.Pipelines.PipeReader.Create(stream);
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                var line = await HttpHelper.ReadHeaders(reader, headers);
+                line = await HttpHelper.ReadHeaders(reader, headers);
                 sw.Stop();
                 time = sw.ElapsedMilliseconds;
                 strRet.AppendLine(line);
@@ -249,7 +252,7 @@ Content-Length2: 0
             while(time == null)
             Thread.Sleep(100);
 
-            if (time > 20)
+            if (time > 2)
                 throw new Exception("解析时间太长");
 
            
