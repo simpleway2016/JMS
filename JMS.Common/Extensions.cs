@@ -8,7 +8,7 @@ using Way.Lib;
 
 namespace JMS
 {
-    public static class Extentions
+    public static class Extensions
     {
         public static string[] GetStringArrayParameters(this object[] source)
         {
