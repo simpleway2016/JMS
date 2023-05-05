@@ -6,7 +6,7 @@
 		<AssemblyName>JMS.ServiceProvider</AssemblyName>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/simpleway2016/JMS</RepositoryUrl>
-		<Version>3.0.5</Version>
+		<Version>3.1.0</Version>
 		<Authors>Jack.T</Authors>
 		<Company>JMS</Company>
 		<Product>JMS</Product>
