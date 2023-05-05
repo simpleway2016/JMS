@@ -287,7 +287,8 @@ Content-Length2: 0
 
             using (var remoteClient = new RemoteClient(gateways))
             {
-
+                remoteClient.ListMicroService(null);
+                remoteClient.ListMicroServiceAsync(null).GetAwaiter().GetResult();
                 while (true)
                 {
                     if (remoteClient.TryGetMicroService("TestWebService") == null)

@@ -317,7 +317,15 @@ namespace JMS.Common
             Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             socket.SendTimeout = 16000;
             socket.ReceiveTimeout = 16000;
-            socket.Connect(endPoint);
+            try
+            {
+                socket.Connect(endPoint);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
 
             this.Socket = socket;
             this.InnerStream = new NetworkStream(socket);
@@ -350,7 +358,15 @@ namespace JMS.Common
             Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             socket.SendTimeout = 16000;
             socket.ReceiveTimeout = 16000;
-            await socket.ConnectAsync(endPoint);
+            try
+            {
+                await socket.ConnectAsync(endPoint);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
 
             this.Socket = socket;
             this.InnerStream = new NetworkStream(socket);
