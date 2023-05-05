@@ -344,3 +344,4 @@ healthchecksdb
 /Publish/Proxy.zip
 /WebApiTest/$$_JMS.Invoker.Transactions
 /WebApiTest/$$JMS_RetryCommitPath
+/JMS.MicroServiceHost1

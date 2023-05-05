@@ -41,28 +41,27 @@ namespace JMS
 
         async void checkGateway(NetAddress addr,Action<object> continuation,object state)
         {
+            var client = NetClientPool.CreateClient(_proxyAddr, addr);
             try
             {
-                using (var client = new ProxyClient(_proxyAddr))
+                client.ReadTimeout = _timeout;
+                client.WriteServiceData(new GatewayCommand
                 {
-                    await client.ConnectAsync(addr);
-                    client.ReadTimeout = _timeout;
-                    client.WriteServiceData(new GatewayCommand
-                    {
-                        Type = CommandType.FindMaster
-                    });
-                    var ret = await client.ReadServiceObjectAsync<InvokeResult>();
-                    if (ret.Success == true && _masterGateway == null)
-                    {
-                        _masterGateway = addr;
-                        _status = ValueTaskSourceStatus.Succeeded;
-                        continuation(state);
-                    }
+                    Type = CommandType.FindMaster
+                });
+                var ret = await client.ReadServiceObjectAsync<InvokeResult>();
+                NetClientPool.AddClientToPool(client);
+
+                if (ret.Success == true && _masterGateway == null)
+                {
+                    _masterGateway = addr;
+                    _status = ValueTaskSourceStatus.Succeeded;
+                    continuation(state);
                 }
             }
             catch (Exception ex)
             {
-
+                client.Dispose();
             }
             finally
             {

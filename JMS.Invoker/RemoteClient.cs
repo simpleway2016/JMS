@@ -320,28 +320,29 @@ namespace JMS
             Task.Run(() => {
                 bool exit = false;
                 Parallel.For(0, _allGateways.Length, i => {
+                    var addr = _allGateways[i];
+
+                    var client = NetClientPool.CreateClient(this.ProxyAddress, addr);
                     try
                     {
-                        var addr = _allGateways[i];
-                        using (var client = new ProxyClient(this.ProxyAddress))
+                        client.ReadTimeout = this.Timeout;
+                        client.WriteServiceData(new GatewayCommand
                         {
-                            client.Connect(addr);
-                            client.ReadTimeout = this.Timeout;
-                            client.WriteServiceData(new GatewayCommand
-                            {
-                                Type = CommandType.FindMaster
-                            });
-                            var ret = client.ReadServiceObject<InvokeResult>();
-                            if (ret.Success == true && masterAddress == null)
-                            {
-                                masterAddress = addr;
-                                waitObj.Set();
-                                exit = true;
-                            }
+                            Type = CommandType.FindMaster
+                        });
+                        var ret = client.ReadServiceObject<InvokeResult>();
+                        NetClientPool.AddClientToPool(client);
+
+                        if (ret.Success == true && masterAddress == null)
+                        {
+                            masterAddress = addr;
+                            waitObj.Set();
+                            exit = true;
                         }
                     }
                     catch
                     {
+                        client.Dispose();
                     }
                 });
 
