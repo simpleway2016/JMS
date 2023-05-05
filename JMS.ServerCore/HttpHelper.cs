@@ -167,18 +167,7 @@ namespace JMS.ServerCore
                     if (position != null)
                     {
                         block = buffer.Slice(0, position.Value);
-#if NETCOREAPP3_1_OR_GREATER
-                        if (block.IsSingleSegment)
-                        {
-                            line = Encoding.UTF8.GetString(block.FirstSpan);
-                        }
-                        else
-                        {
-                            line = Encoding.UTF8.GetString(block.ToArray());
-                        }
-#elif NETCOREAPP2_1
-                        line = Encoding.UTF8.GetString(block.ToArray());
-#endif                       
+                        line = block.GetString();                     
 
                         // 往position位置偏移1个字节
                         buffer = buffer.Slice(buffer.GetPosition(1, position.Value));

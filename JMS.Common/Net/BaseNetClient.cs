@@ -404,14 +404,7 @@ namespace JMS.Common
                 {
                     block = buffer.Slice(0, position.Value);
 
-                    if (block.IsSingleSegment)
-                    {
-                        line = Encoding.UTF8.GetString(block.First.Span).Trim();
-                    }
-                    else
-                    {
-                        line = Encoding.UTF8.GetString(block.ToArray()).Trim();
-                    }
+                    line = block.GetString().Trim();
 
                     // 告诉PipeReader已经处理多少缓冲
                     _PipeReader.AdvanceTo(buffer.GetPosition(1, position.Value));
