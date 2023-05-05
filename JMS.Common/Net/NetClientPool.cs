@@ -16,10 +16,12 @@ namespace JMS
     {
         internal static int POOLSIZE = 65535;
         const int RELEASESECONDS = 10;
+        internal static int DefaultReadTimeout = 16000;
         static NetClientSeatCollection SeatCollection = new NetClientSeatCollection();
         static NetClientPool()
         {
             new Thread(checkTime).Start();
+
         }
 
         public static event EventHandler<NetClient> CreatedNewClient;
@@ -33,6 +35,16 @@ namespace JMS
             if (size < 0)
                 throw new Exception("参数错误");
             POOLSIZE = size;
+        }
+
+        /// <summary>
+        /// 设置默认超时时间，单位：毫秒，默认:16000
+        /// </summary>
+        public static void SetDefaultReadTimeout(int timeout)
+        {
+            if (timeout < 0)
+                throw new ArgumentException("invalid timeout");
+            DefaultReadTimeout = timeout;
         }
 
         static void checkTime()
@@ -216,7 +228,7 @@ namespace JMS
                         item.Key = key;
                         item.OnSeatTime = DateTime.Now;
                         item.Client = client;
-                        client.ReadTimeout = 16000;
+                        client.ReadTimeout = NetClientPool.DefaultReadTimeout;
                         item.Used = 2;
                         return;
                     }

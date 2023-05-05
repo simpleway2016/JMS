@@ -69,15 +69,6 @@ namespace JMS
         }
 
         /// <summary>
-        /// 客户端请求包的大小上限，默认 102400
-        /// </summary>
-        public int CommandMaxSize
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// 最多允许多少个请求数。默认值为0，表示无限制。
         /// </summary>
         public int MaxRequestCount
@@ -151,7 +142,6 @@ namespace JMS
         public MicroServiceHost(IServiceCollection services)
         {
             this.Id = Guid.NewGuid().ToString("N");
-            this.CommandMaxSize = 102400;
             _services = services;
             _scheduleTaskManager = new ScheduleTaskManager(this);
             _ControllerFactory = new ControllerFactory(this);

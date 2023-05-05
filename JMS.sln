@@ -45,7 +45,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.ServerCore", "JMS.Serve
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JMS.HttpProxy", "JMS.HttpProxy\JMS.HttpProxy.csproj", "{F8B44DC0-2142-45D6-978C-E67D85D26079}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiTest2", "WebApiTest2\WebApiTest2.csproj", "{6E1527DF-FD3D-4CBD-9A1C-B9818A182A53}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiTest2", "WebApiTest2\WebApiTest2.csproj", "{6E1527DF-FD3D-4CBD-9A1C-B9818A182A53}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

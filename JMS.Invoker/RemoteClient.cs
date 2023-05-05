@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
@@ -108,18 +109,24 @@ namespace JMS
             {
                 findMasterGateway();
             }
-            using (var netclient = new ProxyClient( this.ProxyAddress))
+            var client = NetClientPool.CreateClient(this.ProxyAddress, GatewayAddress);
+
+            try
             {
-                netclient.Connect(GatewayAddress);
-                netclient.WriteServiceData(new GatewayCommand()
+                client.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.GetAllServiceProviders,
                     Content = serviceName,
                     Header = this.GetCommandHeader(),
                 });
-                var serviceLocations = netclient.ReadServiceObject<RegisterServiceRunningInfo[]>();
-               
+                var serviceLocations = client.ReadServiceObject<RegisterServiceRunningInfo[]>();
+                NetClientPool.AddClientToPool(client);
                 return serviceLocations;
+            }
+            catch
+            {
+                client.Dispose();
+                throw;
             }
         }
 
@@ -134,19 +141,25 @@ namespace JMS
             {
                 await findMasterGatewayAsync();
             }
-            using (var netclient = new ProxyClient(this.ProxyAddress))
+            var client = NetClientPool.CreateClient(this.ProxyAddress, GatewayAddress);
+            try
             {
-                await netclient.ConnectAsync(GatewayAddress);
-                netclient.WriteServiceData(new GatewayCommand()
+                client.WriteServiceData(new GatewayCommand()
                 {
                     Type = CommandType.GetAllServiceProviders,
                     Content = serviceName,
                     Header = this.GetCommandHeader(),
                 });
-                var serviceLocations = await netclient.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();
-
+                var serviceLocations = await client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();
+                NetClientPool.AddClientToPool(client);
                 return serviceLocations;
             }
+            catch
+            {
+                client.Dispose();
+                throw;
+            }
+            
         }
 
         /// <summary>
@@ -307,28 +320,29 @@ namespace JMS
             Task.Run(() => {
                 bool exit = false;
                 Parallel.For(0, _allGateways.Length, i => {
+                    var addr = _allGateways[i];
+
+                    var client = NetClientPool.CreateClient(this.ProxyAddress, addr);
                     try
                     {
-                        var addr = _allGateways[i];
-                        using (var client = new ProxyClient(this.ProxyAddress))
+                        client.ReadTimeout = this.Timeout;
+                        client.WriteServiceData(new GatewayCommand
                         {
-                            client.Connect(addr);
-                            client.ReadTimeout = this.Timeout;
-                            client.WriteServiceData(new GatewayCommand
-                            {
-                                Type = CommandType.FindMaster
-                            });
-                            var ret = client.ReadServiceObject<InvokeResult>();
-                            if (ret.Success == true && masterAddress == null)
-                            {
-                                masterAddress = addr;
-                                waitObj.Set();
-                                exit = true;
-                            }
+                            Type = CommandType.FindMaster
+                        });
+                        var ret = client.ReadServiceObject<InvokeResult>();
+                        NetClientPool.AddClientToPool(client);
+
+                        if (ret.Success == true && masterAddress == null)
+                        {
+                            masterAddress = addr;
+                            waitObj.Set();
+                            exit = true;
                         }
                     }
                     catch
                     {
+                        client.Dispose();
                     }
                 });
 

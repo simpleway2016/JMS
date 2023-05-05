@@ -1,13 +1,14 @@
 ﻿using JMS.Common;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
 
 namespace JMS
 {
-    public static class Extentions
+    public static class Extensions
     {
         public static string[] GetStringArrayParameters(this object[] source)
         {
@@ -34,5 +35,31 @@ namespace JMS
             return obj;
         }
         
+        public static string GetString(this ReadOnlySequence<byte> buffer)
+        {
+            if (buffer.IsSingleSegment)
+            {
+                return Encoding.UTF8.GetString(buffer.First.Span);
+            }
+            else
+            {
+                var len = (int)buffer.Length;
+               var data =  ArrayPool<byte>.Shared.Rent(len);
+                Memory<byte> memory= new Memory<byte>(data);
+                try
+                {
+                    foreach( var block in buffer)
+                    {
+                        block.CopyTo(memory);
+                        memory = memory.Slice(block.Length);
+                    }
+                    return Encoding.UTF8.GetString(data , 0 , len);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(data);
+                }
+            }
+        }
     }
 }

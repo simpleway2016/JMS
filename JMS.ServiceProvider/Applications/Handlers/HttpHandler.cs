@@ -39,7 +39,7 @@ namespace JMS.Applications
         public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
             cmd.Header = new Dictionary<string, string>();
-            var urlLine = await JMS.ServerCore.HttpHelper.ReadHeaders(cmd.Service, netclient.InnerStream, cmd.Header);
+            var urlLine = await JMS.ServerCore.HttpHelper.ReadHeaders( netclient.PipeReader, cmd.Header);
 
 
 

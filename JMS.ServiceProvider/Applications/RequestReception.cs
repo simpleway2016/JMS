@@ -60,18 +60,20 @@ namespace JMS.Applications
 
         async Task<InvokeCommand> GetRequestCommand(NetClient client)
         {
-            byte[] data = new byte[4];
-            await client.ReadDataAsync(data, 0, data.Length);
+            var ret = await client.PipeReader.ReadAtLeastAsync(4);
+            if (ret.IsCompleted && ret.Buffer.Length < 4)
+                throw new SocketException();
 
-            var text = Encoding.UTF8.GetString(data);
+            var text = Encoding.UTF8.GetString(ret.Buffer.Slice(0, 4).First.Span);
+            client.PipeReader.AdvanceTo(ret.Buffer.Start);//好像在做无用功，但是没有这句，有可能往下再读数据会卡住
+
             if (text == "GET " || text == "POST")
             {
-                return new InvokeCommand { Type = InvokeType.Http, Service = text };
+                return new InvokeCommand { Type = InvokeType.Http};
             }
             else
             {
-                data = await client.ReadServiceDataBytesAsync(BitConverter.ToInt32(data), _MicroServiceProvider.CommandMaxSize);
-                return Encoding.UTF8.GetString(data).FromJson<InvokeCommand>();
+                return await client.ReadServiceObjectAsync<InvokeCommand>();
             }
         }
 

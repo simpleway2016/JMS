@@ -37,7 +37,7 @@ namespace JMS.Applications.CommandHandles
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null, client.InnerStream, cmd.Header);
+            var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(client.PipeReader, cmd.Header);
 
             if (cmd.Header.TryGetValue("Host", out string host) == false)
                 return;
@@ -135,7 +135,7 @@ namespace JMS.Applications.CommandHandles
 
                 //读取服务器发回来的头部
                 cmd.Header.Clear();
-                requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(null, proxyClient.InnerStream, cmd.Header);
+                requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(proxyClient.PipeReader, cmd.Header);
                 inputContentLength = 0;
                 if (cmd.Header.ContainsKey("Content-Length"))
                 {

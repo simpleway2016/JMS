@@ -12,6 +12,12 @@ using System.Security.Authentication;
 using System.Runtime.InteropServices;
 using System.Linq;
 using System.Threading.Tasks;
+using System.IO.Pipelines;
+using System.Reflection.PortableExecutable;
+using System.Buffers;
+using System.Text;
+using Org.BouncyCastle.Crypto.IO;
+using JMS.Common.Net;
 
 namespace JMS.Common
 {
@@ -23,18 +29,34 @@ namespace JMS.Common
     {
         public NetAddress NetAddress { get; protected set; }
 
-        private Stream _stream;
+        private Stream _innerStream;
+        private Stream _pipeStream;
         public Stream InnerStream
         {
             get
             {
-                return _stream;
+                return _pipeStream == null ? _innerStream : _pipeStream;
             }
             set
             {
-                _stream = value;
+                _innerStream = value;
+                if(value == null)
+                {
+                    _PipeReader = null;
+                    _pipeStream?.Dispose();
+                    _pipeStream = null;
+                }
+                else
+                {
+                    _PipeReader = System.IO.Pipelines.PipeReader.Create(value, new System.IO.Pipelines.StreamPipeReaderOptions(null,-1,-1,true));
+                    _pipeStream = new PipeLineStream(_PipeReader , _innerStream);
+                }
             }
         }
+
+        private System.IO.Pipelines.PipeReader _PipeReader;
+        public System.IO.Pipelines.PipeReader PipeReader => _PipeReader;
+
         public Socket Socket
         {
             get;
@@ -52,34 +74,10 @@ namespace JMS.Common
                 return this.Socket.RemoteEndPoint;
             }
         }
-        private bool m_Active;
-        private System.Text.Encoding code = System.Text.Encoding.UTF8;
+
         int _closedFlag = 0;
 
-        public System.Text.Encoding Encoding
-        {
-            get
-            {
-                return code;
-            }
-            set
-            {
-                code = value;
-            }
-        }
 
-        private System.Text.Encoding _ErrorEncoding = System.Text.Encoding.UTF8;
-        public System.Text.Encoding ErrorEncoding
-        {
-            get
-            {
-                return _ErrorEncoding;
-            }
-            set
-            {
-                _ErrorEncoding = value;
-            }
-        }
 
         public int ReadTimeout {
             get
@@ -111,11 +109,17 @@ namespace JMS.Common
             {
                 try
                 {
-                    _stream?.Dispose();
+                    _innerStream?.Dispose();
+                    _innerStream = null;
+
+                    _pipeStream?.Dispose();
+                    _pipeStream = null;
                 }
                 catch
                 {
                 }
+                
+
                 try
                 {
                     Socket?.Dispose();
@@ -153,7 +157,7 @@ namespace JMS.Common
             this.Socket.SendTimeout = 16000;
             this.Socket.ReceiveTimeout = 16000;
             this.Socket.ReceiveBufferSize = 1024 * 100;
-            this._stream = new NetworkStream(this.Socket);
+            this.InnerStream = new NetworkStream(this.Socket);
             try
             {
                 this.Socket.IOControl(IOControlCode.KeepAliveValues, GetKeepAliveData(), null);
@@ -181,15 +185,15 @@ namespace JMS.Common
                 if (certificateValidationCallback == null)
                     certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
 
-                client = new SslStream(_stream, false, certificateValidationCallback);
+                client = new SslStream(_innerStream, false, certificateValidationCallback);
             }
             else
             {
-                client = new SslStream(_stream);
+                client = new SslStream(_innerStream);
             }
             client.AuthenticateAsClient(targetHost);
 
-            _stream = client;
+            this.InnerStream = client;
         }
 
         /// <summary>
@@ -205,15 +209,15 @@ namespace JMS.Common
                 if (certificateValidationCallback == null)
                     certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
 
-                client = new SslStream(_stream, false, certificateValidationCallback);
+                client = new SslStream(_innerStream, false, certificateValidationCallback);
             }
             else
             {
-                client = new SslStream(_stream);
+                client = new SslStream(_innerStream);
             }
             await client.AuthenticateAsClientAsync(targetHost);
 
-            _stream = client;
+            this.InnerStream = client;
         }
 
         /// <summary>
@@ -231,15 +235,15 @@ namespace JMS.Common
                 if (certificateValidationCallback == null)
                     certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
 
-                client = new SslStream(_stream, false, certificateValidationCallback);
+                client = new SslStream(_innerStream, false, certificateValidationCallback);
             }
             else
             {
-                client = new SslStream(_stream);
+                client = new SslStream(_innerStream);
             }
             client.AuthenticateAsClient(targetHost, clientCertificates,enabledSslProtocols,false);
 
-            _stream = client;
+            this.InnerStream = client;
         }
 
         /// <summary>
@@ -257,15 +261,15 @@ namespace JMS.Common
                 if (certificateValidationCallback == null)
                     certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
 
-                client = new SslStream(_stream, false, certificateValidationCallback);
+                client = new SslStream(_innerStream, false, certificateValidationCallback);
             }
             else
             {
-                client = new SslStream(_stream);
+                client = new SslStream(_innerStream);
             }
             await client.AuthenticateAsClientAsync(targetHost, clientCertificates, enabledSslProtocols, false);
 
-            _stream = client;
+            this.InnerStream = client;
         }
 
         /// <summary>
@@ -275,10 +279,10 @@ namespace JMS.Common
         /// <param name="protocol"></param>
         public void AsSSLServer(X509Certificate2 ssl , RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
-            SslStream sslStream = new SslStream(_stream, false, remoteCertificateValidationCallback);
+            SslStream sslStream = new SslStream(_innerStream, false, remoteCertificateValidationCallback);
             sslStream.AuthenticateAsServer(ssl, true, protocol, false);
 
-            _stream = sslStream;
+            this.InnerStream = sslStream;
         }
         /// <summary>
         /// 使用ssl协议作为服务器端
@@ -287,10 +291,10 @@ namespace JMS.Common
         /// <param name="protocol"></param>
         public async Task AsSSLServerAsync(X509Certificate2 ssl, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
-            SslStream sslStream = new SslStream(_stream, false ,remoteCertificateValidationCallback);
+            SslStream sslStream = new SslStream(_innerStream, false ,remoteCertificateValidationCallback);
             await sslStream.AuthenticateAsServerAsync(ssl, true, protocol, false);
 
-            _stream = sslStream;
+            this.InnerStream = sslStream;
         }
 
         public virtual void Connect(NetAddress addr)
@@ -313,10 +317,18 @@ namespace JMS.Common
             Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             socket.SendTimeout = 16000;
             socket.ReceiveTimeout = 16000;
-            socket.Connect(endPoint);
+            try
+            {
+                socket.Connect(endPoint);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
 
             this.Socket = socket;
-            this._stream = new NetworkStream(socket);
+            this.InnerStream = new NetworkStream(socket);
             try
             {
                 this.Socket.IOControl(IOControlCode.KeepAliveValues, GetKeepAliveData(), null);
@@ -346,10 +358,18 @@ namespace JMS.Common
             Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             socket.SendTimeout = 16000;
             socket.ReceiveTimeout = 16000;
-            await socket.ConnectAsync(endPoint);
+            try
+            {
+                await socket.ConnectAsync(endPoint);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
 
             this.Socket = socket;
-            this._stream = new NetworkStream(socket);
+            this.InnerStream = new NetworkStream(socket);
             try
             {
                 this.Socket.IOControl(IOControlCode.KeepAliveValues, GetKeepAliveData(), null);
@@ -381,35 +401,49 @@ namespace JMS.Common
 
         public async Task<string> ReadLineAsync(int maxLength)
         {
-            byte[] bs = new byte[1];
-            List<byte> lineBuffer = new List<byte>(1024);
-            int readed;
+            ReadResult ret;
+            SequencePosition? position;
+            string line;
+            byte n = (byte)'\n';
+            ReadOnlySequence<byte> block;
             while (true)
             {
-                readed = await _stream.ReadAsync(bs, 0, 1);
-                if (readed <= 0)
+                ret = await _PipeReader.ReadAsync();
+                if (ret.IsCompleted)
+                {
                     throw new SocketException();
+                }
+                var buffer = ret.Buffer;
 
-                if (bs[0] == 10)
+                position = buffer.PositionOf(n);
+                if (position != null)
                 {
-                    break;
+                    block = buffer.Slice(0, position.Value);
+
+                    line = block.GetString().Trim();
+
+                    // 告诉PipeReader已经处理多少缓冲
+                    _PipeReader.AdvanceTo(buffer.GetPosition(1, position.Value));
+                    return line;
                 }
-                else if (bs[0] != 13)
+                else
                 {
-                    lineBuffer.Add(bs[0]);
-                    if ( maxLength > 0 && lineBuffer.Count > maxLength)
-                        throw new Exception("content is too big");
-                }
+                   
+
+                    if (maxLength > 0 && buffer.Length > maxLength)
+                        throw new SizeLimitException("line is too long");
+
+                    // 告诉PipeReader已经处理多少缓冲
+                    _PipeReader.AdvanceTo(buffer.Start,buffer.End);
+                }               
+
             }
-
-
-            return this.code.GetString(lineBuffer.ToArray());
         }
 
 
         public void WriteLine(string text)
         {
-            byte[] buffer = this.Encoding.GetBytes($"{text}\r\n");
+            byte[] buffer = Encoding.UTF8.GetBytes($"{text}\r\n");
             this.InnerStream.Write(buffer, 0, buffer.Length);
         }
 
