@@ -155,12 +155,16 @@ namespace JMS.ServerCore
             while (true)
             {
                 ret = await reader.ReadAsync();
+               
+                buffer = ret.Buffer;
                 if (ret.IsCompleted)
                 {
+                    if (buffer.Length > 0)
+                    {
+                        reader.AdvanceTo(buffer.End);
+                    }
                     throw new SocketException();
                 }
-                buffer = ret.Buffer;
-
                 do
                 {
                     position = buffer.PositionOf(n);

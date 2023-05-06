@@ -111,12 +111,29 @@ namespace JMS.Common
                 {
                     _innerStream?.Dispose();
                     _innerStream = null;
-
-                    _pipeStream?.Dispose();
-                    _pipeStream = null;
                 }
                 catch
                 {
+                }
+
+                try
+                {
+                    _PipeReader?.Complete();
+                    _PipeReader = null;
+                }
+                catch 
+                {
+
+                }
+
+                try
+                {
+                    _pipeStream?.Dispose();
+                    _pipeStream = null;
+                }
+                catch 
+                {
+
                 }
                 
 
@@ -409,11 +426,16 @@ namespace JMS.Common
             while (true)
             {
                 ret = await _PipeReader.ReadAsync();
+                var buffer = ret.Buffer;
                 if (ret.IsCompleted)
                 {
+                    if (buffer.Length > 0)
+                    {
+                        _PipeReader.AdvanceTo(buffer.End);
+                    }
                     throw new SocketException();
                 }
-                var buffer = ret.Buffer;
+               
 
                 position = buffer.PositionOf(n);
                 if (position != null)
