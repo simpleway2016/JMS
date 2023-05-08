@@ -31,9 +31,14 @@ namespace JMS.Applications.CommandHandles
         {
             if (cmd.IsHttp)
             {
-                var contentBytes = Encoding.UTF8.GetBytes(new 
+                var contentBytes = Encoding.UTF8.GetBytes(new
                 {
                     Success = _gatewayRefereeClient.IsMaster,
+                    Data = new
+                    {
+                        SupportRetmoteClientConnect = true,
+                        Version = this.GetType().Assembly.GetName().Version.ToString()
+                    }
                 }.ToJsonString());
                 netclient.OutputHttpContent(contentBytes);
             }
@@ -42,6 +47,11 @@ namespace JMS.Applications.CommandHandles
                 netclient.WriteServiceData(new InvokeResult
                 {
                     Success = _gatewayRefereeClient.IsMaster,
+                    Data = new
+                    {
+                        SupportRetmoteClientConnect = true,
+                        Version = this.GetType().Assembly.GetName().Version.ToString()
+                    }
                 });
             }
 

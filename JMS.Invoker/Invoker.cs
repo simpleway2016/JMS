@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using JMS.GatewayConnection;
 using JMS.InvokeConnects;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System;
@@ -10,8 +11,10 @@ using Way.Lib;
 
 namespace JMS
 {
-    class Invoker: IMicroService
+    class Invoker : IMicroService
     {
+        IRemoteClient _serviceTransaction;
+        IMicroServiceProvider _microServiceProvider;
         public IRemoteClient ServiceTransaction { get; }
         string _serviceName;
         ClientServiceDetail _serviceLocation;
@@ -19,8 +22,10 @@ namespace JMS
         bool _IsFromGateway;
         public bool IsFromGateway => _IsFromGateway;
 
-        public Invoker(IRemoteClient ServiceTransaction, string serviceName)
+        public Invoker(IRemoteClient ServiceTransaction, IMicroServiceProvider microServiceProvider, string serviceName)
         {
+            this._serviceTransaction = ServiceTransaction;
+            this._microServiceProvider = microServiceProvider;
             this.ServiceTransaction = ServiceTransaction;
             _serviceName = serviceName;
             _IsFromGateway = true;
@@ -35,47 +40,10 @@ namespace JMS
                 return true;
             }
             //获取服务地址
-            var netclient = NetClientPool.CreateClient(this.ServiceTransaction.ProxyAddress,this.ServiceTransaction.GatewayAddress);
-            netclient.ReadTimeout = this.ServiceTransaction.Timeout;
-            try
-            {
-                netclient.WriteServiceData(new GatewayCommand()
-                {
-                    Type = CommandType.GetServiceProvider,
-                    Header = ServiceTransaction.GetCommandHeader(),
-                    Content = new GetServiceProviderRequest
-                    {
-                        ServiceName = _serviceName
-                    }.ToJsonString()
-                });
-                var serviceLocation = netclient.ReadServiceObject<ClientServiceDetail>();
-
-                if (serviceLocation.ServiceAddress == "not master")
-                    throw new MissMasterGatewayException("");
-
-                if(serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.ServiceAddress))
-                {
-                    //网关没有这个服务
-                    return false;
-                }
-
-                _serviceLocation = serviceLocation;
-
-                NetClientPool.AddClientToPool(netclient);
-            }
-            catch (SocketException ex)
-            {
-                netclient.Dispose();
-                throw new MissMasterGatewayException(ex.Message);
-            }
-            catch (Exception)
-            {
-                netclient.Dispose();
-                throw;
-            }
+            _serviceLocation = _microServiceProvider.GetServiceLocation(ServiceTransaction , _serviceName).GetAwaiter().GetResult();
 
 
-            return true;
+            return _serviceLocation != null;
         }
 
         public async Task<bool> InitAsync(ClientServiceDetail registerServiceLocation)
@@ -87,48 +55,10 @@ namespace JMS
                 return true;
             }
             //获取服务地址
-            var netclient = await NetClientPool.CreateClientAsync(this.ServiceTransaction.ProxyAddress, this.ServiceTransaction.GatewayAddress);
-            netclient.ReadTimeout = this.ServiceTransaction.Timeout;
-            try
-            {
-                netclient.WriteServiceData(new GatewayCommand()
-                {
-                    Type = CommandType.GetServiceProvider,
-                    Header = ServiceTransaction.GetCommandHeader(),
-                    Content = new GetServiceProviderRequest
-                    {
-                        ServiceName = _serviceName
-                    }.ToJsonString()
-                });
-                var serviceLocation = await netclient.ReadServiceObjectAsync<ClientServiceDetail>();
-
-                if (serviceLocation.ServiceAddress == "not master")
-                    throw new MissMasterGatewayException("");
-
-                if (serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.ServiceAddress))
-                {
-                    NetClientPool.AddClientToPool(netclient);
-                    //网关没有这个服务
-                    return false;
-                }
-
-                _serviceLocation = serviceLocation;
-
-                NetClientPool.AddClientToPool(netclient);
-            }
-            catch (SocketException ex)
-            {
-                netclient.Dispose();
-                throw new MissMasterGatewayException(ex.Message);
-            }
-            catch (Exception)
-            {
-                netclient.Dispose();
-                throw;
-            }
+            _serviceLocation = await _microServiceProvider.GetServiceLocation(ServiceTransaction, _serviceName);
 
 
-            return true;
+            return _serviceLocation != null;
         }
 
         public bool Init()

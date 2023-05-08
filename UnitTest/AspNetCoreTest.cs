@@ -288,7 +288,7 @@ Content-Length2: 0
                    }
                 };
 
-            using (var remoteClient = new RemoteClient(gateways))
+            using (var remoteClient = new RemoteClient("localhost" , normalTest._gateWayPort))
             {
                 remoteClient.ListMicroService(null);
                 remoteClient.ListMicroServiceAsync(null).GetAwaiter().GetResult();
@@ -448,6 +448,7 @@ Content-Length2: 0
                     Thread.Sleep(100);
                     service2 = remoteClient.TryGetMicroService("TestCrashService");
                 }
+                service2 = remoteClient.TryGetMicroServiceAsync("TestCrashService").GetAwaiter().GetResult();
                 try
                 {
                     service2.Invoke("/Crash/AsyncSetName");

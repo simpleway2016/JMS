@@ -39,6 +39,16 @@ namespace JMS.Dtos
             this.ServiceAddress = registerServiceLocation.ServiceAddress;
             this.UseSsl = registerServiceLocation.UseSsl;
         }
+        public ClientServiceDetail(ServiceDetail source, RegisterServiceRunningInfo registerServiceRunningInfo)
+        {
+            this.Name = source.Name;
+            this.AllowGatewayProxy = source.AllowGatewayProxy;
+            this.Type = source.Type;
+            this.Description = source.Description;
+            this.Port = registerServiceRunningInfo.Port;
+            this.ServiceAddress = registerServiceRunningInfo.ServiceAddress;
+            this.UseSsl = registerServiceRunningInfo.UseSsl;
+        }
         public ClientServiceDetail()
         {
 

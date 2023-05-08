@@ -35,6 +35,7 @@ namespace JMS.Dtos
         BeGatewayMaster = 20,
         AddLockKey = 21,
         RemoveLockKey = 22,
+        RemoteClientConnection = 23,
     }
     public class GatewayCommand
     {

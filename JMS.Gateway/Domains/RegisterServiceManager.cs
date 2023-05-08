@@ -15,6 +15,7 @@ namespace JMS.Domains
     {
         IConfiguration _configuration;
         public event EventHandler<RegisterServiceInfo> ServiceConnect;
+        public event EventHandler<RegisterServiceInfo> ServiceInfoRefresh;
         public event EventHandler<RegisterServiceInfo> ServiceDisconnect;
 
         ConcurrentDictionary<string, IMicroServiceReception> _allServiceReceptions = new ConcurrentDictionary<string, IMicroServiceReception>();
@@ -79,6 +80,14 @@ namespace JMS.Domains
                 {
                     ServiceDisconnect(this, o.ServiceInfo);
                 }
+            }
+        }
+
+        public void RefreshServiceInfo(RegisterServiceInfo serviceInfo)
+        {
+            if(ServiceInfoRefresh != null)
+            {
+                ServiceInfoRefresh(this, serviceInfo);
             }
         }
     }

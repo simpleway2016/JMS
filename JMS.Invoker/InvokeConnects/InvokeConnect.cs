@@ -52,7 +52,7 @@ namespace JMS
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate,CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
+            _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
             try
             {
                 _client.ReadTimeout = tran.Timeout;
@@ -73,7 +73,7 @@ namespace JMS
                     this.AddClientToPool();
                     throw new RemoteException(tran.TransactionId, result.Error);
                 }
-               
+
 
                 if (result.SupportTransaction)
                     tran.AddConnect(this);
@@ -126,7 +126,7 @@ namespace JMS
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress,new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
+            _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
             try
             {
                 _client.ReadTimeout = tran.Timeout;
@@ -258,14 +258,14 @@ namespace JMS
             }
         }
 
-        public void RetryTranaction(NetAddress proxyAddress, ClientServiceDetail serviceLocation, byte[] certData, string tranId,string tranFlag)
+        public void RetryTranaction(NetAddress proxyAddress, ClientServiceDetail serviceLocation, byte[] certData, string tranId, string tranFlag)
         {
             X509Certificate2 cert = null;
             if (certData != null)
             {
                 cert = new X509Certificate2(certData);
             }
-            _client = NetClientPool.CreateClient(proxyAddress,new NetAddress(serviceLocation.ServiceAddress, serviceLocation.Port, serviceLocation.UseSsl) { Certificate = cert, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
+            _client = NetClientPool.CreateClient(proxyAddress, new NetAddress(serviceLocation.ServiceAddress, serviceLocation.Port, serviceLocation.UseSsl) { Certificate = cert, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
             var command = new InvokeCommand()
             {
                 Type = InvokeType.RetryTranaction,
@@ -285,12 +285,12 @@ namespace JMS
             this.AddClientToPool();
             if (result.Success == false || result.Data == -2)
             {
-                if(string.IsNullOrEmpty(result.Error))
+                if (string.IsNullOrEmpty(result.Error))
                     throw new Exception("重新执行事务失败");
                 else
                     throw new Exception(result.Error);
             }
-           
+
         }
     }
 }

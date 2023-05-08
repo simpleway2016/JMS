@@ -52,7 +52,7 @@ namespace JMS.Applications.CommandHandles
             {
                 service.ServiceList = serviceItem.ServiceList;
                 service.ClientCheckCodeFile = serviceItem.ClientCheckCodeFile;
-               
+                _RegisterServiceManager.RefreshServiceInfo(service);
             }
 
             netclient.WriteServiceData(new InvokeResult { Success = true});

@@ -162,9 +162,9 @@ namespace JMS
         /// <param name="cmdAction"></param>
         public void KeepHeartBeating(Func<object> cmdAction)
         {
-
+            bool exited = false;
             Task.Run(() => {
-                while (true)
+                while (!exited)
                 {
                     Thread.Sleep(10000);
                     try
@@ -187,6 +187,7 @@ namespace JMS
                 }
                 catch
                 {
+                    exited = true;
                     return;
                 }
             }

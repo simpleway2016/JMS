@@ -96,6 +96,7 @@ namespace JMS
             services.AddSingleton<IRequestReception, RequestReception>();
             services.AddSingleton<IRegisterServiceManager, RegisterServiceManager>();
             services.AddSingleton<ICommandHandlerRoute, CommandHandlerRoute>();
+            services.AddSingleton<IRemoteClientManager, DefaultRemoteClientManager>();
             services.AddSingleton<Gateway>();
             services.AddSingleton<LockKeyManager>();
             services.AddTransient<IMicroServiceReception, MicroServiceReception>();
