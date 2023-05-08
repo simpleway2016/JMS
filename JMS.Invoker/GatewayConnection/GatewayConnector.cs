@@ -47,10 +47,10 @@ namespace JMS.GatewayConnection
                     if (_disposed)
                         return;
 
-                    var services = await _client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();
-                    _allServices.Clear();
+                    var services = await _client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();                    
                     lock (_allServices)
                     {
+                        _allServices.Clear();
                         _allServices.AddRange(services);
                     }
 
@@ -123,7 +123,12 @@ namespace JMS.GatewayConnection
             {
                 if (!_disposed)
                 {
-                    Task.Run(keepConnect);
+                    lock (_allServices)
+                    {
+                        _allServices.Clear();
+                    }
+                    await Task.Delay(2000);
+                    keepConnect();
                 }
             }
         }
