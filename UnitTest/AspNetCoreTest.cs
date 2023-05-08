@@ -288,7 +288,7 @@ Content-Length2: 0
                    }
                 };
 
-            using (var remoteClient = new RemoteClient(gateways))
+            using (var remoteClient = new RemoteClient("localhost" , normalTest._gateWayPort))
             {
                 remoteClient.ListMicroService(null);
                 remoteClient.ListMicroServiceAsync(null).GetAwaiter().GetResult();

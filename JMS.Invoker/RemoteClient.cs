@@ -63,22 +63,7 @@ namespace JMS
         public X509Certificate2 ServiceClientCertificate { get;  set; }
         MasterGatewayProvider _masterGatewayProvider;
         ILogger<RemoteClient> _logger;
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gatewayAddress">网关ip</param>
-        /// <param name="port">网关端口</param>
-        /// <param name="proxyAddress"></param>
-        /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
-        /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public RemoteClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null,X509Certificate2 serviceClientCert = null)
-        {
-            _TransactionId = Guid.NewGuid().ToString("N");
-            GatewayAddress = new NetAddress(gatewayAddress, port);
-            ServiceClientCertificate = serviceClientCert;
-            this.ProxyAddress = proxyAddress;
-            TransactionReporterRoute.Logger = _logger = logger;
-        }
+      
         /// <summary>
         /// 
         /// </summary>
@@ -95,6 +80,20 @@ namespace JMS
 
             //先找到master网关
             _allGateways = gatewayAddresses;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="gatewayAddress">网关ip</param>
+        /// <param name="port">网关端口</param>
+        /// <param name="proxyAddress"></param>
+        /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
+        /// <param name="serviceClientCert">与微服务互通的证书</param>
+        public RemoteClient(string gatewayAddress, int port, NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null, X509Certificate2 serviceClientCert = null)
+            : this(new NetAddress[] { new NetAddress(gatewayAddress, port) }, proxyAddress, logger, serviceClientCert)
+        {
+
         }
 
         /// <summary>
