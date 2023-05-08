@@ -52,7 +52,7 @@ namespace JMS
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate });
+            _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate,CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
             try
             {
                 _client.ReadTimeout = tran.Timeout;
