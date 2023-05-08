@@ -14,11 +14,13 @@ namespace JMS.Domains
     public interface IRegisterServiceManager
     {
         public event EventHandler<RegisterServiceInfo> ServiceConnect;
+        public event EventHandler<RegisterServiceInfo> ServiceInfoRefresh;
         public event EventHandler<RegisterServiceInfo> ServiceDisconnect;
         bool SupportJmsDoc { get; }
         public IEnumerable<RegisterServiceInfo> GetAllRegisterServices();
         void AddRegisterService(IMicroServiceReception reception);
         void RemoveRegisterService(RegisterServiceInfo registerServiceInfo);
+        void RefreshServiceInfo(RegisterServiceInfo serviceInfo);
         RegisterServiceInfo GetServiceById(string id);
 
         void DisconnectAllServices();

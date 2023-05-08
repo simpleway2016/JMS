@@ -133,6 +133,7 @@ namespace JMS.Applications.CommandHandles
                 ServiceId = m.ServiceId,
                 ServiceList = m.ServiceList,
                 MaxThread = m.MaxThread,
+                MaxRequestCount = m.MaxRequestCount,
                 UseSsl = m.UseSsl,
                 PerformanceInfo = new PerformanceInfo
                 {

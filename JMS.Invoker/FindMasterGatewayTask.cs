@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Security.Cryptography.X509Certificates;
 using JMS.Dtos;
+using JMS.GatewayConnection;
 
 namespace JMS
 {
     class FindMasterGatewayTask : IValueTaskSource<NetAddress>
     {
+        public bool SupportRemoteConnection;
         int _timeout;
         NetAddress _proxyAddr;
         NetAddress[] _gatewayAddrs;
@@ -49,11 +51,12 @@ namespace JMS
                 {
                     Type = CommandType.FindMaster
                 });
-                var ret = await client.ReadServiceObjectAsync<InvokeResult>();
+                var ret = await client.ReadServiceObjectAsync<InvokeResult<FindMasterResult>>();
                 NetClientPool.AddClientToPool(client);
 
                 if (ret.Success == true && _masterGateway == null)
                 {
+                    SupportRemoteConnection = ret.Data != null && ret.Data.SupportRetmoteClientConnect;
                     _masterGateway = addr;
                     _status = ValueTaskSourceStatus.Succeeded;
                     continuation(state);

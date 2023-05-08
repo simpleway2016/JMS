@@ -90,7 +90,7 @@ namespace JMS.Dtos
         /// <summary>
         /// 当前连接的请求数
         /// </summary>
-        public int? RequestQuantity;
+        public int RequestQuantity;
         /// <summary>
         /// CPU利用率
         /// </summary>
@@ -112,7 +112,7 @@ namespace JMS.Dtos
         /// </summary>
         public int MaxThread;
         public string ServiceId;
-
+        public int MaxRequestCount;
         /// <summary>
         /// 当前微服务的负载情况
         /// </summary>

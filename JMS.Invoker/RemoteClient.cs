@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using JMS.GatewayConnection;
 using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
 using System;
@@ -54,15 +55,13 @@ namespace JMS
             }
         }
 
-        static Way.Lib.Collections.ConcurrentList<NetAddress> HistoryMasterAddressList = new Way.Lib.Collections.ConcurrentList<NetAddress>();
-
         public NetAddress GatewayAddress { get; private set; }
         public NetAddress ProxyAddress { get; }
         NetAddress[] _allGateways;
 
         Dictionary<string, string> _Header = new Dictionary<string, string>();
         public X509Certificate2 ServiceClientCertificate { get;  set; }
-
+        MasterGatewayProvider _masterGatewayProvider;
         ILogger<RemoteClient> _logger;
         /// <summary>
         /// 
@@ -304,64 +303,11 @@ namespace JMS
                     GatewayAddress = _allGateways[0];
                 return;
             }
-
-            //先从历史主网关选出一个
-            var historyMaster = HistoryMasterAddressList.FirstOrDefault(m => _allGateways.Any(g => g==m));
-            if(historyMaster != null)
+            if (_masterGatewayProvider == null)
             {
-                GatewayAddress = historyMaster;
-                return;
+                _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout);
             }
-
-            NetAddress masterAddress = null;
-
-            ManualResetEvent waitObj = new ManualResetEvent(false);
-
-            Task.Run(() => {
-                bool exit = false;
-                Parallel.For(0, _allGateways.Length, i => {
-                    var addr = _allGateways[i];
-
-                    var client = NetClientPool.CreateClient(this.ProxyAddress, addr);
-                    try
-                    {
-                        client.ReadTimeout = this.Timeout;
-                        client.WriteServiceData(new GatewayCommand
-                        {
-                            Type = CommandType.FindMaster
-                        });
-                        var ret = client.ReadServiceObject<InvokeResult>();
-                        NetClientPool.AddClientToPool(client);
-
-                        if (ret.Success == true && masterAddress == null)
-                        {
-                            masterAddress = addr;
-                            waitObj.Set();
-                            exit = true;
-                        }
-                    }
-                    catch
-                    {
-                        client.Dispose();
-                    }
-                });
-
-                if (exit)
-                    return;
-
-                waitObj.Set();
-            });
-
-            waitObj.WaitOne();
-            waitObj.Dispose();
-
-
-            if (masterAddress == null)
-                throw new MissMasterGatewayException("无法找到主网关");
-            GatewayAddress = masterAddress;
-
-            if(HistoryMasterAddressList.Any(m=>m== GatewayAddress) == false)
-                HistoryMasterAddressList.Add(GatewayAddress);
+            GatewayAddress = _masterGatewayProvider.GetMaster();
         }
 
         async Task findMasterGatewayAsync()
@@ -372,19 +318,11 @@ namespace JMS
                     GatewayAddress = _allGateways[0];
                 return;
             }
-
-            //先从历史主网关选出一个
-            var historyMaster = HistoryMasterAddressList.FirstOrDefault(m => _allGateways.Any(g => g == m));
-            if (historyMaster != null)
+            if (_masterGatewayProvider == null)
             {
-                GatewayAddress = historyMaster;
-                return;
+                _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout);
             }
-
-            GatewayAddress = await new ValueTask<NetAddress>(new FindMasterGatewayTask(_allGateways , this.Timeout,this.ProxyAddress), 0); ;
-
-            if (HistoryMasterAddressList.Any(m => m == GatewayAddress) == false)
-                HistoryMasterAddressList.Add(GatewayAddress);
+            GatewayAddress = await _masterGatewayProvider.GetMasterAsync();
         }
 
         /// <summary>
@@ -455,8 +393,7 @@ namespace JMS
                         throw;
                     else
                     {
-                        if (GatewayAddress != null)
-                            HistoryMasterAddressList.Remove(GatewayAddress);
+                        _masterGatewayProvider.RemoveMaster();
                     }
                     findMasterGateway();
                 }
@@ -496,8 +433,7 @@ namespace JMS
                         throw;
                     else
                     {
-                        if (GatewayAddress != null)
-                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
+                        _masterGatewayProvider.RemoveMaster();
                     }
                     await findMasterGatewayAsync();
                 }
@@ -562,8 +498,7 @@ namespace JMS
                         throw;
                     else
                     {
-                        if (GatewayAddress != null)
-                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
+                        _masterGatewayProvider.RemoveMaster();
                     }
                     findMasterGateway();
                 }
@@ -598,8 +533,7 @@ namespace JMS
                         throw;
                     else
                     {
-                        if (GatewayAddress != null)
-                            HistoryMasterAddressList.Remove(HistoryMasterAddressList.FirstOrDefault(m => m == GatewayAddress));
+                        _masterGatewayProvider.RemoveMaster();
                     }
                     await findMasterGatewayAsync();
                 }
