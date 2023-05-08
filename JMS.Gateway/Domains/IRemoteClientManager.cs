@@ -31,7 +31,45 @@ namespace JMS.Domains
             this._registerServiceManager = registerServiceManager;
             _registerServiceManager.ServiceConnect += _registerServiceManager_ServiceConnect;
             _registerServiceManager.ServiceDisconnect += _registerServiceManager_ServiceDisconnect;
-            _registerServiceManager.ServiceInfoRefresh += _registerServiceManager_ServiceConnect;
+            _registerServiceManager.ServiceInfoRefresh += _registerServiceManager_ServiceInfoRefresh; ;
+        }
+
+        private void _registerServiceManager_ServiceInfoRefresh(object sender, RegisterServiceInfo serviceInfo)
+        {
+            if (!string.IsNullOrWhiteSpace(serviceInfo.ClientCheckCodeFile))
+                return;
+
+            var obj = new
+            {
+                Type = 3,
+                Data = new RegisterServiceRunningInfo
+                {
+                    Host = serviceInfo.Host,
+                    ServiceAddress = serviceInfo.ServiceAddress,
+                    Port = serviceInfo.Port,
+                    ServiceId = serviceInfo.ServiceId,
+                    ServiceList = serviceInfo.ServiceList,
+                    MaxThread = serviceInfo.MaxThread,
+                    UseSsl = serviceInfo.UseSsl,
+                    MaxRequestCount = serviceInfo.MaxRequestCount,
+                    PerformanceInfo = new PerformanceInfo
+                    {
+                        RequestQuantity = serviceInfo.RequestQuantity,
+                        CpuUsage = serviceInfo.CpuUsage
+                    }
+                }.ToJsonString()
+            };
+            foreach (var client in _clients)
+            {
+                try
+                {
+                    client.Key.WriteServiceData(obj);
+                }
+                catch
+                {
+
+                }
+            }
         }
 
         private void _registerServiceManager_ServiceDisconnect(object sender, Dtos.RegisterServiceInfo serviceInfo)

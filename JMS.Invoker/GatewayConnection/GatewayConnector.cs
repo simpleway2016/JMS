@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -67,6 +68,15 @@ namespace JMS.GatewayConnection
                             //移除
                             _allServices.TryRemove(ret.Data, out curItem);
                         }
+                        else if (ret.Type == 3)
+                        {
+                            //更新
+                            curItem = ret.Data.FromJson<RegisterServiceRunningInfo>();
+                            if (_allServices.TryGetValue(curItem.ServiceId, out RegisterServiceRunningInfo exist))
+                            {
+                                _allServices.TryUpdate(curItem.ServiceId, curItem, exist);
+                            }
+                        }
                     }
                 }
             }
@@ -87,17 +97,65 @@ namespace JMS.GatewayConnection
            
         }
 
-        public RegisterServiceRunningInfo GetServiceLocation(string serviceName,bool isGatewayProxy)
+        async Task<ClientServiceDetail> GetServiceLocationInGateway(IRemoteClient remoteClient, string serviceName)
+        {
+            //获取服务地址
+            var netclient = await NetClientPool.CreateClientAsync(_proxy, _gatewayAddress);
+            netclient.ReadTimeout = 8000;
+            try
+            {
+                await netclient.WriteServiceDataAsync(new GatewayCommand()
+                {
+                    Type = CommandType.GetServiceProvider,
+                    Header = remoteClient.GetCommandHeader(),
+                    Content = new GetServiceProviderRequest
+                    {
+                        ServiceName = serviceName
+                    }.ToJsonString()
+                });
+                var serviceLocation = await netclient.ReadServiceObjectAsync<ClientServiceDetail>();
+
+                if (serviceLocation.ServiceAddress == "not master")
+                    throw new MissMasterGatewayException("");
+
+                if (serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.ServiceAddress))
+                {
+                    //网关没有这个服务
+                    return null;
+                }
+
+                NetClientPool.AddClientToPool(netclient);
+                return serviceLocation;
+            }
+            catch (SocketException ex)
+            {
+                netclient.Dispose();
+                throw new MissMasterGatewayException(ex.Message);
+            }
+            catch (Exception)
+            {
+                netclient.Dispose();
+                throw;
+            }
+        }
+
+        public async Task<ClientServiceDetail> GetServiceLocation(IRemoteClient remoteClient, string serviceName)
         {
             if(_supportRemoteConnection == false)
             {
-                throw new NotImplementedException();
+                return await GetServiceLocationInGateway(remoteClient,serviceName);
             }
 
-            var matchServices = _allServices.Where(m => m.Value.ServiceList.Any(n => n.Name == serviceName && (n.AllowGatewayProxy || isGatewayProxy == false))
+            var matchServices = _allServices.Where(m => m.Value.ServiceList.Any(n => n.Name == serviceName)
             && m.Value.MaxThread > 0
             && (m.Value.MaxRequestCount == 0 || m.Value.PerformanceInfo.RequestQuantity < m.Value.MaxRequestCount)
             ).Select(m=>m.Value);
+
+            if(matchServices.Count() == 0)
+            {
+                return await GetServiceLocationInGateway(remoteClient,serviceName);
+
+            }
 
             IEnumerable<RegisterServiceRunningInfo> services = null;
 
@@ -111,11 +169,13 @@ namespace JMS.GatewayConnection
             //查找一个客户占用比较低的机器
             var item = services.OrderBy(m => m.PerformanceInfo.RequestQuantity / m.MaxThread).FirstOrDefault();
             if (item == null)
+            {
                 return null;
+            }
 
             Interlocked.Increment(ref item.PerformanceInfo.RequestQuantity);
 
-            return item;
+            return new ClientServiceDetail(item.ServiceList.FirstOrDefault(m=>m.Name == serviceName) , item);
         }
 
         class GatewayConnectionResult

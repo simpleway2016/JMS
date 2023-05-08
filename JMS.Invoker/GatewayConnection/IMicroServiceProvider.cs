@@ -2,12 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JMS.GatewayConnection
 {
     internal interface IMicroServiceProvider
     {
-        RegisterServiceRunningInfo GetServiceLocation(string serviceName);
+        Task<ClientServiceDetail> GetServiceLocation(IRemoteClient tran, string serviceName);
     }
 
 }

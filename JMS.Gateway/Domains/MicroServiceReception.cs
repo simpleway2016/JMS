@@ -131,7 +131,7 @@ namespace JMS.Domains
                         try
                         {
                             var hardwareInfo = command.Content.FromJson<PerformanceInfo>();
-                            Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity.GetValueOrDefault());
+                            Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity);
                             ServiceInfo.CpuUsage = hardwareInfo.CpuUsage.GetValueOrDefault();
                             _registerServiceManager.RefreshServiceInfo(ServiceInfo);
                         }

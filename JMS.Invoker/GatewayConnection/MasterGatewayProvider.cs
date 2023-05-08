@@ -36,15 +36,15 @@ namespace JMS.GatewayConnection
 
         }
 
+        public IMicroServiceProvider GetMicroServiceProvider()
+        {
+            return _master;
+        }
+
         public NetAddress GetMaster()
         {
             if (_allGateways == null)
                 return null;
-
-            if (_allGateways.Length == 1)
-            {
-                return _allGateways[0];
-            }
 
 
             if(_master != null)
@@ -108,11 +108,6 @@ namespace JMS.GatewayConnection
         {
             if (_allGateways == null)
                 return null;
-
-            if ( _allGateways.Length == 1)
-            {
-                return _allGateways[0];
-            }
 
             if (_master != null)
             {

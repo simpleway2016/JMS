@@ -297,12 +297,6 @@ namespace JMS
 
         void findMasterGateway()
         {
-            if (_allGateways == null || _allGateways.Length == 1)
-            {
-                if(_allGateways != null)
-                    GatewayAddress = _allGateways[0];
-                return;
-            }
             if (_masterGatewayProvider == null)
             {
                 _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout);
@@ -312,12 +306,6 @@ namespace JMS
 
         async Task findMasterGatewayAsync()
         {
-            if (_allGateways == null || _allGateways.Length == 1)
-            {
-                if (_allGateways != null)
-                    GatewayAddress = _allGateways[0];
-                return;
-            }
             if (_masterGatewayProvider == null)
             {
                 _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout);
@@ -383,7 +371,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, att.ServiceName);
+                    var invoker = new Invoker(this, _masterGatewayProvider.GetMicroServiceProvider(), att.ServiceName);
                     if (invoker.Init(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
@@ -423,7 +411,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, att.ServiceName);
+                    var invoker = new Invoker(this, _masterGatewayProvider.GetMicroServiceProvider(), att.ServiceName);
                     if (await invoker.InitAsync(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
@@ -488,7 +476,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, serviceName);
+                    var invoker = new Invoker(this, _masterGatewayProvider.GetMicroServiceProvider(), serviceName);
                     if (invoker.Init(registerServiceLocation))
                         return invoker;
                 }
@@ -523,7 +511,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, serviceName);
+                    var invoker = new Invoker(this, _masterGatewayProvider.GetMicroServiceProvider(), serviceName);
                     if (await invoker.InitAsync(registerServiceLocation))
                         return invoker;
                 }
