@@ -11,7 +11,7 @@ using Way.Lib;
 
 namespace JMS.GatewayConnection
 {
-    internal class GatewayConnector : IDisposable,IMicroServiceProvider
+    internal class GatewayConnector : IDisposable, IMicroServiceProvider
     {
         bool _supportRemoteConnection;
         NetAddress _proxy;
@@ -19,7 +19,7 @@ namespace JMS.GatewayConnection
         bool _disposed = false;
         ProxyClient _client;
         public NetAddress GatewayAddress => _gatewayAddress;
-        ConcurrentDictionary<string, RegisterServiceRunningInfo> _allServices = new ConcurrentDictionary<string, RegisterServiceRunningInfo>();
+        List<RegisterServiceRunningInfo> _allServices = new List<RegisterServiceRunningInfo>(1024);
         public GatewayConnector(NetAddress proxy, NetAddress gatewayAddress, bool supportRemoteConnection)
         {
             this._supportRemoteConnection = supportRemoteConnection;
@@ -49,33 +49,72 @@ namespace JMS.GatewayConnection
 
                     var services = await _client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();
                     _allServices.Clear();
-                    foreach ( var item in services )
+                    lock (_allServices)
                     {
-                        _allServices[item.ServiceId] = item;
+                        _allServices.AddRange(services);
                     }
 
                     while (!_disposed)
                     {
                         var ret = await _client.ReadServiceObjectAsync<GatewayConnectionResult>();
-                        if(ret.Type == 1)
+                        if (ret.Type == 1)
                         {
                             //新增
                             curItem = ret.Data.FromJson<RegisterServiceRunningInfo>();
-                            _allServices[curItem.ServiceId] = curItem;
+                            lock (_allServices)
+                            {
+                                _allServices.Add(curItem);
+                            }
                         }
-                        else if(ret.Type == 2)
+                        else if (ret.Type == 2)
                         {
                             //移除
-                            _allServices.TryRemove(ret.Data, out curItem);
+                            lock (_allServices)
+                            {
+                                for (int i = 0; i < _allServices.Count; i++)
+                                {
+                                    try
+                                    {
+                                        var item = _allServices[i];
+                                        if (item.ServiceId == ret.Data)
+                                        {
+                                            _allServices.RemoveAt(i);
+                                            break;
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        i--;
+                                    }
+                                }
+                            }
                         }
                         else if (ret.Type == 3)
                         {
                             //更新
                             curItem = ret.Data.FromJson<RegisterServiceRunningInfo>();
-                            if (_allServices.TryGetValue(curItem.ServiceId, out RegisterServiceRunningInfo exist))
+
+                            for (int i = 0; i < _allServices.Count; i++)
                             {
-                                _allServices.TryUpdate(curItem.ServiceId, curItem, exist);
+                                try
+                                {
+                                    var exist = _allServices[i];
+                                    if (exist.ServiceId == curItem.ServiceId)
+                                    {
+                                        exist.ServiceList = curItem.ServiceList;
+                                        exist.PerformanceInfo = curItem.PerformanceInfo;
+                                        exist.ServiceAddress = curItem.ServiceAddress;
+                                        exist.Port = curItem.Port;
+                                        exist.UseSsl = curItem.UseSsl;
+                                        break;
+                                    }
+                                }
+                                catch
+                                {
+                                    i--;
+                                }
                             }
+
                         }
                     }
                 }
@@ -94,7 +133,7 @@ namespace JMS.GatewayConnection
             _disposed = true;
             _client?.Dispose();
             _client = null;
-           
+
         }
 
         async Task<ClientServiceDetail> GetServiceLocationInGateway(IRemoteClient remoteClient, string serviceName)
@@ -141,19 +180,32 @@ namespace JMS.GatewayConnection
 
         public async Task<ClientServiceDetail> GetServiceLocation(IRemoteClient remoteClient, string serviceName)
         {
-            if(_supportRemoteConnection == false)
+            if (_supportRemoteConnection == false)
             {
-                return await GetServiceLocationInGateway(remoteClient,serviceName);
+                return await GetServiceLocationInGateway(remoteClient, serviceName);
             }
 
-            var matchServices = _allServices.Where(m => m.Value.ServiceList.Any(n => n.Name == serviceName)
-            && m.Value.MaxThread > 0
-            && (m.Value.MaxRequestCount == 0 || m.Value.PerformanceInfo.RequestQuantity < m.Value.MaxRequestCount)
-            ).Select(m=>m.Value);
-
-            if(matchServices.Count() == 0)
+            RegisterServiceRunningInfo[] matchServices;
+            while (true)
             {
-                return await GetServiceLocationInGateway(remoteClient,serviceName);
+                try
+                {
+                    matchServices = _allServices.Where(m => m.ServiceList.Any(n => n.Name == serviceName)
+                    && m.MaxThread > 0
+                    && (m.MaxRequestCount == 0 || m.PerformanceInfo.RequestQuantity < m.MaxRequestCount)
+                    ).ToArray();
+
+                    break;
+                }
+                catch
+                {
+                    Thread.Sleep(10);
+                }
+            }
+
+            if (matchServices.Length == 0)
+            {
+                return await GetServiceLocationInGateway(remoteClient, serviceName);
 
             }
 
@@ -175,7 +227,7 @@ namespace JMS.GatewayConnection
 
             Interlocked.Increment(ref item.PerformanceInfo.RequestQuantity);
 
-            return new ClientServiceDetail(item.ServiceList.FirstOrDefault(m=>m.Name == serviceName) , item);
+            return new ClientServiceDetail(item.ServiceList.FirstOrDefault(m => m.Name == serviceName), item);
         }
 
         class GatewayConnectionResult
@@ -185,5 +237,5 @@ namespace JMS.GatewayConnection
         }
     }
 
-    
+
 }
