@@ -40,7 +40,7 @@ namespace JMS
                 return true;
             }
             //获取服务地址
-            _serviceLocation = _microServiceProvider.GetServiceLocation(ServiceTransaction , _serviceName).GetAwaiter().GetResult();
+            _serviceLocation = _microServiceProvider.GetServiceLocation(ServiceTransaction , _serviceName);
 
 
             return _serviceLocation != null;
@@ -55,7 +55,7 @@ namespace JMS
                 return true;
             }
             //获取服务地址
-            _serviceLocation = await _microServiceProvider.GetServiceLocation(ServiceTransaction, _serviceName);
+            _serviceLocation = await _microServiceProvider.GetServiceLocationAsync(ServiceTransaction, _serviceName);
 
 
             return _serviceLocation != null;

@@ -141,7 +141,7 @@ namespace JMS.GatewayConnection
 
         }
 
-        async Task<ClientServiceDetail> GetServiceLocationInGateway(IRemoteClient remoteClient, string serviceName)
+        async Task<ClientServiceDetail> GetServiceLocationInGatewayAsync(IRemoteClient remoteClient, string serviceName)
         {
             //获取服务地址
             var netclient = await NetClientPool.CreateClientAsync(_proxy, _gatewayAddress);
@@ -183,11 +183,53 @@ namespace JMS.GatewayConnection
             }
         }
 
-        public async Task<ClientServiceDetail> GetServiceLocation(IRemoteClient remoteClient, string serviceName)
+        ClientServiceDetail GetServiceLocationInGateway(IRemoteClient remoteClient, string serviceName)
+        {
+            //获取服务地址
+            var netclient = NetClientPool.CreateClient(_proxy, _gatewayAddress);
+            netclient.ReadTimeout = 8000;
+            try
+            {
+                netclient.WriteServiceData(new GatewayCommand()
+                {
+                    Type = CommandType.GetServiceProvider,
+                    Header = remoteClient.GetCommandHeader(),
+                    Content = new GetServiceProviderRequest
+                    {
+                        ServiceName = serviceName
+                    }.ToJsonString()
+                });
+                var serviceLocation = netclient.ReadServiceObject<ClientServiceDetail>();
+
+                if (serviceLocation.ServiceAddress == "not master")
+                    throw new MissMasterGatewayException("");
+
+                if (serviceLocation.Port == 0 && string.IsNullOrEmpty(serviceLocation.ServiceAddress))
+                {
+                    //网关没有这个服务
+                    return null;
+                }
+
+                NetClientPool.AddClientToPool(netclient);
+                return serviceLocation;
+            }
+            catch (SocketException ex)
+            {
+                netclient.Dispose();
+                throw new MissMasterGatewayException(ex.Message);
+            }
+            catch (Exception)
+            {
+                netclient.Dispose();
+                throw;
+            }
+        }
+
+        public async Task<ClientServiceDetail> GetServiceLocationAsync(IRemoteClient remoteClient, string serviceName)
         {
             if (_supportRemoteConnection == false)
             {
-                return await GetServiceLocationInGateway(remoteClient, serviceName);
+                return await GetServiceLocationInGatewayAsync(remoteClient, serviceName);
             }
 
             RegisterServiceRunningInfo[] matchServices;
@@ -210,7 +252,59 @@ namespace JMS.GatewayConnection
 
             if (matchServices.Length == 0)
             {
-                return await GetServiceLocationInGateway(remoteClient, serviceName);
+                return await GetServiceLocationInGatewayAsync(remoteClient, serviceName);
+
+            }
+
+            IEnumerable<RegisterServiceRunningInfo> services = null;
+
+            //先查找cpu使用率低于70%的
+            services = matchServices.Where(m => m.PerformanceInfo.CpuUsage < 70);
+
+
+            if (services.Count() == 0)
+                services = matchServices;
+
+            //查找一个客户占用比较低的机器
+            var item = services.OrderBy(m => m.PerformanceInfo.RequestQuantity / m.MaxThread).FirstOrDefault();
+            if (item == null)
+            {
+                return null;
+            }
+
+            Interlocked.Increment(ref item.PerformanceInfo.RequestQuantity);
+
+            return new ClientServiceDetail(item.ServiceList.FirstOrDefault(m => m.Name == serviceName), item);
+        }
+
+        public ClientServiceDetail GetServiceLocation(IRemoteClient remoteClient, string serviceName)
+        {
+            if (_supportRemoteConnection == false)
+            {
+                return GetServiceLocationInGateway(remoteClient, serviceName);
+            }
+
+            RegisterServiceRunningInfo[] matchServices;
+            while (true)
+            {
+                try
+                {
+                    matchServices = _allServices.Where(m => m.ServiceList.Any(n => n.Name == serviceName)
+                    && m.MaxThread > 0
+                    && (m.MaxRequestCount == 0 || m.PerformanceInfo.RequestQuantity < m.MaxRequestCount)
+                    ).ToArray();
+
+                    break;
+                }
+                catch
+                {
+                    Thread.Sleep(10);
+                }
+            }
+
+            if (matchServices.Length == 0)
+            {
+                return GetServiceLocationInGateway(remoteClient, serviceName);
 
             }
 

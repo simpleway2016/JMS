@@ -8,7 +8,8 @@ namespace JMS.GatewayConnection
 {
     internal interface IMicroServiceProvider
     {
-        Task<ClientServiceDetail> GetServiceLocation(IRemoteClient tran, string serviceName);
+        Task<ClientServiceDetail> GetServiceLocationAsync(IRemoteClient tran, string serviceName);
+        ClientServiceDetail GetServiceLocation(IRemoteClient tran, string serviceName);
     }
 
 }
