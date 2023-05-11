@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Reflection;
@@ -145,7 +146,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
                             result = actionFilterProcessor.OnActionExecuted(result);
                             if (result != null)
-                            {                                
+                            {
                                 if (result is ObjectResult oret)
                                 {
                                     result = oret.Value;
@@ -154,9 +155,27 @@ namespace JMS.ServiceProvider.AspNetCore
                                 {
                                     result = jret.Value;
                                 }
-                                else if (result is OkResult okret)
+                                else if (result is StatusCodeResult statusCodeResult)
                                 {
-                                    result = okret.StatusCode;
+                                    if (statusCodeResult.StatusCode < 200 || statusCodeResult.StatusCode >= 300)
+                                    {
+                                        if (tranDelegate.RollbackAction != null)
+                                        {
+                                            tranDelegate.RollbackAction();
+                                            tranDelegate.RollbackAction = null;
+                                            tranDelegate.CommitAction = null;
+                                        }
+                                        netClient.WriteServiceData(new InvokeResult
+                                        {
+                                            Success = false,
+                                            Error = ((HttpStatusCode)statusCodeResult.StatusCode).ToString()
+
+                                        });
+                                        releaseNetClient(netClient);
+                                        return true;
+                                    }
+                                    else
+                                        result = statusCodeResult.StatusCode;
                                 }
                                 else if (result is OkObjectResult okobjret)
                                 {
