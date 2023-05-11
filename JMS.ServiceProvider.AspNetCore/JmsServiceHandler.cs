@@ -216,15 +216,15 @@ namespace JMS.ServiceProvider.AspNetCore
                             while (ex.InnerException != null)
                                 ex = ex.InnerException;
 
+                            actionFilterProcessor.Exception = ex;
+                            actionFilterProcessor.OnActionExecuted(null);
+
                             if (tranDelegate.RollbackAction != null)
                             {
                                 tranDelegate.RollbackAction();
                                 tranDelegate.RollbackAction = null;
                                 tranDelegate.CommitAction = null;
                             }
-
-                            actionFilterProcessor.Exception = ex;
-                            actionFilterProcessor.OnActionExecuted(null);
 
                             var outputObj = new InvokeResult
                             {
