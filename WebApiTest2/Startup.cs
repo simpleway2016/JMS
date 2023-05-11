@@ -46,11 +46,18 @@ namespace WebApiTest2
             Task.Run(() =>
             {
                 Thread.Sleep(2000);
-                using (var rc = new RemoteClient(gateways))
+                try
                 {
-                    var service = rc.GetMicroService("DemoService");
-                    var name = service.Invoke<string>("api/demo/Test", "Jack");
-                    Console.WriteLine($"name:{name}");
+                    using (var rc = new RemoteClient(gateways))
+                    {
+                        var service = rc.GetMicroService("DemoService");
+                        var name = service.Invoke<string>("api/demo/Test", "Jack");
+                        Console.WriteLine($"name:{name}");
+                    }
+                }
+                catch (Exception)
+                {
+                     
                 }
             });
             app.UseMvc();
