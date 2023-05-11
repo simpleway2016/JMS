@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,17 +31,34 @@ namespace JMS.ServiceProvider.AspNetCore
              
             if (desc.Properties.TryGetValue("jms_filters", out object o) == false)
             {
+                ILogger<ActionFilterProcessor> logger = context.RequestServices.GetService<ILogger<ActionFilterProcessor>>();
                 var filters = (from m in desc.FilterDescriptors
                                where !(m.Filter is UnsupportedContentTypeFilter) &&
                                !(m.Filter is Microsoft.AspNetCore.Mvc.Infrastructure.ModelStateInvalidFilter) &&
                                (m.Filter is TypeFilterAttribute || m.Filter.GetType().GetInterface(typeof(IActionFilter).FullName) != null)
                                select (m.Filter is TypeFilterAttribute) ? ((TypeFilterAttribute)m.Filter).ImplementationType : m.Filter.GetType()).ToArray();
+                filters = filters.Where(m => m.GetInterface(typeof(IActionFilter).FullName) != null).ToArray();
+
                 _actionfilters = new IActionFilter[filters.Length];
                 for (int i = 0; i < filters.Length; i++)
                 {
-                    _actionfilters[i] = (IActionFilter)Activator.CreateInstance(filters[i]);
+                    try
+                    {
+                        var contructor = filters[i].GetConstructors(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).FirstOrDefault();
+                        var contructorParams = contructor.GetParameters();
+                        var ps = new object[contructorParams.Length];
+                        for (int j = 0; j < ps.Length; j++)
+                        {
+                            ps[j] = context.RequestServices.GetService(contructorParams[j].ParameterType);
+                        }
+                        _actionfilters[i] = (IActionFilter)Activator.CreateInstance(filters[i], ps);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger?.LogError(ex, $"实例化 {filters[i].FullName} 发生异常");
+                    }
                 }
-                desc.Properties["jms_filters"] = _actionfilters;
+                desc.Properties["jms_filters"] = _actionfilters.Where(m=>m != null).ToArray();
             }
             else
             {

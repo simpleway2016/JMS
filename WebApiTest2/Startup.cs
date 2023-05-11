@@ -27,7 +27,10 @@ namespace WebApiTest2
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-
+            services.AddMvc(option => {
+                option.Filters.Add<MyActionFilter>();
+                option.Filters.Add<HttpGlobalExceptionFilter>();
+            });
             services.RegisterJmsService("http://127.0.0.1:5000", "DemoService", gateways);
         }
 
