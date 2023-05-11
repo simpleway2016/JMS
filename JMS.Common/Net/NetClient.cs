@@ -219,7 +219,26 @@ namespace JMS
             return datas;
         }
 
-     
+       byte[] ReadServiceDataBytes(int flag)
+        {
+            if (flag == 1179010630)
+                return new byte[0];
+
+            var isgzip = (flag & 1) == 1;
+            this.KeepAlive = (flag & 2) == 2;
+            var len = flag >> 2;
+
+            if (len > 102400)
+                throw new SizeLimitException("command size is too big");
+
+            var datas = new byte[len];
+            this.ReadData(datas, 0, len);
+
+            if (isgzip)
+                datas = GZipHelper.Decompress(datas);
+            return datas;
+        }
+
         public int ReadInt()
         {
             byte[] data = new byte[4];
@@ -272,9 +291,35 @@ namespace JMS
 
         public virtual void ReadData(byte[] data, int offset, int count)
         {
-           ReadDataAsync(data,offset,count).GetAwaiter().GetResult();
+            int readed;
+            while (count > 0)
+            {
+                readed = this.InnerStream.Read(data, offset, count);
+                if (readed <= 0)
+                    throw new SocketException();
+                offset += readed;
+                count -= readed;
+            }
         }
 
+        public byte[] ReadServiceDataBytes()
+        {
+            try
+            {
+                var datas = new byte[4];
+                this.ReadData(datas, 0, datas.Length);
+
+                var flag = BitConverter.ToInt32(datas);
+
+                return ReadServiceDataBytes(flag);
+            }
+            catch (System.IO.IOException ex)
+            {
+                if (ex.InnerException is SocketException)
+                    throw ex.InnerException;
+                throw ex;
+            }
+        }
 
         public async Task<byte[]> ReadServiceDataBytesAsync()
         {
@@ -300,7 +345,10 @@ namespace JMS
 
         public  string ReadServiceData()
         {
-            return ReadServiceDataAsync().GetAwaiter().GetResult();
+            var data = ReadServiceDataBytes();
+            if (data.Length == 0)
+                return null;
+            return Encoding.UTF8.GetString(data);
         }
 
         public async Task<string> ReadServiceDataAsync()
@@ -313,7 +361,16 @@ namespace JMS
 
         public  T ReadServiceObject<T>()
         {
-            return ReadServiceObjectAsync<T>().GetAwaiter().GetResult();
+            var datas = ReadServiceDataBytes();
+            string str = Encoding.UTF8.GetString(datas);
+            try
+            {
+                return str.FromJson<T>();
+            }
+            catch (Exception ex)
+            {
+                throw new ConvertException(str, $"无法将{str}实例化为{typeof(T).FullName}，" + ex.ToString());
+            }
 
         }
 
