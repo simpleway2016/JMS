@@ -128,7 +128,7 @@ namespace JMS.ServiceProvider.AspNetCore
                         try
                         {                          
 
-                            actionFilterProcessor?.OnActionExecuting();
+                            actionFilterProcessor.OnActionExecuting();
                             var result = desc.MethodInfo.Invoke(controller, parameters);
                             if (result is Task || result is ValueTask)
                             {
@@ -145,7 +145,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
                             result = actionFilterProcessor.OnActionExecuted(result);
                             if (result != null)
-                            {
+                            {                                
                                 if (result is ObjectResult oret)
                                 {
                                     result = oret.Value;
@@ -153,6 +153,14 @@ namespace JMS.ServiceProvider.AspNetCore
                                 else if (result is JsonResult jret)
                                 {
                                     result = jret.Value;
+                                }
+                                else if (result is OkResult okret)
+                                {
+                                    result = okret.StatusCode;
+                                }
+                                else if (result is OkObjectResult okobjret)
+                                {
+                                    result = okobjret.Value;
                                 }
                                 else if (result is IActionResult)
                                     throw new Exception("不支持返回值类型" + result.GetType().FullName);
@@ -214,6 +222,9 @@ namespace JMS.ServiceProvider.AspNetCore
                                 tranDelegate.RollbackAction = null;
                                 tranDelegate.CommitAction = null;
                             }
+
+                            actionFilterProcessor.Exception = ex;
+                            actionFilterProcessor.OnActionExecuted(null);
 
                             var outputObj = new InvokeResult
                             {
