@@ -34,12 +34,12 @@ namespace JMS
                 var headers = tran.GetCommandHeader();
                 foreach (var pair in headers)
                 {
-                    headerStr.AppendLine($"{pair.Key}: {pair.Value}");
+                    headerStr.Append($"{pair.Key}: {pair.Value}\r\n");
                 }
             }
-            if(headerStr.Length == 0)
+            if (headerStr.Length == 0)
             {
-                headerStr.AppendLine("");
+                headerStr.Append("\r\n");
             }
 
             var content = @"GET " + uri.AbsolutePath + @" HTTP/1.1
