@@ -78,13 +78,13 @@ namespace JMS.Applications.HttpMiddlewares
 
                 Uri gatewayUri = new Uri($"http://{headers["Host"]}");
 
-                strBuffer.AppendLine($"{httpMethod} {requestPath} HTTP/1.1");
+                strBuffer.Append($"{httpMethod} {requestPath} HTTP/1.1\r\n");
 
                 foreach (var pair in headers)
                 {
                     if (pair.Key == "Host")
                     {
-                        strBuffer.AppendLine($"Host: {hostUri.Host}");
+                        strBuffer.Append($"Host: {hostUri.Host}\r\n");
                     }
                     else if (pair.Key == "Origin")
                     {
@@ -93,25 +93,25 @@ namespace JMS.Applications.HttpMiddlewares
                             var uri = new Uri(pair.Value);
                             if (uri.Host == gatewayUri.Host)
                             {
-                                strBuffer.AppendLine($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}");
+                                strBuffer.Append($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}\r\n");
                             }
                             else
                             {
-                                strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
+                                strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
                             }
                         }
                         catch
                         {
-                            strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
+                            strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
                         }
                     }
                     else
                     {
-                        strBuffer.AppendLine($"{pair.Key}: {pair.Value}");
+                        strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
                     }
                 }
 
-                strBuffer.AppendLine("");
+                strBuffer.Append("\r\n");
                 var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
                 //发送头部到服务器
                 proxyClient.Write(data);

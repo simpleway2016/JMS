@@ -79,12 +79,15 @@ namespace JMS.Applications.CommandHandles
             cmd.Header["Host"] = targetUri.Authority;
 
             StringBuilder buffer = new StringBuilder();
-            buffer.AppendLine(requestPathLine);
+            buffer.Append(requestPathLine);
+            buffer.Append("\r\n");
+
             foreach (var pair in cmd.Header)
             {
-                buffer.AppendLine($"{pair.Key}: {pair.Value}");
+                buffer.Append($"{pair.Key}: {pair.Value}\r\n");
             }
-            buffer.AppendLine("");
+            buffer.Append("\r\n");
+
             var data = Encoding.UTF8.GetBytes(buffer.ToString());
 
             var proxyClient = await NetClientPool.CreateClientAsync(null, new NetAddress(targetUri.Host, targetUri.Port) { 
@@ -143,14 +146,16 @@ namespace JMS.Applications.CommandHandles
                 }
 
                 buffer.Clear();
-                buffer.AppendLine(requestPathLine);
+                buffer.Append(requestPathLine);
+                buffer.Append("\r\n");
 
                 foreach (var pair in cmd.Header)
                 {
-                    buffer.AppendLine($"{pair.Key}: {pair.Value}");
+                    buffer.Append($"{pair.Key}: {pair.Value}\r\n");
                 }
 
-                buffer.AppendLine("");
+                buffer.Append("\r\n");
+
                 data = Encoding.UTF8.GetBytes(buffer.ToString());
                 //发送头部给浏览器
                 client.Write(data);

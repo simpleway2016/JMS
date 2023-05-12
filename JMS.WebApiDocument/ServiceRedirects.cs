@@ -54,7 +54,7 @@ namespace JMS.WebApiDocument
                 var path = context.Request.GetEncodedPathAndQuery();
                 var index = path.IndexOf("/JMSRedirect/");
                 path = path.Substring(index + 12);
-                strBuffer.AppendLine($"GET {path} HTTP/1.1");
+                strBuffer.Append($"GET {path} HTTP/1.1\r\n");
 
                 var ip = context.Connection.RemoteIpAddress.ToString();
                 string strForwared = null;
@@ -72,16 +72,16 @@ namespace JMS.WebApiDocument
                 {
                     if (pair.Key == "Host")
                     {
-                        strBuffer.AppendLine($"Host: {hostUri.Host}");
+                        strBuffer.Append($"Host: {hostUri.Host}\r\n");
                     }
                     else
                     {
-                        strBuffer.AppendLine($"{pair.Key}: {pair.Value.ToString()}");
+                        strBuffer.Append($"{pair.Key}: {pair.Value.ToString()}\r\n");
                     }
                 }
 
-                strBuffer.AppendLine($"X-Forwarded-For: {strForwared}");
-                strBuffer.AppendLine("");
+                strBuffer.Append($"X-Forwarded-For: {strForwared}\r\n");
+                strBuffer.Append("\r\n");
                 var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
                 //发送头部到服务器
                 proxyClient.Write(data);
@@ -108,7 +108,7 @@ namespace JMS.WebApiDocument
             var path = context.Request.GetEncodedPathAndQuery();
             var index = path.IndexOf("/JMSRedirect/");
             path = path.Substring(index + 12 + location.Name.Length + 1);
-            strBuffer.AppendLine($"{context.Request.Method} {path} HTTP/1.1");
+            strBuffer.Append($"{context.Request.Method} {path} HTTP/1.1\r\n");
 
             var ip = context.Connection.RemoteIpAddress.ToString();
             string strForwared = null;
@@ -131,16 +131,16 @@ namespace JMS.WebApiDocument
             {
                 if (pair.Key == "Host" && hostUri != null)
                 {
-                    strBuffer.AppendLine($"Host: {hostUri.Host}");
+                    strBuffer.Append($"Host: {hostUri.Host}\r\n");
                 }
                 else
                 {
-                    strBuffer.AppendLine($"{pair.Key}: {pair.Value.ToString()}");
+                    strBuffer.Append($"{pair.Key}: {pair.Value.ToString()}\r\n");
                 }
             }
 
-            strBuffer.AppendLine($"X-Forwarded-For: {strForwared}");
-            strBuffer.AppendLine("");
+            strBuffer.Append($"X-Forwarded-For: {strForwared}\r\n");
+            strBuffer.Append("\r\n");
 
             NetClient proxyClient = await NetClientPool.CreateClientAsync(null, new NetAddress(hostUri.Host, hostUri.Port, hostUri.Scheme == "https" || hostUri.Scheme == "wss")
             {
