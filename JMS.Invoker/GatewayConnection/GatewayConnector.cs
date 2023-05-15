@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace JMS.GatewayConnection
 {
     internal class GatewayConnector : IDisposable, IMicroServiceProvider
     {
+        ILogger _logger;
         bool _supportRemoteConnection;
         NetAddress _proxy;
         NetAddress _gatewayAddress;
@@ -20,8 +22,9 @@ namespace JMS.GatewayConnection
         ProxyClient _client;
         public NetAddress GatewayAddress => _gatewayAddress;
         List<RegisterServiceRunningInfo> _allServices = new List<RegisterServiceRunningInfo>(1024);
-        public GatewayConnector(NetAddress proxy, NetAddress gatewayAddress, bool supportRemoteConnection)
+        public GatewayConnector(NetAddress proxy, NetAddress gatewayAddress, bool supportRemoteConnection, ILogger logger)
         {
+            this._logger = logger;
             this._supportRemoteConnection = supportRemoteConnection;
             this._proxy = proxy;
             this._gatewayAddress = gatewayAddress;
@@ -35,10 +38,24 @@ namespace JMS.GatewayConnection
         {
             try
             {
+                _logger?.LogDebug($"正在连接网关:{_gatewayAddress} {(_proxy!=null?"代理:":"")}{_proxy}");
                 RegisterServiceRunningInfo curItem;
                 using (_client = new ProxyClient(_proxy))
                 {
                     await _client.ConnectAsync(_gatewayAddress);
+                    _client.KeepAlive = true;
+                    await _client.WriteServiceDataAsync(new GatewayCommand
+                    {
+                        Type = CommandType.FindMaster
+                    });
+                    var findMasterRet = await _client.ReadServiceObjectAsync<InvokeResult>();
+                    if (findMasterRet.Success == false)
+                    {
+                        _logger?.LogDebug($"{_gatewayAddress}不是主网关，放弃连接");
+                        return;
+                    }
+
+                    _client.KeepAlive = false;
                     await _client.WriteServiceDataAsync(new GatewayCommand
                     {
                         Type = CommandType.RemoteClientConnection
@@ -47,6 +64,7 @@ namespace JMS.GatewayConnection
                     if (_disposed)
                         return;
 
+                    _logger?.LogDebug($"成功连接{_gatewayAddress}");
                     var services = await _client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();                    
                     lock (_allServices)
                     {
@@ -121,6 +139,7 @@ namespace JMS.GatewayConnection
             }
             catch
             {
+                _logger?.LogDebug($"与网关断开{_gatewayAddress}");
                 if (!_disposed)
                 {
                     lock (_allServices)

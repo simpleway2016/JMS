@@ -298,7 +298,7 @@ namespace JMS
         {
             if (_masterGatewayProvider == null)
             {
-                _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout);
+                _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout , _logger);
             }
             GatewayAddress = _masterGatewayProvider.GetMaster();
         }
@@ -307,7 +307,7 @@ namespace JMS
         {
             if (_masterGatewayProvider == null)
             {
-                _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout);
+                _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout, _logger);
             }
             GatewayAddress = await _masterGatewayProvider.GetMasterAsync();
         }

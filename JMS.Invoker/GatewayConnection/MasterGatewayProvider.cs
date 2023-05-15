@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace JMS.GatewayConnection
 {
     internal class MasterGatewayProvider
     {
+        ILogger _logger;
         string _key;
         int _timeout;
         NetAddress _proxy;
@@ -18,17 +20,18 @@ namespace JMS.GatewayConnection
 
         GatewayConnector _master;
         static ConcurrentDictionary<string, MasterGatewayProvider> Providers = new ConcurrentDictionary<string, MasterGatewayProvider>();
-        public static MasterGatewayProvider Create(NetAddress proxy, NetAddress[] gateWays, int timeout)
+        public static MasterGatewayProvider Create(NetAddress proxy, NetAddress[] gateWays, int timeout,ILogger logger)
         {
             var key = string.Join(',', gateWays.Select(m => m.ToString()));
 
-            var masterGatewayProvider = Providers.GetOrAdd(key,k=> new MasterGatewayProvider(proxy, gateWays, timeout, key));
+            var masterGatewayProvider = Providers.GetOrAdd(key, k => new MasterGatewayProvider(proxy, gateWays, logger,timeout, key));
 
             return masterGatewayProvider;
         }
 
-        public MasterGatewayProvider(NetAddress proxy, NetAddress[] allGateways, int timeout, string key)
+        public MasterGatewayProvider(NetAddress proxy, NetAddress[] allGateways, ILogger logger, int timeout, string key)
         {
+            this._logger = logger;
             this._key = key;
             this._timeout = timeout;
             this._proxy = proxy;
@@ -99,8 +102,13 @@ namespace JMS.GatewayConnection
             if (masterAddress == null)
                 throw new MissMasterGatewayException("无法找到主网关");
 
-            _master = new GatewayConnector(_proxy, masterAddress, supportRemoteConnection);
-
+            lock (this)
+            {
+                if (_master == null)
+                {
+                    _master = new GatewayConnector(_proxy, masterAddress, supportRemoteConnection , _logger);
+                }
+            }
             return masterAddress;
         }
 
@@ -117,7 +125,14 @@ namespace JMS.GatewayConnection
 
             var task = new FindMasterGatewayTask(_allGateways, _timeout, _proxy);
             var masterAddress = await new ValueTask<NetAddress>(task, 0);
-            _master = new GatewayConnector( _proxy, masterAddress, task.SupportRemoteConnection);
+
+            lock (this)
+            {
+                if (_master == null)
+                {
+                    _master = new GatewayConnector(_proxy, masterAddress, task.SupportRemoteConnection, _logger);
+                }
+            }
 
 
             return _master.GatewayAddress;

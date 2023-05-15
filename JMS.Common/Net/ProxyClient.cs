@@ -34,11 +34,9 @@ namespace JMS
             {
                 _addr = addr.Address;
                 _port = addr.Port;
-                addr.Address = this.ProxyAddress.Address;
-                addr.Port = this.ProxyAddress.Port;
-                base.Connect(addr);
-                addr.Address = _addr;
-                addr.Port = _port;
+
+                base.Connect(this.ProxyAddress);
+
                 this.NetAddress = addr;
             }
             else
@@ -53,11 +51,9 @@ namespace JMS
             {
                 _addr = addr.Address;
                 _port = addr.Port;
-                addr.Address = this.ProxyAddress.Address;
-                addr.Port = this.ProxyAddress.Port;
-                await base.ConnectAsync(addr);
-                addr.Address = _addr;
-                addr.Port = _port;
+
+                await base.ConnectAsync(this.ProxyAddress);
+
                 this.NetAddress = addr;
             }
             else
@@ -117,7 +113,7 @@ namespace JMS
                 if (isdomain == false)
                 {
                     Array.Copy(addrBytes, 0, buffer, 4, addrBytes.Length);
-                    buffer[4+ addrBytes.Length] = portBytes[1];
+                    buffer[4 + addrBytes.Length] = portBytes[1];
                     buffer[4 + addrBytes.Length + 1] = portBytes[0];
                     len = 4 + addrBytes.Length + 2;
                 }
