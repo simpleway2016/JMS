@@ -27,7 +27,8 @@ namespace JMS.Common
     /// </summary>
     public class BaseNetClient : IDisposable
     {
-        public NetAddress NetAddress { get; protected set; }
+        NetAddress _netaddr;
+        public virtual NetAddress NetAddress => _netaddr;
 
         private Stream _innerStream;
         private Stream _pipeStream;
@@ -352,7 +353,7 @@ namespace JMS.Common
             }
             catch { }
 
-            this.NetAddress = addr;
+            _netaddr = addr;
         }
 
         public virtual async Task ConnectAsync(NetAddress addr)
@@ -393,7 +394,7 @@ namespace JMS.Common
             }
             catch { }
 
-            this.NetAddress = addr;
+            _netaddr = addr;
         }
 
         public void Write(byte[] data)

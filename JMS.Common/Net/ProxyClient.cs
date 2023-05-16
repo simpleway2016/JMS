@@ -19,6 +19,8 @@ namespace JMS
     public class ProxyClient : CertClient
     {
         public NetAddress ProxyAddress { get; }
+        NetAddress _netaddr;
+        public override NetAddress NetAddress => _netaddr;
         /// <summary>
         /// 
         /// </summary>
@@ -32,12 +34,9 @@ namespace JMS
         {
             if (this.ProxyAddress != null)
             {
-                _addr = addr.Address;
-                _port = addr.Port;
+                _netaddr = addr;
 
-                base.Connect(this.ProxyAddress);
-
-                this.NetAddress = addr;
+                base.Connect(this.ProxyAddress);               
             }
             else
             {
@@ -49,12 +48,8 @@ namespace JMS
         {
             if (this.ProxyAddress != null)
             {
-                _addr = addr.Address;
-                _port = addr.Port;
-
-                await base.ConnectAsync(this.ProxyAddress);
-
-                this.NetAddress = addr;
+                _netaddr = addr;
+                await base.ConnectAsync(this.ProxyAddress);               
             }
             else
             {
@@ -62,8 +57,6 @@ namespace JMS
             }
         }
 
-        string _addr;
-        int _port;
 
         protected override void AfterConnect()
         {
@@ -83,7 +76,7 @@ namespace JMS
                 byte[] addrBytes = null;
                 bool isdomain = false;
                 byte addrType;
-                if (IPAddress.TryParse(_addr, out IPAddress ip))
+                if (IPAddress.TryParse(_netaddr.Address, out IPAddress ip))
                 {
                     addrBytes = ip.GetAddressBytes();
                     if (addrBytes.Length > 4)
@@ -99,11 +92,11 @@ namespace JMS
                 {
                     isdomain = true;
                     addrType = 0x3;//域名
-                    addrBytes = Encoding.ASCII.GetBytes(_addr);
+                    addrBytes = Encoding.ASCII.GetBytes(_netaddr.Address);
                 }
 
 
-                byte[] portBytes = BitConverter.GetBytes((ushort)_port);
+                byte[] portBytes = BitConverter.GetBytes((ushort)_netaddr.Port);
 
                 var len = 0;
                 buffer[0] = 0x5;
@@ -131,7 +124,7 @@ namespace JMS
                 this.ReadData(buffer, 0, 4);
                 if (buffer[1] != 0)
                 {
-                    throw new ProxyException($"{_addr}:{_port}代理服务器不能转发");
+                    throw new ProxyException($"{_netaddr}代理服务器不能转发");
                 }
                 if (buffer[3] == 0x1)
                 {
