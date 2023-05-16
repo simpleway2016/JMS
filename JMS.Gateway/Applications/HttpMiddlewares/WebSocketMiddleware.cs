@@ -23,19 +23,22 @@ namespace JMS.Applications.HttpMiddlewares
                 && headers.TryGetValue("Upgrade", out string upgrade)
                 && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
             {
-                var servieName = requestPath.Substring(1);
-                if (servieName.Contains("/"))
+
+                int indexflag;
+                var serviceName = requestPath.Substring(1);
+                if ((indexflag = serviceName.IndexOf('/')) > 0)
                 {
-                    servieName = servieName.Substring(0, servieName.IndexOf("/"));
+                    serviceName = serviceName.Substring(0, indexflag);
                 }
-                if (servieName.Contains("?"))
+
+                if (serviceName.Contains("?"))
                 {
-                    servieName = servieName.Substring(0, servieName.IndexOf("?"));
+                    serviceName = serviceName.Substring(0, serviceName.IndexOf("?"));
                 }
 
                 var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest
                 {
-                    ServiceName = servieName,
+                    ServiceName = serviceName,
                     IsGatewayProxy = true,
                     Header = headers
                 });
@@ -47,7 +50,7 @@ namespace JMS.Applications.HttpMiddlewares
                 if (location.Type == ServiceType.WebApi)
                 {
                     //去除servicename去代理访问
-                    requestPath = requestPath.Substring(servieName.Length + 1);
+                    requestPath = requestPath.Substring(serviceName.Length + 1);
                     if (requestPath.Length == 0)
                         requestPath = "/";
                 }

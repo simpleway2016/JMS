@@ -14,10 +14,11 @@ namespace JMS.Applications.HttpMiddlewares
     {
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> reqheaders)
         {
+            int indexflag;
             var serviceName = requestPath.Substring(1);
-            if (serviceName.Contains("/"))
+            if ((indexflag = serviceName.IndexOf('/')) > 0)
             {
-                serviceName = serviceName.Substring(0, serviceName.IndexOf("/"));
+                serviceName = serviceName.Substring(0, indexflag);
             }
 
             int contentLength = 0;

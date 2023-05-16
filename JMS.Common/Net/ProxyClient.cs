@@ -32,10 +32,9 @@ namespace JMS
 
         public override void Connect(NetAddress addr)
         {
+            _netaddr = addr;
             if (this.ProxyAddress != null)
             {
-                _netaddr = addr;
-
                 base.Connect(this.ProxyAddress);               
             }
             else
@@ -46,9 +45,9 @@ namespace JMS
 
         public override async Task ConnectAsync(NetAddress addr)
         {
+            _netaddr = addr;
             if (this.ProxyAddress != null)
-            {
-                _netaddr = addr;
+            {              
                 await base.ConnectAsync(this.ProxyAddress);               
             }
             else
