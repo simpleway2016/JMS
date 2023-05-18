@@ -15,15 +15,16 @@ namespace JMS.ServerCore
         TcpListener _tcpListenerV6;
         public event EventHandler<Socket> Connected;
         public event EventHandler<Exception> OnError;
+        bool _stopped = true;
         public MulitTcpListener(int port)
         {
             this._port = port;
-            _tcpListener = new TcpListener(IPAddress.Any, port);
-            _tcpListenerV6 = new TcpListener(IPAddress.IPv6Any, port);
+           
         }
 
         public void Stop()
         {
+            _stopped = true;
             _tcpListener?.Stop();
             _tcpListenerV6?.Stop();
 
@@ -33,6 +34,13 @@ namespace JMS.ServerCore
 
         public void Run()
         {
+            if (_stopped == false)
+                return;
+
+            _stopped = false;
+            _tcpListener = new TcpListener(IPAddress.Any, _port);
+            _tcpListenerV6 = new TcpListener(IPAddress.IPv6Any, _port);
+
             new Thread(() => { runListener(_tcpListenerV6); }).Start();
             this.runListener(_tcpListener);
         }
@@ -53,7 +61,10 @@ namespace JMS.ServerCore
             }
             catch(Exception ex)
             {
-                OnError?.Invoke(this, ex);
+                if (!_stopped)
+                {
+                    OnError?.Invoke(this, ex);
+                }
             }
         }
     }
