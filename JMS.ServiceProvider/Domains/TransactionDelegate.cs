@@ -45,6 +45,7 @@ namespace JMS
         internal async Task WaitForCommandAsync(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient,ILogger logger)
         {
             InvokeCommand cmd;
+            bool checkedHealth = false;
             try
             {
                 while (true)
@@ -59,6 +60,7 @@ namespace JMS
                             onRollback(gatewayConnector, faildCommitBuilder, netclient, logger);
                             return;
                         case InvokeType.HealthyCheck:
+                            checkedHealth = true;
                             onHealthyCheck(gatewayConnector, faildCommitBuilder, netclient, logger);
                             break;
                     }
@@ -66,8 +68,12 @@ namespace JMS
             }
             catch (SocketException)
             {
-                Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
-                if (await gatewayConnector.CheckTransactionAsync(this.TransactionId))
+                if (checkedHealth)
+                {
+                    Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
+                }
+
+                if (checkedHealth && await gatewayConnector.CheckTransactionAsync(this.TransactionId))
                 {
                     //网关告知事务已成功，需要提交事务
                     this.CommitAction();

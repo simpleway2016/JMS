@@ -47,6 +47,7 @@ namespace JMS.ServiceProvider.AspNetCore
         internal async Task WaitForCommandAsync(IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
         {
             string cmd;
+            bool checkedHealth = false;
             try
             {
                 while (true)
@@ -61,6 +62,7 @@ namespace JMS.ServiceProvider.AspNetCore
                             onRollback(gatewayConnector, faildCommitBuilder, netClient, logger);
                             return;
                         case "ready":
+                            checkedHealth = true;
                             onHealthyCheck(gatewayConnector, faildCommitBuilder, netClient, logger);
                             break;
                     }
@@ -68,8 +70,11 @@ namespace JMS.ServiceProvider.AspNetCore
             }
             catch (SocketException)
             {
-                Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
-                if (gatewayConnector.CheckTransaction(this.TransactionId))
+                if (checkedHealth)
+                {
+                    Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
+                }
+                if (checkedHealth && await gatewayConnector.CheckTransactionAsync(this.TransactionId))
                 {
                     //网关告知事务已成功，需要提交事务
                     this.CommitAction();
