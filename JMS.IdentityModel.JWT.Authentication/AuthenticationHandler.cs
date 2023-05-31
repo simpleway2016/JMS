@@ -70,11 +70,6 @@ namespace JMS.IdentityModel.JWT.Authentication
 
         public object Authenticate(IDictionary<string, string> headers)
         {
-            for(int i = 0; i < 8 && rsaSecurityKey == null; i ++)
-            {
-                Thread.Sleep(1000);
-            }
-
             string token = null;
             foreach (var header in HeaderNames)
             {
@@ -89,6 +84,14 @@ namespace JMS.IdentityModel.JWT.Authentication
 
         public object VerifyToken(string token)
         {
+            for (int i = 0; i < 8 && rsaSecurityKey == null; i++)
+            {
+                Thread.Sleep(1000);
+            }
+            if(rsaSecurityKey == null)
+            {
+                throw new AuthenticationException("miss signature key");
+            }
             if (string.IsNullOrEmpty(token))
                 throw new AuthenticationException("Authentication failed");
 
