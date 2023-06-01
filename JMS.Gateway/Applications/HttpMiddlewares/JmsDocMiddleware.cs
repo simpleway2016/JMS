@@ -59,47 +59,52 @@ namespace JMS.Applications.HttpMiddlewares
                     {
                         if (serviceItem.AllowGatewayProxy == false || controllerInfos.Any(m => m.name == serviceItem.Name))
                             continue;
-
-                        using (var proxyRemoteClient = new RemoteClient(new[] { new NetAddress("127.0.0.1", ((IPEndPoint)client.Socket.LocalEndPoint).Port) }))
+                        try
                         {
-                            var location = new ClientServiceDetail(serviceItem, serviceInfo);
+                            using (var proxyRemoteClient = new RemoteClient(new[] { new NetAddress("127.0.0.1", ((IPEndPoint)client.Socket.LocalEndPoint).Port) }))
+                            {
+                                var location = new ClientServiceDetail(serviceItem, serviceInfo);
 
-                            var service = proxyRemoteClient.GetMicroService(serviceItem.Name, location);
-                            if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
-                            {
-                                var jsonContent = service.GetServiceInfo();
-                                var controllerInfo = jsonContent.FromJson<ControllerInfo>();
-                                controllerInfo.name = serviceItem.Name;
-                                controllerInfo.desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description;
-                                foreach (var method in controllerInfo.items)
+                                var service = proxyRemoteClient.GetMicroService(serviceItem.Name, location);
+                                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
                                 {
-                                    method.url = $"/{HttpUtility.UrlEncode(serviceItem.Name)}/{method.title}";
+                                    var jsonContent = service.GetServiceInfo();
+                                    var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                                    controllerInfo.name = serviceItem.Name;
+                                    controllerInfo.desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description;
+                                    foreach (var method in controllerInfo.items)
+                                    {
+                                        method.url = $"/{HttpUtility.UrlEncode(serviceItem.Name)}/{method.title}";
+                                    }
+                                    if (controllerInfo.items.Count == 1)
+                                        controllerInfo.items[0].opened = true;
+                                    controllerInfos.Add(controllerInfo);
                                 }
-                                if (controllerInfo.items.Count == 1)
-                                    controllerInfo.items[0].opened = true;
-                                controllerInfos.Add(controllerInfo);
-                            }
-                            else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
-                            {
-                                var jsonContent = service.GetServiceInfo();
-                                var serviceinfo = jsonContent.FromJson<ControllerInfo>();
-                                var controllerInfo = new ControllerInfo()
+                                else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
                                 {
-                                    name = serviceItem.Name,
-                                    desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description,
-                                };
-                                controllerInfo.items = new List<MethodItemInfo>();
-                                controllerInfo.items.Add(new MethodItemInfo
-                                {
-                                    title = "WebSocket接口",
-                                    method = serviceinfo.desc,
-                                    isComment = true,
-                                    isWebSocket = true,
-                                    opened = true,
-                                    url = $"/{HttpUtility.UrlEncode(serviceItem.Name)}"
-                                });
-                                controllerInfos.Add(controllerInfo);
+                                    var jsonContent = service.GetServiceInfo();
+                                    var serviceinfo = jsonContent.FromJson<ControllerInfo>();
+                                    var controllerInfo = new ControllerInfo()
+                                    {
+                                        name = serviceItem.Name,
+                                        desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description,
+                                    };
+                                    controllerInfo.items = new List<MethodItemInfo>();
+                                    controllerInfo.items.Add(new MethodItemInfo
+                                    {
+                                        title = "WebSocket接口",
+                                        method = serviceinfo.desc,
+                                        isComment = true,
+                                        isWebSocket = true,
+                                        opened = true,
+                                        url = $"/{HttpUtility.UrlEncode(serviceItem.Name)}"
+                                    });
+                                    controllerInfos.Add(controllerInfo);
+                                }
                             }
+                        }
+                        catch (Exception)
+                        {
                         }
                     }
                 }
