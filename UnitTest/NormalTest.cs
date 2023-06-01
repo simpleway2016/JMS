@@ -761,6 +761,13 @@ Content-Length: 0
                     serviceClient = client.TryGetMicroService("UserInfoService");
                 }
 
+                using ( var otherclient = new RemoteClient("127.0.0.2" , 1))
+                {
+                    var testservice = otherclient.GetMicroService("UserInfoService", serviceClient.ServiceLocation);
+                    testservice = otherclient.GetMicroServiceAsync("UserInfoService", serviceClient.ServiceLocation).GetAwaiter().GetResult();
+                }
+                   
+
                 serviceClient.Invoke("SetUserName", "Jack");
                 serviceClient.Invoke("SetAge", 28);
                 serviceClient.InvokeAsync("SetFather", "Tom");

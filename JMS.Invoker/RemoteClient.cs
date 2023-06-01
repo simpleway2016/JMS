@@ -356,7 +356,7 @@ namespace JMS
         /// <returns></returns>
         public virtual T TryGetMicroService<T>( ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
-            if (GatewayAddress == null)
+            if (GatewayAddress == null && registerServiceLocation == null)
             {
                 findMasterGateway();
             }
@@ -370,7 +370,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, _masterGatewayProvider.GetMicroServiceProvider(), att.ServiceName);
+                    var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), att.ServiceName);
                     if (invoker.Init(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
@@ -396,7 +396,7 @@ namespace JMS
         /// <returns></returns>
         public virtual async Task<T> TryGetMicroServiceAsync<T>(ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
-            if (GatewayAddress == null)
+            if (GatewayAddress == null && registerServiceLocation == null)
             {
                 await findMasterGatewayAsync();
             }
@@ -410,7 +410,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, _masterGatewayProvider.GetMicroServiceProvider(), att.ServiceName);
+                    var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), att.ServiceName);
                     if (await invoker.InitAsync(registerServiceLocation))
                         return (T)Activator.CreateInstance(classType, new object[] { invoker });
                 }
@@ -466,7 +466,7 @@ namespace JMS
         /// <returns></returns>
         public virtual IMicroService TryGetMicroService(string serviceName, ClientServiceDetail registerServiceLocation = null)
         {
-            if (GatewayAddress == null)
+            if (GatewayAddress == null && registerServiceLocation == null)
             {
                 findMasterGateway();
             }
@@ -475,7 +475,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, _masterGatewayProvider.GetMicroServiceProvider(), serviceName);
+                    var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), serviceName);
                     if (invoker.Init(registerServiceLocation))
                         return invoker;
                 }
@@ -502,7 +502,7 @@ namespace JMS
         /// <returns></returns>
         public virtual async Task<IMicroService> TryGetMicroServiceAsync(string serviceName, ClientServiceDetail registerServiceLocation = null)
         {
-            if (GatewayAddress == null)
+            if (GatewayAddress == null && registerServiceLocation == null)
             {
                 await findMasterGatewayAsync();
             }
@@ -510,7 +510,7 @@ namespace JMS
             {
                 try
                 {
-                    var invoker = new Invoker(this, _masterGatewayProvider.GetMicroServiceProvider(), serviceName);
+                    var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), serviceName);
                     if (await invoker.InitAsync(registerServiceLocation))
                         return invoker;
                 }
