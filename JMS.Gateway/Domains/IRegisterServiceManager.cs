@@ -19,7 +19,7 @@ namespace JMS.Domains
         bool SupportJmsDoc { get; }
         public IEnumerable<RegisterServiceInfo> GetAllRegisterServices();
         void AddRegisterService(IMicroServiceReception reception);
-        void RemoveRegisterService(RegisterServiceInfo registerServiceInfo);
+        void RemoveRegisterService(IMicroServiceReception reception);
         void RefreshServiceInfo(RegisterServiceInfo serviceInfo);
         RegisterServiceInfo GetServiceById(string id);
 

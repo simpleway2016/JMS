@@ -41,14 +41,17 @@ namespace JMS.Domains
         public Task HealthyCheck(NetClient netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
-            handleRegister(registerCmd, this);
+            handleRegister(registerCmd);
             if (this.ServiceInfo == null)
+            {
+                _registerServiceManager.RemoveRegisterService(this);
                 return Task.CompletedTask;
+            }
 
             return checkState();
         }
 
-        void handleRegister(GatewayCommand registerCmd, MicroServiceReception reception)
+        void handleRegister(GatewayCommand registerCmd)
         {
             var serviceItem = registerCmd.Content.FromJson<RegisterServiceInfo>();
             if (serviceItem.ServiceList == null)
@@ -95,8 +98,8 @@ namespace JMS.Domains
                 Data = this.GetType().Assembly.GetName().Version.ToString()
             });
 
-            reception.ServiceInfo = serviceItem;
-            _registerServiceManager.AddRegisterService(reception);
+            this.ServiceInfo = serviceItem;
+            _registerServiceManager.AddRegisterService(this);
 
             _Logger?.LogInformation($"微服务{serviceItem.ServiceList.Select(m=>m.Name).ToJsonString()} {serviceItem.Host}:{serviceItem.Port}注册");
 
@@ -105,7 +108,7 @@ namespace JMS.Domains
 
         void disconnect()
         {
-            _registerServiceManager.RemoveRegisterService(ServiceInfo);
+            _registerServiceManager.RemoveRegisterService(this);
 
         }
         public virtual void Close()
@@ -147,10 +150,6 @@ namespace JMS.Domains
                         {
                             Success = true
                         });
-                    }
-                    else if (command.Type == CommandType.RegisterSerivce)
-                    {
-                        handleRegister(command, new VirtualServiceReception());
                     }
                     else
                     {

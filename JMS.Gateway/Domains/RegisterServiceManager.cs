@@ -18,7 +18,7 @@ namespace JMS.Domains
         public event EventHandler<RegisterServiceInfo> ServiceInfoRefresh;
         public event EventHandler<RegisterServiceInfo> ServiceDisconnect;
 
-        ConcurrentDictionary<string, IMicroServiceReception> _allServiceReceptions = new ConcurrentDictionary<string, IMicroServiceReception>();
+        ConcurrentDictionary<IMicroServiceReception,bool> _allServiceReceptions = new ConcurrentDictionary<IMicroServiceReception, bool>();
 
         public bool SupportJmsDoc => _configuration.GetSection("Http:SupportJmsDoc").Get<bool>();
 
@@ -30,7 +30,7 @@ namespace JMS.Domains
 
         public void AddRegisterService(IMicroServiceReception reception)
         {
-            _allServiceReceptions[reception.ServiceInfo.ServiceId] = reception;
+            _allServiceReceptions[reception] = true;
 
             if (ServiceConnect != null)
             {
@@ -40,25 +40,22 @@ namespace JMS.Domains
 
         public IEnumerable<RegisterServiceInfo> GetAllRegisterServices()
         {
-            return _allServiceReceptions.Values.Select(m=>m.ServiceInfo);
+            return (from m in _allServiceReceptions.Keys
+                    select m.ServiceInfo);
         }
 
         public RegisterServiceInfo GetServiceById(string id)
-        {
-            if(_allServiceReceptions.TryGetValue(id ,out IMicroServiceReception o))
-            {
-                return o.ServiceInfo;
-            }
-            return null;
+        {            
+            return _allServiceReceptions.Keys.FirstOrDefault(m=>m.ServiceInfo.ServiceId == id)?.ServiceInfo;
         }
 
-        public void RemoveRegisterService(RegisterServiceInfo registerServiceInfo)
+        public void RemoveRegisterService(IMicroServiceReception microServiceReception)
         {
-            if (_allServiceReceptions.TryRemove(registerServiceInfo.ServiceId, out IMicroServiceReception o))
+            if (_allServiceReceptions.TryRemove(microServiceReception, out bool o))
             {
                 if (ServiceDisconnect != null)
                 {
-                    ServiceDisconnect(this, o.ServiceInfo);
+                    ServiceDisconnect(this, microServiceReception.ServiceInfo);
                 }
             }
         }
@@ -67,18 +64,19 @@ namespace JMS.Domains
         {
             foreach( var item in _allServiceReceptions )
             {
-                item.Value.Close();
+                item.Key.Close();
             }
         }
 
         public void DisconnectService(string id)
         {
-            if (_allServiceReceptions.TryRemove(id, out IMicroServiceReception o))
+            var reception = _allServiceReceptions.Keys.FirstOrDefault(m => m.ServiceInfo.ServiceId == id);
+            if (_allServiceReceptions.TryRemove(reception, out bool o))
             {
-                o.Close();
+                reception.Close();
                 if (ServiceDisconnect != null)
                 {
-                    ServiceDisconnect(this, o.ServiceInfo);
+                    ServiceDisconnect(this, reception.ServiceInfo);
                 }
             }
         }
