@@ -177,9 +177,9 @@
 
         .subcon {
             margin-top: 0.5rem;
-            background: #e7e8f1;
+            background: #f2f3fa;
             font-size: 0.8rem;
-            padding: 0.3rem 0.6rem;
+            padding: 0.6rem 0.6rem;
             border-radius: 0.2rem;
             width: fit-content;
             color: #333333;
@@ -282,8 +282,9 @@
             <div style="text-align:right;"><button @click="btnClick(btnitem)" v-for="btnitem in controllers[selectedControllerIndex].buttons">{{btnitem.name}}</button></div>
             <div class="funcItem" v-for="item in controllers[selectedControllerIndex].items">
 
-                <div class="title" @click="openClick(item)">{{item.title}} {{item.desc}}</div>
+                <div class="title" @click="openClick(item)">{{item.title}} {{getFirstLine(item.desc)}}</div>
                 <div class="subitem" v-show="item.opened">
+                    <div class="subcon" v-html="lineBreak(item.desc)"></div>
                     <div class="subtitle" v-if="item.isWebSocket">请求路径url</div>
                     <div class="subcon" v-if="item.isWebSocket" @click="selectDiv" style="cursor:pointer;">{{item.url}}</div>
                     <div class="subtitle" v-if="item.isWebSocket&&item.method">说明：</div>
@@ -480,6 +481,12 @@
         }
     }
 
+    function getFirstLine(v) {
+        if (!v)
+            return v;
+        return v.split('\n')[0];
+    }
+
     function lineBreak(v) {
         if (!v)
             return "";
@@ -540,6 +547,9 @@
                 },
                 lineBreak: function (v) {
                     return lineBreak(v);
+                }, 
+                getFirstLine: function (v) {
+                    return getFirstLine(v);
                 }
             },
 
@@ -618,6 +628,9 @@
             },
             lineBreak: function (v) {
                 return lineBreak(v);
+            },
+            getFirstLine: function (v) {
+                return getFirstLine(v);
             }
         }
     });

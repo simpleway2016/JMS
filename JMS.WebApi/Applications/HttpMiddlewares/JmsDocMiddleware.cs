@@ -46,7 +46,7 @@ namespace JMS.Applications.HttpMiddlewares
                 }
 
                 List<ControllerInfo> controllerInfos = new List<ControllerInfo>();
-                List<string> doneList = new List<string>();
+                List<ServiceDetail> doneList = new List<ServiceDetail>();
                 using (var rc = new RemoteClient(WebApiProgram.GatewayAddresses))
                 {
                     var allServices = await rc.ListMicroServiceAsync(null);
@@ -54,64 +54,73 @@ namespace JMS.Applications.HttpMiddlewares
                     {
                         foreach (var serviceInfo in serviceRunningInfo.ServiceList)
                         {
-                            if (serviceInfo.AllowGatewayProxy == false || doneList.Contains(serviceInfo.Name))
+                            if (serviceInfo.AllowGatewayProxy == false || doneList.Any( m=>m.Name == serviceInfo.Name))
                                 continue;
+                            doneList.Add(serviceInfo);
 
-                            try
-                            {
-                                doneList.Add(serviceInfo.Name);
-
-                                var service = await rc.TryGetMicroServiceAsync(serviceInfo.Name);
-                                if (service == null)
-                                    continue;
-
-                                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
-                                {
-                                    var jsonContent = service.GetServiceInfo();
-                                    var controllerInfo = jsonContent.FromJson<ControllerInfo>();
-                                    if (!string.IsNullOrWhiteSpace(serviceInfo.Description))
-                                    {
-                                        controllerInfo.desc = serviceInfo.Description;
-                                    }
-                                    foreach (var method in controllerInfo.items)
-                                    {
-                                        method.url = $"/{HttpUtility.UrlEncode(serviceInfo.Name)}/{method.title}";
-                                    }
-                                    if (controllerInfo.items.Count == 1)
-                                        controllerInfo.items[0].opened = true;
-
-                                    controllerInfo.buttons = null;
-                                    controllerInfos.Add(controllerInfo);
-                                }
-                                else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
-                                {
-                                    var jsonContent = service.GetServiceInfo();
-                                    var cInfo = jsonContent.FromJson<ControllerInfo>();
-
-                                    var controllerInfo = new ControllerInfo()
-                                    {
-                                        name = serviceInfo.Name,
-                                        desc = string.IsNullOrWhiteSpace(serviceInfo.Description) ? serviceInfo.Name : serviceInfo.Description,
-                                    };
-                                    controllerInfo.items = new List<MethodItemInfo>();
-                                    controllerInfo.items.Add(new MethodItemInfo
-                                    {
-                                        title = "WebSocket接口",
-                                        method = cInfo.desc,
-                                        isComment = true,
-                                        isWebSocket = true,
-                                        opened = true,
-                                        url = $"/{HttpUtility.UrlEncode(serviceInfo.Name)}"
-                                    });
-                                    controllerInfos.Add(controllerInfo);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-
-                            }
+                           
                         }
                     }
+
+                    Parallel.ForEach(doneList, serviceInfo => {
+                        try
+                        {
+                            var service = rc.TryGetMicroService(serviceInfo.Name);
+                            if (service == null)
+                                return;
+
+                            if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
+                            {
+                                var jsonContent = service.GetServiceInfo();
+                                var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                                if (!string.IsNullOrWhiteSpace(serviceInfo.Description))
+                                {
+                                    controllerInfo.desc = serviceInfo.Description;
+                                }
+                                foreach (var method in controllerInfo.items)
+                                {
+                                    method.url = $"/{HttpUtility.UrlEncode(serviceInfo.Name)}/{method.title}";
+                                }
+                                if (controllerInfo.items.Count == 1)
+                                    controllerInfo.items[0].opened = true;
+
+                                controllerInfo.buttons = null;
+                                lock (controllerInfos)
+                                {
+                                    controllerInfos.Add(controllerInfo);
+                                }
+                            }
+                            else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
+                            {
+                                var jsonContent = service.GetServiceInfo();
+                                var cInfo = jsonContent.FromJson<ControllerInfo>();
+
+                                var controllerInfo = new ControllerInfo()
+                                {
+                                    name = serviceInfo.Name,
+                                    desc = string.IsNullOrWhiteSpace(serviceInfo.Description) ? serviceInfo.Name : serviceInfo.Description,
+                                };
+                                controllerInfo.items = new List<MethodItemInfo>();
+                                controllerInfo.items.Add(new MethodItemInfo
+                                {
+                                    title = "WebSocket接口",
+                                    method = cInfo.desc,
+                                    isComment = true,
+                                    isWebSocket = true,
+                                    opened = true,
+                                    url = $"/{HttpUtility.UrlEncode(serviceInfo.Name)}"
+                                });
+                                lock (controllerInfos)
+                                {
+                                    controllerInfos.Add(controllerInfo);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+                    });
                 }
 
                 using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.index.html"))

@@ -1,4 +1,5 @@
 ﻿using JMS.AssemblyDocumentReader;
+using JMS.Dtos;
 using JMS.WebApiDocument.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -96,72 +97,81 @@ namespace JMS.WebApiDocument
             }
             else
             {
-                List<string> doneList = new List<string>();
+                List<ServiceDetail> doneList = new List<ServiceDetail>();
                 using (var client = ServiceRedirects.ClientProviderFunc())
                 {
                     var allServices = await client.ListMicroServiceAsync(null);
+
                     foreach( var serviceRunningInfo in allServices)
                     {
                         foreach( var serviceInfo in serviceRunningInfo.ServiceList)
                         {
-                            if (serviceInfo.AllowGatewayProxy == false || doneList.Contains(serviceInfo.Name))
+                            if (serviceInfo.AllowGatewayProxy == false || doneList.Any( m=>m.Name == serviceInfo.Name))
                                 continue;
 
-                            try
-                            {
-                                doneList.Add(serviceInfo.Name);
-
-                                var service = await client.TryGetMicroServiceAsync(serviceInfo.Name);
-                                if (service == null)
-                                    continue;
-
-                                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
-                                {
-                                    var jsonContent = service.GetServiceInfo();
-                                    var controllerInfo = jsonContent.FromJson<ControllerInfo>();
-                                    if (!string.IsNullOrWhiteSpace(serviceInfo.Description))
-                                    {
-                                        controllerInfo.desc = serviceInfo.Description;
-                                    }
-                                    foreach (var method in controllerInfo.items)
-                                    {
-                                        method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}/{method.title}";
-                                    }
-                                    if (controllerInfo.items.Count == 1)
-                                        controllerInfo.items[0].opened = true;
-
-                                    controllerInfo.buttons = null;
-                                    controllerInfos.Add(controllerInfo);
-                                }
-                                else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
-                                {
-                                    var jsonContent = service.GetServiceInfo();
-                                    var cInfo = jsonContent.FromJson<ControllerInfo>();
-
-                                    var controllerInfo = new ControllerInfo()
-                                    {
-                                        name = serviceInfo.Name,
-                                        desc = string.IsNullOrWhiteSpace(serviceInfo.Description) ? serviceInfo.Name : serviceInfo.Description,
-                                    };
-                                    controllerInfo.items = new List<MethodItemInfo>();
-                                    controllerInfo.items.Add(new MethodItemInfo
-                                    {
-                                        title = "WebSocket接口",
-                                        method = cInfo.desc,
-                                        isComment = true,
-                                        isWebSocket = true,
-                                        opened = true,
-                                        url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}"
-                                    });
-                                    controllerInfos.Add(controllerInfo);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogError(ex, "");
-                            }
+                            doneList.Add(serviceInfo);
                         }
                     }
+
+                    Parallel.ForEach(doneList, serviceInfo => {
+                        try
+                        {
+                            var service = client.TryGetMicroService(serviceInfo.Name);
+                            if (service == null)
+                                return;
+
+                            if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
+                            {
+                                var jsonContent = service.GetServiceInfo();
+                                var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                                if (!string.IsNullOrWhiteSpace(serviceInfo.Description))
+                                {
+                                    controllerInfo.desc = serviceInfo.Description;
+                                }
+                                foreach (var method in controllerInfo.items)
+                                {
+                                    method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}/{method.title}";
+                                }
+                                if (controllerInfo.items.Count == 1)
+                                    controllerInfo.items[0].opened = true;
+
+                                controllerInfo.buttons = null;
+                                lock (controllerInfos)
+                                {
+                                    controllerInfos.Add(controllerInfo);
+                                }
+                            }
+                            else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
+                            {
+                                var jsonContent = service.GetServiceInfo();
+                                var cInfo = jsonContent.FromJson<ControllerInfo>();
+
+                                var controllerInfo = new ControllerInfo()
+                                {
+                                    name = serviceInfo.Name,
+                                    desc = string.IsNullOrWhiteSpace(serviceInfo.Description) ? serviceInfo.Name : serviceInfo.Description,
+                                };
+                                controllerInfo.items = new List<MethodItemInfo>();
+                                controllerInfo.items.Add(new MethodItemInfo
+                                {
+                                    title = "WebSocket接口",
+                                    method = cInfo.desc,
+                                    isComment = true,
+                                    isWebSocket = true,
+                                    opened = true,
+                                    url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}"
+                                });
+                                lock (controllerInfos)
+                                {
+                                    controllerInfos.Add(controllerInfo);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogError(ex, "");
+                        }
+                    });
                 }
             }
 

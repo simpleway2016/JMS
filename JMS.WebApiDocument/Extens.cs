@@ -53,7 +53,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                 controllerTypes.AddRange(assemblyPart.Types.Where(m => m.GetCustomAttribute<WebApiDocAttribute>() != null).ToArray());
                             }
                         }
-
+                         
                         return HtmlBuilder.Build(context, controllerTypes);
                     }
                     catch (Exception ex)
