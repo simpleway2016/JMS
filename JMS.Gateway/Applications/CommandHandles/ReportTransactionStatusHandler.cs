@@ -15,19 +15,17 @@ namespace JMS.Applications.CommandHandles
 {
     class ReportTransactionStatusHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
-        TransactionStatusManager _TransactionStatusManager;
-        public ReportTransactionStatusHandler(IServiceProvider serviceProvider)
+        TransactionStatusManager _transactionStatusManager;
+        public ReportTransactionStatusHandler(TransactionStatusManager transactionStatusManager)
         {
-            _serviceProvider = serviceProvider;
-            _TransactionStatusManager = _serviceProvider.GetService<TransactionStatusManager>();
+            this._transactionStatusManager = transactionStatusManager;
         }
         public CommandType MatchCommandType => CommandType.ReportTransactionStatus;
 
         public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             var tran = cmd.Content;
-            _TransactionStatusManager.AddSuccessTransaction(tran);
+            _transactionStatusManager.AddSuccessTransaction(tran);
 
             netclient.WriteServiceData(new InvokeResult
             {

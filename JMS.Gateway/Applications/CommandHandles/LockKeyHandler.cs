@@ -13,16 +13,14 @@ namespace JMS.Applications.CommandHandles
 {
     class LockKeyHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
         LockKeyManager _lockKeyManager;
         Gateway _gateway;
         IRegisterServiceManager _registerServiceManager;
-        public LockKeyHandler(IServiceProvider serviceProvider)
+        public LockKeyHandler(LockKeyManager lockKeyManager, Gateway gateway, IRegisterServiceManager registerServiceManager)
         {
-            _serviceProvider = serviceProvider;
-            _lockKeyManager = serviceProvider.GetService<LockKeyManager>();
-            _gateway = serviceProvider.GetService<Gateway>();
-            _registerServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
+            this._lockKeyManager = lockKeyManager;
+            this._gateway = gateway;
+            this._registerServiceManager = registerServiceManager;
         }
         public CommandType MatchCommandType => CommandType.LockKey;
 

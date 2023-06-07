@@ -10,13 +10,11 @@ namespace JMS.Applications.CommandHandles
 {
     class HealthyCheckHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
-        public CommandType MatchCommandType => CommandType.HealthyCheck;
         Gateway _gateway;
-        public HealthyCheckHandler(IServiceProvider serviceProvider)
+        public CommandType MatchCommandType => CommandType.HealthyCheck;
+        public HealthyCheckHandler(Gateway gateway)
         {
-            _serviceProvider = serviceProvider;
-            _gateway = _serviceProvider.GetService<Gateway>();
+            this._gateway = gateway;
         }
         public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {

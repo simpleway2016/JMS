@@ -15,15 +15,13 @@ namespace JMS.Applications.CommandHandles
 {
     class FindMasterHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
         IConfiguration _configuration;
-        ClusterGatewayConnector _gatewayRefereeClient;
+        ClusterGatewayConnector _clusterGatewayConnector;
 
-        public FindMasterHandler(IServiceProvider serviceProvider)
+        public FindMasterHandler(IConfiguration configuration, ClusterGatewayConnector clusterGatewayConnector)
         {
-            _serviceProvider = serviceProvider;
-            _configuration = serviceProvider.GetService<IConfiguration>();
-            _gatewayRefereeClient = serviceProvider.GetService<ClusterGatewayConnector>();
+            this._configuration = configuration;
+            this._clusterGatewayConnector = clusterGatewayConnector;
         }
         public CommandType MatchCommandType => CommandType.FindMaster;
 
@@ -33,7 +31,7 @@ namespace JMS.Applications.CommandHandles
             {
                 var contentBytes = Encoding.UTF8.GetBytes(new
                 {
-                    Success = _gatewayRefereeClient.IsMaster,
+                    Success = _clusterGatewayConnector.IsMaster,
                     Data = new
                     {
                         SupportRetmoteClientConnect = true,
@@ -46,7 +44,7 @@ namespace JMS.Applications.CommandHandles
             {
                 netclient.WriteServiceData(new InvokeResult
                 {
-                    Success = _gatewayRefereeClient.IsMaster,
+                    Success = _clusterGatewayConnector.IsMaster,
                     Data = new
                     {
                         SupportRetmoteClientConnect = true,

@@ -11,11 +11,11 @@ namespace JMS.Applications.CommandHandles
 {
     internal class RemoteClientConnectionHandler : ICommandHandler
     {
-        public CommandType MatchCommandType =>  CommandType.RemoteClientConnection;
         IRemoteClientManager _remoteClientManager;
-        public RemoteClientConnectionHandler(IServiceProvider serviceProvider)
+        public CommandType MatchCommandType => CommandType.RemoteClientConnection;
+        public RemoteClientConnectionHandler(IRemoteClientManager remoteClientManager)
         {
-            _remoteClientManager = serviceProvider.GetService<IRemoteClientManager>();
+            this._remoteClientManager = remoteClientManager;
         }
         public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {

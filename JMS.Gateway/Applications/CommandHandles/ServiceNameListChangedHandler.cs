@@ -13,16 +13,12 @@ namespace JMS.Applications.CommandHandles
 {
     class ServiceNameListChangedHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
-        Gateway _gateway;
-        IServiceProviderAllocator _ServiceProviderAllocator;
-        IRegisterServiceManager _RegisterServiceManager;
-        public ServiceNameListChangedHandler(IServiceProvider serviceProvider)
+        IRegisterServiceManager _registerServiceManager;
+        IServiceProviderAllocator _serviceProviderAllocator;
+        public ServiceNameListChangedHandler(IRegisterServiceManager registerServiceManager, IServiceProviderAllocator serviceProviderAllocator)
         {
-            _serviceProvider = serviceProvider;
-            _gateway = serviceProvider.GetService<Gateway>();
-            _RegisterServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
-            _ServiceProviderAllocator = serviceProvider.GetService<IServiceProviderAllocator>();
+            this._registerServiceManager = registerServiceManager;
+            this._serviceProviderAllocator = serviceProviderAllocator;
         }
         public CommandType MatchCommandType => CommandType.ServiceNameListChanged;
 
@@ -47,12 +43,12 @@ namespace JMS.Applications.CommandHandles
                 }
             }
 
-            var service = _RegisterServiceManager.GetServiceById(serviceItem.ServiceId);
+            var service = _registerServiceManager.GetServiceById(serviceItem.ServiceId);
            if(service != null)
             {
                 service.ServiceList = serviceItem.ServiceList;
                 service.ClientCheckCodeFile = serviceItem.ClientCheckCodeFile;
-                _RegisterServiceManager.RefreshServiceInfo(service);
+                _registerServiceManager.RefreshServiceInfo(service);
             }
 
             netclient.WriteServiceData(new InvokeResult { Success = true});

@@ -14,13 +14,13 @@ namespace JMS.Applications.CommandHandles
 {
     class RegisterServiceHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
         IConfiguration _configuration;
+        IServiceProvider _serviceProvider;
 
-        public RegisterServiceHandler(IServiceProvider serviceProvider)
+        public RegisterServiceHandler(IServiceProvider serviceProvider, IConfiguration configuration)
         {
+            this._configuration = configuration;
             _serviceProvider = serviceProvider;
-            _configuration = serviceProvider.GetService<IConfiguration>();
         }
         public CommandType MatchCommandType => CommandType.RegisterSerivce;
 

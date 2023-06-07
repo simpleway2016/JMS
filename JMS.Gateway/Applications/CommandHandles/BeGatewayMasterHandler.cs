@@ -10,15 +10,15 @@ namespace JMS.Applications.CommandHandles
 {
     class BeGatewayMasterHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
+        ClusterGatewayConnector _clusterGatewayConnector;
         public CommandType MatchCommandType => CommandType.BeGatewayMaster;
-        public BeGatewayMasterHandler(IServiceProvider serviceProvider)
+        public BeGatewayMasterHandler(ClusterGatewayConnector clusterGatewayConnector)
         {
-            _serviceProvider = serviceProvider;
+            this._clusterGatewayConnector = clusterGatewayConnector;
         }
         public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
-            _serviceProvider.GetService<ClusterGatewayConnector>().SomeoneWantToBeMaster(netclient, cmd);
+            _clusterGatewayConnector.SomeoneWantToBeMaster(netclient, cmd);
         }
     }
 }

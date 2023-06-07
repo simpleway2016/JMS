@@ -14,19 +14,17 @@ namespace JMS.Applications.CommandHandles
 {
     class RemoveTransactionStatusHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
-        TransactionStatusManager _TransactionStatusManager;
-        public RemoveTransactionStatusHandler(IServiceProvider serviceProvider)
+        TransactionStatusManager _transactionStatusManager;
+        public RemoveTransactionStatusHandler(TransactionStatusManager transactionStatusManager)
         {
-            _serviceProvider = serviceProvider;
-            _TransactionStatusManager = _serviceProvider.GetService<TransactionStatusManager>();
+            this._transactionStatusManager = transactionStatusManager;
         }
         public CommandType MatchCommandType => CommandType.RemoveTransactionStatus;
 
         public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
             var tran = cmd.Content;
-            _TransactionStatusManager.RemoveTransaction(tran);
+            _transactionStatusManager.RemoveTransaction(tran);
             netclient.WriteServiceData(new InvokeResult
             {
                 Success = true

@@ -20,11 +20,9 @@ namespace JMS.Applications
 
         public void Init()
         {
-            var interfaceType = typeof(ICommandHandler);
-            var handleTypes = typeof(CommandHandlerRoute).Assembly.DefinedTypes.Where(m => m.ImplementedInterfaces.Contains(interfaceType));
-            foreach (var type in handleTypes)
+            var handlers = _serviceProvider.GetServices<ICommandHandler>();
+            foreach( var handler in handlers)
             {
-                var handler = (ICommandHandler)Activator.CreateInstance(type, new object[] { _serviceProvider });
                 _cache[handler.MatchCommandType] = handler;
             }
         }

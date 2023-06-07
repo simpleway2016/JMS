@@ -14,15 +14,12 @@ namespace JMS.Applications.CommandHandles
 {
     class UploadLockedKeysHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
         LockKeyManager _lockKeyManager;
-        Gateway _gateway;
         IRegisterServiceManager _registerServiceManager;
-        public UploadLockedKeysHandler(IServiceProvider serviceProvider)
+        public UploadLockedKeysHandler(LockKeyManager lockKeyManager, IRegisterServiceManager registerServiceManager)
         {
-            _lockKeyManager = serviceProvider.GetService<LockKeyManager>();
-            _gateway = serviceProvider.GetService<Gateway>();
-            _registerServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
+            this._lockKeyManager = lockKeyManager;
+            this._registerServiceManager = registerServiceManager;
         }
         public CommandType MatchCommandType => CommandType.UploadLockKeys;
 

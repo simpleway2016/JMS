@@ -15,19 +15,18 @@ namespace JMS.Applications.CommandHandles
 {
     class ListenFileChangeHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
-        Gateway _gateway;
-        
-        public ListenFileChangeHandler(IServiceProvider serviceProvider)
+        ListenFileChangeReception _listenFileChangeReception;
+
+        public ListenFileChangeHandler(ListenFileChangeReception listenFileChangeReception)
         {
-            _serviceProvider = serviceProvider;
-            _gateway = _serviceProvider.GetService<Gateway>();
+            this._listenFileChangeReception = listenFileChangeReception;
+
         }
         public CommandType MatchCommandType => CommandType.ListenFileChange;
 
         public Task Handle(NetClient netclient, GatewayCommand cmd)
         {
-            return _serviceProvider.GetService<ListenFileChangeReception>().Handle(netclient, cmd);
+            return _listenFileChangeReception.Handle(netclient, cmd);
 
         }
     }

@@ -22,19 +22,17 @@ namespace JMS.Applications.CommandHandles
     /// </summary>
     class HttpRequestHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
-        ICommandHandlerRoute _manager;
         IServiceProviderAllocator _serviceProviderAllocator;
         IRegisterServiceManager _registerServiceManager;
+        ICommandHandlerRoute _commandHandlerRoute;
         IHttpMiddlewareManager _httpMiddlewareManager;
-        public HttpRequestHandler(IServiceProvider serviceProvider)
+        public HttpRequestHandler(IServiceProviderAllocator serviceProviderAllocator, IRegisterServiceManager registerServiceManager,
+            ICommandHandlerRoute commandHandlerRoute, IHttpMiddlewareManager httpMiddlewareManager)
         {
-            this._serviceProvider = serviceProvider;
-
-            _serviceProviderAllocator = serviceProvider.GetService<IServiceProviderAllocator>();
-            _registerServiceManager = _serviceProvider.GetService<IRegisterServiceManager>();
-            _manager = _serviceProvider.GetService<ICommandHandlerRoute>();
-            _httpMiddlewareManager = _serviceProvider.GetService<IHttpMiddlewareManager>();
+            this._serviceProviderAllocator = serviceProviderAllocator;
+            this._registerServiceManager = registerServiceManager;
+            this._commandHandlerRoute = commandHandlerRoute;
+            this._httpMiddlewareManager = httpMiddlewareManager;
         }
         public CommandType MatchCommandType => CommandType.HttpRequest;
 

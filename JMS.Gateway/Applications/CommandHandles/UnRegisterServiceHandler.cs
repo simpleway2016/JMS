@@ -14,15 +14,13 @@ namespace JMS.Applications.CommandHandles
 {
     class UnRegisterServiceHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
         IConfiguration _configuration;
         IRegisterServiceManager _registerServiceManager;
 
-        public UnRegisterServiceHandler(IServiceProvider serviceProvider)
+        public UnRegisterServiceHandler(IConfiguration configuration, IRegisterServiceManager registerServiceManager)
         {
-            _serviceProvider = serviceProvider;
-            _configuration = serviceProvider.GetService<IConfiguration>();
-            _registerServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
+            this._configuration = configuration;
+            this._registerServiceManager = registerServiceManager;
         }
         public CommandType MatchCommandType => CommandType.UnRegisterSerivce;
 

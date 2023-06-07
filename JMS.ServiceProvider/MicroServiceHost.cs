@@ -25,6 +25,7 @@ using System.Collections.Concurrent;
 using JMS.Common.Net;
 using Org.BouncyCastle.Bcpg;
 using JMS.Dtos;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace JMS
 {
@@ -300,19 +301,17 @@ namespace JMS
             _services.AddSingleton<ICodeBuilder, CodeBuilder>();
             _services.AddSingleton<IGatewayConnector, GatewayConnector>();
             _services.AddSingleton<IRequestReception, RequestReception>();
-            _services.AddSingleton<InvokeRequestHandler>();
-            _services.AddSingleton<HttpHandler>();
-            _services.AddSingleton<GenerateInvokeCodeRequestHandler>();
-            _services.AddSingleton<GenerateServiceInfoHandler>();
-            _services.AddSingleton<GetAllLockedKeysHandler>();
-            _services.AddSingleton<RetryTranactionHandler>();
-            _services.AddSingleton<UnLockedKeyAnywayHandler>();
             _services.AddSingleton<IProcessExitHandler, ProcessExitHandler>();
             _services.AddSingleton<MicroServiceHost>(this);
             _services.AddSingleton<SafeTaskFactory>();
 
-
             _services.AddSingleton<ControllerFactory>(_ControllerFactory);
+
+            //注入handler
+            var handlerTypes = typeof(RequestReception).Assembly.DefinedTypes.Where(m => m.ImplementedInterfaces.Contains(typeof(IRequestHandler))).Select(m=>ServiceDescriptor.Singleton(typeof(IRequestHandler) , m));
+            _services.TryAddEnumerable(handlerTypes);
+
+           
         }
 
         public MicroServiceHost Build(int port, NetAddress[] gatewayAddresses)

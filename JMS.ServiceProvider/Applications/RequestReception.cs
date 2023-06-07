@@ -35,10 +35,9 @@ namespace JMS.Applications
             _processExitHandler = processExitHandler;
             _SSLConfiguration = _MicroServiceProvider.ServiceProvider.GetService<SSLConfiguration>();
 
-            var handlerTypes = typeof(RequestReception).Assembly.DefinedTypes.Where(m => m.ImplementedInterfaces.Contains(typeof(IRequestHandler)));
-            foreach (var type in handlerTypes)
+            var handlers = _MicroServiceProvider.ServiceProvider.GetServices<IRequestHandler>();
+            foreach (var handler in handlers)
             {
-                var handler = (IRequestHandler)microServiceProvider.ServiceProvider.GetService(type);
                 _cache[handler.MatchType] = handler;
             }
 

@@ -18,6 +18,7 @@ using JMS.ServerCore;
 using JMS.ServerCore.Http.Middlewares;
 using JMS.ServerCore.Http;
 using JMS.Applications.HttpMiddlewares;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace JMS
 {
@@ -104,6 +105,11 @@ namespace JMS
             services.AddTransient<ListenFileChangeReception>();
             services.AddSingleton<ClientCheckFactory>();
             services.AddSingleton<ErrorUserMarker>();
+
+            //添加所有handler
+            var interfaceType = typeof(ICommandHandler);
+            var handleTypes = typeof(CommandHandlerRoute).Assembly.DefinedTypes.Where(m => m.ImplementedInterfaces.Contains(interfaceType)).Select(m=> ServiceDescriptor.Singleton(interfaceType, m));
+            services.TryAddEnumerable(handleTypes);
 
             services.UseHttp()
                 .AddHttpMiddleware<WebSocketMiddleware>()

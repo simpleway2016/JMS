@@ -14,19 +14,19 @@ namespace JMS.Applications.CommandHandles
 {
     class GetAllServiceProvidersHandler : ICommandHandler
     {
+        Gateway _gateway;
+        IRegisterServiceManager _registerServiceManager;
         IConfiguration _configuration;
-        IServiceProvider _serviceProvider;
-        Gateway _Gateway;
         ErrorUserMarker _errorUserMarker;
-        IRegisterServiceManager _RegisterServiceManager;
-        public GetAllServiceProvidersHandler(IServiceProvider serviceProvider)
+
+        public GetAllServiceProvidersHandler(Gateway gateway, IRegisterServiceManager registerServiceManager, IConfiguration configuration,
+            ErrorUserMarker errorUserMarker)
         {
-            
-            _serviceProvider = serviceProvider;
-            _Gateway = serviceProvider.GetService<Gateway>();
-            _RegisterServiceManager = serviceProvider.GetService<IRegisterServiceManager>();
-            this._configuration = serviceProvider.GetService<IConfiguration>();
-            _errorUserMarker = serviceProvider.GetService<ErrorUserMarker>();
+            this._gateway = gateway;
+            this._registerServiceManager = registerServiceManager;
+            this._configuration = configuration;
+            this._errorUserMarker = errorUserMarker;
+
         }
         public CommandType MatchCommandType => CommandType.GetAllServiceProviders;
 
@@ -119,7 +119,7 @@ namespace JMS.Applications.CommandHandles
 
         public RegisterServiceRunningInfo[] List(string serviceName)
         {
-            var list = _RegisterServiceManager.GetAllRegisterServices();
+            var list = _registerServiceManager.GetAllRegisterServices();
             if (!string.IsNullOrEmpty(serviceName))
             {
                 list = list.Where(m => m.ServiceList.Any(m=>m.Name == serviceName));

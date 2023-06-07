@@ -14,12 +14,10 @@ namespace JMS.Applications.CommandHandles
 {
     class GetTransactionStatusHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
-        TransactionStatusManager _TransactionStatusManager;
-        public GetTransactionStatusHandler(IServiceProvider serviceProvider)
+        TransactionStatusManager _transactionStatusManager;
+        public GetTransactionStatusHandler(TransactionStatusManager transactionStatusManager)
         {
-            _serviceProvider = serviceProvider;
-            _TransactionStatusManager = _serviceProvider.GetService<TransactionStatusManager>();
+            this._transactionStatusManager = transactionStatusManager;
         }
         public CommandType MatchCommandType => CommandType.GetTransactionStatus;
 
@@ -29,7 +27,7 @@ namespace JMS.Applications.CommandHandles
 
             netclient.WriteServiceData(new InvokeResult
             {
-                Success = _TransactionStatusManager.IsTransactionSuccess(tran)
+                Success = _transactionStatusManager.IsTransactionSuccess(tran)
             }) ;
         }
     }

@@ -12,12 +12,12 @@ namespace JMS.Applications.CommandHandles
 {
     class GetServiceProviderHandler : ICommandHandler
     {
-        IServiceProvider _serviceProvider;
-        ClusterGatewayConnector _gatewayRefereeClient;
-        public GetServiceProviderHandler(IServiceProvider serviceProvider)
+        IServiceProviderAllocator _serviceProviderAllocator;
+        ClusterGatewayConnector _clusterGatewayConnector;
+        public GetServiceProviderHandler(ClusterGatewayConnector clusterGatewayConnector, IServiceProviderAllocator serviceProviderAllocator)
         {
-            _serviceProvider = serviceProvider;
-            _gatewayRefereeClient = serviceProvider.GetService<ClusterGatewayConnector>();
+            this._serviceProviderAllocator = serviceProviderAllocator;
+            this._clusterGatewayConnector = clusterGatewayConnector;
         }
         public CommandType MatchCommandType => CommandType.GetServiceProvider;
 
@@ -57,14 +57,14 @@ namespace JMS.Applications.CommandHandles
             requestBody.ClientAddress = ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString();
             try
             {
-                if (_gatewayRefereeClient.IsMaster == false)
+                if (_clusterGatewayConnector.IsMaster == false)
                 {
                     outputResult(netclient, cmd, new ClientServiceDetail("not master", 0));
                 }
                 else
                 {
 
-                    var location = _serviceProvider.GetService<IServiceProviderAllocator>().Alloc(requestBody);
+                    var location = _serviceProviderAllocator.Alloc(requestBody);
                     if(location == null)
                     {
                         outputResult(netclient, cmd,null);

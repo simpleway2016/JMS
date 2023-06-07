@@ -13,9 +13,7 @@ namespace JMS.Applications.CommandHandles
 {
     class CheckSupportSingletonServiceHandler : ICommandHandler
     {
-        public CheckSupportSingletonServiceHandler(IServiceProvider serviceProvider)
-        {
-        }
+
         public CommandType MatchCommandType => CommandType.CheckSupportSingletonService;
 
         public async Task Handle(NetClient netclient, GatewayCommand cmd)
