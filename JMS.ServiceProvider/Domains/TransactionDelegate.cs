@@ -107,7 +107,7 @@ namespace JMS
                 {
                     faildCommitBuilder.CommitSuccess(RetryCommitFilePath);
                     RetryCommitFilePath = null;
-                    logger?.LogInformation("事务{0}提交完毕", TransactionId);
+                    //logger?.LogInformation("事务{0}提交完毕", TransactionId);
                 }
             }
             catch (Exception ex)
@@ -135,7 +135,7 @@ namespace JMS
             {
                 faildCommitBuilder.Rollback(RetryCommitFilePath);
                 RetryCommitFilePath = null;
-                logger?.LogInformation("事务{0}回滚完毕，请求数据:{1}", TransactionId, RequestCommand.ToJsonString());
+                //logger?.LogInformation("事务{0}回滚完毕，请求数据:{1}", TransactionId, RequestCommand.ToJsonString());
             }
            
             netclient.WriteServiceData(new InvokeResult() { Success = true });
@@ -146,7 +146,7 @@ namespace JMS
             {
                 RetryCommitFilePath = faildCommitBuilder.Build(TransactionId,TransactionFlag, RequestCommand, UserContent);
             }
-            logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, RequestCommand.ToJsonString(), UserContent);
+            //logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, RequestCommand.ToJsonString(), UserContent);
             netclient.WriteServiceData(new InvokeResult
             {
                 Success = AgreeCommit

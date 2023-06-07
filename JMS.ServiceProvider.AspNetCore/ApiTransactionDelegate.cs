@@ -125,7 +125,7 @@ namespace JMS.ServiceProvider.AspNetCore
                 CommitAction = null;
             }
 
-            logger?.LogInformation("事务{0}提交完毕", TransactionId);
+            //logger?.LogInformation("事务{0}提交完毕", TransactionId);
 
             netClient.WriteServiceData( Encoding.UTF8.GetBytes("ok"));
         }
@@ -138,7 +138,7 @@ namespace JMS.ServiceProvider.AspNetCore
                 faildCommitBuilder.Rollback(RetryCommitFilePath);
                 RetryCommitFilePath = null;
             }
-            logger?.LogInformation("事务{0}回滚完毕，请求数据:{1}", TransactionId, this.InvokeInfo.ToJsonString());
+            //logger?.LogInformation("事务{0}回滚完毕，请求数据:{1}", TransactionId, this.InvokeInfo.ToJsonString());
 
             netClient.WriteServiceData(Encoding.UTF8.GetBytes("ok"));
         }
@@ -148,7 +148,7 @@ namespace JMS.ServiceProvider.AspNetCore
             {
                 RetryCommitFilePath = faildCommitBuilder.Build(TransactionId,TransactionFlag, this.InvokeInfo,this.UserContent);
             }
-            logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, this.InvokeInfo.ToJsonString(), UserContent);
+            //logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, this.InvokeInfo.ToJsonString(), UserContent);
             netClient.WriteServiceData(Encoding.UTF8.GetBytes("ok"));
         }
     }
