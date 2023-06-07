@@ -25,6 +25,7 @@ namespace ServiceStatusViewer.Views
         public MessageBox()
         {
             this.InitializeComponent();
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
         private void InitializeComponent()

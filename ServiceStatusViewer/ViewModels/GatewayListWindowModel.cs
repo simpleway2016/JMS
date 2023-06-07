@@ -3,7 +3,9 @@ using Avalonia.Controls.ApplicationLifetimes;
 using JMS;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
+using ServiceStatusViewer;
 using ServiceStatusViewer.Infrastructures;
+using ServiceStatusViewer.ViewModels;
 using ServiceStatusViewer.Views;
 using System;
 using System.Collections.Generic;
@@ -66,7 +68,10 @@ namespace ServiceStatusViewer.ViewModels
 
         }
 
-        public IReactiveCommand EnterClick => ReactiveCommand.Create(async () => {
+        public IReactiveCommand EnterClick => ReactiveCommand.Create(EnterClickAction);
+
+        public async void EnterClickAction()
+        {
             try
             {
                 if (string.IsNullOrWhiteSpace(_GatewayAddress))
@@ -77,7 +82,7 @@ namespace ServiceStatusViewer.ViewModels
                 var gatewayAddressItems = _GatewayAddress.Trim().Split(',');
                 List<NetAddress> list = new List<NetAddress>();
 
-                foreach( var addStr in gatewayAddressItems)
+                foreach (var addStr in gatewayAddressItems)
                 {
                     if (addStr.StartsWith("http"))
                     {
@@ -93,7 +98,7 @@ namespace ServiceStatusViewer.ViewModels
                 }
 
                 MicroServiceClient.GatewayAddresses = list.ToArray();
-               
+
                 NetAddress proxy = null;
                 if (!string.IsNullOrWhiteSpace(_ProxyAddress))
                 {
@@ -105,7 +110,8 @@ namespace ServiceStatusViewer.ViewModels
                 MicroServiceClient.Password = this.Password;
 
                 var desktop = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
-                desktop.MainWindow = new MainWindow {
+                desktop.MainWindow = new MainWindow
+                {
                     DataContext = new MainWindowViewModel()
                 };
                 desktop.MainWindow.Show();
@@ -115,6 +121,6 @@ namespace ServiceStatusViewer.ViewModels
             {
                 await MessageBox.Show(ex.Message);
             }
-        });
+        }
     }
 }
