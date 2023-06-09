@@ -31,16 +31,11 @@ namespace ServiceStatusViewer.ViewModels
             this.IsAddingButton = true;
         });
 
-        public IReactiveCommand VueMethodsClick => ReactiveCommand.Create(() =>
-        {
-            if(_vueCodeItem == null)
-            {
-                _vueCodeItem = new ApiDocCodeBuilderModel
-                {
-                    Name = "vue methods",
-                    Code = @"<script>
+        string _vueMethodCode = @"<script>
 var vueMethods = {
     addStarForLines : function(text){
+        if(!text) 
+            return text;
         var arr = text.split('\n');
         var ret = """";
         for( var i = 0 ; i < arr.length ; i ++ ){
@@ -52,7 +47,15 @@ var vueMethods = {
     }
 };
 </script>
-"
+";
+        public IReactiveCommand VueMethodsClick => ReactiveCommand.Create(() =>
+        {
+            if(_vueCodeItem == null)
+            {
+                _vueCodeItem = new ApiDocCodeBuilderModel
+                {
+                    Name = "vue methods",
+                    Code = _vueMethodCode
                 };
             }
             new JSCodeEditor(_vueCodeItem).Show();
@@ -74,6 +77,10 @@ var vueMethods = {
                     foreach( var btn in buttons)
                     {
                         btn.SetApiDocSettingWindowModel(this);
+                    }
+                    if( buttons.Count() == 0)
+                    {
+                        await client.SetApiDocumentButton("vue methods", _vueMethodCode);
                     }
                     _vueCodeItem = buttons.FirstOrDefault(m => m.Name == "vue methods");
                     this.Buttons.AddRange(buttons.Where(m=>m.Name != "vue methods"));
