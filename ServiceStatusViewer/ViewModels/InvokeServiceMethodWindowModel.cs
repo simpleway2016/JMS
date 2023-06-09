@@ -4,6 +4,7 @@ using ServiceStatusViewer.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Reactive;
 using System.Text;
 using System.Threading.Tasks;
@@ -217,9 +218,30 @@ namespace ServiceStatusViewer.ViewModels
                     }
                 }
             }
+            catch (SocketException ex)
+            {
+                if (ex.ErrorCode == 0)
+                {
+                    await MessageBox.Show("调用失败，可能是参数传递不正确。");
+                }
+                else
+                {
+                    await MessageBox.Show(ex.Message);
+                }
+            }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                while(ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
+
+                if ( ex is SocketException socketErr && socketErr.ErrorCode == 0)
+                {
+                    await MessageBox.Show("调用失败，可能是参数传递不正确。");
+                    return;
+                }
+                await MessageBox.Show(ex.Message);
             }
             finally
             {

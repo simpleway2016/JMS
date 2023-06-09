@@ -101,7 +101,15 @@ namespace JMS.Applications.HttpMiddlewares
                 List<ServiceDetail> doneList = new List<ServiceDetail>();
                 using (var rc = new RemoteClient(WebApiProgram.GatewayAddresses))
                 {
-                    var buttons = await rc.GetApiDocumentButtons<ApiDocCodeBuilderInfo>();
+                    ApiDocCodeBuilderInfo[] buttons;
+                    try
+                    {
+                        buttons = await rc.GetApiDocumentButtons<ApiDocCodeBuilderInfo>();
+                    }
+                    catch
+                    {
+                        buttons = new ApiDocCodeBuilderInfo[0];
+                    }
                     var allServices = await rc.ListMicroServiceAsync(null);
                     foreach (var serviceRunningInfo in allServices)
                     {
