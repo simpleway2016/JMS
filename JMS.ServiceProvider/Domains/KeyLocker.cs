@@ -70,7 +70,7 @@ namespace JMS.Domains
 
                         netclient.WriteServiceData(new GatewayCommand
                         {
-                            Type = CommandType.LockKey,
+                            Type = (int)CommandType.LockKey,
                             Content = new LockKeyInfo
                             {
                                 Key = key,
@@ -121,7 +121,7 @@ namespace JMS.Domains
 
                         netclient.WriteServiceData(new GatewayCommand
                         {
-                            Type = CommandType.LockKey,
+                            Type = (int)CommandType.LockKey,
                             Content = new LockKeyInfo
                             {
                                 Key = key,
@@ -161,7 +161,7 @@ namespace JMS.Domains
             {
                 netclient.WriteServiceData(new GatewayCommand
                 {
-                    Type = CommandType.LockKey,
+                    Type = (int)CommandType.LockKey,
                     Content = new LockKeyInfo
                     {
                         Key = null,
@@ -206,7 +206,7 @@ namespace JMS.Domains
                             {
                                 netclient.WriteServiceData(new GatewayCommand
                                 {
-                                    Type = CommandType.LockKey,
+                                    Type = (int)CommandType.LockKey,
                                     Content = new LockKeyInfo
                                     {
                                         Key = key,
@@ -272,7 +272,7 @@ namespace JMS.Domains
                             {
                                 netclient.WriteServiceData(new GatewayCommand
                                 {
-                                    Type = CommandType.LockKey,
+                                    Type = (int)CommandType.LockKey,
                                     Content = new LockKeyInfo
                                     {
                                         Key = key,
@@ -333,7 +333,7 @@ namespace JMS.Domains
                     {
                         netclient.WriteServiceData(new GatewayCommand
                         {
-                            Type = CommandType.LockKey,
+                            Type = (int)CommandType.LockKey,
                             Content = new LockKeyInfo
                             {
                                 Key = key,
@@ -387,7 +387,7 @@ namespace JMS.Domains
                     {
                         netclient.WriteServiceData(new GatewayCommand
                         {
-                            Type = CommandType.LockKey,
+                            Type = (int)CommandType.LockKey,
                             Content = new LockKeyInfo
                             {
                                 Key = key,

@@ -46,7 +46,7 @@ namespace JMS.GatewayConnection
                     _client.KeepAlive = true;
                     await _client.WriteServiceDataAsync(new GatewayCommand
                     {
-                        Type = CommandType.FindMaster
+                        Type = (int)CommandType.FindMaster
                     });
                     var findMasterRet = await _client.ReadServiceObjectAsync<InvokeResult>();
                     if (findMasterRet.Success == false)
@@ -58,7 +58,7 @@ namespace JMS.GatewayConnection
                     _client.KeepAlive = false;
                     await _client.WriteServiceDataAsync(new GatewayCommand
                     {
-                        Type = CommandType.RemoteClientConnection
+                        Type = (int)CommandType.RemoteClientConnection
                     });
 
                     if (_disposed)
@@ -169,7 +169,7 @@ namespace JMS.GatewayConnection
             {
                 await netclient.WriteServiceDataAsync(new GatewayCommand()
                 {
-                    Type = CommandType.GetServiceProvider,
+                    Type = (int)CommandType.GetServiceProvider,
                     Header = remoteClient.GetCommandHeader(),
                     Content = new GetServiceProviderRequest
                     {
@@ -211,7 +211,7 @@ namespace JMS.GatewayConnection
             {
                 netclient.WriteServiceData(new GatewayCommand()
                 {
-                    Type = CommandType.GetServiceProvider,
+                    Type = (int)CommandType.GetServiceProvider,
                     Header = remoteClient.GetCommandHeader(),
                     Content = new GetServiceProviderRequest
                     {

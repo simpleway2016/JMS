@@ -2,6 +2,7 @@
 using JMS.GatewayConnection;
 using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -60,10 +61,10 @@ namespace JMS
         NetAddress[] _allGateways;
 
         Dictionary<string, string> _Header = new Dictionary<string, string>();
-        public X509Certificate2 ServiceClientCertificate { get;  set; }
+        public X509Certificate2 ServiceClientCertificate { get; set; }
         MasterGatewayProvider _masterGatewayProvider;
         ILogger<RemoteClient> _logger;
-      
+
         /// <summary>
         /// 
         /// </summary>
@@ -71,7 +72,7 @@ namespace JMS
         /// <param name="proxyAddress"></param>
         /// <param name="logger">日志对象，用于在事务发生意外时，记录详细信息</param>
         /// <param name="serviceClientCert">与微服务互通的证书</param>
-        public RemoteClient(NetAddress[] gatewayAddresses,NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null, X509Certificate2 serviceClientCert = null)
+        public RemoteClient(NetAddress[] gatewayAddresses, NetAddress proxyAddress = null, ILogger<RemoteClient> logger = null, X509Certificate2 serviceClientCert = null)
         {
             _TransactionId = Guid.NewGuid().ToString("N");
             TransactionReporterRoute.Logger = _logger = logger;
@@ -103,7 +104,7 @@ namespace JMS
         /// <returns></returns>
         public RegisterServiceRunningInfo[] ListMicroService(string serviceName)
         {
-            if(GatewayAddress == null)
+            if (GatewayAddress == null)
             {
                 findMasterGateway();
             }
@@ -113,7 +114,7 @@ namespace JMS
             {
                 client.WriteServiceData(new GatewayCommand()
                 {
-                    Type = CommandType.GetAllServiceProviders,
+                    Type = (int)CommandType.GetAllServiceProviders,
                     Content = serviceName,
                     Header = this.GetCommandHeader(),
                 });
@@ -126,6 +127,91 @@ namespace JMS
                 client.Dispose();
                 throw;
             }
+        }
+
+        public async Task SetApiDocumentButton(string buttonName, string code)
+        {
+            if (GatewayAddress == null)
+            {
+                await findMasterGatewayAsync();
+            }
+            InvokeResult ret = null;
+            var client = NetClientPool.CreateClient(this.ProxyAddress, GatewayAddress);
+            try
+            {
+                client.WriteServiceData(new GatewayCommand()
+                {
+                    Type = (int)CommandType.SetApiDocumentButton,
+                    Content = new ApiDocCodeBuilderInfo { Name = buttonName, Code = code }.ToJsonString(),
+                    Header = this.GetCommandHeader(),
+                });
+                ret = await client.ReadServiceObjectAsync<InvokeResult>();
+                NetClientPool.AddClientToPool(client);
+            }
+            catch
+            {
+                client.Dispose();
+                throw;
+            }
+            if (ret.Success == false)
+                throw new Exception(ret.Error);
+        }
+
+        public async Task RemoveApiDocumentButton(string buttonName)
+        {
+            if (GatewayAddress == null)
+            {
+                await findMasterGatewayAsync();
+            }
+            InvokeResult ret = null;
+            var client = NetClientPool.CreateClient(this.ProxyAddress, GatewayAddress);
+            try
+            {
+                client.WriteServiceData(new GatewayCommand()
+                {
+                    Type = (int)CommandType.RemoveApiDocumentButton,
+                    Content = buttonName,
+                    Header = this.GetCommandHeader(),
+                });
+                ret = await client.ReadServiceObjectAsync<InvokeResult>();
+                NetClientPool.AddClientToPool(client);
+            }
+            catch
+            {
+                client.Dispose();
+                throw;
+            }
+            if (ret.Success == false)
+                throw new Exception(ret.Error);
+        }
+
+        public async Task<T[]> GetApiDocumentButtons<T>(string buttonName = null)
+        {
+            if (GatewayAddress == null)
+            {
+                await findMasterGatewayAsync();
+            }
+            InvokeResult<T[]> ret = null;
+            var client = NetClientPool.CreateClient(this.ProxyAddress, GatewayAddress);
+            try
+            {
+                client.WriteServiceData(new GatewayCommand()
+                {
+                    Type = (int)CommandType.GetApiDocumentButtons,
+                    Content = buttonName,
+                    Header = this.GetCommandHeader(),
+                });
+                ret = await client.ReadServiceObjectAsync<InvokeResult<T[]>>();
+                NetClientPool.AddClientToPool(client);
+                return ret.Data;
+            }
+            catch
+            {
+                client.Dispose();
+                throw;
+            }
+            if (ret.Success == false)
+                throw new Exception(ret.Error);
         }
 
         /// <summary>
@@ -144,7 +230,7 @@ namespace JMS
             {
                 client.WriteServiceData(new GatewayCommand()
                 {
-                    Type = CommandType.GetAllServiceProviders,
+                    Type = (int)CommandType.GetAllServiceProviders,
                     Content = serviceName,
                     Header = this.GetCommandHeader(),
                 });
@@ -157,7 +243,7 @@ namespace JMS
                 client.Dispose();
                 throw;
             }
-            
+
         }
 
         /// <summary>
@@ -177,10 +263,11 @@ namespace JMS
 
             var infos = ListMicroService(serviceName);
             var ret = new RegisterServiceLocation[infos.Length];
-            for(int i = 0; i < infos.Length; i ++)
+            for (int i = 0; i < infos.Length; i++)
             {
                 var info = infos[i];
-                ret[i] = new RegisterServiceLocation { 
+                ret[i] = new RegisterServiceLocation
+                {
                     Host = info.Host,
                     Port = info.Port,
                     ServiceAddress = info.ServiceAddress
@@ -224,7 +311,7 @@ namespace JMS
         /// </summary>
         /// <param name="serviceAddress"></param>
         /// <param name="key"></param>
-        public void UnLockKeyAnyway(NetAddress serviceAddress,string key)
+        public void UnLockKeyAnyway(NetAddress serviceAddress, string key)
         {
             serviceAddress.Certificate = ServiceClientCertificate;
             using (var netclient = new ProxyClient(this.ProxyAddress))
@@ -232,7 +319,7 @@ namespace JMS
                 netclient.Connect(serviceAddress);
                 netclient.WriteServiceData(new InvokeCommand()
                 {
-                    Type = InvokeType.UnlockKeyAnyway,
+                    Type = (int)InvokeType.UnlockKeyAnyway,
                     Method = key
                 });
                 netclient.ReadServiceObject<InvokeResult>();
@@ -252,19 +339,19 @@ namespace JMS
                 netclient.Connect(serviceAddress);
                 netclient.WriteServiceData(new InvokeCommand()
                 {
-                    Type = InvokeType.GetAllLockedKeys,
+                    Type = (int)InvokeType.GetAllLockedKeys,
                 });
                 var ret = netclient.ReadServiceObject<InvokeResult<string[]>>();
                 return ret.Data;
             }
         }
 
-        public bool TryGetHeader(string key,out string value)
+        public bool TryGetHeader(string key, out string value)
         {
             return _Header.TryGetValue(key, out value);
         }
 
-        public void SetHeader(string key,string value)
+        public void SetHeader(string key, string value)
         {
             if (key == "TranId")
                 throw new Exception("key='TranId' is not allow");
@@ -275,7 +362,7 @@ namespace JMS
             _Header[key] = value;
         }
 
-        public Dictionary<string,string> GetCommandHeader()
+        public Dictionary<string, string> GetCommandHeader()
         {
             var header = new Dictionary<string, string>();
             header["TranId"] = this.TransactionId;
@@ -298,7 +385,7 @@ namespace JMS
         {
             if (_masterGatewayProvider == null)
             {
-                _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout , _logger);
+                _masterGatewayProvider = MasterGatewayProvider.Create(this.ProxyAddress, _allGateways, this.Timeout, _logger);
             }
             GatewayAddress = _masterGatewayProvider.GetMaster();
         }
@@ -318,9 +405,9 @@ namespace JMS
         /// <typeparam name="T"></typeparam>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual T GetMicroService<T>( ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
+        public virtual T GetMicroService<T>(ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
-            var ret = TryGetMicroService<T>( registerServiceLocation);
+            var ret = TryGetMicroService<T>(registerServiceLocation);
             if (ret == null)
             {
                 var classType = typeof(T);
@@ -354,7 +441,7 @@ namespace JMS
         /// <typeparam name="T"></typeparam>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual T TryGetMicroService<T>( ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
+        public virtual T TryGetMicroService<T>(ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
             if (GatewayAddress == null && registerServiceLocation == null)
             {
@@ -434,10 +521,10 @@ namespace JMS
         /// <param name="serviceName"></param>
         /// <param name="registerServiceLocation">指定服务器地址，默认null，表示由网关自动分配</param>
         /// <returns></returns>
-        public virtual IMicroService GetMicroService( string serviceName,ClientServiceDetail registerServiceLocation = null)
+        public virtual IMicroService GetMicroService(string serviceName, ClientServiceDetail registerServiceLocation = null)
         {
-            var ret = TryGetMicroService(serviceName,registerServiceLocation);
-            if(ret == null)
+            var ret = TryGetMicroService(serviceName, registerServiceLocation);
+            if (ret == null)
                 throw new MissServiceException($"找不到微服务“{serviceName}”");
 
             return ret;
@@ -534,14 +621,14 @@ namespace JMS
 
         void IRemoteClient.AddConnect(IInvokeConnect connect)
         {
-            lock(_Connects)
+            lock (_Connects)
             {
                 _Connects.Add(connect);
-            }           
+            }
         }
         void IRemoteClient.AddTask(Task task)
         {
-            if(_SupportTransaction)
+            if (_SupportTransaction)
             {
                 _transactionTasks.AddTask(task);
             }
@@ -554,7 +641,7 @@ namespace JMS
         void waitTasks()
         {
             var errs = _transactionTasks.Wait();
-            if ( errs != null && errs.Count > 0)
+            if (errs != null && errs.Count > 0)
                 throw errs[0];
 
         }
@@ -625,7 +712,7 @@ namespace JMS
                 //健康检查
                 if (invokeType == InvokeType.CommitTranaction)
                 {
-                    for(int i = 0; i < _Connects.Count; i ++)
+                    for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
                         try
@@ -664,7 +751,7 @@ namespace JMS
                         {
                             connect.Dispose();
                         }
-                        
+
                     }
                     if (invokeType == InvokeType.CommitTranaction)
                         throw new TransactionException(null, "提交事务时，有连接中断，所有事务将回滚");
@@ -678,9 +765,9 @@ namespace JMS
 
                     if (invokeType == InvokeType.CommitTranaction)
                     {
-                        reporter.ReportTransactionSuccess(this,this.TransactionId);
+                        reporter.ReportTransactionSuccess(this, this.TransactionId);
                     }
-                    for(int i = 0; i < _Connects.Count; i ++)
+                    for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
                         if (connect == null)
@@ -718,8 +805,9 @@ namespace JMS
                     {
                         if (invokeType == InvokeType.CommitTranaction)
                         {
-                            Task.Run(() => {
-                                reporter.ReportTransactionCompleted(this,this.TransactionId);
+                            Task.Run(() =>
+                            {
+                                reporter.ReportTransactionCompleted(this, this.TransactionId);
                             });
                         }
                     }
@@ -732,8 +820,8 @@ namespace JMS
             else
             {
                 return null;
-            }           
-           
+            }
+
         }
 
         List<TransactionException> endRequest(InvokeType invokeType)
@@ -746,7 +834,7 @@ namespace JMS
                 //健康检查
                 if (invokeType == InvokeType.CommitTranaction)
                 {
-                    for(int i = 0; i < _Connects.Count; i ++)
+                    for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
                         try
@@ -820,7 +908,7 @@ namespace JMS
                         {
                             connect.Dispose();
                             errors.Add(new TransactionException(connect.InvokingInfo, ex.Message));
-                            
+
                         }
                     }
 
@@ -840,7 +928,8 @@ namespace JMS
                     {
                         if (invokeType == InvokeType.CommitTranaction)
                         {
-                            Task.Run(() => {
+                            Task.Run(() =>
+                            {
                                 reporter.ReportTransactionCompleted(this, this.TransactionId);
                             });
                         }

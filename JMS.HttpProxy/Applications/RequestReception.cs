@@ -38,7 +38,7 @@ namespace JMS.Applications
 
         async Task<GatewayCommand> GetRequestCommand(NetClient client)
         {
-            return new GatewayCommand { Type = CommandType.HttpRequest };
+            return new GatewayCommand { Type = (int)CommandType.HttpRequest };
         }
 
         public async void Interview(Socket socket)

@@ -1,5 +1,6 @@
 ﻿using JMS;
 using Microsoft.Extensions.Configuration;
+using Pomelo.Data.MySql.Memcached;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,8 @@ namespace ServiceStatusViewer
       
         public MicroServiceClient():base(GatewayAddresses , ProxyAddresses)
         {
-
+            this.SetHeader("UserName", MicroServiceClient.UserName);
+            this.SetHeader("Password", MicroServiceClient.Password);
         }
     }
 }

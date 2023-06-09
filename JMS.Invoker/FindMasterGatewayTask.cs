@@ -49,7 +49,7 @@ namespace JMS
                 client.ReadTimeout = _timeout;
                 client.WriteServiceData(new GatewayCommand
                 {
-                    Type = CommandType.FindMaster
+                    Type = (int)CommandType.FindMaster
                 });
                 var ret = await client.ReadServiceObjectAsync<InvokeResult<FindMasterResult>>();
                 NetClientPool.AddClientToPool(client);

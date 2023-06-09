@@ -97,7 +97,7 @@ namespace JMS
                 client.Connect(_microServiceHost.MasterGatewayAddress);
                 client.WriteServiceData(new GatewayCommand
                 {
-                    Type = CommandType.UnRegisterSerivce,
+                    Type = (int)CommandType.UnRegisterSerivce,
                     Content = _microServiceHost.Id
                 });
                 client.ReadServiceObject<InvokeResult>();

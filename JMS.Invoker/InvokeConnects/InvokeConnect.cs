@@ -192,7 +192,7 @@ namespace JMS
         {
             _client.WriteServiceData(new InvokeCommand()
             {
-                Type = InvokeType.HealthyCheck,
+                Type = (int)InvokeType.HealthyCheck,
             });
             return _client.ReadServiceObject<InvokeResult>();
         }
@@ -200,7 +200,7 @@ namespace JMS
         {
             _client.WriteServiceData(new InvokeCommand()
             {
-                Type = InvokeType.HealthyCheck,
+                Type = (int)InvokeType.HealthyCheck,
             });
             return _client.ReadServiceObjectAsync<InvokeResult>();
         }
@@ -209,7 +209,7 @@ namespace JMS
         {
             _client.WriteServiceData(new InvokeCommand()
             {
-                Type = InvokeType.CommitTranaction,
+                Type = (int)InvokeType.CommitTranaction,
                 Header = tran.GetCommandHeader()
             });
             return _client.ReadServiceObject<InvokeResult>();
@@ -218,7 +218,7 @@ namespace JMS
         {
             _client.WriteServiceData(new InvokeCommand()
             {
-                Type = InvokeType.CommitTranaction,
+                Type = (int)InvokeType.CommitTranaction,
                 Header = tran.GetCommandHeader()
             });
             return _client.ReadServiceObjectAsync<InvokeResult>();
@@ -228,7 +228,7 @@ namespace JMS
         {
             _client.WriteServiceData(new InvokeCommand()
             {
-                Type = InvokeType.RollbackTranaction,
+                Type = (int)InvokeType.RollbackTranaction,
                 Header = tran.GetCommandHeader()
             });
             return _client.ReadServiceObject<InvokeResult>();
@@ -237,7 +237,7 @@ namespace JMS
         {
             _client.WriteServiceData(new InvokeCommand()
             {
-                Type = InvokeType.RollbackTranaction,
+                Type = (int)InvokeType.RollbackTranaction,
                 Header = tran.GetCommandHeader()
             });
             return _client.ReadServiceObjectAsync<InvokeResult>();
@@ -268,7 +268,7 @@ namespace JMS
             _client = NetClientPool.CreateClient(proxyAddress, new NetAddress(serviceLocation.ServiceAddress, serviceLocation.Port, serviceLocation.UseSsl) { Certificate = cert, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
             var command = new InvokeCommand()
             {
-                Type = InvokeType.RetryTranaction,
+                Type = (int)InvokeType.RetryTranaction,
                 Header = new Dictionary<string, string> {
                                     { "TranId" , tranId},
                                     {"TranFlag" , tranFlag }

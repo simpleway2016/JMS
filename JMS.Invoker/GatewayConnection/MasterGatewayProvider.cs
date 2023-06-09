@@ -70,7 +70,7 @@ namespace JMS.GatewayConnection
                         client.ReadTimeout = _timeout;
                         client.WriteServiceData(new GatewayCommand
                         {
-                            Type = CommandType.FindMaster
+                            Type = (int)CommandType.FindMaster
                         });
                         var ret = client.ReadServiceObject<InvokeResult<FindMasterResult>>();
                         NetClientPool.AddClientToPool(client);

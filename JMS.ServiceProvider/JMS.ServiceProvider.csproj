@@ -6,11 +6,12 @@
 		<AssemblyName>JMS.ServiceProvider</AssemblyName>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/simpleway2016/JMS</RepositoryUrl>
-		<Version>3.1.8</Version>
+		<Version>3.2.0</Version>
 		<Authors>Jack.T</Authors>
 		<Company>JMS</Company>
 		<Product>JMS</Product>
 		<Description>.net core 微服务开发框架 - 服务端依赖库</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

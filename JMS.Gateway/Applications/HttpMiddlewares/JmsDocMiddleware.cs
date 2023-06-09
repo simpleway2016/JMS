@@ -1,4 +1,5 @@
 ﻿using JMS.Domains;
+using JMS.Domains.ApiDocument;
 using JMS.Dtos;
 using JMS.ServerCore.Http;
 using JMS.WebApiDocument;
@@ -16,12 +17,57 @@ namespace JMS.Applications.HttpMiddlewares
 {
     internal class JmsDocMiddleware : IHttpMiddleware
     {
+        IDocumentButtonProvider _documentButtonProvider;
         IRegisterServiceManager _registerServiceManager;
-        public JmsDocMiddleware(IRegisterServiceManager registerServiceManager)
+        public JmsDocMiddleware(IRegisterServiceManager registerServiceManager, IDocumentButtonProvider documentButtonProvider)
         {
+            this._documentButtonProvider = documentButtonProvider;
             this._registerServiceManager = registerServiceManager;
 
         }
+
+        void outputCode(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        {
+
+            var servicename = requestPath.Replace("/JmsDoc/OutputCode/", "");
+            servicename = servicename.Substring(0,servicename.IndexOf("?"));
+
+            var buttonName = requestPath.Substring(requestPath.IndexOf("?button=") + 8);
+            buttonName = HttpUtility.UrlDecode(buttonName);
+
+            var serviceInfo = _registerServiceManager.GetAllRegisterServices().FirstOrDefault(m=>m.ServiceList.Any(n=>n.Name == servicename));
+            if (serviceInfo == null)
+                throw new Exception($"Service:{servicename} does not exist");
+            var serviceItem = serviceInfo.ServiceList.FirstOrDefault(n => n.Name == servicename);
+            using (var proxyRemoteClient = new RemoteClient(new[] { new NetAddress("127.0.0.1", ((IPEndPoint)client.Socket.LocalEndPoint).Port) }))
+            {
+                var location = new ClientServiceDetail(serviceItem, serviceInfo);
+
+                var service = proxyRemoteClient.GetMicroService(serviceItem.Name, location);
+                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
+                {
+                    var jsonContent = service.GetServiceInfo();
+                    var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                    controllerInfo.name = serviceItem.Name;
+                    controllerInfo.desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description;
+
+                    ControllerInfo.FormatForBuildCode(controllerInfo,serviceItem.Name);
+
+                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.outputCode.html"))
+                    {
+                        var bs = new byte[ms.Length];
+                        ms.Read(bs, 0, bs.Length);
+                        var code = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m=>m.Name == buttonName).Code;
+                        var vueMethods = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m => m.Name == "vue methods")?.Code;
+                        var text = Encoding.UTF8.GetString(bs).Replace("$$Controller$$", controllerInfo.ToJsonString()).Replace("$$code$$", code).Replace("$$vueMethods$$", vueMethods);
+                        client.OutputHttp200(text);
+                    }
+                }
+            }
+
+           
+        }
+
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
         {
             if (requestPath.StartsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
@@ -31,8 +77,19 @@ namespace JMS.Applications.HttpMiddlewares
                     client.OutputHttpNotFund();
                     return true;
                 }
-
-                if (requestPath.StartsWith("/JmsDoc/vue.js", StringComparison.OrdinalIgnoreCase))
+                else if(requestPath.StartsWith("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        outputCode(client, httpMethod, requestPath, headers);
+                    }
+                    catch (Exception ex)
+                    {
+                        client.OutputHttp200(ex.ToString());
+                    }
+                    return true;
+                }
+                else if (requestPath.StartsWith("/JmsDoc/vue.js", StringComparison.OrdinalIgnoreCase))
                 {
                     if (headers.ContainsKey("If-Modified-Since"))
                     {
@@ -72,6 +129,11 @@ namespace JMS.Applications.HttpMiddlewares
                                     var controllerInfo = jsonContent.FromJson<ControllerInfo>();
                                     controllerInfo.name = serviceItem.Name;
                                     controllerInfo.desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description;
+                                    controllerInfo.buttons = new List<ButtonInfo>( _documentButtonProvider.GetButtons());
+                                    foreach( var btn in controllerInfo.buttons)
+                                    {
+                                        btn.url += $"/JmsDoc/OutputCode/{serviceItem.Name}?button={HttpUtility.UrlEncode(btn.name)}";
+                                    }
                                     foreach (var method in controllerInfo.items)
                                     {
                                         method.url = $"/{HttpUtility.UrlEncode(serviceItem.Name)}/{method.title}";

@@ -19,7 +19,7 @@ namespace JMS.Applications
     class RequestReception : IRequestReception
     {
         IConnectionCounter _connectionCounter;
-        Dictionary<InvokeType, IRequestHandler> _cache = new Dictionary<InvokeType, IRequestHandler>();
+        IRequestHandler[] _cache;
         MicroServiceHost _MicroServiceProvider;
         ILogger<RequestReception> _logger;
         IProcessExitHandler _processExitHandler;
@@ -36,9 +36,10 @@ namespace JMS.Applications
             _SSLConfiguration = _MicroServiceProvider.ServiceProvider.GetService<SSLConfiguration>();
 
             var handlers = _MicroServiceProvider.ServiceProvider.GetServices<IRequestHandler>();
+            _cache = new IRequestHandler[ handlers.Max(m=>(int)m.MatchType) + 1 ];
             foreach (var handler in handlers)
             {
-                _cache[handler.MatchType] = handler;
+                _cache[(int)handler.MatchType] = handler;
             }
 
             CheckCert = new RemoteCertificateValidationCallback(remoteCertificateValidationCallback);
@@ -68,7 +69,7 @@ namespace JMS.Applications
 
             if (text == "GET " || text == "POST")
             {
-                return new InvokeCommand { Type = InvokeType.Http};
+                return new InvokeCommand { Type = (int)InvokeType.Http};
             }
             else
             {

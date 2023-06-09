@@ -53,13 +53,13 @@ namespace JMS
                     cmd = await netclient.ReadServiceObjectAsync<InvokeCommand>();
                     switch (cmd.Type)
                     {
-                        case InvokeType.CommitTranaction:
+                        case (int)InvokeType.CommitTranaction:
                             onCommit(gatewayConnector, faildCommitBuilder, netclient,logger);
                             return;
-                        case InvokeType.RollbackTranaction:
+                        case (int)InvokeType.RollbackTranaction:
                             onRollback(gatewayConnector, faildCommitBuilder, netclient, logger);
                             return;
-                        case InvokeType.HealthyCheck:
+                        case (int)InvokeType.HealthyCheck:
                             checkedHealth = true;
                             onHealthyCheck(gatewayConnector, faildCommitBuilder, netclient, logger);
                             break;

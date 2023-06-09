@@ -19,6 +19,7 @@ using JMS.ServerCore.Http.Middlewares;
 using JMS.ServerCore.Http;
 using JMS.Applications.HttpMiddlewares;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using JMS.Domains.ApiDocument;
 
 namespace JMS
 {
@@ -100,11 +101,13 @@ namespace JMS
             services.AddSingleton<IRemoteClientManager, DefaultRemoteClientManager>();
             services.AddSingleton<Gateway>();
             services.AddSingleton<LockKeyManager>();
+            services.AddSingleton<IAuthentication, Authentication>();
             services.AddTransient<IMicroServiceReception, MicroServiceReception>();
             services.AddSingleton<FileChangeWatcher>();
             services.AddTransient<ListenFileChangeReception>();
             services.AddSingleton<ClientCheckFactory>();
             services.AddSingleton<ErrorUserMarker>();
+            services.AddSingleton<IDocumentButtonProvider,DocumentButtonProvider>();
 
             //添加所有handler
             var interfaceType = typeof(ICommandHandler);

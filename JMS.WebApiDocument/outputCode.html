@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <script src="/JmsDoc/vue.js"></script>
+</head>
+
+<body>
+    <div id="main" style="position:absolute;left:-100000px;top:-10000px;width:10px;height:10px;overflow:hidden;">$$code$$</div>
+    <textarea id="txt" style="width:100%;height:100%;border:0px;"></textarea>
+</body>
+<script>
+    var model = $$Controller$$;
+</script>
+$$vueMethods$$
+<script>
+
+    var vue = new Vue({
+        el: document.body.querySelector("#main"),
+        data: model,
+        methods: window.vueMethods
+    });
+    document.body.querySelector("#txt").value = document.body.querySelector("#main").innerHTML.replace(/\<\!----\>/g, "").replace(/&gt;/g, ">").replace(/&lt;/g, "<");
+</script>
+</html>

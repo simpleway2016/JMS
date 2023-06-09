@@ -34,7 +34,7 @@ namespace JMS.Dtos
     }
     public class InvokeCommand
     {
-        public InvokeType Type = InvokeType.Invoke;
+        public int Type = (int)InvokeType.Invoke;
         public IDictionary<string, string> Header;
         public string Service;
         public string Method;

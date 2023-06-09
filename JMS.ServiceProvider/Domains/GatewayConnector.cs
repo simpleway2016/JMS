@@ -70,7 +70,7 @@ namespace JMS.Domains
 
                 netclient.WriteServiceData(new GatewayCommand
                 {
-                    Type = CommandType.GetTransactionStatus,
+                    Type = (int)CommandType.GetTransactionStatus,
                     Content = tranid
                 });
 
@@ -91,7 +91,7 @@ namespace JMS.Domains
 
                 netclient.WriteServiceData(new GatewayCommand
                 {
-                    Type = CommandType.GetTransactionStatus,
+                    Type = (int)CommandType.GetTransactionStatus,
                     Content = tranid
                 });
 
@@ -118,7 +118,7 @@ namespace JMS.Domains
             {
                 client.WriteServiceData(new GatewayCommand()
                 {
-                    Type = CommandType.ServiceNameListChanged,
+                    Type = (int)CommandType.ServiceNameListChanged,
                     Content = new RegisterServiceInfo
                     {
                         ServiceList = controllers.Where(m => m.Enable).Select(m => m.Service).ToArray(),
@@ -165,7 +165,7 @@ namespace JMS.Domains
                             {
                                 client.WriteServiceData(new GatewayCommand
                                 {
-                                    Type = CommandType.FindMaster
+                                    Type = (int)CommandType.FindMaster
                                 });
                                 var ret = client.ReadServiceObject<InvokeResult>();
                                 if (ret.Success == true && _microServiceHost.MasterGatewayAddress == null)
@@ -219,7 +219,7 @@ namespace JMS.Domains
                         _client = CreateClient(_microServiceHost.MasterGatewayAddress);
                         _client.WriteServiceData(new GatewayCommand()
                         {
-                            Type = CommandType.CheckSupportSingletonService
+                            Type = (int)CommandType.CheckSupportSingletonService
                         });
                         if (_client.ReadServiceObject<InvokeResult>().Success == false)
                         {
@@ -241,7 +241,7 @@ namespace JMS.Domains
 
                 _client.WriteServiceData(new GatewayCommand()
                 {
-                    Type = CommandType.RegisterSerivce,
+                    Type = (int)CommandType.RegisterSerivce,
                     Content = new RegisterServiceInfo
                     {
                         ServiceList = controllers.Where(m => m.Enable).Select(m => m.Service).ToArray(),
@@ -296,7 +296,7 @@ namespace JMS.Domains
                     {
                         client.WriteServiceData(new GatewayCommand
                         {
-                            Type = CommandType.UploadLockKeys,
+                            Type = (int)CommandType.UploadLockKeys,
                             Header = new Dictionary<string, string> {
                                     { "ServiceId",_microServiceHost.Id}
                                 },
@@ -322,7 +322,7 @@ namespace JMS.Domains
                 {
                     return new GatewayCommand
                     {
-                        Type = CommandType.ReportClientConnectQuantity,
+                        Type = (int)CommandType.ReportClientConnectQuantity,
                         Content = new PerformanceInfo
                         {
                             RequestQuantity = _connectionCounter.ConnectionCount,

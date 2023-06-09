@@ -5,15 +5,17 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <DocumentationFile>bin\JMS.WebApiDocument.xml</DocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.1.10</Version>
+    <Version>1.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="index.html" />
+    <None Remove="outputCode.html" />
     <None Remove="vue.js" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="outputCode.html" />
     <EmbeddedResource Include="index.html" />
     <EmbeddedResource Include="vue.js" />
   </ItemGroup>

@@ -11,7 +11,7 @@ namespace JMS.Applications
     class CommandHandlerRoute : ICommandHandlerRoute
     {
         IServiceProvider _serviceProvider;
-        Dictionary<CommandType, ICommandHandler> _cache = new Dictionary<CommandType, ICommandHandler>();
+        ICommandHandler[] _cache;
         public CommandHandlerRoute(IServiceProvider serviceProvider)
         {
             this._serviceProvider = serviceProvider;
@@ -21,9 +21,10 @@ namespace JMS.Applications
         public void Init()
         {
             var handlers = _serviceProvider.GetServices<ICommandHandler>();
-            foreach( var handler in handlers)
+            _cache = new ICommandHandler[handlers.Max(m=>(int)m.MatchCommandType) + 1];
+            foreach ( var handler in handlers)
             {
-                _cache[handler.MatchCommandType] = handler;
+                _cache[(int)handler.MatchCommandType] = handler;
             }
         }
 

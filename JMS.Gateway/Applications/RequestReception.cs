@@ -52,7 +52,7 @@ namespace JMS.Applications
 
             if ( text == "GET " || text == "POST" || text == "PUT " || text == "OPTI")
             {
-                return new GatewayCommand { Type = CommandType.HttpRequest};
+                return new GatewayCommand { Type = (int)CommandType.HttpRequest};
             }
             else
             {

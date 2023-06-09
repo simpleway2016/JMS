@@ -34,7 +34,7 @@ namespace JMS.Applications.HttpMiddlewares
                     }
                     var cmd = new GatewayCommand
                     {
-                        Type = (CommandType)Enum.Parse(typeof(CommandType), arr[0]),
+                        Type = (int)Enum.Parse(typeof(CommandType), arr[0]),
                         Content = json,
                         Header = headers,
                         IsHttp = true
@@ -45,7 +45,7 @@ namespace JMS.Applications.HttpMiddlewares
                 {
                     var cmd = new GatewayCommand
                     {
-                        Type = (CommandType)Enum.Parse(typeof(CommandType), requestPath),
+                        Type = (int)Enum.Parse(typeof(CommandType), requestPath),
                         Header = headers,
                         IsHttp = true
                     };

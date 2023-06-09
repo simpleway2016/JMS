@@ -51,6 +51,8 @@ namespace ServiceStatusViewer.ViewModels
         public string Text => this.ToString();
         public string PerformanceInfo => _data.PerformanceInfo == null ? "" : $"当前连接数：{_data.PerformanceInfo.RequestQuantity} CPU利用率:{(int)(_data.PerformanceInfo.CpuUsage.GetValueOrDefault())}%";
 
+      
+
         public IReactiveCommand GetCodeClick => ReactiveCommand.Create(async () =>
         {
             if (_data.ServiceList.Length == 0)
@@ -163,6 +165,10 @@ namespace ServiceStatusViewer.ViewModels
                 this.RaiseAndSetIfChanged(ref _title, value);
             }
         }
+
+        public IReactiveCommand ApiDocSettingClick => ReactiveCommand.Create(() => {
+            new ApiDocSettingWindow().Show();
+        });
 
         AddressProvider _addressProvider;
         bool _isFirstLoad = true;

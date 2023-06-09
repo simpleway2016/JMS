@@ -30,14 +30,14 @@ namespace JMS.Applications.CommandHandles
         {
             while (true)
             {
-                if (cmd.Type == CommandType.HealthyCheck)
+                if (cmd.Type == (int)CommandType.HealthyCheck)
                     break;
-                else if (cmd.Type == CommandType.AddLockKey)
+                else if (cmd.Type == (int)CommandType.AddLockKey)
                 {
                     var keyObject = cmd.Content.FromJson<KeyObject>();
                     _lockKeyManager.AddKey(keyObject.Key, keyObject.Locker);
                 }
-                else if (cmd.Type == CommandType.RemoveLockKey)
+                else if (cmd.Type == (int)CommandType.RemoveLockKey)
                 {
                     _lockKeyManager.RemoveKey(cmd.Content);
                 }

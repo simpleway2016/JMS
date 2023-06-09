@@ -46,7 +46,7 @@ namespace JMS
                 client.Connect(_gatewayAddress);
                 client.WriteServiceData(new GatewayCommand
                 {
-                    Type = CommandType.GetShareFile,
+                    Type = (int)CommandType.GetShareFile,
                     Content = filepath
                 });
 
@@ -95,7 +95,7 @@ namespace JMS
                     {
                         client.Connect(_gatewayAddress);
                         client.WriteServiceData(new GatewayCommand { 
-                            Type = CommandType.ListenFileChange,
+                            Type = (int)CommandType.ListenFileChange,
                             Content = _dict.Keys.ToJsonString()
                         });
 

@@ -24,6 +24,9 @@
 		<vm:MainWindowViewModel/>
 	</Design.DataContext>
 	<DockPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+			<Button Content="Api文档设置" Margin="10,0,0,0" Command="{Binding ApiDocSettingClick}"></Button>
+		</StackPanel>
 		<TextBlock DockPanel.Dock="Top" Margin="10">在线的服务：</TextBlock>
 		<ListBox DockPanel.Dock="Top" Items="{Binding ServiceList}">
 			<ListBox.ItemTemplate>

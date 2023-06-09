@@ -278,7 +278,7 @@
                 </svg>
             </div>
         </div>
-        <div class="flex-1 itemContainer">
+        <div class="flex-1 itemContainer" v-if="controllers.length">
             <div style="text-align:right;"><button @click="btnClick(btnitem)" v-for="btnitem in controllers[selectedControllerIndex].buttons">{{btnitem.name}}</button></div>
             <div class="funcItem" v-for="item in controllers[selectedControllerIndex].items">
 

@@ -102,7 +102,7 @@ namespace JMS.Domains
                                 {
                                     client.WriteServiceData(new GatewayCommand
                                     {
-                                        Type = CommandType.AddLockKey,
+                                        Type = (int)CommandType.AddLockKey,
                                         Content = item.keyObject.ToJsonString()
                                     });
                                 }
@@ -110,7 +110,7 @@ namespace JMS.Domains
                                 {
                                     client.WriteServiceData(new GatewayCommand
                                     {
-                                        Type = CommandType.RemoveLockKey,
+                                        Type = (int)CommandType.RemoveLockKey,
                                         Content = item.keyObject.Key
                                     });
                                 }
@@ -118,7 +118,7 @@ namespace JMS.Domains
                             }
                             client.WriteServiceData(new GatewayCommand
                             {
-                                Type = CommandType.HealthyCheck
+                                Type = (int)CommandType.HealthyCheck
                             });
                             try
                             {
@@ -158,7 +158,7 @@ namespace JMS.Domains
                                 client.Connect(_otherGatewayAddress);
                                 client.WriteServiceData(new GatewayCommand
                                 {
-                                    Type = CommandType.BeGatewayMaster,
+                                    Type = (int)CommandType.BeGatewayMaster,
                                     Content = new BeMasterContent { Id = _gateway.Id, IsMaster = this.IsMaster }.ToJsonString()
                                 });
                                 var cmd = client.ReadServiceObject<InvokeResult>();
@@ -310,7 +310,7 @@ namespace JMS.Domains
                     {
                         client.WriteServiceData(new GatewayCommand
                         {
-                            Type = CommandType.RemoveTransactionStatus,
+                            Type = (int)CommandType.RemoveTransactionStatus,
                             Content = tranid
                         });
                         var cmd = client.ReadServiceObject<InvokeResult>();
@@ -336,7 +336,7 @@ namespace JMS.Domains
                     {
                         client.WriteServiceData(new GatewayCommand
                         {
-                            Type = CommandType.ReportTransactionStatus,
+                            Type = (int)CommandType.ReportTransactionStatus,
                             Content = tranid
                         });
                         var cmd = client.ReadServiceObject<InvokeResult>();

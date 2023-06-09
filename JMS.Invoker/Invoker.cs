@@ -95,7 +95,7 @@ namespace JMS
                 netclient.ReadTimeout = this.ServiceTransaction.Timeout;
                 netclient.WriteServiceData(new InvokeCommand()
                 {
-                    Type = InvokeType.GenerateInvokeCode,
+                    Type = (int)InvokeType.GenerateInvokeCode,
                     Service = _serviceName,
                     Parameters = new string[] { nameSpace, className }
                 });
@@ -114,7 +114,7 @@ namespace JMS
                 netclient.ReadTimeout = this.ServiceTransaction.Timeout;
                 netclient.WriteServiceData(new InvokeCommand()
                 {
-                    Type = InvokeType.GenerateServiceInfo,
+                    Type = (int)InvokeType.GenerateServiceInfo,
                     Service = _serviceName
                 });
                 var ret = netclient.ReadServiceObject<InvokeResult<string>>();

@@ -21,7 +21,7 @@ namespace JMS.TransactionReporters
             {
                 netclient.WriteServiceData(new GatewayCommand()
                 {
-                    Type = CommandType.ReportTransactionStatus,
+                    Type = (int)CommandType.ReportTransactionStatus,
                     Content = tranid
                 });
                 byte[] data = new byte[4];
@@ -59,7 +59,7 @@ namespace JMS.TransactionReporters
             {
                 netclient.WriteServiceData(new GatewayCommand()
                 {
-                    Type = CommandType.RemoveTransactionStatus,
+                    Type = (int)CommandType.RemoveTransactionStatus,
                     Content = tranid
                 });
                 byte[] data = new byte[4];

@@ -14,79 +14,29 @@ namespace JMS.Applications.CommandHandles
 {
     class GetAllServiceProvidersHandler : ICommandHandler
     {
+        IAuthentication _authentication;
         Gateway _gateway;
         IRegisterServiceManager _registerServiceManager;
         IConfiguration _configuration;
-        ErrorUserMarker _errorUserMarker;
 
         public GetAllServiceProvidersHandler(Gateway gateway, IRegisterServiceManager registerServiceManager, IConfiguration configuration,
-            ErrorUserMarker errorUserMarker)
+            IAuthentication authentication)
         {
+            this._authentication = authentication;
             this._gateway = gateway;
             this._registerServiceManager = registerServiceManager;
             this._configuration = configuration;
-            this._errorUserMarker = errorUserMarker;
 
         }
         public CommandType MatchCommandType => CommandType.GetAllServiceProviders;
 
-        void outputNeedLogin(NetClient netclient,GatewayCommand cmd)
-        {
-            if (cmd.IsHttp)
-            {
-                netclient.OutputHttp401();
-            }
-            else
-            {
-                netclient.WriteServiceData(new RegisterServiceInfo[] { new RegisterServiceInfo() {
-                        ServiceList = new ServiceDetail[]{ new ServiceDetail { Name = "username , password error" } }
-                    } });
-            }
-        }
-        void outputBlackList(NetClient netclient, GatewayCommand cmd)
-        {
-            if (cmd.IsHttp)
-            {
-                netclient.OutputHttp401();
-            }
-            else
-            {
-                netclient.WriteServiceData(new RegisterServiceInfo[] { new RegisterServiceInfo() {
-                        ServiceList = new ServiceDetail[]{ new ServiceDetail { Name = "username , password error. in black list" } }
-                    } });
-            }
-        }
+       
 
         public async Task Handle(NetClient netclient, GatewayCommand cmd)
         {
-            var userInfos = _configuration.GetSection("Http:Users").Get<UserInfo[]>();
-            if(userInfos != null && userInfos.Length > 0)
+            if (!(await _authentication.Verify(netclient, cmd)))
             {
-                var ip = ((IPEndPoint)netclient.RemoteEndPoint).Address.ToString();
-                if(_errorUserMarker.CheckUserIp(ip) == false)
-                {
-                    outputBlackList(netclient,cmd);
-                    return;
-                }
-
-                //检验身份
-                string username, pwd;
-                cmd.Header.TryGetValue("UserName", out username);
-                if (string.IsNullOrWhiteSpace(username))
-                {
-                    outputNeedLogin(netclient, cmd);
-                    return;
-                }
-                cmd.Header.TryGetValue("Password", out pwd);
-
-                if(userInfos.Any(m=>string.Equals( m.UserName , username, StringComparison.OrdinalIgnoreCase) && m.Password == pwd) == false)
-                {
-                    _errorUserMarker.Error(ip);
-                    outputNeedLogin(netclient, cmd);
-                    return;
-                }
-
-                _errorUserMarker.Clear(ip);
+                return;
             }
 
             var locations = this.List(cmd.Content);

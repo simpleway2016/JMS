@@ -1,0 +1,52 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="ServiceStatusViewer.Views.ApiDocSettingWindow"
+        Title="Api文档设置">
+	<Window.Styles>
+		<Style Selector="TextBlock.list">
+			<Setter Property="Foreground" Value="#42b883"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+		</Style>
+		<Style Selector="TextBlock.list2">
+			<Setter Property="Foreground" Value="#000000"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+		</Style>
+		<Style Selector="ItemsRepeater[IsEnabled=false]">
+			<Setter Property="Opacity" Value="0.3"/>
+		</Style>
+	</Window.Styles>
+	<DockPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+			<Button Content="添加前端代码生成按钮" Margin="10,0,0,0" Command="{Binding AddButtonClick}"></Button>
+			<TextBox Margin="10,0,0,0" IsVisible="{Binding IsAddingButton}"  Width="200" Watermark="请输入按钮名称" KeyDown="txtButtonName_KeyDown"></TextBox>
+			<Button Content="编写Vue内部方法" Margin="10,0,0,0" Command="{Binding VueMethodsClick}"></Button>
+		</StackPanel>
+		<TextBlock DockPanel.Dock="Top" Margin="10">当前所有按钮：</TextBlock>
+		<ListBox DockPanel.Dock="Top" Items="{Binding Buttons}">
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="120"/>
+							<ColumnDefinition Width="80"/>
+							<ColumnDefinition Width="*"/>
+						</Grid.ColumnDefinitions>
+						<Grid.ContextMenu>
+							<ContextMenu>
+								<MenuItem Header="重命名" Command="{Binding RenameClick}"></MenuItem>
+							</ContextMenu>
+						</Grid.ContextMenu>
+						<Button Grid.Column="0" Margin="0,0,10,0" Command="{Binding CodeClick}">编辑脚本</Button>
+						<Button Grid.Column="1" Margin="0,0,10,0" Command="{Binding DeleteClick}">删 除</Button>
+						<TextBlock Grid.Column="2" IsVisible="{Binding !IsEditing}" Text="{Binding Name}" VerticalAlignment="Center" Margin="0,0,10,0"></TextBlock>
+						<TextBox Grid.Column="2" IsVisible="{Binding IsEditing}" Text="{Binding Name}" VerticalAlignment="Center" Margin="0,0,10,0" KeyDown="txtEditName_KeyDown"></TextBox>
+					</Grid>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+	</DockPanel>
+
+</Window>

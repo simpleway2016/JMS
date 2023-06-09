@@ -131,7 +131,7 @@ namespace JMS
                     {
                         this.WriteServiceData(new GatewayCommand()
                         {
-                            Type = CommandType.HealthyCheck
+                            Type = (int)CommandType.HealthyCheck
                         });
                     }
                     catch (Exception ex)

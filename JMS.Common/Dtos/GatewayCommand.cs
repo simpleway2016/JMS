@@ -36,10 +36,13 @@ namespace JMS.Dtos
         AddLockKey = 21,
         RemoveLockKey = 22,
         RemoteClientConnection = 23,
+        SetApiDocumentButton = 24,
+        RemoveApiDocumentButton = 25,
+        GetApiDocumentButtons = 26
     }
     public class GatewayCommand
     {
-        public CommandType Type;
+        public int Type;
         public IDictionary<string, string> Header;
         public string Content;
         public bool IsHttp;
