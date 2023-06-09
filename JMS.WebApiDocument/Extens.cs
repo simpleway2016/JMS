@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -40,7 +41,11 @@ namespace Microsoft.Extensions.DependencyInjection
 
             app.Use((context, next) =>
             {
-                if (context.Request.Path.Value.EndsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
+                if (context.Request.Path.Value.Contains("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase))
+                {
+                    return HtmlBuilder.OutputCode(context);
+                }
+                else if (context.Request.Path.Value.EndsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
                 {
                     try
                     {
@@ -102,6 +107,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="clientProviderFunc">RemoteClient创建函数</param>
         /// <param name="redirectHeaders">需要转发的请求头，默认null，表示转发全部</param>
         /// <returns></returns>
+        [Obsolete]
         public static IApplicationBuilder UseJmsServiceRedirect(this IApplicationBuilder app, IConfiguration configuration, Func<RemoteClient> clientProviderFunc, string[] redirectHeaders = null)
         {
             if (clientProviderFunc == null)

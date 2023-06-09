@@ -16,11 +16,55 @@ using System.Xml;
 using System.Xml.Linq;
 using Way.Lib;
 using static Org.BouncyCastle.Math.EC.ECCurve;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace JMS.WebApiDocument
 {
     public class HtmlBuilder
     {
+        public static async Task OutputCode(HttpContext context)
+        {
+            var requestPath = context.Request.Path.Value;
+            var index = requestPath.IndexOf("/JmsDoc/OutputCode/" ,  StringComparison.OrdinalIgnoreCase);
+            var servicename = requestPath.Substring(index + 19);
+
+            var buttonName = context.Request.Query["button"].ToString();
+
+            using (var rc = ServiceRedirects.ClientProviderFunc())
+            {
+                var service = await rc.TryGetMicroServiceAsync(servicename);
+                if (service == null)
+                {
+                    context.Response.ContentType = "text/html; charset=utf-8";
+                    await context.Response.WriteAsync($"Service:{servicename} does not exist");
+                }
+
+                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
+                {
+                    var jsonContent = service.GetServiceInfo();
+                    var buttons = await rc.GetApiDocumentButtons<ApiDocCodeBuilderInfo>(buttonName);
+
+                    var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                    controllerInfo.name = servicename;
+
+                    ControllerInfo.FormatForBuildCode(controllerInfo, servicename);
+
+                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.outputCode.html"))
+                    {
+                        var bs = new byte[ms.Length];
+                        ms.Read(bs, 0, bs.Length);
+                        var code = buttons.FirstOrDefault(m => m.Name == buttonName).Code;
+                        var vueMethods = buttons.FirstOrDefault(m => m.Name == "vue methods")?.Code;
+                        var text = Encoding.UTF8.GetString(bs).Replace("$$Controller$$", controllerInfo.ToJsonString()).Replace("$$code$$", code).Replace("$$vueMethods$$", vueMethods);
+
+
+                        context.Response.ContentType = "text/html; charset=utf-8";
+                        await context.Response.WriteAsync(text);
+                    }
+                }
+            }
+
+        }
         public static async Task Build(HttpContext context, List<Type> controllerTypes)
         {
             List<ControllerInfo> controllerInfos = new List<ControllerInfo>();
@@ -100,6 +144,15 @@ namespace JMS.WebApiDocument
                 List<ServiceDetail> doneList = new List<ServiceDetail>();
                 using (var client = ServiceRedirects.ClientProviderFunc())
                 {
+                    ApiDocCodeBuilderInfo[] buttons;
+                    try
+                    {
+                        buttons = await client.GetApiDocumentButtons<ApiDocCodeBuilderInfo>();
+                    }
+                    catch
+                    {
+                        buttons = new ApiDocCodeBuilderInfo[0];
+                    }
                     var allServices = await client.ListMicroServiceAsync(null);
 
                     foreach( var serviceRunningInfo in allServices)
@@ -128,6 +181,16 @@ namespace JMS.WebApiDocument
                                 {
                                     controllerInfo.desc = serviceInfo.Description;
                                 }
+
+                                controllerInfo.buttons = buttons.Where(m => m.Name != "vue methods").Select(m => new ButtonInfo
+                                {
+                                    name = m.Name
+                                }).ToList();
+                                foreach (var btn in controllerInfo.buttons)
+                                {
+                                    btn.url += $"JmsDoc/OutputCode/{serviceInfo.Name}?button={HttpUtility.UrlEncode(btn.name)}";
+                                }
+
                                 foreach (var method in controllerInfo.items)
                                 {
                                     method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}/{method.title}";
@@ -135,7 +198,6 @@ namespace JMS.WebApiDocument
                                 if (controllerInfo.items.Count == 1)
                                     controllerInfo.items[0].opened = true;
 
-                                controllerInfo.buttons = null;
                                 lock (controllerInfos)
                                 {
                                     controllerInfos.Add(controllerInfo);
