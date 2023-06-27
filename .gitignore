@@ -345,3 +345,4 @@ healthchecksdb
 /WebApiTest/$$_JMS.Invoker.Transactions
 /WebApiTest/$$JMS_RetryCommitPath
 /JMS.MicroServiceHost1
+/JMS.WebApiDocument/test.html
