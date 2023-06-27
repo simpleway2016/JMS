@@ -264,6 +264,27 @@
             color: #fff;
             margin-right: 0.5rem;
         }
+
+        .search {
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+            .search svg {
+                position: absolute;
+                left: 10%;
+                top: 3px;
+                width: 30px;
+            }
+
+            .search input {
+                width: 80%;
+                border-radius: 3px;
+                border: 0;
+                background-color: #f2f7fd;
+                height: 30px;
+                padding-left: 30px;
+            }
     </style>
 </head>
 
@@ -271,7 +292,18 @@
     <div style="display:none;" class="main display-flex flex-direction-row" @click.stop="nothing">
         <div class="leftmenu">
             <div class="lefttop">接口文档</div>
-            <div class="lefttitle display-flex flex-direction-row align-items-center" :class="{actived:index==selectedControllerIndex}" @click="selectedControllerIndex=index" v-for="controller,index in controllers">
+            <div class="search display-flex flex-direction-column align-items-center">
+
+                <input type="text" oninput="onSearch(this.value)" />
+                <svg width="25px" height="25px" viewBox="0 0 25 25" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                        <g id="sousuo" transform="translate(5.000000, 4.000000)" fill="#756E66" fill-rule="nonzero">
+                            <path d="M15.8285022,15.3154188 L12.4648193,11.9517359 C13.6140294,10.680947 14.3174502,8.99910556 14.3174502,7.15515896 C14.3174502,3.21252901 11.1100831,0.00226716346 7.16455837,0.00226716346 C3.21903367,0.00226716346 0.0116665705,3.20963426 0.0116665705,7.15226423 C0.0116665705,11.0948942 3.21903367,14.305156 7.16455837,14.305156 C8.88403135,14.305156 10.4616623,13.6943668 11.6977144,12.6812093 L15.0787656,16.0622606 C15.2842919,16.2677868 15.6200812,16.2677868 15.8285022,16.0622606 C16.0340284,15.8567343 16.0340284,15.520945 15.8285022,15.3154188 Z M1.04798194,7.15226423 C1.04798194,3.7798972 3.79219133,1.03568779 7.16455837,1.03568779 C10.5369254,1.03568779 13.2811348,3.7798972 13.2811348,7.15226423 C13.2811348,10.5246313 10.5369254,13.2688407 7.16455837,13.2688407 C3.79219131,13.2688407 1.04798194,10.5246313 1.04798194,7.15226423 Z" id="形状"></path>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+            <div class="lefttitle display-flex flex-direction-row align-items-center" v-if="!controller.isHide" :class="{actived:index==selectedControllerIndex}" @click="selectedControllerIndex=index" v-for="controller,index in controllers">
                 <div v-if="controller.isPrivate" style="opacity:0.39;">{{controller.desc}}</div>
                 <div v-else>{{controller.desc}}</div>
                 <svg viewBox="0 0 100 100" style="width:0.5rem;height:0.5rem;">
@@ -452,10 +484,32 @@
     </div>
 </body>
 <script>
+    function onSearch(value) {
+        value = value.toLowerCase();
+        for (var i = 0; i < model.controllers.length; i++) {
+            var ctrl = model.controllers[i];
+            if (ctrl.name.toLowerCase().indexOf(value) >= 0 || ctrl.desc.toLowerCase().indexOf(value) >= 0) {
+                ctrl.isHide = false;
+            }
+            else {
+                ctrl.isHide = true;
+            }
+        }
+    }
+
+    function modelInit() {
+        for (var i = 0; i < model.controllers.length; i++) {
+            var ctrl = model.controllers[i];
+            ctrl.isHide = false;
+        }
+    }
+</script>
+<script>
     var model = {
         selectedControllerIndex: 0,
         controllers: $$Controllers$$,
     };
+    modelInit();
 
     var typeArr = $$Types$$;
 </script>
