@@ -272,7 +272,8 @@
         <div class="leftmenu">
             <div class="lefttop">接口文档</div>
             <div class="lefttitle display-flex flex-direction-row align-items-center" :class="{actived:index==selectedControllerIndex}" @click="selectedControllerIndex=index" v-for="controller,index in controllers">
-                <div>{{controller.desc}}</div>
+                <div v-if="controller.isPrivate" style="opacity:0.39;">{{controller.desc}}</div>
+                <div v-else>{{controller.desc}}</div>
                 <svg viewBox="0 0 100 100" style="width:0.5rem;height:0.5rem;">
                     <path d="M0 0 L80 50 L0 100" stroke="#5a616c" fill="none" stroke-width="10"></path>
                 </svg>

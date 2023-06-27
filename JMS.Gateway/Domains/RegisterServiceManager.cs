@@ -19,8 +19,11 @@ namespace JMS.Domains
         public event EventHandler<RegisterServiceInfo> ServiceDisconnect;
 
         ConcurrentDictionary<IMicroServiceReception,bool> _allServiceReceptions = new ConcurrentDictionary<IMicroServiceReception, bool>();
+        bool? _SupportJmsDoc;
+        public bool SupportJmsDoc => _SupportJmsDoc??=_configuration.GetSection("Http:SupportJmsDoc").Get<bool>();
 
-        public bool SupportJmsDoc => _configuration.GetSection("Http:SupportJmsDoc").Get<bool>();
+        bool? _AllServiceInDoc;
+        public bool AllServiceInDoc => _AllServiceInDoc??=_configuration.GetSection("Http:AllServiceInDoc").Get<bool>();
 
         public RegisterServiceManager(IConfiguration configuration)
         {

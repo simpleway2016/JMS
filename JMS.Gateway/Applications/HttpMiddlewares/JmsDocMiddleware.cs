@@ -30,12 +30,12 @@ namespace JMS.Applications.HttpMiddlewares
         {
 
             var servicename = requestPath.Replace("/JmsDoc/OutputCode/", "");
-            servicename = servicename.Substring(0,servicename.IndexOf("?"));
+            servicename = servicename.Substring(0, servicename.IndexOf("?"));
 
             var buttonName = requestPath.Substring(requestPath.IndexOf("?button=") + 8);
             buttonName = HttpUtility.UrlDecode(buttonName);
 
-            var serviceInfo = _registerServiceManager.GetAllRegisterServices().FirstOrDefault(m=>m.ServiceList.Any(n=>n.Name == servicename));
+            var serviceInfo = _registerServiceManager.GetAllRegisterServices().FirstOrDefault(m => m.ServiceList.Any(n => n.Name == servicename));
             if (serviceInfo == null)
                 throw new Exception($"Service:{servicename} does not exist");
             var serviceItem = serviceInfo.ServiceList.FirstOrDefault(n => n.Name == servicename);
@@ -51,13 +51,13 @@ namespace JMS.Applications.HttpMiddlewares
                     controllerInfo.name = serviceItem.Name;
                     controllerInfo.desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description;
 
-                    ControllerInfo.FormatForBuildCode(controllerInfo,serviceItem.Name);
+                    ControllerInfo.FormatForBuildCode(controllerInfo, serviceItem.Name);
 
                     using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.outputCode.html"))
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);
-                        var code = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m=>m.Name == buttonName).Code;
+                        var code = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m => m.Name == buttonName).Code;
                         var vueMethods = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m => m.Name == "vue methods")?.Code;
                         var text = Encoding.UTF8.GetString(bs).Replace("$$Controller$$", controllerInfo.ToJsonString()).Replace("$$code$$", code).Replace("$$vueMethods$$", vueMethods);
                         client.OutputHttp200(text);
@@ -65,7 +65,7 @@ namespace JMS.Applications.HttpMiddlewares
                 }
             }
 
-           
+
         }
 
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
@@ -77,7 +77,7 @@ namespace JMS.Applications.HttpMiddlewares
                     client.OutputHttpNotFund();
                     return true;
                 }
-                else if(requestPath.StartsWith("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase))
+                else if (requestPath.StartsWith("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase))
                 {
                     try
                     {
@@ -114,7 +114,7 @@ namespace JMS.Applications.HttpMiddlewares
                 {
                     foreach (var serviceItem in serviceInfo.ServiceList)
                     {
-                        if (serviceItem.AllowGatewayProxy == false || controllerInfos.Any(m => m.name == serviceItem.Name))
+                        if ((serviceItem.AllowGatewayProxy == false && _registerServiceManager.AllServiceInDoc == false) || controllerInfos.Any(m => m.name == serviceItem.Name))
                             continue;
                         try
                         {
@@ -127,10 +127,11 @@ namespace JMS.Applications.HttpMiddlewares
                                 {
                                     var jsonContent = service.GetServiceInfo();
                                     var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                                    controllerInfo.isPrivate = !serviceItem.AllowGatewayProxy;
                                     controllerInfo.name = serviceItem.Name;
                                     controllerInfo.desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description;
-                                    controllerInfo.buttons = new List<ButtonInfo>( _documentButtonProvider.GetButtons());
-                                    foreach( var btn in controllerInfo.buttons)
+                                    controllerInfo.buttons = new List<ButtonInfo>(_documentButtonProvider.GetButtons());
+                                    foreach (var btn in controllerInfo.buttons)
                                     {
                                         btn.url += $"/JmsDoc/OutputCode/{serviceItem.Name}?button={HttpUtility.UrlEncode(btn.name)}";
                                     }
@@ -149,6 +150,7 @@ namespace JMS.Applications.HttpMiddlewares
                                     var controllerInfo = new ControllerInfo()
                                     {
                                         name = serviceItem.Name,
+                                        isPrivate = !serviceItem.AllowGatewayProxy,
                                         desc = string.IsNullOrWhiteSpace(serviceItem.Description) ? serviceItem.Name : serviceItem.Description,
                                     };
                                     controllerInfo.items = new List<MethodItemInfo>();

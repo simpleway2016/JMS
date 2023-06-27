@@ -11,6 +11,7 @@ namespace JMS.WebApiDocument.Dtos
     public class ControllerInfo
     {
         public string name { get; set; }
+        public bool isPrivate { get; set; }
         public string desc { get; set; }
         public List<MethodItemInfo> items { get; set; }
         public List<ButtonInfo> buttons { get; set; }

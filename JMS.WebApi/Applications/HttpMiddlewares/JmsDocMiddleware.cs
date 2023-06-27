@@ -34,7 +34,7 @@ namespace JMS.Applications.HttpMiddlewares
                 if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
                 {
                     var jsonContent = service.GetServiceInfo();
-                   var buttons = await rc.GetApiDocumentButtons<ApiDocCodeBuilderInfo>(buttonName);
+                    var buttons = await rc.GetApiDocumentButtons<ApiDocCodeBuilderInfo>(buttonName);
 
                     var controllerInfo = jsonContent.FromJson<ControllerInfo>();
                     controllerInfo.name = servicename;
@@ -110,20 +110,23 @@ namespace JMS.Applications.HttpMiddlewares
                     {
                         buttons = new ApiDocCodeBuilderInfo[0];
                     }
+
+                    var allServiceInDoc = WebApiProgram.Configuration.GetSection("Http:AllServiceInDoc").Get<bool>();
                     var allServices = await rc.ListMicroServiceAsync(null);
                     foreach (var serviceRunningInfo in allServices)
                     {
                         foreach (var serviceInfo in serviceRunningInfo.ServiceList)
                         {
-                            if (serviceInfo.AllowGatewayProxy == false || doneList.Any( m=>m.Name == serviceInfo.Name))
+                            if ((serviceInfo.AllowGatewayProxy == false && allServiceInDoc == false) || doneList.Any(m => m.Name == serviceInfo.Name))
                                 continue;
                             doneList.Add(serviceInfo);
 
-                           
+
                         }
                     }
 
-                    Parallel.ForEach(doneList, serviceInfo => {
+                    Parallel.ForEach(doneList, serviceInfo =>
+                    {
                         try
                         {
                             var service = rc.TryGetMicroService(serviceInfo.Name);
@@ -134,11 +137,13 @@ namespace JMS.Applications.HttpMiddlewares
                             {
                                 var jsonContent = service.GetServiceInfo();
                                 var controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                                controllerInfo.isPrivate = !serviceInfo.AllowGatewayProxy;
                                 if (!string.IsNullOrWhiteSpace(serviceInfo.Description))
                                 {
                                     controllerInfo.desc = serviceInfo.Description;
                                 }
-                                controllerInfo.buttons = buttons.Where(m=>m.Name != "vue methods").Select(m=>new ButtonInfo { 
+                                controllerInfo.buttons = buttons.Where(m => m.Name != "vue methods").Select(m => new ButtonInfo
+                                {
                                     name = m.Name
                                 }).ToList();
                                 foreach (var btn in controllerInfo.buttons)
@@ -165,6 +170,7 @@ namespace JMS.Applications.HttpMiddlewares
                                 var controllerInfo = new ControllerInfo()
                                 {
                                     name = serviceInfo.Name,
+                                    isPrivate = !serviceInfo.AllowGatewayProxy,
                                     desc = string.IsNullOrWhiteSpace(serviceInfo.Description) ? serviceInfo.Name : serviceInfo.Description,
                                 };
                                 controllerInfo.items = new List<MethodItemInfo>();
