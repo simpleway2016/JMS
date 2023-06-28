@@ -130,7 +130,7 @@ namespace JMS.RetryCommit
         {
             try
             {
-                if( (DateTime.Now - new FileInfo(file).LastWriteTime).TotalSeconds < 5)
+                if( checkFromGateway && (DateTime.Now - new FileInfo(file).LastWriteTime).TotalSeconds < 5)
                 {
                     Thread.Sleep(5000);
                 }
@@ -187,8 +187,7 @@ namespace JMS.RetryCommit
                         catch (Exception ex)
                         {
                             _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", requestContent.TransactionId, ex.Message);
-                            File.WriteAllText($"{file}.{index}.failed", requestContent.ToJsonString() , Encoding.UTF8);
-                            continue;
+                           
                         }
 
 
