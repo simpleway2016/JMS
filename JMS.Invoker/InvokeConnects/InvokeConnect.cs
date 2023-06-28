@@ -39,12 +39,12 @@ namespace JMS
         }
 
 
-        public T Invoke<T>(string method, IRemoteClient tran, params object[] parameters)
+        public T Invoke<T>(string method, RemoteClient tran, params object[] parameters)
         {
             return Invoke<T>(method, tran, tran.GetCommandHeader(), parameters);
         }
 
-        public T Invoke<T>(string method, IRemoteClient tran, Dictionary<string, string> headers, params object[] parameters)
+        public T Invoke<T>(string method, RemoteClient tran, Dictionary<string, string> headers, params object[] parameters)
         {
             if (tran == null)
             {
@@ -121,7 +121,7 @@ namespace JMS
 
 
         }
-        public async Task<T> InvokeAsync<T>(string method, IRemoteClient tran, params object[] parameters)
+        public async Task<T> InvokeAsync<T>(string method, RemoteClient tran, params object[] parameters)
         {
             var headers = tran.GetCommandHeader();
 
@@ -199,7 +199,7 @@ namespace JMS
             }
         }
 
-        public InvokeResult GoReadyCommit(IRemoteClient tran)
+        public InvokeResult GoReadyCommit(RemoteClient tran)
         {
             _client.WriteServiceData(new InvokeCommand()
             {
@@ -207,7 +207,7 @@ namespace JMS
             });
             return _client.ReadServiceObject<InvokeResult>();
         }
-        public Task<InvokeResult> GoReadyCommitAsync(IRemoteClient tran)
+        public Task<InvokeResult> GoReadyCommitAsync(RemoteClient tran)
         {
             _client.WriteServiceData(new InvokeCommand()
             {
@@ -216,7 +216,7 @@ namespace JMS
             return _client.ReadServiceObjectAsync<InvokeResult>();
         }
 
-        public InvokeResult GoCommit(IRemoteClient tran)
+        public InvokeResult GoCommit(RemoteClient tran)
         {
             _client.WriteServiceData(new InvokeCommand()
             {
@@ -225,7 +225,7 @@ namespace JMS
             });
             return _client.ReadServiceObject<InvokeResult>();
         }
-        public Task<InvokeResult> GoCommitAsync(IRemoteClient tran)
+        public Task<InvokeResult> GoCommitAsync(RemoteClient tran)
         {
             _client.WriteServiceData(new InvokeCommand()
             {
@@ -235,7 +235,7 @@ namespace JMS
             return _client.ReadServiceObjectAsync<InvokeResult>();
         }
 
-        public InvokeResult GoRollback(IRemoteClient tran)
+        public InvokeResult GoRollback(RemoteClient tran)
         {
             _client.WriteServiceData(new InvokeCommand()
             {
@@ -244,7 +244,7 @@ namespace JMS
             });
             return _client.ReadServiceObject<InvokeResult>();
         }
-        public Task<InvokeResult> GoRollbackAsync(IRemoteClient tran)
+        public Task<InvokeResult> GoRollbackAsync(RemoteClient tran)
         {
             _client.WriteServiceData(new InvokeCommand()
             {

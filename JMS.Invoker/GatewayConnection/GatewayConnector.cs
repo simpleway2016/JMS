@@ -160,7 +160,7 @@ namespace JMS.GatewayConnection
 
         }
 
-        async Task<ClientServiceDetail> GetServiceLocationInGatewayAsync(IRemoteClient remoteClient, string serviceName)
+        async Task<ClientServiceDetail> GetServiceLocationInGatewayAsync(RemoteClient remoteClient, string serviceName)
         {
             //获取服务地址
             var netclient = await NetClientPool.CreateClientAsync(_proxy, _gatewayAddress);
@@ -202,7 +202,7 @@ namespace JMS.GatewayConnection
             }
         }
 
-        ClientServiceDetail GetServiceLocationInGateway(IRemoteClient remoteClient, string serviceName)
+        ClientServiceDetail GetServiceLocationInGateway(RemoteClient remoteClient, string serviceName)
         {
             //获取服务地址
             var netclient = NetClientPool.CreateClient(_proxy, _gatewayAddress);
@@ -244,7 +244,7 @@ namespace JMS.GatewayConnection
             }
         }
 
-        public async Task<ClientServiceDetail> GetServiceLocationAsync(IRemoteClient remoteClient, string serviceName)
+        public async Task<ClientServiceDetail> GetServiceLocationAsync(RemoteClient remoteClient, string serviceName)
         {
             if (_supportRemoteConnection == false)
             {
@@ -296,7 +296,7 @@ namespace JMS.GatewayConnection
             return new ClientServiceDetail(item.ServiceList.FirstOrDefault(m => m.Name == serviceName), item);
         }
 
-        public ClientServiceDetail GetServiceLocation(IRemoteClient remoteClient, string serviceName)
+        public ClientServiceDetail GetServiceLocation(RemoteClient remoteClient, string serviceName)
         {
             if (_supportRemoteConnection == false)
             {

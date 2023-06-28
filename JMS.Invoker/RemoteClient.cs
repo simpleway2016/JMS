@@ -21,12 +21,13 @@ namespace JMS
     /// <summary>
     /// 微服务客户端
     /// </summary>
-    public class RemoteClient : IDisposable, IRemoteClient
+    public class RemoteClient : IDisposable
     {
         internal List<IInvokeConnect> _Connects = new List<IInvokeConnect>();
         TaskCollection _transactionTasks = new TaskCollection();
         TaskCollection _normalTasks = new TaskCollection();
         public bool SupportTransaction => _SupportTransaction;
+        internal int InvokingId = 0;
         private string _TransactionId;
         public string TransactionId
         {
@@ -619,7 +620,7 @@ namespace JMS
 
 
 
-        void IRemoteClient.AddConnect(IInvokeConnect connect)
+        internal void AddConnect(IInvokeConnect connect)
         {
             lock (_Connects)
             {
@@ -641,7 +642,7 @@ namespace JMS
             }
         }
 
-        void IRemoteClient.AddTask( IInvokeConnect invokeConnect,int invokingId, Task task)
+        internal void AddTask( IInvokeConnect invokeConnect,int invokingId, Task task)
         {
             if (_SupportTransaction)
             {
@@ -855,7 +856,7 @@ namespace JMS
                     for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
-                        if (connect != null || connect.HasTransactionHolding == false)
+                        if (connect == null || connect.HasTransactionHolding == false)
                             continue;
 
                         try
@@ -882,7 +883,7 @@ namespace JMS
                 {
                     foreach (var connect in _Connects)
                     {
-                        if (connect != null || connect.HasTransactionHolding == false)
+                        if (connect == null || connect.HasTransactionHolding == false)
                         {
                             continue;
                         }
@@ -915,7 +916,7 @@ namespace JMS
                     for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
-                        if (connect != null || connect.HasTransactionHolding == false)
+                        if (connect == null || connect.HasTransactionHolding == false)
                             continue;
 
                         try

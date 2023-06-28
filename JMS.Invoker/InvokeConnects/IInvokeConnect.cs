@@ -15,20 +15,20 @@ namespace JMS
         /// </summary>
         bool HasTransactionHolding { get; }
 
-        Task<T> InvokeAsync<T>(string method, IRemoteClient tran, params object[] parameter);
-        T Invoke<T>(string method, IRemoteClient tran, params object[] parameters);
+        Task<T> InvokeAsync<T>(string method, RemoteClient tran, params object[] parameter);
+        T Invoke<T>(string method, RemoteClient tran, params object[] parameters);
 
         /// <summary>
         /// 确认对方是否可以提交事务
         /// </summary>
         /// <returns></returns>
-        InvokeResult GoReadyCommit(IRemoteClient tran);
-        InvokeResult GoCommit(IRemoteClient tran);
-        InvokeResult GoRollback(IRemoteClient tran);
+        InvokeResult GoReadyCommit(RemoteClient tran);
+        InvokeResult GoCommit(RemoteClient tran);
+        InvokeResult GoRollback(RemoteClient tran);
 
-        Task<InvokeResult> GoReadyCommitAsync(IRemoteClient tran);
-        Task<InvokeResult> GoCommitAsync(IRemoteClient tran);
-        Task<InvokeResult> GoRollbackAsync(IRemoteClient tran);
+        Task<InvokeResult> GoReadyCommitAsync(RemoteClient tran);
+        Task<InvokeResult> GoCommitAsync(RemoteClient tran);
+        Task<InvokeResult> GoRollbackAsync(RemoteClient tran);
 
         /// <summary>
         /// 重新执行事务

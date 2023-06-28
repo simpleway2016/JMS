@@ -7,10 +7,9 @@ namespace JMS
     public interface IStorageEngine
     {
         /// <summary>
-        /// 是否已开启事务
+        /// 当前事务对象
         /// </summary>
-        /// <returns></returns>
-        bool IsBeganTransaction();
+        object CurrentTransaction{ get; }
         /// <summary>
         /// 启动事务
         /// </summary>

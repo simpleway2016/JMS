@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using JMS.InvokeConnects;
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
@@ -36,10 +37,12 @@ namespace JMS
             for (int i = 0; i < _tasks.Count; i++)
             {
                 var item = _tasks[i];
-                if (item.InvokingId == invokingId)
+                //只等待那些InvokingId 比我小的任务，
+                //否则，我如果等待比我大的，那么那些比我大的也会等待我，互相等待就卡死了
+                if (item.InvokingId >= invokingId) 
                     continue;
 
-                if (item.InvokeConnect.InvokingInfo.ServiceLocation.ServiceAddress == serviceLocation.ServiceAddress && item.InvokeConnect.InvokingInfo.ServiceLocation.Port == serviceLocation.Port)
+                if (item.InvokeConnect.InvokingInfo.ServiceLocation.IsTheSameServer(serviceLocation))
                 {
                     await item.Task;
                 }

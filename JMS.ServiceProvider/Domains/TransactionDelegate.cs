@@ -10,7 +10,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Way.Lib;
+using static JMS.RetryCommit.FaildCommitBuilder;
 
 namespace JMS
 {
@@ -119,7 +121,7 @@ namespace JMS
                             return null;
                         case (int)InvokeType.HealthyCheck:
                             checkedHealth = true;
-                            onHealthyCheck(gatewayConnector, faildCommitBuilder, netclient, logger);
+                            onHealthyCheck(transactionDelegateList , gatewayConnector, faildCommitBuilder, netclient, logger);
                             break;
                     }
                 }
@@ -216,11 +218,57 @@ namespace JMS
 
             netclient.WriteServiceData(new InvokeResult() { Success = true });
         }
-        void onHealthyCheck(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
+
+        string getUserContentString(object userContent)
+        {
+            if (userContent != null && userContent is System.Security.Claims.ClaimsPrincipal claimsPrincipal)
+            {
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    claimsPrincipal.WriteTo(new System.IO.BinaryWriter(ms));
+                    ms.Position = 0;
+                    userContent = ms.ToArray();
+                }
+            }
+            return userContent?.ToJsonString();
+        }
+        void onHealthyCheck(List<TransactionDelegate> transactionDelegateList, IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
             if (_storageEngine != null || CommitAction != null)
             {
-                RetryCommitFilePath = faildCommitBuilder.Build(TransactionId, TransactionFlag, RequestCommand, UserContent);
+                if (transactionDelegateList != null && transactionDelegateList.Count > 0)
+                {
+                    var list = (from m in transactionDelegateList
+                     select new RequestInfo
+                     {
+                         Cmd = m.RequestCommand,
+                         TransactionId = m.TransactionId,
+                         TransactionFlag = m.TransactionFlag,
+                         UserContentType = m.UserContent == null ? null : m.UserContent.GetType(),
+                         UserContentValue = m.UserContent == null ? null : getUserContentString(m.UserContent)
+                     }).ToList();
+
+                    list.Add(new RequestInfo {
+                        Cmd = this.RequestCommand,
+                        TransactionId = this.TransactionId,
+                        TransactionFlag = this.TransactionFlag,
+                        UserContentType = this.UserContent == null ? null : this.UserContent.GetType(),
+                        UserContentValue = this.UserContent == null ? null : getUserContentString(this.UserContent)
+                    });
+
+                    RetryCommitFilePath = faildCommitBuilder.Build( this.TransactionId, list);
+                }
+                else
+                {
+                    var info = new RequestInfo {
+                        Cmd = this.RequestCommand,
+                        TransactionId = this.TransactionId,
+                        TransactionFlag = this.TransactionFlag,
+                        UserContentType = this.UserContent == null ? null : this.UserContent.GetType(),
+                        UserContentValue = this.UserContent == null ? null : getUserContentString(this.UserContent)
+                    };
+                    RetryCommitFilePath = faildCommitBuilder.Build(info);
+                }
             }
             //logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, RequestCommand.ToJsonString(), UserContent);
             netclient.WriteServiceData(new InvokeResult

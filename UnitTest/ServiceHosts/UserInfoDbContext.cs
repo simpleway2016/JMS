@@ -23,6 +23,8 @@ namespace UnitTest.ServiceHosts
         public static string FinallyFather { get; set; }
         public static string FinallyMather { get; set; }
 
+        public object CurrentTransaction => BeganTransaction ? this : null;
+
         public static int NewInstanceCount = 0;
         public static int CommitCount = 0;
         public UserInfoDbContext()
@@ -93,9 +95,5 @@ namespace UnitTest.ServiceHosts
             }
         }
 
-        public bool IsBeganTransaction()
-        {
-            return BeganTransaction;
-        }
     }
 }

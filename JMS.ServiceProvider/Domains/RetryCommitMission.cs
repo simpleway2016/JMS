@@ -13,6 +13,7 @@ using static JMS.RetryCommit.FaildCommitBuilder;
 using JMS.Infrastructures;
 using System.Net;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace JMS.RetryCommit
 {
@@ -129,62 +130,89 @@ namespace JMS.RetryCommit
         {
             try
             {
+                if( (DateTime.Now - new FileInfo(file).LastWriteTime).TotalSeconds < 5)
+                {
+                    Thread.Sleep(5000);
+                }
                 file = FileHelper.ChangeFileExt(file, ".trying");
 
-                object usercontent = null;
-                var fileContent = File.ReadAllText(file, Encoding.UTF8).FromJson<RequestInfo>();
-                if (fileContent == null)
+                var textContent = File.ReadAllText(file, Encoding.UTF8);
+                RequestInfo[] requestInfos = null;
+                if (textContent.StartsWith("["))
                 {
-                    FileHelper.ChangeFileExt(file, ".failed");
-                    return;
+                    requestInfos = textContent.FromJson<RequestInfo[]>();
                 }
-                if (checkFromGateway == false && fileContent.TransactionFlag != tranFlag)
+                else
                 {
-                    return;
-                }
-                if (checkFromGateway && _gatewayConnector.CheckTransaction(fileContent.TransactionId) == false)
-                {
-                    _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", fileContent.TransactionId);
-                    FileHelper.ChangeFileExt(file, ".failed");
-                    return;
+                    requestInfos = new RequestInfo[] { textContent.FromJson<RequestInfo>() };
                 }
 
-                _loggerTran?.LogInformation("尝试重新提交事务{0}-{1}", fileContent.TransactionId, fileContent.Cmd.Method);
-
-                if (fileContent.UserContentValue != null)
+                for(int index = 0; index < requestInfos.Length; index++)
                 {
+                    var requestContent = requestInfos[index];
+                    object usercontent = null;
+
+                    if (checkFromGateway == false && requestContent.TransactionFlag != tranFlag)
+                    {
+                        return;
+                    }
+                    if (checkFromGateway && _gatewayConnector.CheckTransaction(requestContent.TransactionId) == false)
+                    {
+                        _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", requestContent.TransactionId);
+                        FileHelper.ChangeFileExt(file, ".failed");
+                        return;
+                    }
+
+                    _loggerTran?.LogInformation("尝试重新提交事务{0}-{1}", requestContent.TransactionId, requestContent.Cmd.Method);
+
+                    if (requestContent.UserContentValue != null)
+                    {
+
+                        try
+                        {
+                            if (requestContent.UserContentType == typeof(System.Security.Claims.ClaimsPrincipal))
+                            {
+
+                                byte[] bs = requestContent.UserContentValue.FromJson<byte[]>();
+                                using (var ms = new System.IO.MemoryStream(bs))
+                                {
+                                    usercontent = new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
+                                }
+                            }
+                            else
+                            {
+                                usercontent = Newtonsoft.Json.JsonConvert.DeserializeObject(requestContent.UserContentValue, requestContent.UserContentType);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", requestContent.TransactionId, ex.Message);
+                            File.WriteAllText($"{file}.{index}.failed", requestContent.ToJsonString() , Encoding.UTF8);
+                            continue;
+                        }
+
+
+                    }
 
                     try
                     {
-                        if (fileContent.UserContentType == typeof(System.Security.Claims.ClaimsPrincipal))
-                        {
-
-                            byte[] bs = fileContent.UserContentValue.FromJson<byte[]>();
-                            using (var ms = new System.IO.MemoryStream(bs))
-                            {
-                                usercontent = new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
-                            }
-                        }
-                        else
-                        {
-                            usercontent = Newtonsoft.Json.JsonConvert.DeserializeObject(fileContent.UserContentValue, fileContent.UserContentType);
-                        }
+                        retry(requestContent.Cmd, usercontent);
+                        _loggerTran?.LogInformation("成功提交事务{0} 请求数据：{1}", requestContent.TransactionId, requestContent.Cmd.ToJsonString());
                     }
                     catch (Exception ex)
                     {
-                        _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", fileContent.TransactionId, ex.Message);
-                        FileHelper.ChangeFileExt(file, ".failed");
+                        _loggerTran?.LogError($"RetryCommitMission处理事务id为{requestContent.TransactionId}时发生未知错误,{ex.Message}\r\nIndex:{index}");
+                        File.WriteAllText($"{file}.{index}.failed", requestContent.ToJsonString(), Encoding.UTF8);
+
                     }
 
-
                 }
-
-                retry(fileContent.Cmd, usercontent);
-                _loggerTran?.LogInformation("成功提交事务{0} 请求数据：{1}", fileContent.TransactionId, fileContent.Cmd.ToJsonString());
-
                 try
                 {
-                    File.Delete(file);
+                    if (File.Exists(file))
+                    {
+                        File.Delete(file);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -193,7 +221,6 @@ namespace JMS.RetryCommit
             }
             catch (Exception ex)
             {
-                _loggerTran?.LogError("RetryCommitMission处理事务id为{0}时发生未知错误,{1}", ex.Message);
                 FileHelper.ChangeFileExt(file, ".failed");
             }
 

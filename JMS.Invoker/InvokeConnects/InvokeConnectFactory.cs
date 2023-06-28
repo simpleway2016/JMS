@@ -8,14 +8,13 @@ namespace JMS.InvokeConnects
 {
     internal class InvokeConnectFactory
     {
-        public static IInvokeConnect Create(IRemoteClient remoteClient, string serviceName,ClientServiceDetail serviceLocation,Invoker invoker)
+        public static IInvokeConnect Create(RemoteClient remoteClient, string serviceName,ClientServiceDetail serviceLocation,Invoker invoker)
         {
             if (remoteClient != null)
             {
-                RemoteClient client = (RemoteClient)remoteClient;
-                if (client._SupportTransaction && client._Connects.Count > 0)
+                if (remoteClient._SupportTransaction && remoteClient._Connects.Count > 0)
                 {
-                    var matchItem = client._Connects.FirstOrDefault(m => m.InvokingInfo.ServiceLocation.ServiceAddress == serviceLocation.ServiceAddress && m.InvokingInfo.ServiceLocation.Port == serviceLocation.Port);
+                    var matchItem = remoteClient._Connects.FirstOrDefault(m => m.InvokingInfo.ServiceLocation.IsTheSameServer(serviceLocation));
                     if (matchItem != null)
                     {
                         return matchItem;
@@ -33,8 +32,31 @@ namespace JMS.InvokeConnects
                 ret = new InvokeConnect(serviceName, serviceLocation, invoker);
             }
 
-            remoteClient.AddConnect(ret);
+            if (remoteClient != null)
+            {
+                remoteClient.AddConnect(ret);
+            }
             return ret;
+        }
+    }
+
+    internal static class LocationExtension
+    {
+        public static bool IsTheSameServer(this ClientServiceDetail clientServiceDetail , ClientServiceDetail otherLocation)
+        {
+            if (clientServiceDetail == otherLocation)
+                return true;
+
+            if(clientServiceDetail.Port == 0 && otherLocation.Port == 0)
+            {
+                var uri1 = new Uri(clientServiceDetail.ServiceAddress);
+                var uri2 = new Uri(otherLocation.ServiceAddress);
+                return uri1.Port == uri2.Port && uri1.Host == uri2.Host;
+            }
+            else
+            {
+                return clientServiceDetail.ServiceAddress == otherLocation.ServiceAddress && clientServiceDetail.Port == otherLocation.Port;
+            }
         }
     }
 }

@@ -287,6 +287,16 @@ namespace UnitTest
                 services.AddScoped<UserInfoDbContext>();
                 var msp = new MicroServiceHost(services);
                 msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + port;
+
+                try
+                {
+                    Directory.Delete(msp.RetryCommitPath, true);
+                }
+                catch (Exception)
+                {
+
+                }
+
                 msp.Register<TestCrashController>("CrashService");
                 msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
                 msp.Build(port, gateways)
@@ -614,6 +624,7 @@ namespace UnitTest
 
                 client.BeginTransaction();
                 serviceClient.Invoke("SetFather", "Tom");
+                serviceClient.InvokeAsync("SetUserName", "Jack1");
                 serviceClient.InvokeAsync("SetUserName", "Jack");
                 serviceClient.InvokeAsync("SetAge", 28);
 
@@ -634,6 +645,146 @@ namespace UnitTest
                 UserInfoDbContext.FinallyFather != "Tom" ||
                 UserInfoDbContext.FinallyAge != 28)
                 throw new Exception("结果不正确");
+        }
+
+        [TestMethod]
+        public void TestCrashScope()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+            StartCrashServiceHost(_CrashServicePort);
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
+                }
+
+                var crashService = client.TryGetMicroService("CrashService");
+                while (crashService == null)
+                {
+                    Thread.Sleep(10);
+                    crashService = client.TryGetMicroService("CrashService");
+                }
+
+                client.BeginTransaction();
+
+                serviceClient.Invoke("SetUserName", "Jack");
+                serviceClient.Invoke("SetAge", 28);
+                crashService.Invoke("SetText", "abc1");
+                crashService.Invoke("SetText", "abc");
+                try
+                {
+                    client.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+
+                    Debug.WriteLine(ex.Message);
+                }
+
+            }
+
+            Thread.Sleep(12000);//等待7秒，失败的事务
+
+            if (UserInfoDbContext.FinallyUserName != "Jack" || UserInfoDbContext.FinallyAge != 28 || TestCrashController.FinallyText != "abc")
+                throw new Exception("结果不正确");
+        }
+
+        [TestMethod]
+        public void TestCrashScopeForLocal()
+        {
+
+            TestCrashController.CanCrash = true;
+            try
+            {
+                Directory.Delete("./$$_JMS.Invoker.Transactions", true);
+            }
+            catch (Exception)
+            {
+
+            }
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+            StartCrashServiceHost(_CrashServicePort);
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            ServiceCollection services = new ServiceCollection();
+
+            services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddDebug();
+                loggingBuilder.AddConsole(); // 将日志输出到控制台
+                loggingBuilder.SetMinimumLevel(LogLevel.Debug);
+            });
+            var serviceProvider = services.BuildServiceProvider();
+
+            string tranid;
+            using (var client = new RemoteClient(gateways, null, serviceProvider.GetService<ILogger<RemoteClient>>()))
+            {
+                var serviceClient = client.TryGetMicroService("TestScopeService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("TestScopeService");
+                }
+
+                var crashService = client.GetMicroService("CrashService", new JMS.Dtos.ClientServiceDetail("127.0.0.1", _CrashServicePort));
+
+                client.BeginTransaction();
+                tranid = client.TransactionId;
+
+                serviceClient.Invoke("SetUserName", "Jack");
+                serviceClient.Invoke("SetAge", 28);
+                crashService.Invoke("SetText", "abc1");
+                crashService.Invoke("SetText", "abc");
+                try
+                {
+                    client.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+
+                    Debug.WriteLine(ex.Message);
+                }
+
+            }
+            DateTime starttime = DateTime.Now;
+            while (File.Exists($"./$$_JMS.Invoker.Transactions/{tranid}.json"))
+            {
+                if ((DateTime.Now - starttime).TotalSeconds > 80)
+                    throw new Exception("超时");
+                Thread.Sleep(1000);
+            }
+
+            if (UserInfoDbContext.FinallyUserName != "Jack" || UserInfoDbContext.FinallyAge != 28 || TestCrashController.FinallyText != "abc")
+                throw new Exception("结果不正确");
+
+            ThreadPool.GetAvailableThreads(out int w, out int c);
         }
 
         [TestMethod]
@@ -889,7 +1040,7 @@ Content-Length: 0
 
             }
 
-            Thread.Sleep(7000);//等待7秒，失败的事务
+            Thread.Sleep(12000);//等待7秒，失败的事务
 
             if (UserInfoDbContext.FinallyUserName != "Jack" || TestCrashController.FinallyText != "abc")
                 throw new Exception("结果不正确");

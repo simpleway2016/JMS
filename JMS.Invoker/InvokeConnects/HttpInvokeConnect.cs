@@ -28,7 +28,7 @@ namespace JMS
             Invoker = invoker;
         }
 
-        byte[] createHttpDatas(IRemoteClient tran, Uri uri,string protocol)
+        byte[] createHttpDatas(RemoteClient tran, Uri uri,string protocol)
         {
             StringBuilder headerStr = new StringBuilder();
             if (tran != null)
@@ -57,7 +57,7 @@ Accept-Language: zh-CN,zh;q=0.9
             return Encoding.UTF8.GetBytes(content);
         }
 
-        public T Invoke<T>(string method, IRemoteClient tran, params object[] parameters)
+        public T Invoke<T>(string method, RemoteClient tran, params object[] parameters)
         {
             return Invoke<T>(method, tran, tran.GetCommandHeader(), parameters);
         }
@@ -74,7 +74,7 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public T Invoke<T>(string method, IRemoteClient tran, Dictionary<string, string> headers, params object[] parameters)
+        public T Invoke<T>(string method, RemoteClient tran, Dictionary<string, string> headers, params object[] parameters)
         {
             if (tran == null)
             {
@@ -84,12 +84,16 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.Parameters = parameters;
 
             var uri = getServiceUri(InvokingInfo.ServiceLocation.ServiceAddress , method);
-            _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) => {
-                if (uri.Scheme == "https")
+            if (_client == null)
+            {
+                _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) =>
                 {
-                    client.AsSSLClient(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
-                }
-            });
+                    if (uri.Scheme == "https")
+                    {
+                        client.AsSSLClient(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
+                    }
+                });
+            }
             try
             {
 
@@ -147,7 +151,7 @@ Accept-Language: zh-CN,zh;q=0.9
 
 
         }
-        public async Task<T> InvokeAsync<T>(string method, IRemoteClient tran, params object[] parameters)
+        public async Task<T> InvokeAsync<T>(string method, RemoteClient tran, params object[] parameters)
         {
             var headers = tran.GetCommandHeader();
             if (tran == null)
@@ -158,13 +162,17 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.Parameters = parameters;
 
             var uri = getServiceUri(InvokingInfo.ServiceLocation.ServiceAddress , method);
-            _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) => {
-                if (uri.Scheme == "https")
+            if (_client == null)
+            {
+                _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) =>
                 {
-                    return client.AsSSLClientAsync(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
-                }
-                return Task.CompletedTask;
-            });
+                    if (uri.Scheme == "https")
+                    {
+                        return client.AsSSLClientAsync(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
+                    }
+                    return Task.CompletedTask;
+                });
+            }
             try
             {
 
@@ -222,7 +230,7 @@ Accept-Language: zh-CN,zh;q=0.9
 
         }
 
-        public InvokeResult GoReadyCommit(IRemoteClient tran)
+        public InvokeResult GoReadyCommit(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("ready"));
             var ret = _client.ReadServiceData();
@@ -242,7 +250,7 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public async Task<InvokeResult> GoReadyCommitAsync(IRemoteClient tran)
+        public async Task<InvokeResult> GoReadyCommitAsync(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("ready"));
             var ret = await _client.ReadServiceDataAsync();
@@ -262,7 +270,7 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public InvokeResult GoCommit(IRemoteClient tran)
+        public InvokeResult GoCommit(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("commit"));
             var ret = _client.ReadServiceData();
@@ -282,7 +290,7 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public async Task<InvokeResult> GoCommitAsync(IRemoteClient tran)
+        public async Task<InvokeResult> GoCommitAsync(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("commit"));
             var ret = await _client.ReadServiceDataAsync();
@@ -302,7 +310,7 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public InvokeResult GoRollback(IRemoteClient tran)
+        public InvokeResult GoRollback(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("rollback"));
             var ret = _client.ReadServiceData();
@@ -322,7 +330,7 @@ Accept-Language: zh-CN,zh;q=0.9
             }
         }
 
-        public async Task<InvokeResult> GoRollbackAsync(IRemoteClient tran)
+        public async Task<InvokeResult> GoRollbackAsync(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("rollback"));
             var ret = await _client.ReadServiceDataAsync();
