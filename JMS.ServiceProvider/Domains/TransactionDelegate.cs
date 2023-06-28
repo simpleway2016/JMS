@@ -1,9 +1,11 @@
 ﻿using JMS.Domains;
 using JMS.Dtos;
 using JMS.RetryCommit;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -20,17 +22,12 @@ namespace JMS
         internal InvokeCommand RequestCommand;
         internal string RetryCommitFilePath;
         internal object UserContent;
+        private readonly MicroServiceControllerBase _controller;
+        private IStorageEngine _storageEngine;
+
         public string TransactionId { get; }
-       public string TransactionFlag { get; }
-        public TransactionDelegate(MicroServiceControllerBase controller)
-        {
-            this.AgreeCommit = true;
-            this.TransactionId = controller.TransactionId;
-            if (controller.Headers.ContainsKey("TranFlag"))
-            {
-                this.TransactionFlag = controller.Headers["TranFlag"];
-            }
-        }
+        public string TransactionFlag { get; }
+        public IStorageEngine StorageEngine => _storageEngine;
 
         /// <summary>
         /// 如果在最后想阻止统一提交事务，可以把AgreeCommit设为false，那么，所有事务最后将回滚
@@ -41,8 +38,67 @@ namespace JMS
         public Action RollbackAction { get; set; }
         internal bool Handled { get; set; }
 
+        public bool SupportTransaction => _storageEngine != null || CommitAction != null || RollbackAction != null;
 
-        internal async Task WaitForCommandAsync(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient,ILogger logger)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controller">当前Controller</param>
+        /// <param name="storageEngine">数据库对象</param>
+        public TransactionDelegate(MicroServiceControllerBase controller, IStorageEngine storageEngine)
+        {
+            _controller = controller;
+            _storageEngine = storageEngine;
+            this.AgreeCommit = true;
+            this.TransactionId = controller.TransactionId;
+            if (controller.Headers.ContainsKey("TranFlag"))
+            {
+                this.TransactionFlag = controller.Headers["TranFlag"];
+            }
+        }
+
+        [Obsolete("建议使用另一个构造函数：TransactionDelegate(MicroServiceControllerBase controller, IStorageEngine storageEngine)\r\n 这样CommitAction、RollbackAction可以不再赋值")]
+        public TransactionDelegate(MicroServiceControllerBase controller)
+        {
+            _controller = controller;
+            this.AgreeCommit = true;
+            this.TransactionId = controller.TransactionId;
+            if (controller.Headers.ContainsKey("TranFlag"))
+            {
+                this.TransactionFlag = controller.Headers["TranFlag"];
+            }
+        }
+
+
+        public void CommitTransaction()
+        {
+            if (_storageEngine != null)
+            {
+                _storageEngine.CommitTransaction();
+                _storageEngine = null;
+            }
+            else if (CommitAction != null)
+            {
+                CommitAction();
+                CommitAction = null;
+            }
+        }
+
+        public void RollbackTransaction()
+        {
+            if (_storageEngine != null)
+            {
+                _storageEngine.RollbackTransaction();
+                _storageEngine = null;
+            }
+            else if (RollbackAction != null)
+            {
+                RollbackAction();
+                RollbackAction = null;
+            }
+        }
+
+        internal async Task<InvokeCommand> WaitForCommandAsync(List<TransactionDelegate> transactionDelegateList, IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
             InvokeCommand cmd;
             bool checkedHealth = false;
@@ -53,12 +109,14 @@ namespace JMS
                     cmd = await netclient.ReadServiceObjectAsync<InvokeCommand>();
                     switch (cmd.Type)
                     {
+                        case (int)InvokeType.Invoke:
+                            return cmd;
                         case (int)InvokeType.CommitTranaction:
-                            onCommit(gatewayConnector, faildCommitBuilder, netclient,logger);
-                            return;
+                            onCommit(transactionDelegateList, gatewayConnector, faildCommitBuilder, netclient, logger);
+                            return null;
                         case (int)InvokeType.RollbackTranaction:
-                            onRollback(gatewayConnector, faildCommitBuilder, netclient, logger);
-                            return;
+                            onRollback(transactionDelegateList, gatewayConnector, faildCommitBuilder, netclient, logger);
+                            return null;
                         case (int)InvokeType.HealthyCheck:
                             checkedHealth = true;
                             onHealthyCheck(gatewayConnector, faildCommitBuilder, netclient, logger);
@@ -76,7 +134,8 @@ namespace JMS
                 if (checkedHealth && await gatewayConnector.CheckTransactionAsync(this.TransactionId))
                 {
                     //网关告知事务已成功，需要提交事务
-                    this.CommitAction();
+                    transactionDelegateList.CommitTransaction();
+                    this.CommitTransaction();
 
                     if (this.RetryCommitFilePath != null)
                     {
@@ -87,7 +146,11 @@ namespace JMS
                 else
                 {
                     //网关告知事务失败，需要回滚事务
-                    this.RollbackAction();
+
+                    _controller.ServiceProvider.GetService<ILogger<TransactionDelegate>>()?.LogInformation("事务{0}回滚完毕，请求数据:{1}", this.TransactionId, this.RequestCommand.ToJsonString());
+
+                    transactionDelegateList.RollbackTransaction();
+                    this.RollbackTransaction();
 
                     if (this.RetryCommitFilePath != null)
                     {
@@ -96,13 +159,21 @@ namespace JMS
                     }
                 }
             }
+
+            return null;
         }
 
-        void onCommit(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
+        void onCommit(List<TransactionDelegate> transactionDelegateList, IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
             try
             {
-                CommitAction?.Invoke();
+              
+                if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)
+                {
+                    this.CommitTransaction();
+                }
+                transactionDelegateList.CommitTransaction();
+
                 if (RetryCommitFilePath != null)
                 {
                     faildCommitBuilder.CommitSuccess(RetryCommitFilePath);
@@ -123,34 +194,64 @@ namespace JMS
             finally
             {
                 CommitAction = null;
+                _storageEngine = null;
             }
 
             netclient.WriteServiceData(new InvokeResult() { Success = true });
         }
-        void onRollback(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
+        void onRollback(List<TransactionDelegate> transactionDelegateList, IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
-            RollbackAction?.Invoke();
-            RollbackAction = null;
+            if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)
+            {
+                this.RollbackTransaction();
+            }
+            transactionDelegateList.RollbackTransaction();
+
             if (RetryCommitFilePath != null)
             {
                 faildCommitBuilder.Rollback(RetryCommitFilePath);
                 RetryCommitFilePath = null;
                 //logger?.LogInformation("事务{0}回滚完毕，请求数据:{1}", TransactionId, RequestCommand.ToJsonString());
             }
-           
+
             netclient.WriteServiceData(new InvokeResult() { Success = true });
         }
         void onHealthyCheck(IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
-            if (CommitAction != null)
+            if (_storageEngine != null || CommitAction != null)
             {
-                RetryCommitFilePath = faildCommitBuilder.Build(TransactionId,TransactionFlag, RequestCommand, UserContent);
+                RetryCommitFilePath = faildCommitBuilder.Build(TransactionId, TransactionFlag, RequestCommand, UserContent);
             }
             //logger?.LogInformation("准备提交事务{0}，请求数据:{1},身份验证信息:{2}", TransactionId, RequestCommand.ToJsonString(), UserContent);
             netclient.WriteServiceData(new InvokeResult
             {
                 Success = AgreeCommit
             });
+        }
+    }
+
+    public static class TransactionDelegateExtension
+    {
+        public static void CommitTransaction(this List<TransactionDelegate> list)
+        {
+            if (list != null)
+            {
+                foreach (var item in list)
+                {
+                    item.CommitTransaction();
+                }
+            }
+        }
+
+        public static void RollbackTransaction(this List<TransactionDelegate> list)
+        {
+            if (list != null)
+            {
+                foreach (var item in list)
+                {
+                    item.RollbackTransaction();
+                }
+            }
         }
     }
 }

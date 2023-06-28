@@ -26,7 +26,7 @@ namespace JMS
         internal List<IInvokeConnect> _Connects = new List<IInvokeConnect>();
         TaskCollection _transactionTasks = new TaskCollection();
         TaskCollection _normalTasks = new TaskCollection();
-
+        public bool SupportTransaction => _SupportTransaction;
         private string _TransactionId;
         public string TransactionId
         {
@@ -37,7 +37,7 @@ namespace JMS
         /// <summary>
         /// 是否支持事务，如果为false，这之后调用的微服务端会直接提交事务。默认为true
         /// </summary>
-        private bool _SupportTransaction = false;
+        internal bool _SupportTransaction = false;
 
 
         private int _Timeout = 30000;
@@ -623,18 +623,33 @@ namespace JMS
         {
             lock (_Connects)
             {
+                if (_Connects.Contains(connect))
+                    return;
                 _Connects.Add(connect);
             }
         }
-        void IRemoteClient.AddTask(Task task)
+        
+        internal async Task WaitConnectComplete(int invokingId,ClientServiceDetail serviceLocation)
         {
             if (_SupportTransaction)
             {
-                _transactionTasks.AddTask(task);
+                await _transactionTasks.WaitConnectComplete(invokingId,serviceLocation);
             }
             else
             {
-                _normalTasks.AddTask(task);
+                await _normalTasks.WaitConnectComplete(invokingId,serviceLocation);
+            }
+        }
+
+        void IRemoteClient.AddTask( IInvokeConnect invokeConnect,int invokingId, Task task)
+        {
+            if (_SupportTransaction)
+            {
+                _transactionTasks.AddTask( invokeConnect, invokingId, task);
+            }
+            else
+            {
+                _normalTasks.AddTask(invokeConnect, invokingId, task);
             }
         }
 
@@ -715,6 +730,9 @@ namespace JMS
                     for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
+                        if (connect == null || !connect.HasTransactionHolding)
+                            continue;
+
                         try
                         {
                             var ret = await connect.GoReadyCommitAsync(this);
@@ -739,7 +757,7 @@ namespace JMS
                 {
                     foreach (var connect in _Connects)
                     {
-                        if (connect == null)
+                        if (connect == null || !connect.HasTransactionHolding)
                             continue;
 
                         try
@@ -770,7 +788,7 @@ namespace JMS
                     for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
-                        if (connect == null)
+                        if (connect == null || !connect.HasTransactionHolding)
                             continue;
 
                         try
@@ -837,6 +855,9 @@ namespace JMS
                     for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
+                        if (connect != null || connect.HasTransactionHolding == false)
+                            continue;
+
                         try
                         {
                             var ret = connect.GoReadyCommit(this);
@@ -861,8 +882,10 @@ namespace JMS
                 {
                     foreach (var connect in _Connects)
                     {
-                        if (connect == null)
+                        if (connect != null || connect.HasTransactionHolding == false)
+                        {
                             continue;
+                        }
 
                         try
                         {
@@ -892,7 +915,7 @@ namespace JMS
                     for (int i = 0; i < _Connects.Count; i++)
                     {
                         var connect = _Connects[i];
-                        if (connect == null)
+                        if (connect != null || connect.HasTransactionHolding == false)
                             continue;
 
                         try

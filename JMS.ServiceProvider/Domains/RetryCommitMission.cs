@@ -92,7 +92,7 @@ namespace JMS.RetryCommit
             {
                 foreach (var file in files)
                 {
-                    RetryFile(file,null);
+                    RetryFile(file, null);
                 }
             }
         }
@@ -102,7 +102,7 @@ namespace JMS.RetryCommit
         /// </summary>
         /// <param name="tranId"></param>
         /// <returns>0:执行成功  -1：没有找到对应的事务文件 -2：执行出错</returns>
-        public int RetryTranaction(string tranId,string tranFlag)
+        public int RetryTranaction(string tranId, string tranFlag)
         {
             lock (this)
             {
@@ -112,7 +112,7 @@ namespace JMS.RetryCommit
                     var files = Directory.GetFiles(folder, $"{tranId}_*.*");
                     if (files.Length > 0)
                     {
-                        RetryFile(files[0],tranFlag, false);
+                        RetryFile(files[0], tranFlag, false);
                         return 0;
                     }
                 }
@@ -125,7 +125,7 @@ namespace JMS.RetryCommit
             }
         }
 
-        public void RetryFile(string file,string tranFlag, bool checkFromGateway = true)
+        public void RetryFile(string file, string tranFlag, bool checkFromGateway = true)
         {
             try
             {
@@ -133,12 +133,12 @@ namespace JMS.RetryCommit
 
                 object usercontent = null;
                 var fileContent = File.ReadAllText(file, Encoding.UTF8).FromJson<RequestInfo>();
-                if(fileContent == null)
+                if (fileContent == null)
                 {
                     FileHelper.ChangeFileExt(file, ".failed");
                     return;
                 }
-                if(checkFromGateway == false && fileContent.TransactionFlag != tranFlag)
+                if (checkFromGateway == false && fileContent.TransactionFlag != tranFlag)
                 {
                     return;
                 }
@@ -209,7 +209,7 @@ namespace JMS.RetryCommit
             {
                 try
                 {
-                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(new IPEndPoint(IPAddress.Parse("127.0.0.1") , 0),cmd, serviceScope.ServiceProvider, userContent);
+                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0), cmd, serviceScope.ServiceProvider, userContent);
                     var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
                     controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
@@ -252,7 +252,8 @@ namespace JMS.RetryCommit
 
                     }
 
-                    Task.Run(async () => {
+                    Task.Run(async () =>
+                    {
                         result = methodInfo.Method.Invoke(controller, parameters);
                         if (result is Task || result is ValueTask)
                         {
@@ -267,29 +268,24 @@ namespace JMS.RetryCommit
                             }
                         }
                     }).Wait();
-                   
+
 
                     controller.OnAfterAction(cmd.Method, parameters);
-                    if (transactionDelegate != null && (transactionDelegate.CommitAction != null || transactionDelegate.RollbackAction != null))
+                    if (transactionDelegate != null && transactionDelegate.SupportTransaction)
                     {
                     }
-                    else if (controller.TransactionControl != null && (controller.TransactionControl.CommitAction != null || controller.TransactionControl.RollbackAction != null))
+                    else if (controller.TransactionControl != null && controller.TransactionControl.SupportTransaction)
                     {
                         transactionDelegate = controller.TransactionControl;
                         transactionDelegate.RequestCommand = cmd;
                     }
 
-                    if (transactionDelegate != null && transactionDelegate.CommitAction != null)
-                    {
-                        transactionDelegate.CommitAction();
-                        transactionDelegate.CommitAction = null;
-                    }
+                    transactionDelegate?.CommitTransaction();
                     transactionDelegate = null;
 
                 }
                 finally
                 {
-                    controller?.OnUnLoad();
                     MicroServiceControllerBase.RequestingObject.Value = null;
                 }
             }

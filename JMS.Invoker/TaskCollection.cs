@@ -1,18 +1,48 @@
-﻿using System;
+﻿using JMS.Dtos;
+using Org.BouncyCastle.Ocsp;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace JMS
 {
+    class ConnectTask
+    {
+        public ConnectTask(IInvokeConnect invokeConnect ,int invokingId, Task task)
+        {
+            InvokeConnect = invokeConnect;
+            InvokingId = invokingId;
+            Task = task;
+        }
+
+        public IInvokeConnect InvokeConnect { get; }
+        public int InvokingId { get; }
+        public Task Task { get; }
+    }
     internal class TaskCollection
     {
-        List<Task> _tasks = new List<Task>();
-        public void AddTask(Task task)
+        List<ConnectTask> _tasks = new List<ConnectTask>();
+        public void AddTask( IInvokeConnect invokeConnect ,int invokingId, Task task)
         {
             lock (_tasks)
             {
-                _tasks.Add(task);
+                _tasks.Add(new ConnectTask(invokeConnect ,invokingId, task));
+            }
+        }
+
+        public async Task WaitConnectComplete(int invokingId,ClientServiceDetail serviceLocation)
+        {
+            for (int i = 0; i < _tasks.Count; i++)
+            {
+                var item = _tasks[i];
+                if (item.InvokingId == invokingId)
+                    continue;
+
+                if (item.InvokeConnect.InvokingInfo.ServiceLocation.ServiceAddress == serviceLocation.ServiceAddress && item.InvokeConnect.InvokingInfo.ServiceLocation.Port == serviceLocation.Port)
+                {
+                    await item.Task;
+                }
             }
         }
 
@@ -32,7 +62,7 @@ namespace JMS
             {
                 try
                 {
-                    _tasks[i].Wait();
+                    _tasks[i].Task.Wait();
                 }
                 catch (Exception ex)
                 {
@@ -60,7 +90,7 @@ namespace JMS
             {
                 try
                 {
-                    await _tasks[i];
+                    await _tasks[i].Task;
                 }
                 catch (Exception ex)
                 {

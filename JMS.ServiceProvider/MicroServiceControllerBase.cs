@@ -10,7 +10,7 @@ using Way.Lib;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 
-public class MicroServiceControllerBase: BaseJmsController
+public class MicroServiceControllerBase: BaseJmsController,IDisposable
 {
     internal class LocalObject
     {
@@ -122,7 +122,7 @@ public class MicroServiceControllerBase: BaseJmsController
 
     }
 
-    public virtual void OnUnLoad()
+    public virtual void Dispose()
     {
 
     }

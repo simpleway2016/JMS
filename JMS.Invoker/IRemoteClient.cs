@@ -8,7 +8,7 @@ namespace JMS
 {
     interface IRemoteClient
     {
-
+        bool SupportTransaction { get; }
         string TransactionId { get; }
         NetAddress GatewayAddress { get;  }
         NetAddress ProxyAddress { get; }
@@ -16,6 +16,6 @@ namespace JMS
         X509Certificate2 ServiceClientCertificate { get; set; }
         Dictionary<string, string> GetCommandHeader();
         void AddConnect(IInvokeConnect connect);
-        void AddTask(Task task);
+        void AddTask(IInvokeConnect connect , int invokingId, Task task);
     }
 }

@@ -18,6 +18,8 @@ namespace JMS
         public InvokingInformation InvokingInfo { get; private set; }
         public InvokeCommand Command { get; private set; }
         public Invoker Invoker { get; private set; }
+        public bool HasTransactionHolding { get;private set; }
+
         public HttpInvokeConnect(string serviceName, ClientServiceDetail location, Invoker invoker)
         {
             InvokingInfo = new InvokingInformation();
@@ -104,7 +106,9 @@ Accept-Language: zh-CN,zh;q=0.9
                 }
 
                 if (result.SupportTransaction)
-                    tran.AddConnect(this);
+                {
+                    this.HasTransactionHolding = true;
+                }
                 else
                 {
                     this.AddClientToPool();
@@ -177,7 +181,9 @@ Accept-Language: zh-CN,zh;q=0.9
                 }
 
                 if (result.SupportTransaction)
-                    tran.AddConnect(this);
+                {
+                    this.HasTransactionHolding = true;
+                }
                 else
                 {
                     this.AddClientToPool();
@@ -353,6 +359,7 @@ Accept-Language: zh-CN,zh;q=0.9
 
         public void Dispose()
         {
+            this.HasTransactionHolding = false;
             if (_client != null)
             {
                 _client.Dispose();

@@ -70,7 +70,7 @@ namespace JMS.TransactionReporters
                 {
                     try
                     {
-                        using (var invokeConnect = InvokeConnectFactory.Create(null, serviceInfo, null))
+                        using (var invokeConnect = InvokeConnectFactory.Create(null, null, serviceInfo, null))
                         {
                             invokeConnect.RetryTranaction(obj.ProxyAddress, serviceInfo, obj.Cert, tranId , obj.TransactionFlag);
                         }

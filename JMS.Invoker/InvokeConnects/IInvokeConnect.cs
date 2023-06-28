@@ -10,6 +10,10 @@ namespace JMS
     {
         InvokingInformation InvokingInfo { get; }
         Invoker Invoker { get; }
+        /// <summary>
+        /// 是否有事务正在挂起
+        /// </summary>
+        bool HasTransactionHolding { get; }
 
         Task<T> InvokeAsync<T>(string method, IRemoteClient tran, params object[] parameter);
         T Invoke<T>(string method, IRemoteClient tran, params object[] parameters);

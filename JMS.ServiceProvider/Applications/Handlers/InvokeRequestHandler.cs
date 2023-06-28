@@ -44,12 +44,22 @@ namespace JMS.Applications
         static DateTime LastInvokingMsgStringTime = DateTime.Now.AddDays(-1);
         public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
-            var originalTimeout = netclient.ReadTimeout;
-            TransactionDelegate transactionDelegate = null;
-            MicroServiceControllerBase controller = null;
-            object[] parameters = null;
             using (IServiceScope serviceScope = _MicroServiceProvider.ServiceProvider.CreateScope())
             {
+                await handleInScope(netclient, cmd, serviceScope);
+            }
+        }
+
+        async Task handleInScope(NetClient netclient, InvokeCommand cmd, IServiceScope serviceScope)
+        {
+            List<TransactionDelegate> tranDelegateList = null;
+            var originalTimeout = netclient.ReadTimeout;
+            while (true)
+            {
+                TransactionDelegate transactionDelegate = null;
+                MicroServiceControllerBase controller = null;
+                object[] parameters = null;
+
                 try
                 {
                     var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
@@ -58,7 +68,7 @@ namespace JMS.Applications
                         throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
 
                     object userContent = null;
-                    if(methodInfo.AllowAnonymous == false)
+                    if (methodInfo.AllowAnonymous == false)
                     {
                         if (controllerTypeInfo.NeedAuthorize || methodInfo.NeedAuthorize)
                         {
@@ -69,11 +79,12 @@ namespace JMS.Applications
                             }
                         }
                     }
-                   
+
 
                     MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent);
 
                     controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
+                    controller.TransactionControl = null;
                     controller.NetClient = netclient;
                     controller._keyLocker = _MicroServiceProvider.ServiceProvider.GetService<IKeyLocker>();
                     if (_logger != null && _logger.IsEnabled(LogLevel.Trace))
@@ -101,7 +112,7 @@ namespace JMS.Applications
                             transactionDelegate.RequestCommand = cmd;
                         }
                     }
-                    
+
                     if (parameterInfos.Length > 0)
                     {
                         if (cmd.Parameters == null)
@@ -151,11 +162,11 @@ namespace JMS.Applications
                     controller.OnAfterAction(cmd.Method, parameters);
 
                     var supportTran = false;
-                    if (transactionDelegate != null && (transactionDelegate.CommitAction != null || transactionDelegate.RollbackAction != null))
+                    if (transactionDelegate != null && transactionDelegate.SupportTransaction)
                     {
                         supportTran = true;
                     }
-                    else if (controller.TransactionControl != null && (controller.TransactionControl.CommitAction != null || controller.TransactionControl.RollbackAction != null))
+                    else if (controller.TransactionControl != null && controller.TransactionControl.SupportTransaction)
                     {
                         transactionDelegate = controller.TransactionControl;
                         transactionDelegate.RequestCommand = cmd;
@@ -179,10 +190,7 @@ namespace JMS.Applications
                     if (!supportTran && transactionDelegate != null)
                     {
                         //不需要事务支持，提交现有事务
-                        if (transactionDelegate.CommitAction != null)
-                        {
-                            transactionDelegate.CommitAction();
-                        }
+                        transactionDelegate.CommitTransaction();
                         transactionDelegate = null;
                     }
 
@@ -197,7 +205,40 @@ namespace JMS.Applications
                     {
                         netclient.ReadTimeout = 0;
                         transactionDelegate.UserContent = controller.UserContent;
-                        await transactionDelegate.WaitForCommandAsync(_gatewayConnector, _faildCommitBuilder, netclient, _loggerTran);
+                        var nextInvokeCmd = await transactionDelegate.WaitForCommandAsync(tranDelegateList , _gatewayConnector, _faildCommitBuilder, netclient, _loggerTran);
+
+                        if (nextInvokeCmd != null)
+                        {
+                            bool addToList = true;
+                            if (tranDelegateList == null)
+                            {
+                                tranDelegateList = new List<TransactionDelegate>();
+                            }
+                            else
+                            {
+                                if (transactionDelegate.StorageEngine != null)
+                                {
+                                    foreach (var preDelegate in tranDelegateList)
+                                    {
+                                        if (preDelegate.StorageEngine == transactionDelegate.StorageEngine)
+                                        {
+                                            //同一个数据库对象，不用放入list
+                                            addToList = false;
+                                            break;
+                                        }
+                                    }
+                                }                               
+                            }
+
+                            if (addToList)
+                            {
+                                tranDelegateList.Add(transactionDelegate);
+                            }
+                            //继续调用下一个方法
+                            cmd = nextInvokeCmd;
+                            continue;
+                        }
+
                         transactionDelegate = null;
                     }
                 }
@@ -209,15 +250,19 @@ namespace JMS.Applications
                     while (ex.InnerException != null)
                         ex = ex.InnerException;
 
+                    if(tranDelegateList != null || transactionDelegate != null)
+                    {
+                        _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", transactionDelegate.TransactionId, transactionDelegate.RequestCommand.ToJsonString());
+                    }
+
                     if (transactionDelegate != null)
                     {
                         try
                         {
-                            if (transactionDelegate.RollbackAction != null)
+                            if (transactionDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == transactionDelegate) == false)
                             {
-                                transactionDelegate.RollbackAction();
-                                _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", transactionDelegate.TransactionId, transactionDelegate.RequestCommand.ToJsonString());
-                            }
+                                transactionDelegate.RollbackTransaction();
+                            }                            
                         }
                         catch (Exception rollex)
                         {
@@ -225,6 +270,7 @@ namespace JMS.Applications
                         }
                         transactionDelegate = null;
                     }
+                    tranDelegateList.RollbackTransaction();
 
                     try
                     {
@@ -252,10 +298,12 @@ namespace JMS.Applications
                 finally
                 {
                     netclient.ReadTimeout = originalTimeout;
-                    controller?.OnUnLoad();
                     MicroServiceControllerBase.RequestingObject.Value = null;
                 }
+
+                return;
             }
+
         }
     }
 }

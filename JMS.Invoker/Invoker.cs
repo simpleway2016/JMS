@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
 
@@ -22,11 +23,11 @@ namespace JMS
         bool _IsFromGateway;
         public bool IsFromGateway => _IsFromGateway;
 
-        public Invoker(IRemoteClient ServiceTransaction, IMicroServiceProvider microServiceProvider, string serviceName)
+        public Invoker(IRemoteClient serviceTransaction, IMicroServiceProvider microServiceProvider, string serviceName)
         {
-            this._serviceTransaction = ServiceTransaction;
+            this._serviceTransaction = serviceTransaction;
             this._microServiceProvider = microServiceProvider;
-            this.ServiceTransaction = ServiceTransaction;
+            this.ServiceTransaction = serviceTransaction;
             _serviceName = serviceName;
             _IsFromGateway = true;
         }
@@ -40,7 +41,7 @@ namespace JMS
                 return true;
             }
             //获取服务地址
-            _serviceLocation = _microServiceProvider.GetServiceLocation(ServiceTransaction , _serviceName);
+            _serviceLocation = _microServiceProvider.GetServiceLocation(ServiceTransaction, _serviceName);
 
 
             return _serviceLocation != null;
@@ -68,22 +69,41 @@ namespace JMS
 
         public void Invoke(string method, params object[] parameters)
         {
-            InvokeConnectFactory.Create(_serviceName, _serviceLocation,this).Invoke<object>(method, ServiceTransaction, parameters);
+            InvokeConnectFactory.Create(ServiceTransaction, _serviceName, _serviceLocation, this).Invoke<object>(method, ServiceTransaction, parameters);
         }
         public T Invoke<T>(string method, params object[] parameters)
         {
-            return InvokeConnectFactory.Create(_serviceName, _serviceLocation, this).Invoke<T>(method, ServiceTransaction, parameters);
+            return InvokeConnectFactory.Create(ServiceTransaction, _serviceName, _serviceLocation, this).Invoke<T>(method, ServiceTransaction, parameters);
         }
+
+        async Task<T> CreateInvokeTask<T>(IInvokeConnect connect,int invokingId, string method, object[] parameters)
+        {
+          
+            if (ServiceTransaction.SupportTransaction)
+            {
+                await ((RemoteClient)ServiceTransaction).WaitConnectComplete(invokingId , _serviceLocation);
+            }
+
+            return await connect.InvokeAsync<T>(method, ServiceTransaction, parameters);
+        }
+
+        static int InvokingId = 0;
         public Task<T> InvokeAsync<T>(string method, params object[] parameters)
         {
-            var task = InvokeConnectFactory.Create(_serviceName, _serviceLocation, this).InvokeAsync<T>(method,  ServiceTransaction, parameters);
-            ServiceTransaction.AddTask(task);
+            var id = Interlocked.Increment(ref InvokingId);
+            var connect = InvokeConnectFactory.Create(ServiceTransaction, _serviceName, _serviceLocation, this);
+          
+            var task = CreateInvokeTask<T>(connect, id , method, parameters);
+            ServiceTransaction.AddTask(connect, id, task);
             return task;
         }
         public Task InvokeAsync(string method, params object[] parameters)
         {
-            var task = InvokeConnectFactory.Create(_serviceName, _serviceLocation, this).InvokeAsync<object>(method, ServiceTransaction, parameters);
-            ServiceTransaction.AddTask(task);
+            var id = Interlocked.Increment(ref InvokingId);
+            var connect = InvokeConnectFactory.Create(ServiceTransaction, _serviceName, _serviceLocation, this);
+
+            var task = CreateInvokeTask<object>(connect, id, method, parameters);
+            ServiceTransaction.AddTask(connect, id,task);
             return task;
         }
 
@@ -91,7 +111,7 @@ namespace JMS
         {
             using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress))
             {
-                netclient.Connect(new NetAddress( _serviceLocation.ServiceAddress, _serviceLocation.Port, ServiceTransaction.ServiceClientCertificate));
+                netclient.Connect(new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, ServiceTransaction.ServiceClientCertificate));
                 netclient.ReadTimeout = this.ServiceTransaction.Timeout;
                 netclient.WriteServiceData(new InvokeCommand()
                 {
@@ -101,7 +121,7 @@ namespace JMS
                 });
                 var ret = netclient.ReadServiceObject<InvokeResult<string>>();
                 if (!ret.Success)
-                    throw new RemoteException(null,ret.Data);
+                    throw new RemoteException(null, ret.Data);
                 return ret.Data;
             }
         }
@@ -110,7 +130,7 @@ namespace JMS
         {
             using (var netclient = new ProxyClient(ServiceTransaction.ProxyAddress))
             {
-                netclient.Connect(new NetAddress( _serviceLocation.ServiceAddress, _serviceLocation.Port, ServiceTransaction.ServiceClientCertificate));
+                netclient.Connect(new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, ServiceTransaction.ServiceClientCertificate));
                 netclient.ReadTimeout = this.ServiceTransaction.Timeout;
                 netclient.WriteServiceData(new InvokeCommand()
                 {

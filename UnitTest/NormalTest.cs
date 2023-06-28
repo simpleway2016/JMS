@@ -215,6 +215,7 @@ namespace UnitTest
                 msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + _UserInfoServicePort;
                 msp.ClientCheckCodeFile = "./code1.txt";
                 msp.Register<TestUserInfoController>("UserInfoService" , "用户服务" , true);
+                msp.Register<TestScopeController>("TestScopeService", "作用域测试服务", true);
                 msp.Register<TestWebSocketController>("TestWebSocketService");
                 msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
                 msp.Build(_UserInfoServicePort, gateways)
@@ -581,6 +582,57 @@ namespace UnitTest
                 UserInfoDbContext.FinallyAge != 28 ||
                 UserInfoDbContext.FinallyFather != "Tom" ||
                 UserInfoDbContext.FinallyMather != "Lucy")
+                throw new Exception("结果不正确");
+        }
+
+        [TestMethod]
+        public void TestRequestScope()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            UserInfoDbContext.Reset();
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("TestScopeService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("TestScopeService");
+                }
+
+                client.BeginTransaction();
+                serviceClient.Invoke("SetFather", "Tom");
+                serviceClient.InvokeAsync("SetUserName", "Jack");
+                serviceClient.InvokeAsync("SetAge", 28);
+
+                client.CommitTransactionAsync().Wait();
+            }
+
+            Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName}");
+
+            if(UserInfoDbContext.NewInstanceCount != 1)
+            {
+                throw new Exception($"new了{UserInfoDbContext.NewInstanceCount}次");
+            }
+            if (UserInfoDbContext.CommitCount != 1)
+            {
+                throw new Exception($"commit了{UserInfoDbContext.CommitCount}次");
+            }
+            if (UserInfoDbContext.FinallyUserName != "Jack" ||
+                UserInfoDbContext.FinallyFather != "Tom" ||
+                UserInfoDbContext.FinallyAge != 28)
                 throw new Exception("结果不正确");
         }
 

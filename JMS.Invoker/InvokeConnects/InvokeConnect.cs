@@ -29,6 +29,7 @@ namespace JMS
         public InvokingInformation InvokingInfo { get; private set; }
         public InvokeCommand Command { get; private set; }
         public Invoker Invoker { get; private set; }
+        public bool HasTransactionHolding { get; private set; }
         public InvokeConnect(string serviceName, ClientServiceDetail location, Invoker invoker)
         {
             InvokingInfo = new InvokingInformation();
@@ -52,7 +53,11 @@ namespace JMS
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
+            if (_client == null)
+            {
+                _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
+            }
+
             try
             {
                 _client.ReadTimeout = tran.Timeout;
@@ -74,9 +79,10 @@ namespace JMS
                     throw new RemoteException(tran.TransactionId, result.Error);
                 }
 
-
                 if (result.SupportTransaction)
-                    tran.AddConnect(this);
+                {
+                    this.HasTransactionHolding = true;
+                }
                 else
                 {
                     this.AddClientToPool();
@@ -126,7 +132,11 @@ namespace JMS
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
 
-            _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
+            if (_client == null)
+            {
+                _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
+            }
+
             try
             {
                 _client.ReadTimeout = tran.Timeout;
@@ -148,9 +158,10 @@ namespace JMS
                     throw new RemoteException(tran.TransactionId, result.Error);
                 }
 
-
                 if (result.SupportTransaction)
-                    tran.AddConnect(this);
+                {
+                    this.HasTransactionHolding = true;
+                }
                 else
                 {
                     this.AddClientToPool();
@@ -251,6 +262,7 @@ namespace JMS
 
         public void Dispose()
         {
+            this.HasTransactionHolding = false;
             if (_client != null)
             {
                 _client.Dispose();

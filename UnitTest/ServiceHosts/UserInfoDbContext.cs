@@ -1,13 +1,15 @@
-﻿using System;
+﻿using JMS;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnitTest.ServiceHosts
 {
-    internal class UserInfoDbContext : IDbContext
+    internal class UserInfoDbContext : IDbContext,IStorageEngine
     {
         bool _disposed;
         public bool BeganTransaction { get; private set; }
@@ -21,13 +23,18 @@ namespace UnitTest.ServiceHosts
         public static string FinallyFather { get; set; }
         public static string FinallyMather { get; set; }
 
+        public static int NewInstanceCount = 0;
+        public static int CommitCount = 0;
         public UserInfoDbContext()
         {
+            Interlocked.Increment(ref NewInstanceCount);
             Debug.WriteLine("UserInfoDbContext实例化");
         }
 
         public static void Reset()
         {
+            CommitCount = 0;
+            NewInstanceCount = 0;
             FinallyUserName = null;
             FinallyAge = 0;
             FinallyFather = null;
@@ -63,6 +70,7 @@ namespace UnitTest.ServiceHosts
                     FinallyMather = this.Mather;
 
                 Debug.WriteLine("UserInfoDbContext提交事务了");
+                Interlocked.Increment(ref CommitCount);
                 BeganTransaction = false;
             }
         }
@@ -83,6 +91,11 @@ namespace UnitTest.ServiceHosts
                 Debug.WriteLine("UserInfoDbContext回滚事务了");
                 BeganTransaction = false;
             }
+        }
+
+        public bool IsBeganTransaction()
+        {
+            return BeganTransaction;
         }
     }
 }
