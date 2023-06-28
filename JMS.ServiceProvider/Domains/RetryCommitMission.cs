@@ -23,6 +23,7 @@ namespace JMS.RetryCommit
         MicroServiceHost _microServiceHost;
         ILogger<TransactionDelegate> _loggerTran;
         IGatewayConnector _gatewayConnector;
+
         public RetryCommitMission(MicroServiceHost microServiceHost, ControllerFactory controllerFactory, ILogger<TransactionDelegate> loggerTran)
         {
             this._controllerFactory = controllerFactory;

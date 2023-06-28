@@ -665,6 +665,7 @@ namespace UnitTest
                    }
                 };
 
+            var transactionId = "";
             using (var client = new RemoteClient(gateways))
             {
                 var serviceClient = client.TryGetMicroService("UserInfoService");
@@ -689,6 +690,7 @@ namespace UnitTest
                 crashService.Invoke("SetText", "abc");
                 try
                 {
+                    transactionId = client.TransactionId;
                     client.CommitTransaction();
                 }
                 catch (Exception ex)
@@ -705,6 +707,11 @@ namespace UnitTest
                 throw new Exception("结果不正确");
         }
 
+
+        /// <summary>
+        /// 由RemoteClient发起重试请求
+        /// </summary>
+        /// <exception cref="Exception"></exception>
         [TestMethod]
         public void TestCrashScopeForLocal()
         {
@@ -1046,6 +1053,10 @@ Content-Length: 0
                 throw new Exception("结果不正确");
         }
 
+        /// <summary>
+        /// 由RemoteClient发起重试请求
+        /// </summary>
+        /// <exception cref="Exception"></exception>
         [TestMethod]
         public void TestCrashForLocal()
         {
