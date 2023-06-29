@@ -452,7 +452,7 @@ Content-Length2: 0
                 service2 = remoteClient.TryGetMicroServiceAsync("TestCrashService").GetAwaiter().GetResult();
                 try
                 {
-                    service2.Invoke("/Crash/AsyncSetName");
+                    service2.Invoke("/Crash/AsyncSetName2");
                     throw new Exception("error");
                 }
                 catch (Exception ex)

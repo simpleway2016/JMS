@@ -49,7 +49,10 @@ namespace UnitTest.Controllers
             _apiTransactionDelegate.StorageEngine = _userInfoDbContext;
             _userInfoDbContext.UserName = name;
         }
-
+        [HttpGet]
+        public async void AsyncSetName2()
+        {
+        }
         [HttpGet]
         public string GetName()
         {
