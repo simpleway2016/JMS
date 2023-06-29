@@ -39,7 +39,8 @@ namespace UnitTest
     var featureProvider = new MyFeatureProvider();
     manager.FeatureProviders.Add(featureProvider);
 });
-            builder.Services.RegisterJmsService("http://127.0.0.1:9000", "TestWebService", gateways ,true, option => {
+            builder.Services.RegisterJmsService("http://127.0.0.1:9000", "TestWebService", gateways, true, option =>
+            {
                 option.RetryCommitPath += "9000";
             });
             var app = builder.Build();
@@ -66,7 +67,8 @@ namespace UnitTest
     var featureProvider = new MyCrashFeatureProvider();
     manager.FeatureProviders.Add(featureProvider);
 });
-            builder.Services.RegisterJmsService("http://127.0.0.1:9001", "TestCrashService", gateways, true, option => {
+            builder.Services.RegisterJmsService("http://127.0.0.1:9001", "TestCrashService", gateways, true, option =>
+            {
                 option.RetryCommitPath += "9001";
             });
             var app = builder.Build();
@@ -80,18 +82,20 @@ namespace UnitTest
             return app;
         }
 
-      
+
         [TestMethod]
         public void PipelineHeaderTest()
         {
             var headers = new Dictionary<string, string>();
             string reqline = null;
-            var actionAccept = new Action<Socket>(async socket => {
+            var actionAccept = new Action<Socket>(async socket =>
+            {
                 var serverClient = new NetClient(socket);
-              
+
                 reqline = await HttpHelper.ReadHeaders(serverClient.PipeReader, headers);
             });
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 var tcplistener = new TcpListener(10001);
                 tcplistener.Start();
 
@@ -104,14 +108,14 @@ namespace UnitTest
 
             Thread.Sleep(500);
             var client = new NetClient();
-            client.Connect(new NetAddress("127.0.0.1",10001));
+            client.Connect(new NetAddress("127.0.0.1", 10001));
             var data = Encoding.UTF8.GetBytes("GET /test");
-            client.InnerStream.Write(data , 0 , data.Length);
+            client.InnerStream.Write(data, 0, data.Length);
             Thread.Sleep(2000);
-           
-            for(int i = 0;i < 6000; i ++)
+
+            for (int i = 0; i < 6000; i++)
             {
-                client.InnerStream.Write(new byte[1] { (byte)'a'}, 0, 1);
+                client.InnerStream.Write(new byte[1] { (byte)'a' }, 0, 1);
 
             }
             data = Encoding.UTF8.GetBytes(@"1awefijawofjewaofjawojfeowajfoawjoefoawjfijoaw9
@@ -131,7 +135,7 @@ Host: abc.com
             while (reqline == null)
                 Thread.Sleep(500);
 
-            if(reqline.Length > 6000 && reqline.EndsWith("aw9"))
+            if (reqline.Length > 6000 && reqline.EndsWith("aw9"))
             {
 
             }
@@ -151,14 +155,16 @@ Host: abc.com
             string reqline1 = null;
             string reqline2 = null;
             string reqline3 = null;
-            var actionAccept = new Action<Socket>(async socket => {
+            var actionAccept = new Action<Socket>(async socket =>
+            {
                 var serverClient = new NetClient(socket);
 
                 reqline1 = await serverClient.ReadLineAsync();
                 reqline2 = await serverClient.ReadLineAsync();
                 reqline3 = await serverClient.ReadLineAsync();
             });
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 var tcplistener = new TcpListener(10002);
                 tcplistener.Start();
 
@@ -236,7 +242,8 @@ Content-Length2: 0
 ";
             StringBuilder strRet = new StringBuilder();
             long? time = null;
-            Task.Run(async () => {
+            Task.Run(async () =>
+            {
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 var reader = System.IO.Pipelines.PipeReader.Create(stream);
                 var line = await HttpHelper.ReadHeaders(reader, headers);
@@ -250,19 +257,19 @@ Content-Length2: 0
                 time = sw.ElapsedMilliseconds;
                 strRet.AppendLine(line);
             });
-            while(time == null)
-            Thread.Sleep(100);
+            while (time == null)
+                Thread.Sleep(100);
 
             if (time > 2)
                 throw new Exception("解析时间太长");
 
-           
-            foreach( var pair in headers)
+
+            foreach (var pair in headers)
             {
                 strRet.AppendLine($"{pair.Key}: {pair.Value}");
             }
             strRet.AppendLine("");
-            if(strRet.ToString() != content)
+            if (strRet.ToString() != content)
             {
                 throw new Exception("解析后内容不正确");
             }
@@ -289,7 +296,7 @@ Content-Length2: 0
                    }
                 };
 
-            using (var remoteClient = new RemoteClient("localhost" , normalTest._gateWayPort))
+            using (var remoteClient = new RemoteClient("localhost", normalTest._gateWayPort))
             {
                 remoteClient.ListMicroService(null);
                 remoteClient.ListMicroServiceAsync(null).GetAwaiter().GetResult();
@@ -308,7 +315,7 @@ Content-Length2: 0
             param.Add(new KeyValuePair<string, string>("age", "1"));
 
             //通过网关反向代理访问webapi
-            var ret = client.PostAsync($"http://localhost:{normalTest._gateWayPort}/TestWebService/WeatherForecast" ,new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
+            var ret = client.PostAsync($"http://localhost:{normalTest._gateWayPort}/TestWebService/WeatherForecast", new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
             var text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
@@ -334,7 +341,7 @@ Content-Length2: 0
             //app.StopAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
-      
+
 
         /// <summary>
         /// 测试线程池是否多次创建
@@ -373,7 +380,8 @@ Content-Length2: 0
             }
 
             int createCount = 0;
-            NetClientPool.CreatedNewClient += (s, newClient) => {
+            NetClientPool.CreatedNewClient += (s, newClient) =>
+            {
                 Interlocked.Increment(ref createCount);
             };
             for (int i = 0; i < 10; i++)
@@ -415,7 +423,8 @@ Content-Length2: 0
 
         void startSocket5Proxy()
         {
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 JMS.Proxy.Program.Main(new string[] { "8918" });
             });
         }
@@ -517,7 +526,7 @@ Content-Length2: 0
             }
             finally
             {
-               
+
             }
         }
 
@@ -570,7 +579,7 @@ Content-Length2: 0
                     if (ret.Length != 5)
                         throw new Exception("返回结果错误");
 
-                    var name = service2.Invoke<string>("/Crash/SetName" , "Jack");
+                    var name = service2.Invoke<string>("/Crash/SetName", "Jack");
 
                     try
                     {
@@ -590,7 +599,73 @@ Content-Length2: 0
             }
             finally
             {
-               
+
+            }
+        }
+
+        [TestMethod]
+        public void ScropeCrashTest()
+        {
+            var normalTest = new NormalTest();
+            normalTest.StartGateway();
+
+            var app = StartWebApi(normalTest._gateWayPort);
+            app.RunAsync();
+
+            var crash_app = StartCrashWebApi(normalTest._gateWayPort);
+            crash_app.RunAsync();
+
+            Thread.Sleep(1000);
+
+
+            try
+            {
+                normalTest.WaitGatewayReady(normalTest._gateWayPort);
+
+
+                var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = normalTest._gateWayPort
+                   }
+                };
+
+                using (var remoteClient = new RemoteClient(gateways))
+                {
+                    var service2 = remoteClient.TryGetMicroService("TestCrashService");
+                    while (service2 == null)
+                    {
+                        Thread.Sleep(100);
+                        service2 = remoteClient.TryGetMicroService("TestCrashService");
+                    }
+
+                    remoteClient.BeginTransaction();
+
+                    for (int i = 0; i < 20; i++)
+                    {
+                        service2.InvokeAsync<string>("/Crash/SetName", "Jack" + i);
+                    }
+                    service2.InvokeAsync<string>("/Crash/SetName", "Jack");
+
+                    try
+                    {
+                        remoteClient.CommitTransaction();
+                    }
+                    catch (Exception ex)
+                    {
+
+                        Debug.WriteLine(ex.Message);
+                    }
+                }
+
+                Thread.Sleep(12000);//等待7秒，失败的事务
+
+                if (UserInfoDbContext.FinallyUserName != "Jack")
+                    throw new Exception("结果不正确");
+            }
+            finally
+            {
+
             }
         }
 
@@ -649,7 +724,7 @@ Content-Length2: 0
                     remoteClient.CommitTransaction();
                 }
 
-                if (UserInfoDbContext.FinallyUserName != "Jack")  
+                if (UserInfoDbContext.FinallyUserName != "Jack")
                     throw new Exception("结果不正确");
 
                 UserInfoDbContext.FinallyUserName = null;
@@ -660,7 +735,8 @@ Content-Length2: 0
 
                     remoteClient.BeginTransaction();
 
-                    NetClientPool.CreatedNewClient += (s, e) => {
+                    NetClientPool.CreatedNewClient += (s, e) =>
+                    {
                         createdNewClient = true;
                     };
 
@@ -675,7 +751,7 @@ Content-Length2: 0
 
                 if (createdNewClient)
                     throw new Exception("创建了新的连接");
-                if (UserInfoDbContext.FinallyUserName != "Jack")  
+                if (UserInfoDbContext.FinallyUserName != "Jack")
                     throw new Exception("结果不正确");
             }
             finally
