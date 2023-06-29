@@ -630,15 +630,15 @@ namespace JMS
             }
         }
         
-        internal async Task WaitConnectComplete(int invokingId,ClientServiceDetail serviceLocation)
+        internal async Task WaitConnectComplete(int invokingId,IInvokeConnect invokeConnect)
         {
             if (_SupportTransaction)
             {
-                await _transactionTasks.WaitConnectComplete(invokingId,serviceLocation);
+                await _transactionTasks.WaitConnectComplete(invokingId, invokeConnect);
             }
             else
             {
-                await _normalTasks.WaitConnectComplete(invokingId,serviceLocation);
+                await _normalTasks.WaitConnectComplete(invokingId, invokeConnect);
             }
         }
 

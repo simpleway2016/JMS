@@ -28,36 +28,33 @@ namespace JMS.ServiceProvider.AspNetCore
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="transactionId">事务id</param>
-        /// <param name="cmd">请求对象</param>
-        /// <param name="userContent">身份信息对象</param>
-        public string Build(string transactionId,string tranFlag, InvokeInfo cmd, object userContent)
+        public string Build(RequestInfo requestInfo)
         {
             try
             {
                 if (Directory.Exists(_microServiceHost.RetryCommitPath) == false)
                     Directory.CreateDirectory(_microServiceHost.RetryCommitPath);
 
-                Type userContentType = userContent?.GetType();
-                if (userContent != null && userContent is System.Security.Claims.ClaimsPrincipal claimsPrincipal)
-                {
-                    using (var ms = new System.IO.MemoryStream())
-                    {
-                        claimsPrincipal.WriteTo(new System.IO.BinaryWriter(ms));
-                        ms.Position = 0;
-                        userContent = ms.ToArray();
-                    }
-                }
+                var filepath = $"{_microServiceHost.RetryCommitPath}/{requestInfo.TransactionId}_{Guid.NewGuid().ToString("N")}.txt";
+                File.WriteAllText(filepath, requestInfo.ToJsonString(), Encoding.UTF8);
+                return filepath;
+            }
+            catch (Exception ex)
+            {
+                _loggerTran.LogError(ex, "FaildCommitBuilder");
+                return null;
+            }
+        }
+
+        public string Build(string transactionId, IEnumerable<RequestInfo> requestInfos)
+        {
+            try
+            {
+                if (Directory.Exists(_microServiceHost.RetryCommitPath) == false)
+                    Directory.CreateDirectory(_microServiceHost.RetryCommitPath);
 
                 var filepath = $"{_microServiceHost.RetryCommitPath}/{transactionId}_{Guid.NewGuid().ToString("N")}.txt";
-                File.WriteAllText(filepath, new RequestInfo
-                {
-                    Cmd = cmd,
-                    TransactionId = transactionId,
-                    TransactionFlag = tranFlag,
-                    UserContentType = userContent == null ? null : userContentType,
-                    UserContentValue = userContent?.ToJsonString()
-                }.ToJsonString(), Encoding.UTF8);
+                File.WriteAllText(filepath, requestInfos.ToJsonString(), Encoding.UTF8);
                 return filepath;
             }
             catch (Exception ex)

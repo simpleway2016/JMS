@@ -79,7 +79,7 @@ namespace JMS
           
             if (RemoteClient.SupportTransaction)
             {
-                await RemoteClient.WaitConnectComplete(invokingId , _serviceLocation);
+                await RemoteClient.WaitConnectComplete(invokingId , connect);
             }
 
             return await connect.InvokeAsync<T>(method, RemoteClient, parameters);

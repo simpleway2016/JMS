@@ -127,11 +127,13 @@ namespace JMS.RetryCommit
             }
         }
 
+
+
         public void RetryFile(string file, string tranFlag, bool checkFromGateway = true)
         {
             try
             {
-                if( checkFromGateway && (DateTime.Now - new FileInfo(file).LastWriteTime).TotalSeconds < 5)
+                if (checkFromGateway && (DateTime.Now - new FileInfo(file).LastWriteTime).TotalSeconds < 5)
                 {
                     Thread.Sleep(5000);
                 }
@@ -148,76 +150,45 @@ namespace JMS.RetryCommit
                     requestInfos = new RequestInfo[] { textContent.FromJson<RequestInfo>() };
                 }
 
-                for(int index = 0; index < requestInfos.Length; index++)
+                if (checkFromGateway == false && requestInfos.First().TransactionFlag != tranFlag)
                 {
-                    var requestContent = requestInfos[index];
-                    object usercontent = null;
+                    return;
+                }
+                if (checkFromGateway && _gatewayConnector.CheckTransaction(requestInfos.First().TransactionId) == false)
+                {
+                    _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", requestInfos.First().TransactionId);
+                    FileHelper.ChangeFileExt(file, ".failed");
+                    return;
+                }
 
-                    if (checkFromGateway == false && requestContent.TransactionFlag != tranFlag)
-                    {
-                        return;
-                    }
-                    if (checkFromGateway && _gatewayConnector.CheckTransaction(requestContent.TransactionId) == false)
-                    {
-                        _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", requestContent.TransactionId);
-                        FileHelper.ChangeFileExt(file, ".failed");
-                        return;
-                    }
-
-                    _loggerTran?.LogInformation("尝试重新提交事务{0}-{1}", requestContent.TransactionId, requestContent.Cmd.Method);
-
-                    if (requestContent.UserContentValue != null)
-                    {
-
-                        try
-                        {
-                            if (requestContent.UserContentType == typeof(System.Security.Claims.ClaimsPrincipal))
-                            {
-
-                                byte[] bs = requestContent.UserContentValue.FromJson<byte[]>();
-                                using (var ms = new System.IO.MemoryStream(bs))
-                                {
-                                    usercontent = new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
-                                }
-                            }
-                            else
-                            {
-                                usercontent = Newtonsoft.Json.JsonConvert.DeserializeObject(requestContent.UserContentValue, requestContent.UserContentType);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", requestContent.TransactionId, ex.Message);
-                           
-                        }
+                _loggerTran?.LogInformation("尝试重新提交事务{0}", requestInfos.First().TransactionId);
 
 
-                    }
+
+                try
+                {
+                    retry(requestInfos);
+                    _loggerTran?.LogInformation("成功提交事务{0} 请求数据：{1}", requestInfos.First().TransactionId, requestInfos.ToJsonString());
 
                     try
                     {
-                        retry(requestContent.Cmd, usercontent);
-                        _loggerTran?.LogInformation("成功提交事务{0} 请求数据：{1}", requestContent.TransactionId, requestContent.Cmd.ToJsonString());
+                        if (File.Exists(file))
+                        {
+                            File.Delete(file);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        _loggerTran?.LogError($"RetryCommitMission处理事务id为{requestContent.TransactionId}时发生未知错误,{ex.Message}\r\nIndex:{index}");
-                        File.WriteAllText($"{file}.{index}.failed", requestContent.ToJsonString(), Encoding.UTF8);
-
+                        _loggerTran?.LogError("文件{0}删除失败,{1}", file, ex.Message);
                     }
 
-                }
-                try
-                {
-                    if (File.Exists(file))
-                    {
-                        File.Delete(file);
-                    }
                 }
                 catch (Exception ex)
                 {
-                    _loggerTran?.LogError("文件{0}删除失败,{1}", file, ex.Message);
+                    _loggerTran?.LogError($"RetryCommitMission处理事务id为{requestInfos.First().TransactionId}时发生未知错误,{ex.Message}");
+                    FileHelper.ChangeFileExt(file, ".failed");
                 }
+
             }
             catch (Exception ex)
             {
@@ -226,95 +197,104 @@ namespace JMS.RetryCommit
 
         }
 
-        void retry(InvokeCommand cmd, object userContent)
+        void retry(RequestInfo[] requestInfos)
         {
-            TransactionDelegate transactionDelegate = null;
-            MicroServiceControllerBase controller = null;
-            object[] parameters = null;
-
             using (IServiceScope serviceScope = _microServiceHost.ServiceProvider.CreateScope())
             {
-                try
+                List<TransactionDelegate> transactionDelegateList = new List<TransactionDelegate>();
+                foreach (var requestContent in requestInfos)
                 {
-                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0), cmd, serviceScope.ServiceProvider, userContent);
-                    var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
-
-                    controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
-                    controller._keyLocker = _microServiceHost.ServiceProvider.GetService<IKeyLocker>();
-
-
-                    var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
-                    if (methodInfo == null)
-                        throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
-
-
-
-                    var parameterInfos = methodInfo.Method.GetParameters();
-                    object result = null;
-
-                    int startPIndex = 0;
-                    if (parameterInfos.Length > 0)
+                    TransactionDelegate transactionDelegate = null;
+                    MicroServiceControllerBase controller = null;
+                    object[] parameters = null;
+                    var cmd = requestContent.Cmd;
+                    try
                     {
-                        parameters = new object[parameterInfos.Length];
-                        if (parameterInfos[0].ParameterType == typeof(TransactionDelegate))
+                        MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0), cmd, serviceScope.ServiceProvider, requestContent.GetUserContent(_loggerTran));
+                        var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
+
+                        controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
+                        controller.TransactionControl = null;
+                        controller._keyLocker = _microServiceHost.ServiceProvider.GetService<IKeyLocker>();
+
+
+                        var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);
+                        if (methodInfo == null)
+                            throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
+
+
+
+                        var parameterInfos = methodInfo.Method.GetParameters();
+                        object result = null;
+
+                        int startPIndex = 0;
+                        if (parameterInfos.Length > 0)
                         {
-                            startPIndex = 1;
-                            parameters[0] = transactionDelegate = new TransactionDelegate(controller);
+                            parameters = new object[parameterInfos.Length];
+                            if (parameterInfos[0].ParameterType == typeof(TransactionDelegate))
+                            {
+                                startPIndex = 1;
+                                parameters[0] = transactionDelegate = new TransactionDelegate(controller);
+                                transactionDelegate.RequestCommand = cmd;
+                            }
+                        }
+
+                        controller.OnBeforeAction(cmd.Method, parameters);
+                        if (parameterInfos.Length > 0)
+                        {
+                            for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
+                            {
+                                string pvalue = cmd.Parameters[index];
+                                if (pvalue == null)
+                                    continue;
+
+                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
+
+                            }
+
+                        }
+
+                        Task.Run(async () =>
+                        {
+                            result = methodInfo.Method.Invoke(controller, parameters);
+                            if (result is Task || result is ValueTask)
+                            {
+                                if (methodInfo.Method.ReturnType.IsGenericType)
+                                {
+                                    result = await (dynamic)result;
+                                }
+                                else
+                                {
+                                    await (dynamic)result;
+                                    result = null;
+                                }
+                            }
+                        }).Wait();
+
+
+                        controller.OnAfterAction(cmd.Method, parameters);
+                        if (transactionDelegate != null && transactionDelegate.SupportTransaction)
+                        {
+                        }
+                        else if (controller.TransactionControl != null && controller.TransactionControl.SupportTransaction)
+                        {
+                            transactionDelegate = controller.TransactionControl;
                             transactionDelegate.RequestCommand = cmd;
                         }
-                    }
 
-                    controller.OnBeforeAction(cmd.Method, parameters);
-                    if (parameterInfos.Length > 0)
-                    {
-                        for (int i = startPIndex, index = 0; i < parameters.Length && index < cmd.Parameters.Length; i++, index++)
+                        if (transactionDelegate.StorageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == transactionDelegate.StorageEngine) == false)
                         {
-                            string pvalue = cmd.Parameters[index];
-                            if (pvalue == null)
-                                continue;
-
-                            parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
-
+                            transactionDelegateList.Add(transactionDelegate);
                         }
 
                     }
-
-                    Task.Run(async () =>
+                    finally
                     {
-                        result = methodInfo.Method.Invoke(controller, parameters);
-                        if (result is Task || result is ValueTask)
-                        {
-                            if (methodInfo.Method.ReturnType.IsGenericType)
-                            {
-                                result = await (dynamic)result;
-                            }
-                            else
-                            {
-                                await (dynamic)result;
-                                result = null;
-                            }
-                        }
-                    }).Wait();
-
-
-                    controller.OnAfterAction(cmd.Method, parameters);
-                    if (transactionDelegate != null && transactionDelegate.SupportTransaction)
-                    {
+                        MicroServiceControllerBase.RequestingObject.Value = null;
                     }
-                    else if (controller.TransactionControl != null && controller.TransactionControl.SupportTransaction)
-                    {
-                        transactionDelegate = controller.TransactionControl;
-                        transactionDelegate.RequestCommand = cmd;
-                    }
-
-                    transactionDelegate?.CommitTransaction();
-                    transactionDelegate = null;
-
                 }
-                finally
-                {
-                    MicroServiceControllerBase.RequestingObject.Value = null;
-                }
+
+                transactionDelegateList.CommitTransaction();
             }
         }
     }

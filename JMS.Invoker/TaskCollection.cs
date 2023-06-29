@@ -32,7 +32,7 @@ namespace JMS
             }
         }
 
-        public async Task WaitConnectComplete(int invokingId,ClientServiceDetail serviceLocation)
+        public async Task WaitConnectComplete(int invokingId,IInvokeConnect invokeConnect)
         {
             for (int i = 0; i < _tasks.Count; i++)
             {
@@ -42,7 +42,7 @@ namespace JMS
                 if (item.InvokingId >= invokingId) 
                     continue;
 
-                if (item.InvokeConnect.InvokingInfo.ServiceLocation.IsTheSameServer(serviceLocation))
+                if (item.InvokeConnect == invokeConnect)
                 {
                     await item.Task;
                 }

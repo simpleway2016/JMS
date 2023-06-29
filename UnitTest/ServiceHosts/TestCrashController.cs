@@ -7,12 +7,15 @@ using System.Threading.Tasks;
 
 namespace UnitTest.ServiceHosts
 {
-    internal class TestCrashController : MicroServiceControllerBase
+    internal class TestCrashController : MicroServiceControllerBase,IStorageEngine
     {
         public static string FinallyText;
         public static bool CanCrash = true;
 
         string _text;
+
+        public object CurrentTransaction => _text;
+
         public void SetText(string text)
         {
             _text = text;
@@ -22,19 +25,28 @@ namespace UnitTest.ServiceHosts
         {
             base.OnAfterAction(actionName, parameters);
 
-            this.TransactionControl = new JMS.TransactionDelegate(this);
-            this.TransactionControl.CommitAction = () => {
-                if (CanCrash)
-                {
-                    CanCrash = false;
-                    throw new Exception("故意宕机");
-                }
+            this.TransactionControl = new JMS.TransactionDelegate(this,this);
+        }
 
-                FinallyText = _text;
-            };
-            this.TransactionControl.RollbackAction = () => { 
-                
-            };
+        public void BeginTransaction()
+        {
+            
+        }
+
+        public void CommitTransaction()
+        {
+            if (CanCrash)
+            {
+                CanCrash = false;
+                throw new Exception("故意宕机");
+            }
+
+            FinallyText = _text;
+        }
+
+        public void RollbackTransaction()
+        {
+            _text = null;
         }
     }
 }

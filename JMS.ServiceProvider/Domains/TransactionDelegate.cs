@@ -136,8 +136,11 @@ namespace JMS
                 if (checkedHealth && await gatewayConnector.CheckTransactionAsync(this.TransactionId))
                 {
                     //网关告知事务已成功，需要提交事务
+                    if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)
+                    {
+                        this.CommitTransaction();
+                    }
                     transactionDelegateList.CommitTransaction();
-                    this.CommitTransaction();
 
                     if (this.RetryCommitFilePath != null)
                     {
@@ -151,8 +154,11 @@ namespace JMS
 
                     _controller.ServiceProvider.GetService<ILogger<TransactionDelegate>>()?.LogInformation("事务{0}回滚完毕，请求数据:{1}", this.TransactionId, this.RequestCommand.ToJsonString());
 
+                    if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)
+                    {
+                        this.RollbackTransaction();
+                    }
                     transactionDelegateList.RollbackTransaction();
-                    this.RollbackTransaction();
 
                     if (this.RetryCommitFilePath != null)
                     {

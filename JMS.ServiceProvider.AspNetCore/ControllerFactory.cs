@@ -55,19 +55,19 @@ namespace JMS.ServiceProvider.AspNetCore
             return controller;
         }
 
-        public object Create(HttpContext context, IServiceProvider serviceProvider,out ControllerActionDescriptor controllerActionDescriptor)
+        public object Create(string requestPath, IServiceProvider serviceProvider,out ControllerActionDescriptor controllerActionDescriptor)
         {
             controllerActionDescriptor = null;
-            var path = context.Request.Path.Value;
-            if (path.StartsWith("/"))
-                path = path.Substring(1);
+           
+            if (requestPath.StartsWith("/"))
+                requestPath = requestPath.Substring(1);
 
             foreach (var descitem in _actionDescriptorCollectionProvider.ActionDescriptors.Items)
             {
                 if (descitem is ControllerActionDescriptor actionDesc)
                 {
                    
-                    if (string.Equals(actionDesc.AttributeRouteInfo.Template, path, StringComparison.OrdinalIgnoreCase) )
+                    if (string.Equals(actionDesc.AttributeRouteInfo.Template, requestPath, StringComparison.OrdinalIgnoreCase) )
                     {
                         if (actionDesc.MethodInfo.ReturnType == typeof(void) && actionDesc.MethodInfo.GetCustomAttribute<AsyncStateMachineAttribute>() != null)
                         {
