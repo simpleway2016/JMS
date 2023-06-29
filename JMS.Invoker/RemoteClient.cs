@@ -648,6 +648,12 @@ namespace JMS
             }
         }
         
+        /// <summary>
+        /// 等待相同connect执行完毕
+        /// </summary>
+        /// <param name="invokingId"></param>
+        /// <param name="invokeConnect"></param>
+        /// <returns></returns>
         internal async Task WaitConnectComplete(int invokingId,IInvokeConnect invokeConnect)
         {
             if (_SupportTransaction)
