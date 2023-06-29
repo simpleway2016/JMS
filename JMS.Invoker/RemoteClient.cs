@@ -20,6 +20,7 @@ namespace JMS
 {
     /// <summary>
     /// 微服务客户端
+    /// 注意：不要把RemoteClient作为一个单例长期使用，每次使用RemoteClient应该使用using关键字包围
     /// </summary>
     public class RemoteClient : IDisposable
     {
