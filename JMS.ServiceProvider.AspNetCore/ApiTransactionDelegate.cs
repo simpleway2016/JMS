@@ -25,8 +25,8 @@ namespace JMS.ServiceProvider.AspNetCore
         /// <summary>
         /// 事务标识，如果为null，表示本次访问来自浏览器等常规http客户端
         /// </summary>
-        public string TransactionId { get; }
-        public string TransactionFlag { get; }
+        public string TransactionId { get; internal set; }
+        public string TransactionFlag { get; internal set; }
         IStorageEngine _storageEngine;
         public ApiTransactionDelegate()
         {
@@ -44,7 +44,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
         public Action CommitAction { get; set; }
         public Action RollbackAction { get; set; }
-        internal bool Handled { get; set; }
+
         public bool SupportTransaction => _storageEngine != null || CommitAction != null || RollbackAction != null;
         public IStorageEngine StorageEngine
         {

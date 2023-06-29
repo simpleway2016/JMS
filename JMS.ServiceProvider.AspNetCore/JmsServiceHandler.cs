@@ -262,6 +262,10 @@ namespace JMS.ServiceProvider.AspNetCore
                                     if (addToList)
                                     {
                                         tranDelegateList.Add(new ApiTransactionDelegate() { 
+                                            TransactionId = tranDelegate.TransactionId,
+                                            TransactionFlag = tranDelegate.TransactionFlag,
+                                            InvokeInfo = tranDelegate.InvokeInfo,
+                                            UserContent = tranDelegate.UserContent,
                                             StorageEngine = tranDelegate.StorageEngine,
                                             CommitAction = tranDelegate.CommitAction,
                                             RollbackAction = tranDelegate.RollbackAction
