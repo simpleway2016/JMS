@@ -693,7 +693,7 @@ Content-Length2: 0
 
             Thread.Sleep(1000);
 
-
+            UserInfoDbContext.Reset();
             try
             {
                 normalTest.WaitGatewayReady(normalTest._gateWayPort);
@@ -734,6 +734,15 @@ Content-Length2: 0
                     remoteClient.CommitTransaction();
                 }
 
+                if (UserInfoDbContext.NewInstanceCount != 1)
+                {
+                    throw new Exception($"new了{UserInfoDbContext.NewInstanceCount}次");
+                }
+                if (UserInfoDbContext.CommitCount != 1)
+                {
+                    throw new Exception($"commit了{UserInfoDbContext.CommitCount}次");
+                }
+
                 if (UserInfoDbContext.FinallyUserName != "Jack")
                     throw new Exception("结果不正确");
 
@@ -758,6 +767,9 @@ Content-Length2: 0
 
                     remoteClient.CommitTransaction();
                 }
+
+
+               
 
                 if (createdNewClient)
                     throw new Exception("创建了新的连接");
