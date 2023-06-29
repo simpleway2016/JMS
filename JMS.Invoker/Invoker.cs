@@ -67,11 +67,24 @@ namespace JMS
 
         public void Invoke(string method, params object[] parameters)
         {
-            InvokeConnectFactory.Create(RemoteClient, _serviceName, _serviceLocation, this).Invoke<object>(method, RemoteClient, parameters);
+            var connect = InvokeConnectFactory.Create(RemoteClient, _serviceName, _serviceLocation, this);
+           
+            if (RemoteClient.SupportTransaction && RemoteClient.HasTransactionTask())
+            {
+                var invokingId = Interlocked.Increment(ref RemoteClient.InvokingId);
+                RemoteClient.WaitConnectComplete(invokingId, connect).Wait();
+            }
+            connect.Invoke<object>(method, RemoteClient, parameters);
         }
         public T Invoke<T>(string method, params object[] parameters)
         {
-            return InvokeConnectFactory.Create(RemoteClient, _serviceName, _serviceLocation, this).Invoke<T>(method, RemoteClient, parameters);
+            var connect = InvokeConnectFactory.Create(RemoteClient, _serviceName, _serviceLocation, this);
+            if (RemoteClient.SupportTransaction && RemoteClient.HasTransactionTask())
+            {
+                var invokingId = Interlocked.Increment(ref RemoteClient.InvokingId);
+                RemoteClient.WaitConnectComplete(invokingId, connect).Wait();
+            }
+            return connect.Invoke<T>(method, RemoteClient, parameters);
         }
 
         async Task<T> CreateInvokeTask<T>(IInvokeConnect connect,int invokingId, string method, object[] parameters)

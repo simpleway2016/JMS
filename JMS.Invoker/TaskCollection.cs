@@ -24,6 +24,7 @@ namespace JMS
     internal class TaskCollection
     {
         List<ConnectTask> _tasks = new List<ConnectTask>();
+        public int Count => _tasks.Count;
         public void AddTask( IInvokeConnect invokeConnect ,int invokingId, Task task)
         {
             lock (_tasks)
@@ -37,13 +38,13 @@ namespace JMS
             for (int i = 0; i < _tasks.Count; i++)
             {
                 var item = _tasks[i];
-                //只等待那些InvokingId 比我小的任务，
-                //否则，我如果等待比我大的，那么那些比我大的也会等待我，互相等待就卡死了
-                if (item.InvokingId >= invokingId) 
-                    continue;
-
                 if (item.InvokeConnect == invokeConnect)
                 {
+                    //只等待那些InvokingId 比我小的任务，
+                    //否则，我如果等待比我大的，那么那些比我大的也会等待我，互相等待就卡死了
+                    if (item.InvokingId >= invokingId)
+                        continue;
+
                     await item.Task;
                 }
             }

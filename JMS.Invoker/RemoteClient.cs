@@ -1013,6 +1013,11 @@ namespace JMS
             }
         }
 
+        internal bool HasTransactionTask()
+        {
+            return _transactionTasks.Count > 0;
+        }
+
         /// <summary>
         /// 回滚分布式事务
         /// </summary>
