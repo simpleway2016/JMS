@@ -142,52 +142,35 @@ namespace JMS.ServiceProvider.AspNetCore
                 file = FileHelper.ChangeFileExt(file, ".trying");
 
                 object usercontent = null;
-                var fileContent = File.ReadAllText(file, Encoding.UTF8).FromJson<RequestInfo>();
-
-                if (checkFromGateway && _gatewayConnector.CheckTransaction(fileContent.TransactionId) == false)
+                var filetext = File.ReadAllText(file, Encoding.UTF8);
+                RequestInfo[] requestInfos;
+                if (filetext.StartsWith("["))
                 {
-                    _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", fileContent.TransactionId);
+                    requestInfos = filetext.FromJson<RequestInfo[]>();
+                }
+                else
+                {
+                    requestInfos = new RequestInfo[] { filetext.FromJson<RequestInfo>() };
+                }
+
+                if (checkFromGateway && _gatewayConnector.CheckTransaction(requestInfos.First().TransactionId) == false)
+                {
+                    _loggerTran?.LogInformation("网关没有标注事务成功，事务{0}记录到失败记录", requestInfos.First().TransactionId);
                     FileHelper.ChangeFileExt(file, ".failed");
                     return;
                 }
 
-                if(checkFromGateway == false && tranFlag != fileContent.TransactionFlag)
+                if(checkFromGateway == false && tranFlag != requestInfos.First().TransactionFlag)
                 {
                     return;
                 }
 
-                _loggerTran?.LogInformation("尝试重新提交事务{0}-{1}", fileContent.TransactionId, fileContent.Cmd.ControllerFullName + "." + fileContent.Cmd.ActionName);
+                _loggerTran?.LogInformation("尝试重新提交事务{0}-{1}", requestInfos.First().TransactionId );
 
-                if (fileContent.UserContentValue != null)
-                {
+              
 
-                    try
-                    {
-                        if (fileContent.UserContentType == typeof(System.Security.Claims.ClaimsPrincipal))
-                        {
-
-                            byte[] bs = fileContent.UserContentValue.FromJson<byte[]>();
-                            using (var ms = new System.IO.MemoryStream(bs))
-                            {
-                                usercontent = new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
-                            }
-                        }
-                        else
-                        {
-                            usercontent = Newtonsoft.Json.JsonConvert.DeserializeObject(fileContent.UserContentValue, fileContent.UserContentType);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _loggerTran?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", fileContent.TransactionId, ex.Message);
-                        FileHelper.ChangeFileExt(file, ".failed");
-                    }
-
-
-                }
-
-                retry(context, fileContent, usercontent);
-                _loggerTran?.LogInformation("成功提交事务{0} 请求数据：{1}", fileContent.TransactionId, fileContent.Cmd.ToJsonString());
+                retry(context, requestInfos);
+                _loggerTran?.LogInformation("成功提交事务{0} 请求数据：{1}", requestInfos.First().TransactionId, requestInfos.ToJsonString());
 
                 try
                 {
@@ -206,67 +189,77 @@ namespace JMS.ServiceProvider.AspNetCore
 
         }
 
-        async void retry(HttpContext context, RequestInfo requestInfo, object userContent)
+        async void retry(HttpContext context, RequestInfo[] requestInfos)
         {
-            if(userContent != null)
-            {
-                context.User = userContent as ClaimsPrincipal;
-            }
+
+            List<ApiTransactionDelegate> transactionDelegateList = new List<ApiTransactionDelegate>();
             using (IServiceScope serviceScope = _microServiceHost.ServiceProvider.CreateScope())
             {
                 context.RequestServices = serviceScope.ServiceProvider;
-
-                var controller = _controllerFactory.Create(requestInfo, context.RequestServices, out ControllerActionDescriptor desc);
-                if (controller != null)
+                foreach (var requestContent in requestInfos)
                 {
-                    var parameters = new object[desc.Parameters.Count];
-                    for (int i = 0; i < parameters.Length && i < requestInfo.Cmd.Parameters.Length; i++)
+                    var userContent = requestContent.GetUserContent(_loggerTran);
+                    if (userContent != null)
                     {
-                        string pvalue = requestInfo.Cmd.Parameters[i];
-                        if (pvalue == null)
-                            continue;
+                        context.User = userContent as ClaimsPrincipal;
+                    }
+                    else
+                    {
+                        context.User = null;
+                    }
+                    var controller = _controllerFactory.Create(requestContent, context.RequestServices, out ControllerActionDescriptor desc);
+                    if (controller != null)
+                    {
+                        var parameters = new object[desc.Parameters.Count];
+                        for (int i = 0; i < parameters.Length && i < requestContent.Cmd.Parameters.Length; i++)
+                        {
+                            string pvalue = requestContent.Cmd.Parameters[i];
+                            if (pvalue == null)
+                                continue;
 
-                        try
-                        {
-                            parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, desc.Parameters[i].ParameterType);
+                            try
+                            {
+                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, desc.Parameters[i].ParameterType);
+                            }
+                            catch (Exception ex)
+                            {
+                                var msg = $"转换参数出错，name:{desc.Parameters[i].Name} value:{pvalue}";
+                                throw new Exception(msg, ex);
+                            }
                         }
-                        catch (Exception ex)
+
+                        var actionFilterProcessor = new ActionFilterProcessor(context, controller, desc, parameters);
+
+                        actionFilterProcessor.OnActionExecuting();
+                        var result = desc.MethodInfo.Invoke(controller, parameters);
+                        if (result is Task || result is ValueTask)
                         {
-                            var msg = $"转换参数出错，name:{desc.Parameters[i].Name} value:{pvalue}";
-                            throw new Exception(msg, ex);
+                            if (desc.MethodInfo.ReturnType.IsGenericType)
+                            {
+                                result = await (dynamic)result;
+                            }
+                            else
+                            {
+                                await (dynamic)result;
+                                result = null;
+                            }
+                        }
+
+                        result = actionFilterProcessor.OnActionExecuted(result);
+
+                        var transactionDelegate = context.RequestServices.GetService<ApiTransactionDelegate>();
+                        if (transactionDelegate.StorageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == transactionDelegate.StorageEngine) == false)
+                        {
+                            transactionDelegateList.Add(transactionDelegate);
                         }
                     }
-
-                    var actionFilterProcessor = new ActionFilterProcessor(context, controller, desc, parameters);
-
-                    actionFilterProcessor.OnActionExecuting();
-                    var result = desc.MethodInfo.Invoke(controller, parameters);
-                    if (result is Task || result is ValueTask)
+                    else
                     {
-                        if (desc.MethodInfo.ReturnType.IsGenericType)
-                        {
-                            result = await (dynamic)result;
-                        }
-                        else
-                        {
-                            await (dynamic)result;
-                            result = null;
-                        }
-                    }
-
-                    result = actionFilterProcessor.OnActionExecuted(result);
-
-                    var tranDelegate = context.RequestServices.GetService<ApiTransactionDelegate>();
-                    if (tranDelegate.CommitAction != null)
-                    {
-                        tranDelegate.CommitAction();
-                        tranDelegate.CommitAction = null;
+                        throw new Exception("controller is null");
                     }
                 }
-                else
-                {
-                    throw new Exception("controller is null");
-                }
+
+                transactionDelegateList.CommitTransaction();
             }
         }
     }

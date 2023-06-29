@@ -122,6 +122,38 @@ namespace JMS.ServiceProvider.AspNetCore
             public InvokeInfo Cmd;
             public Type UserContentType;
             public string UserContentValue;
+
+            public object GetUserContent(ILogger logger)
+            {
+                if (this.UserContentValue != null)
+                {
+
+                    try
+                    {
+                        if (this.UserContentType == typeof(System.Security.Claims.ClaimsPrincipal))
+                        {
+
+                            byte[] bs = this.UserContentValue.FromJson<byte[]>();
+                            using (var ms = new System.IO.MemoryStream(bs))
+                            {
+                                return new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
+                            }
+                        }
+                        else
+                        {
+                            return Newtonsoft.Json.JsonConvert.DeserializeObject(this.UserContentValue, this.UserContentType);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger?.LogError("RetryCommitMission无法还原事务id为{0}的身份信息,{1}", this.TransactionId, ex.Message);
+                    }
+
+
+                }
+
+                return null;
+            }
         }
     }
 
