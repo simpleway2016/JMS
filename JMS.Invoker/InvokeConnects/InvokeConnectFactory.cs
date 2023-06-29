@@ -58,5 +58,18 @@ namespace JMS.InvokeConnects
                 return clientServiceDetail.ServiceAddress == otherLocation.ServiceAddress && clientServiceDetail.Port == otherLocation.Port;
             }
         }
+        public static bool IsTheSameServer(this ClientServiceDetail clientServiceDetail, string otherAddr,int port)
+        {
+            if (clientServiceDetail.Port == 0 && port == 0)
+            {
+                var uri1 = new Uri(clientServiceDetail.ServiceAddress);
+                var uri2 = new Uri(otherAddr);
+                return uri1.Port == uri2.Port && uri1.Host == uri2.Host;
+            }
+            else
+            {
+                return clientServiceDetail.ServiceAddress == otherAddr && clientServiceDetail.Port == port;
+            }
+        }
     }
 }

@@ -213,7 +213,7 @@ namespace UnitTest
                 services.AddScoped<UserInfoDbContext>();
                 var msp = new MicroServiceHost(services);
                 msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + _UserInfoServicePort;
-                msp.ClientCheckCodeFile = "./code1.txt";
+                //msp.ClientCheckCodeFile = "./code1.txt";
                 msp.Register<TestUserInfoController>("UserInfoService" , "用户服务" , true);
                 msp.Register<TestScopeController>("TestScopeService", "作用域测试服务", true);
                 msp.Register<TestWebSocketController>("TestWebSocketService");
@@ -596,7 +596,7 @@ namespace UnitTest
         }
 
         [TestMethod]
-        public void TestRequestScope()
+        public void TestScope()
         {
             UserInfoDbContext.Reset();
             StartGateway();
@@ -645,6 +645,43 @@ namespace UnitTest
                 UserInfoDbContext.FinallyFather != "Tom" ||
                 UserInfoDbContext.FinallyAge != 28)
                 throw new Exception("结果不正确");
+        }
+
+        /// <summary>
+        /// 测试是否优先选择已有的服务器
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        [TestMethod]
+        public void TestGetSameLocation()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            UserInfoDbContext.Reset();
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("TestScopeService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("TestScopeService");
+                }
+
+                var serviceClient2 = client.TryGetMicroService("UserInfoService");
+                var serviceClient3 = client.TryGetMicroServiceAsync("TestScopeService").GetAwaiter().GetResult();
+            }
+
         }
 
         [TestMethod]

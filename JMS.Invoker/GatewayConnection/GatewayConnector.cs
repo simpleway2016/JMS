@@ -1,4 +1,5 @@
 ﻿using JMS.Dtos;
+using JMS.InvokeConnects;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -20,6 +21,7 @@ namespace JMS.GatewayConnection
         NetAddress _gatewayAddress;
         bool _disposed = false;
         ProxyClient _client;
+        bool _loadServiceInfoCompleted;
         public NetAddress GatewayAddress => _gatewayAddress;
         List<RegisterServiceRunningInfo> _allServices = new List<RegisterServiceRunningInfo>(1024);
         public GatewayConnector(NetAddress proxy, NetAddress gatewayAddress, bool supportRemoteConnection, ILogger logger)
@@ -38,7 +40,7 @@ namespace JMS.GatewayConnection
         {
             try
             {
-                _logger?.LogDebug($"正在连接网关:{_gatewayAddress} {(_proxy!=null?"代理:":"")}{_proxy}");
+                _logger?.LogDebug($"正在连接网关:{_gatewayAddress} {(_proxy != null ? "代理:" : "")}{_proxy}");
                 RegisterServiceRunningInfo curItem;
                 using (_client = new ProxyClient(_proxy))
                 {
@@ -65,13 +67,13 @@ namespace JMS.GatewayConnection
                         return;
 
                     _logger?.LogDebug($"成功连接{_gatewayAddress}");
-                    var services = await _client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();                    
+                    var services = await _client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();
                     lock (_allServices)
                     {
                         _allServices.Clear();
                         _allServices.AddRange(services);
                     }
-
+                    _loadServiceInfoCompleted = true;
                     while (!_disposed)
                     {
                         var ret = await _client.ReadServiceObjectAsync<GatewayConnectionResult>();
@@ -142,6 +144,7 @@ namespace JMS.GatewayConnection
                 _logger?.LogDebug($"与网关断开{_gatewayAddress}");
                 if (!_disposed)
                 {
+                    _loadServiceInfoCompleted = false;
                     lock (_allServices)
                     {
                         _allServices.Clear();
@@ -251,6 +254,19 @@ namespace JMS.GatewayConnection
                 return await GetServiceLocationInGatewayAsync(remoteClient, serviceName);
             }
 
+            if (!_loadServiceInfoCompleted)
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    if (!_loadServiceInfoCompleted)
+                        Thread.Sleep(100);
+                    else
+                        break;
+                }
+            }
+            if (!_loadServiceInfoCompleted)
+                throw new Exception("Timeout to connect gateway");
+
             RegisterServiceRunningInfo[] matchServices;
             while (true)
             {
@@ -275,6 +291,17 @@ namespace JMS.GatewayConnection
 
             }
 
+            //优先选择已有的地址
+            if (remoteClient._microServices.Count > 0)
+            {
+                var existItem = matchServices.FirstOrDefault(x => remoteClient._microServices.Any(m => m.ServiceLocation.IsTheSameServer(x.ServiceAddress, x.Port)));
+                if (existItem != null)
+                {
+                    Interlocked.Increment(ref existItem.PerformanceInfo.RequestQuantity);
+
+                    return new ClientServiceDetail(existItem.ServiceList.FirstOrDefault(m => m.Name == serviceName), existItem);
+                }
+            }
             IEnumerable<RegisterServiceRunningInfo> services = null;
 
             //先查找cpu使用率低于70%的
@@ -303,6 +330,19 @@ namespace JMS.GatewayConnection
                 return GetServiceLocationInGateway(remoteClient, serviceName);
             }
 
+            if (!_loadServiceInfoCompleted)
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    if (!_loadServiceInfoCompleted)
+                        Thread.Sleep(100);
+                    else
+                        break;
+                }
+            }
+            if (!_loadServiceInfoCompleted)
+                throw new Exception("Timeout to connect gateway");
+
             RegisterServiceRunningInfo[] matchServices;
             while (true)
             {
@@ -325,6 +365,18 @@ namespace JMS.GatewayConnection
             {
                 return GetServiceLocationInGateway(remoteClient, serviceName);
 
+            }
+
+            //优先选择已有的地址
+            if (remoteClient._microServices.Count > 0)
+            {
+                var existItem = matchServices.FirstOrDefault(x => remoteClient._microServices.Any(m => m.ServiceLocation.IsTheSameServer(x.ServiceAddress, x.Port)));
+                if (existItem != null)
+                {
+                    Interlocked.Increment(ref existItem.PerformanceInfo.RequestQuantity);
+
+                    return new ClientServiceDetail(existItem.ServiceList.FirstOrDefault(m => m.Name == serviceName), existItem);
+                }
             }
 
             IEnumerable<RegisterServiceRunningInfo> services = null;

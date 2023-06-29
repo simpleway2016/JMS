@@ -34,6 +34,7 @@ namespace JMS
             get => _TransactionId;
         }
 
+        internal List<IMicroService> _microServices = new List<IMicroService>();
         internal string TransactionFlag;
         /// <summary>
         /// 是否支持事务，如果为false，这之后调用的微服务端会直接提交事务。默认为true
@@ -460,7 +461,12 @@ namespace JMS
                 {
                     var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), att.ServiceName);
                     if (invoker.Init(registerServiceLocation))
-                        return (T)Activator.CreateInstance(classType, new object[] { invoker });
+                    {
+                        var ret = (T)Activator.CreateInstance(classType, new object[] { invoker });
+
+                        _microServices.Add(invoker);
+                        return ret;
+                    }
                 }
                 catch (MissMasterGatewayException)
                 {
@@ -500,7 +506,12 @@ namespace JMS
                 {
                     var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), att.ServiceName);
                     if (await invoker.InitAsync(registerServiceLocation))
-                        return (T)Activator.CreateInstance(classType, new object[] { invoker });
+                    {
+                        
+                        var ret = (T)Activator.CreateInstance(classType, new object[] { invoker });
+                        _microServices.Add(invoker);
+                        return ret;
+                    }
                 }
                 catch (MissMasterGatewayException)
                 {
@@ -565,7 +576,10 @@ namespace JMS
                 {
                     var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), serviceName);
                     if (invoker.Init(registerServiceLocation))
+                    {
+                        _microServices.Add(invoker);
                         return invoker;
+                    }
                 }
                 catch (MissMasterGatewayException)
                 {
@@ -600,7 +614,10 @@ namespace JMS
                 {
                     var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), serviceName);
                     if (await invoker.InitAsync(registerServiceLocation))
+                    {
+                        _microServices.Add(invoker);
                         return invoker;
+                    }
                 }
                 catch (MissMasterGatewayException)
                 {
@@ -1004,6 +1021,7 @@ namespace JMS
 
         public void Dispose()
         {
+            _microServices.Clear();
             if (_SupportTransaction)
             {
                 RollbackTransaction();
