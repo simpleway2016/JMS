@@ -19,6 +19,7 @@ using UnitTest.ServiceHosts;
 using JMS.ServerCore;
 using System.IO;
 using System.Net.Sockets;
+using JMS.Common;
 
 namespace UnitTest
 {
@@ -582,7 +583,7 @@ Content-Length2: 0
                     }
                 }
 
-                Thread.Sleep(7000);//等待7秒，失败的事务
+                Thread.Sleep(12000);//等待7秒，失败的事务
 
                 if (CrashController.FinallyUserName != "Jack")
                     throw new Exception("结果不正确");
@@ -593,7 +594,95 @@ Content-Length2: 0
             }
         }
 
-       
+        [TestMethod]
+        public void ScropeTest()
+        {
+            var normalTest = new NormalTest();
+            normalTest.StartGateway();
+
+            var app = StartWebApi(normalTest._gateWayPort);
+            app.RunAsync();
+
+            var crash_app = StartCrashWebApi(normalTest._gateWayPort);
+            crash_app.RunAsync();
+
+            Thread.Sleep(1000);
+
+
+            try
+            {
+                normalTest.WaitGatewayReady(normalTest._gateWayPort);
+
+
+                var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = normalTest._gateWayPort
+                   }
+                };
+
+                using (var remoteClient = new RemoteClient(gateways))
+                {
+                    var service = remoteClient.TryGetMicroService("TestWebService");
+                    while (service == null)
+                    {
+                        Thread.Sleep(100);
+                        service = remoteClient.TryGetMicroService("TestWebService");
+                    }
+
+                    var service2 = remoteClient.TryGetMicroService("TestCrashService");
+                    while (service2 == null)
+                    {
+                        Thread.Sleep(100);
+                        service2 = remoteClient.TryGetMicroService("TestCrashService");
+                    }
+
+                    remoteClient.BeginTransaction();
+
+
+                    service2.Invoke("/Crash/AsyncSetName", "Jack2");
+                    service2.Invoke("/Crash/AsyncSetName", "Jack");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack1");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack2");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack");
+
+                    remoteClient.CommitTransaction();
+                }
+
+                if (CrashController.FinallyUserName != "Jack2")  //因为最后一个事务会先提交，然后再提交之前的事务，那么最后提交的事务应该是Jack2那次的调用
+                    throw new Exception("结果不正确");
+
+                CrashController.FinallyUserName = null;
+                bool createdNewClient = false;
+                using (var remoteClient = new RemoteClient(gateways))
+                {
+                    var service2 = remoteClient.TryGetMicroService("TestCrashService");
+
+                    remoteClient.BeginTransaction();
+
+                    NetClientPool.CreatedNewClient += (s, e) => {
+                        createdNewClient = true;
+                    };
+
+                    service2.Invoke("/Crash/AsyncSetName", "Jack2");
+                    service2.Invoke("/Crash/AsyncSetName", "Jack");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack1");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack2");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack");
+
+                    remoteClient.CommitTransaction();
+                }
+
+                if (createdNewClient)
+                    throw new Exception("创建了新的连接");
+                if (CrashController.FinallyUserName != "Jack2")  //因为最后一个事务会先提交，然后再提交之前的事务，那么最后提交的事务应该是Jack2那次的调用
+                    throw new Exception("结果不正确");
+            }
+            finally
+            {
+
+            }
+        }
     }
 
     class MyFeatureProvider : IApplicationFeatureProvider<ControllerFeature>

@@ -108,7 +108,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 else
                 {
                     _client.WriteServiceData(Encoding.UTF8.GetBytes("invoke"));
-                    _client.WriteServiceData(uri.PathAndQuery);
+                    _client.WriteServiceData(Encoding.UTF8.GetBytes(uri.PathAndQuery));
                 }
                 _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
                 var result = _client.ReadServiceObject<InvokeResult<T>>();
@@ -196,7 +196,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 else
                 {
                     _client.WriteServiceData(Encoding.UTF8.GetBytes("invoke"));
-                    _client.WriteServiceData(uri.PathAndQuery);
+                    _client.WriteServiceData(Encoding.UTF8.GetBytes(uri.PathAndQuery));
                 }
 
                 _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));

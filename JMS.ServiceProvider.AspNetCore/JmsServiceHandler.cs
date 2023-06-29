@@ -46,11 +46,12 @@ namespace JMS.ServiceProvider.AspNetCore
                     ApiTransactionDelegate.CurrentTranId.Value = (tranIds[0], tranFlag.Count == 0 ? null : tranFlag[0]);
                     var controllerFactory = app.ApplicationServices.GetService<ControllerFactory>();
 
-                    var parametersStrArr = (await netClient.ReadServiceDataAsync()).FromJson<string[]>();
+                 
                     var requestPath = context.Request.Path.Value;
 
                     while (true)
                     {
+                        var parametersStrArr = (await netClient.ReadServiceDataAsync()).FromJson<string[]>();
                         var controller = controllerFactory.Create(requestPath, context.RequestServices, out ControllerActionDescriptor desc);
                         if (desc == null)
                         {
@@ -256,11 +257,20 @@ namespace JMS.ServiceProvider.AspNetCore
 
                                     if (addToList)
                                     {
-                                        tranDelegateList.Add(tranDelegate);
+                                        tranDelegateList.Add(new ApiTransactionDelegate(tranDelegate.StorageEngine) { 
+                                            CommitAction = tranDelegate.CommitAction,
+                                            RollbackAction = tranDelegate.RollbackAction
+                                        });
                                     }
+
+                                    tranDelegate.Clear();
                                     //继续调用下一个方法
                                     requestPath = nextRequestPath;
                                     continue;
+                                }
+                                else
+                                {
+                                    break;
                                 }
                             }
                             catch (Exception ex)
@@ -288,10 +298,13 @@ namespace JMS.ServiceProvider.AspNetCore
 
                                 };
                                 netClient.WriteServiceData(outputObj);
+                                break;
                             }
-                            releaseNetClient(netClient);
+                            
                         }
                     }
+
+                    releaseNetClient(netClient);
                 }
                 catch(Exception ex)
                 {

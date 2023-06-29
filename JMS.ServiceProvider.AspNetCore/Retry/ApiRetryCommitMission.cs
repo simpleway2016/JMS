@@ -139,6 +139,10 @@ namespace JMS.ServiceProvider.AspNetCore
         {
             try
             {
+                if (checkFromGateway && (DateTime.Now - new FileInfo(file).LastWriteTime).TotalSeconds < 5)
+                {
+                    Thread.Sleep(5000);
+                }
                 file = FileHelper.ChangeFileExt(file, ".trying");
 
                 object usercontent = null;

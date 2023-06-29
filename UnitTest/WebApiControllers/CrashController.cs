@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace UnitTest.Controllers
 {
@@ -21,7 +23,7 @@ namespace UnitTest.Controllers
             this._apiTransactionDelegate = apiTransactionDelegate;
         }
 
-
+        string _name;
         [HttpGet]
         public string SetName(string name)
         {
@@ -32,16 +34,20 @@ namespace UnitTest.Controllers
                     throw new Exception("¹ÊÒâå´»ú");
                 }
 
-                FinallyUserName = name;
+                FinallyUserName = _name;
 
             };
+            _name = name;
             return name;
         }
 
         [HttpGet]
-        public async void AsyncSetName()
+        public async Task AsyncSetName(string name)
         {
-            
+            _apiTransactionDelegate.CommitAction = () => {
+                FinallyUserName = _name;
+            };
+            _name = name;
         }
 
         [HttpGet]

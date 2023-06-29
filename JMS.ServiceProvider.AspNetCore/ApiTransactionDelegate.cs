@@ -58,6 +58,13 @@ namespace JMS.ServiceProvider.AspNetCore
         internal bool Handled { get; set; }
         public IStorageEngine StorageEngine => _storageEngine;
 
+        internal void Clear()
+        {
+            _storageEngine = null;
+            CommitAction = null;
+            RollbackAction = null;
+            AgreeCommit = true;
+        }
         public void CommitTransaction()
         {
             if (_storageEngine != null)
