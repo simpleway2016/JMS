@@ -28,17 +28,6 @@ namespace JMS.ServiceProvider.AspNetCore
         public string TransactionId { get; }
         public string TransactionFlag { get; }
         IStorageEngine _storageEngine;
-        public ApiTransactionDelegate(IStorageEngine storageEngine)
-        {
-            _storageEngine = storageEngine;
-            this.AgreeCommit = true;
-            var val = CurrentTranId.Value;
-            this.TransactionId = CurrentTranId.Value.tranId;
-            this.TransactionFlag = CurrentTranId.Value.tranFlag;
-            CurrentTranId.Value = (null,null);
-            
-        }
-        [Obsolete("建议使用另一个构造函数：TransactionDelegate(MicroServiceControllerBase controller, IStorageEngine storageEngine)\r\n 这样CommitAction、RollbackAction可以不再赋值")]
         public ApiTransactionDelegate()
         {
             this.AgreeCommit = true;
@@ -56,7 +45,18 @@ namespace JMS.ServiceProvider.AspNetCore
         public Action CommitAction { get; set; }
         public Action RollbackAction { get; set; }
         internal bool Handled { get; set; }
-        public IStorageEngine StorageEngine => _storageEngine;
+        public bool SupportTransaction => _storageEngine != null || CommitAction != null || RollbackAction != null;
+        public IStorageEngine StorageEngine
+        {
+            get
+            {
+                return _storageEngine;
+            }
+            set
+            {
+                _storageEngine = value;
+            }
+        }
 
         internal void Clear()
         {

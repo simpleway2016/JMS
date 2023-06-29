@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using UnitTest.ServiceHosts;
 
 namespace UnitTest.Controllers
 {
@@ -15,15 +16,16 @@ namespace UnitTest.Controllers
     [Route("[controller]/[action]")]
     public class CrashController : ControllerBase
     {
+        UserInfoDbContext _userInfoDbContext;
         ApiTransactionDelegate _apiTransactionDelegate;
-        public static string FinallyUserName;
+
         public static bool CanCrash = true;
-        public CrashController(ApiTransactionDelegate apiTransactionDelegate)
+        public CrashController(ApiTransactionDelegate apiTransactionDelegate, UserInfoDbContext userInfoDbContext)
         {
+            this._userInfoDbContext = userInfoDbContext;
             this._apiTransactionDelegate = apiTransactionDelegate;
         }
 
-        string _name;
         [HttpGet]
         public string SetName(string name)
         {
@@ -34,20 +36,18 @@ namespace UnitTest.Controllers
                     throw new Exception("¹ÊÒâå´»ú");
                 }
 
-                FinallyUserName = _name;
+                UserInfoDbContext.FinallyUserName = name;
 
             };
-            _name = name;
             return name;
         }
 
         [HttpGet]
         public async Task AsyncSetName(string name)
         {
-            _apiTransactionDelegate.CommitAction = () => {
-                FinallyUserName = _name;
-            };
-            _name = name;
+            _userInfoDbContext.BeginTransaction();
+            _apiTransactionDelegate.StorageEngine = _userInfoDbContext;
+            _userInfoDbContext.UserName = name;
         }
 
         [HttpGet]

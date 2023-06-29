@@ -259,7 +259,7 @@ namespace JMS.Applications
                     {
                         try
                         {
-                            if (transactionDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == transactionDelegate) == false)
+                            if (transactionDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == transactionDelegate.StorageEngine) == false)
                             {
                                 transactionDelegate.RollbackTransaction();
                             }                            

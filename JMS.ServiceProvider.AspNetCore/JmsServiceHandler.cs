@@ -163,12 +163,16 @@ namespace JMS.ServiceProvider.AspNetCore
                                     {
                                         if (statusCodeResult.StatusCode < 200 || statusCodeResult.StatusCode >= 300)
                                         {
-                                            if (tranDelegate.RollbackAction != null)
+                                            if (tranDelegate != null)
                                             {
-                                                tranDelegate.RollbackAction();
-                                                tranDelegate.RollbackAction = null;
-                                                tranDelegate.CommitAction = null;
+                                                if (tranDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == tranDelegate.StorageEngine) == false)
+                                                {
+                                                    tranDelegate.RollbackTransaction();
+                                                }
+                                                tranDelegate = null;
                                             }
+                                            tranDelegateList.RollbackTransaction();
+
                                             netClient.WriteServiceData(new InvokeResult
                                             {
                                                 Success = false,
@@ -193,12 +197,12 @@ namespace JMS.ServiceProvider.AspNetCore
                                     result = null;
                                 }
 
-                                if (tranDelegate.CommitAction != null && !supportTran)
+                                if (tranDelegate.SupportTransaction && !supportTran)
                                 {
-                                    tranDelegate.CommitAction();
+                                    tranDelegate.CommitTransaction();
                                     tranDelegate = null;
                                 }
-                                else if (tranDelegate.CommitAction == null)
+                                else if (tranDelegate.SupportTransaction == false)
                                 {
                                     tranDelegate = null;
                                     supportTran = false;
@@ -257,7 +261,8 @@ namespace JMS.ServiceProvider.AspNetCore
 
                                     if (addToList)
                                     {
-                                        tranDelegateList.Add(new ApiTransactionDelegate(tranDelegate.StorageEngine) { 
+                                        tranDelegateList.Add(new ApiTransactionDelegate() { 
+                                            StorageEngine = tranDelegate.StorageEngine,
                                             CommitAction = tranDelegate.CommitAction,
                                             RollbackAction = tranDelegate.RollbackAction
                                         });

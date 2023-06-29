@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace UnitTest.ServiceHosts
 {
-    internal class UserInfoDbContext : IDbContext,IStorageEngine
+    public class UserInfoDbContext : IDbContext,IStorageEngine
     {
         bool _disposed;
         public bool BeganTransaction { get; private set; }

@@ -169,7 +169,7 @@ namespace JMS.ServiceProvider.AspNetCore
                     return;
                 }
 
-                _loggerTran?.LogInformation("尝试重新提交事务{0}-{1}", requestInfos.First().TransactionId );
+                _loggerTran?.LogInformation("尝试重新提交事务{0}", requestInfos.First().TransactionId );
 
               
 
@@ -254,8 +254,13 @@ namespace JMS.ServiceProvider.AspNetCore
                         var transactionDelegate = context.RequestServices.GetService<ApiTransactionDelegate>();
                         if (transactionDelegate.StorageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == transactionDelegate.StorageEngine) == false)
                         {
-                            transactionDelegateList.Add(transactionDelegate);
+                            transactionDelegateList.Add(new ApiTransactionDelegate { 
+                                StorageEngine = transactionDelegate.StorageEngine,
+                                CommitAction = transactionDelegate.CommitAction,
+                                RollbackAction = transactionDelegate.RollbackAction,
+                            });
                         }
+                        transactionDelegate.Clear();
                     }
                     else
                     {

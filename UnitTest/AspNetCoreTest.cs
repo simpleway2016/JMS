@@ -31,8 +31,8 @@ namespace UnitTest
             var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:9000" });
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
-            
 
+            builder.Services.AddScoped<UserInfoDbContext>();
             builder.Services.AddMvcCore()
 .ConfigureApplicationPartManager(manager =>
 {
@@ -58,7 +58,7 @@ namespace UnitTest
             var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:9001" });
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
-
+            builder.Services.AddScoped<UserInfoDbContext>();
 
             builder.Services.AddMvcCore()
 .ConfigureApplicationPartManager(manager =>
@@ -585,7 +585,7 @@ Content-Length2: 0
 
                 Thread.Sleep(12000);//等待7秒，失败的事务
 
-                if (CrashController.FinallyUserName != "Jack")
+                if (UserInfoDbContext.FinallyUserName != "Jack")
                     throw new Exception("结果不正确");
             }
             finally
@@ -649,10 +649,10 @@ Content-Length2: 0
                     remoteClient.CommitTransaction();
                 }
 
-                if (CrashController.FinallyUserName != "Jack2")  //因为最后一个事务会先提交，然后再提交之前的事务，那么最后提交的事务应该是Jack2那次的调用
+                if (UserInfoDbContext.FinallyUserName != "Jack")  
                     throw new Exception("结果不正确");
 
-                CrashController.FinallyUserName = null;
+                UserInfoDbContext.FinallyUserName = null;
                 bool createdNewClient = false;
                 using (var remoteClient = new RemoteClient(gateways))
                 {
@@ -675,7 +675,7 @@ Content-Length2: 0
 
                 if (createdNewClient)
                     throw new Exception("创建了新的连接");
-                if (CrashController.FinallyUserName != "Jack2")  //因为最后一个事务会先提交，然后再提交之前的事务，那么最后提交的事务应该是Jack2那次的调用
+                if (UserInfoDbContext.FinallyUserName != "Jack")  
                     throw new Exception("结果不正确");
             }
             finally
