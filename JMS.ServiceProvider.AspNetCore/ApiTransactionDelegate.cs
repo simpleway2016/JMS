@@ -165,9 +165,14 @@ namespace JMS.ServiceProvider.AspNetCore
             {
                 if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)
                 {
+                    transactionDelegateList.CommitTransaction();
                     this.CommitTransaction();
                 }
-                transactionDelegateList.CommitTransaction();
+                else
+                {
+                    transactionDelegateList.CommitTransaction();
+                }
+              
 
                 if (RetryCommitFilePath != null)
                 {
@@ -198,9 +203,14 @@ namespace JMS.ServiceProvider.AspNetCore
         {
             if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)
             {
+                transactionDelegateList.RollbackTransaction();
                 this.RollbackTransaction();
             }
-            transactionDelegateList.RollbackTransaction();
+            else
+            {
+                transactionDelegateList.RollbackTransaction();
+            }
+          
 
             if (RetryCommitFilePath != null)
             {
