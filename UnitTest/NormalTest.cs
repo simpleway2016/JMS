@@ -797,7 +797,9 @@ namespace UnitTest
                     serviceClient = client.TryGetMicroService("TestScopeService");
                 }
 
-                var crashService = client.GetMicroService("CrashService", new JMS.Dtos.ClientServiceDetail("127.0.0.1", _CrashServicePort));
+                var crashService = client.GetMicroService("CrashService", new JMS.Dtos.ClientServiceDetail("127.0.0.1", _CrashServicePort) { 
+                    Properties = new Dictionary<string, string>() { { "EngineVersion", "5.0.0"} }
+                });
 
                 client.BeginTransaction();
                 tranid = client.TransactionId;
