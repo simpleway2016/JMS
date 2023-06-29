@@ -229,7 +229,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
                                 var failbuilder = app.ApplicationServices.GetService<ApiFaildCommitBuilder>();
                                 var gatewayConnector = app.ApplicationServices.GetService<IGatewayConnector>();
-                                var nextRequestPath = await tranDelegate.WaitForCommandAsync(null, gatewayConnector, failbuilder, netClient, app.ApplicationServices.GetService<ILogger>());
+                                var nextRequestPath = await tranDelegate.WaitForCommandAsync(tranDelegateList, gatewayConnector, failbuilder, netClient, app.ApplicationServices.GetService<ILogger>());
 
                                 if (nextRequestPath != null)
                                 {
