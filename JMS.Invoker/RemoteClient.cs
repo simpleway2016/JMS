@@ -701,6 +701,15 @@ namespace JMS
             }
         }
 
+        /// <summary>
+        /// 设置下面的调用是否参与到分布式事务
+        /// </summary>
+        /// <param name="isSupportTransaction">true：参与  false：不参与</param>
+        public void SetSupportTransaction(bool isSupportTransaction)
+        {
+            _SupportTransaction = isSupportTransaction;
+        }
+
 
         /// <summary>
         /// 提交分布式事务 (请先使用BeginTransaction启动事务)

@@ -84,6 +84,7 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.Parameters = parameters;
 
             var uri = getServiceUri(InvokingInfo.ServiceLocation.ServiceAddress , method);
+            bool isNewClient = false;
             if (_client == null)
             {
                 _client = NetClientPool.CreateClient(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) =>
@@ -93,14 +94,22 @@ Accept-Language: zh-CN,zh;q=0.9
                         client.AsSSLClient(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
                     }
                 });
+                isNewClient = true;
             }
             try
             {
 
                 _client.ReadTimeout = tran.Timeout;
-                var data = createHttpDatas(tran, uri, "JmsService");
-                _client.Write(data);
-
+                if (isNewClient)
+                {
+                    var data = createHttpDatas(tran, uri, "JmsService");
+                    _client.Write(data);
+                }
+                else
+                {
+                    _client.WriteServiceData(Encoding.UTF8.GetBytes("invoke"));
+                    _client.WriteServiceData(uri.PathAndQuery);
+                }
                 _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
                 var result = _client.ReadServiceObject<InvokeResult<T>>();
                 if (result.Success == false)
@@ -160,8 +169,9 @@ Accept-Language: zh-CN,zh;q=0.9
             }
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
-
+            var isNewClient = false;
             var uri = getServiceUri(InvokingInfo.ServiceLocation.ServiceAddress , method);
+
             if (_client == null)
             {
                 _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(uri.Host, uri.Port) { Certificate = tran.ServiceClientCertificate }, (client) =>
@@ -172,13 +182,22 @@ Accept-Language: zh-CN,zh;q=0.9
                     }
                     return Task.CompletedTask;
                 });
+                isNewClient = true;
             }
             try
             {
 
                 _client.ReadTimeout = tran.Timeout;
-                var data = createHttpDatas(tran, uri, "JmsService");
-                _client.Write(data);
+                if (isNewClient)
+                {
+                    var data = createHttpDatas(tran, uri, "JmsService");
+                    _client.Write(data);
+                }
+                else
+                {
+                    _client.WriteServiceData(Encoding.UTF8.GetBytes("invoke"));
+                    _client.WriteServiceData(uri.PathAndQuery);
+                }
 
                 _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
                 var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>();
