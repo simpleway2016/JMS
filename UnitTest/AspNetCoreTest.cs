@@ -26,8 +26,12 @@ namespace UnitTest
     [TestClass]
     public class AspNetCoreTest
     {
+        static bool StartedWebApi = false;
         WebApplication StartWebApi(int gateWayPort)
         {
+            if (StartedWebApi)
+                return null;
+            StartedWebApi = true;
             var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:9000" });
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
@@ -53,9 +57,12 @@ namespace UnitTest
             app.MapControllers();
             return app;
         }
-
+        static bool StartedCrashWebApi = false;
         WebApplication StartCrashWebApi(int gateWayPort)
         {
+            if (StartedCrashWebApi)
+                return null;
+            StartedCrashWebApi = true;
             var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:9001" });
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
@@ -281,10 +288,10 @@ Content-Length2: 0
             var normalTest = new NormalTest();
             normalTest.StartGateway();
             normalTest.StartJmsWebApi();
-            normalTest.StartWebApi(normalTest._gateWayPort).RunAsync();
+            normalTest.StartWebApi(normalTest._gateWayPort)?.RunAsync();
 
             var app = StartWebApi(normalTest._gateWayPort);
-            app.RunAsync();
+            app?.RunAsync();
             Thread.Sleep(1000);
             normalTest.WaitGatewayReady(normalTest._gateWayPort);
 
@@ -355,7 +362,7 @@ Content-Length2: 0
             normalTest.StartJmsWebApi();
 
             var app = StartWebApi(normalTest._gateWayPort);
-            app.RunAsync();
+            app?.RunAsync();
             Thread.Sleep(1000);
             normalTest.WaitGatewayReady(normalTest._gateWayPort);
 
@@ -437,7 +444,7 @@ Content-Length2: 0
             normalTest.StartGateway();
 
             var app = StartCrashWebApi(normalTest._gateWayPort);
-            app.RunAsync();
+            app?.RunAsync();
             Thread.Sleep(1000);
             normalTest.WaitGatewayReady(normalTest._gateWayPort);
 
@@ -495,7 +502,7 @@ Content-Length2: 0
             normalTest.StartGateway();
 
             var app = StartWebApi(normalTest._gateWayPort);
-            app.RunAsync();
+            app?.RunAsync();
             Thread.Sleep(1000);
             normalTest.WaitGatewayReady(normalTest._gateWayPort);
 
@@ -533,14 +540,15 @@ Content-Length2: 0
         [TestMethod]
         public void CrashTest()
         {
+            CrashController.CanCrash = true;
             var normalTest = new NormalTest();
             normalTest.StartGateway();
 
             var app = StartWebApi(normalTest._gateWayPort);
-            app.RunAsync();
+            app?.RunAsync();
 
             var crash_app = StartCrashWebApi(normalTest._gateWayPort);
-            crash_app.RunAsync();
+            crash_app?.RunAsync();
 
             Thread.Sleep(1000);
 
@@ -606,14 +614,15 @@ Content-Length2: 0
         [TestMethod]
         public void ScropeCrashTest()
         {
+            CrashController.CanCrash = true;
             var normalTest = new NormalTest();
             normalTest.StartGateway();
 
             var app = StartWebApi(normalTest._gateWayPort);
-            app.RunAsync();
+            app?.RunAsync();
 
             var crash_app = StartCrashWebApi(normalTest._gateWayPort);
-            crash_app.RunAsync();
+            crash_app?.RunAsync();
 
             Thread.Sleep(1000);
 
@@ -629,7 +638,7 @@ Content-Length2: 0
                         Port = normalTest._gateWayPort
                    }
                 };
-
+                string transactionId = null;
                 using (var remoteClient = new RemoteClient(gateways))
                 {
                     var service2 = remoteClient.TryGetMicroService("TestCrashService");
@@ -640,6 +649,7 @@ Content-Length2: 0
                     }
 
                     remoteClient.BeginTransaction();
+                    transactionId = remoteClient.TransactionId;
 
                     for (int i = 0; i < 20; i++)
                     {
@@ -661,7 +671,7 @@ Content-Length2: 0
                 Thread.Sleep(12000);//等待7秒，失败的事务
 
                 if (UserInfoDbContext.FinallyUserName != "Jack")
-                    throw new Exception("结果不正确");
+                    throw new Exception("结果不正确=>" + UserInfoDbContext.FinallyUserName + "\r\n" + transactionId);
             }
             finally
             {
@@ -676,10 +686,10 @@ Content-Length2: 0
             normalTest.StartGateway();
 
             var app = StartWebApi(normalTest._gateWayPort);
-            app.RunAsync();
+            app?.RunAsync();
 
             var crash_app = StartCrashWebApi(normalTest._gateWayPort);
-            crash_app.RunAsync();
+            crash_app?.RunAsync();
 
             Thread.Sleep(1000);
 

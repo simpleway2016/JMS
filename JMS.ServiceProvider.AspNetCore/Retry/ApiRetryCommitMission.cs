@@ -193,7 +193,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
         }
 
-        async void retry(HttpContext context, RequestInfo[] requestInfos)
+        void retry(HttpContext context, RequestInfo[] requestInfos)
         {
 
             List<ApiTransactionDelegate> transactionDelegateList = new List<ApiTransactionDelegate>();
@@ -238,15 +238,7 @@ namespace JMS.ServiceProvider.AspNetCore
                         var result = desc.MethodInfo.Invoke(controller, parameters);
                         if (result is Task || result is ValueTask)
                         {
-                            if (desc.MethodInfo.ReturnType.IsGenericType)
-                            {
-                                result = await (dynamic)result;
-                            }
-                            else
-                            {
-                                await (dynamic)result;
-                                result = null;
-                            }
+                            ((dynamic)result).Wait();
                         }
 
                         result = actionFilterProcessor.OnActionExecuted(result);
