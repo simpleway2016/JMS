@@ -250,11 +250,6 @@ namespace JMS.Applications
                     while (ex.InnerException != null)
                         ex = ex.InnerException;
 
-                    if(tranDelegateList != null || transactionDelegate != null)
-                    {
-                        _loggerTran?.LogInformation("事务{0}回滚完毕，请求数据:{1}", transactionDelegate.TransactionId, transactionDelegate.RequestCommand.ToJsonString());
-                    }
-
                     if (transactionDelegate != null)
                     {
                         try

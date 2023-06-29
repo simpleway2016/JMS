@@ -152,7 +152,7 @@ namespace JMS
                 {
                     //网关告知事务失败，需要回滚事务
 
-                    _controller.ServiceProvider.GetService<ILogger<TransactionDelegate>>()?.LogInformation("事务{0}回滚完毕，请求数据:{1}", this.TransactionId, this.RequestCommand.ToJsonString());
+                    _controller.ServiceProvider.GetService<ILogger<TransactionDelegate>>()?.LogInformation($"事务{this.TransactionId}回滚");
 
                     if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)
                     {
