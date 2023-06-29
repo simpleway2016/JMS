@@ -16,7 +16,11 @@ namespace JMS.Dtos
         /// 对外提供微服务的地址
         /// </summary>
         public string ServiceAddress;
-        
+
+        /// <summary>
+        /// 附加属性
+        /// </summary>
+        public Dictionary<string, string> Properties;
 
         /// <summary>
         /// 服务器是否启用了ssl证书
@@ -77,6 +81,7 @@ namespace JMS.Dtos
         /// 用来是否运行客户端连接的检验代码的文件路径
         /// </summary>
         public string ClientCheckCodeFile;
+      
         /// <summary>
         /// 是否同一时间只有一个相同的服务器运行（双机热备）
         /// </summary>
@@ -113,6 +118,10 @@ namespace JMS.Dtos
         public int MaxThread;
         public string ServiceId;
         public int MaxRequestCount;
+        /// <summary>
+        /// 附加属性
+        /// </summary>
+        public Dictionary<string,string> Properties;
         /// <summary>
         /// 当前微服务的负载情况
         /// </summary>

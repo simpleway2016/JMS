@@ -126,6 +126,7 @@ namespace JMS.GatewayConnection
                                         exist.ServiceAddress = curItem.ServiceAddress;
                                         exist.Port = curItem.Port;
                                         exist.UseSsl = curItem.UseSsl;
+                                        exist.Properties = curItem.Properties;
                                         break;
                                     }
                                 }

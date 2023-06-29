@@ -16,7 +16,10 @@ namespace JMS.Dtos
         /// 服务器是否启用了ssl证书
         /// </summary>
         public bool UseSsl;
-
+        /// <summary>
+        /// 附加属性
+        /// </summary>
+        public Dictionary<string, string> Properties;
         public ClientServiceDetail(string address, int port)
         {
             this.Port = port;
@@ -38,6 +41,7 @@ namespace JMS.Dtos
             this.Port = registerServiceLocation.Port;
             this.ServiceAddress = registerServiceLocation.ServiceAddress;
             this.UseSsl = registerServiceLocation.UseSsl;
+            this.Properties = registerServiceLocation.Properties;
         }
         public ClientServiceDetail(ServiceDetail source, RegisterServiceRunningInfo registerServiceRunningInfo)
         {
@@ -48,6 +52,7 @@ namespace JMS.Dtos
             this.Port = registerServiceRunningInfo.Port;
             this.ServiceAddress = registerServiceRunningInfo.ServiceAddress;
             this.UseSsl = registerServiceRunningInfo.UseSsl;
+            this.Properties = registerServiceRunningInfo.Properties;
         }
         public ClientServiceDetail()
         {

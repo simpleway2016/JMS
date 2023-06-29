@@ -52,6 +52,7 @@ namespace JMS.Domains
                     MaxThread = serviceInfo.MaxThread,
                     UseSsl = serviceInfo.UseSsl,
                     MaxRequestCount = serviceInfo.MaxRequestCount,
+                    Properties = serviceInfo.Properties,
                     PerformanceInfo = new PerformanceInfo
                     {
                         RequestQuantity = serviceInfo.RequestQuantity,
@@ -110,6 +111,7 @@ namespace JMS.Domains
                     MaxThread = serviceInfo.MaxThread,
                     UseSsl = serviceInfo.UseSsl,
                     MaxRequestCount = serviceInfo.MaxRequestCount,
+                    Properties = serviceInfo.Properties,
                     PerformanceInfo = new PerformanceInfo
                     {
                         RequestQuantity = serviceInfo.RequestQuantity,
@@ -152,6 +154,7 @@ namespace JMS.Domains
                 MaxThread = m.MaxThread,
                 UseSsl = m.UseSsl,
                 MaxRequestCount = m.MaxRequestCount,
+                Properties = m.Properties,
                 PerformanceInfo = new PerformanceInfo
                 {
                     RequestQuantity = m.RequestQuantity,

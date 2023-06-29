@@ -47,6 +47,8 @@ namespace JMS.Applications.CommandHandles
            if(service != null)
             {
                 service.ServiceList = serviceItem.ServiceList;
+                service.Port = serviceItem.Port;
+                service.SingletonService = serviceItem.SingletonService;
                 service.ClientCheckCodeFile = serviceItem.ClientCheckCodeFile;
                 _registerServiceManager.RefreshServiceInfo(service);
             }

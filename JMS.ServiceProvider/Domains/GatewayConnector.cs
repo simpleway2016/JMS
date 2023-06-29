@@ -252,6 +252,7 @@ namespace JMS.Domains
                         MaxRequestCount = _microServiceHost.MaxRequestCount,
                         ClientCheckCodeFile = _microServiceHost.ClientCheckCodeFile,
                         SingletonService = _microServiceHost.SingletonService,
+                        Properties = new Dictionary<string, string>(){ { "EngineVersion", typeof(GatewayConnector).Assembly.GetName().Version.ToString() } },
                         UseSsl = (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     }.ToJsonString()
                 });

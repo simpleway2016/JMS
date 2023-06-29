@@ -85,6 +85,7 @@ namespace JMS.Applications.CommandHandles
                 MaxThread = m.MaxThread,
                 MaxRequestCount = m.MaxRequestCount,
                 UseSsl = m.UseSsl,
+                Properties = m.Properties,
                 PerformanceInfo = new PerformanceInfo
                 {
                     RequestQuantity = m.RequestQuantity,
