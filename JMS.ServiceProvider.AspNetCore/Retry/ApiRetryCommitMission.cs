@@ -188,7 +188,19 @@ namespace JMS.ServiceProvider.AspNetCore
             catch (Exception ex)
             {
                 _loggerTran?.LogError("RetryCommitMission处理事务id为{0}时发生未知错误,{1}", ex.Message);
-                FileHelper.ChangeFileExt(file, ".failed");
+                file = FileHelper.ChangeFileExt(file, ".failed");
+
+                //30秒后，把文件重新改回.err，重新尝试执行
+                Task.Run(() => {
+                    Thread.Sleep(30000);
+                    try
+                    {
+                        FileHelper.ChangeFileExt(file, ".err");
+                    }
+                    catch
+                    {
+                    }
+                });
             }
 
         }
