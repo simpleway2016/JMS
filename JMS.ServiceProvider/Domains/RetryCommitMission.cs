@@ -204,7 +204,14 @@ namespace JMS.RetryCommit
             }
             catch (Exception ex)
             {
-               
+                _loggerTran?.LogError($"RetryCommitMission处理事务时发生未知错误,{ex.Message}");
+                try
+                {
+                    FileHelper.ChangeFileExt(file, ".err");
+                }
+                catch
+                {
+                }
             }
 
         }
