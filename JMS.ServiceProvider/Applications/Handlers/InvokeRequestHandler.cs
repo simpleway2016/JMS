@@ -218,14 +218,10 @@ namespace JMS.Applications
                             {
                                 if (transactionDelegate.StorageEngine != null)
                                 {
-                                    foreach (var preDelegate in tranDelegateList)
+                                    if (tranDelegateList.Any(x => x.StorageEngine == transactionDelegate.StorageEngine))
                                     {
-                                        if (preDelegate.StorageEngine == transactionDelegate.StorageEngine)
-                                        {
-                                            //同一个数据库对象，不用放入list
-                                            addToList = false;
-                                            break;
-                                        }
+                                        //同一个数据库对象，不用放入list
+                                        addToList = false;
                                     }
                                 }                               
                             }
