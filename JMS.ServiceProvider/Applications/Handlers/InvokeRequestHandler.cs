@@ -183,7 +183,8 @@ namespace JMS.Applications
                     {
                         Success = true,
                         SupportTransaction = supportTran,
-                        Data = result
+                        Data = result,
+                        Attributes = "{'SupportScope':true}",
 
                     }.ToJsonString());
 

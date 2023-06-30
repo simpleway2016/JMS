@@ -18,6 +18,7 @@ namespace JMS
         public InvokingInformation InvokingInfo { get; private set; }
         public InvokeCommand Command { get; private set; }
         public Invoker Invoker { get; private set; }
+        public bool SupportScope { get;private set; }
         public bool HasTransactionHolding { get;private set; }
 
         public HttpInvokeConnect(string serviceName, ClientServiceDetail location, Invoker invoker)
@@ -118,6 +119,11 @@ Accept-Language: zh-CN,zh;q=0.9
                     throw new RemoteException(tran.TransactionId, result.Error);
                 }
 
+                if (result.Attributes != null)
+                {
+                    this.SupportScope = result.Attributes.FromJson<InvokeAttributes>().SupportScope;
+                }
+
                 if (result.SupportTransaction)
                 {
                     this.HasTransactionHolding = true;
@@ -205,6 +211,11 @@ Accept-Language: zh-CN,zh;q=0.9
                 {
                     this.AddClientToPool();
                     throw new RemoteException(tran.TransactionId, result.Error);
+                }
+
+                if (result.Attributes != null)
+                {
+                    this.SupportScope = result.Attributes.FromJson<InvokeAttributes>().SupportScope;
                 }
 
                 if (result.SupportTransaction)

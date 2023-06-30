@@ -8,21 +8,16 @@ namespace JMS.InvokeConnects
 {
     internal class InvokeConnectFactory
     {
-        static Version MinScopeSupportVersion = new Version("3.3.0");
         public static IInvokeConnect Create(RemoteClient remoteClient, string serviceName,ClientServiceDetail serviceLocation,Invoker invoker)
         {
             if (remoteClient != null)
             {
                 if (remoteClient._SupportTransaction && remoteClient._Connects.Count > 0)
                 {
-                    var matchItem = remoteClient._Connects.FirstOrDefault(m => m.InvokingInfo.ServiceLocation.IsTheSameServer(serviceLocation));
+                    var matchItem = remoteClient._Connects.FirstOrDefault(m => m.SupportScope && m.InvokingInfo.ServiceLocation.IsTheSameServer(serviceLocation));
                     if (matchItem != null)
                     {
-                        if (matchItem.InvokingInfo.ServiceLocation.Properties != null && matchItem.InvokingInfo.ServiceLocation.Properties.TryGetValue("EngineVersion", out string engineVersion)
-                            && new Version(engineVersion) >= MinScopeSupportVersion)
-                        {
-                            return matchItem;
-                        }
+                        return matchItem;
                     }
                 }
             }

@@ -212,7 +212,8 @@ namespace JMS.ServiceProvider.AspNetCore
                                 {
                                     Success = true,
                                     SupportTransaction = supportTran,
-                                    Data = result
+                                    Data = result,
+                                    Attributes = "{'SupportScope':true}",
 
                                 };
                                 netClient.WriteServiceData(outputObj);

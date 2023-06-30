@@ -47,6 +47,7 @@ namespace JMS.Dtos
         public bool SupportTransaction;
         public object Data;
         public string Error;
+        public string Attributes;
     }
     public class InvokeResult<T>
     {
@@ -54,5 +55,6 @@ namespace JMS.Dtos
         public bool SupportTransaction;
         public T Data;
         public string Error;
+        public string Attributes;
     }
 }
