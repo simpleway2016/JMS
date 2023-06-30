@@ -130,9 +130,13 @@ namespace JMS.ServiceProvider.AspNetCore
                     //网关告知事务已成功，需要提交事务
                     if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)
                     {
+                        transactionDelegateList.CommitTransaction();
                         this.CommitTransaction();
                     }
-                    transactionDelegateList.CommitTransaction();
+                    else
+                    {
+                        transactionDelegateList.CommitTransaction();
+                    }
 
                     if (this.RetryCommitFilePath != null)
                     {
