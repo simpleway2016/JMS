@@ -1,5 +1,6 @@
 ﻿using JMS;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,7 +15,27 @@ namespace UnitTest.ServiceHosts
         bool _disposed;
         public bool BeganTransaction { get; private set; }
 
-        public string UserName { get; set; }
+        static UserInfoDbContext LockedObject;
+        private string _Name;
+        public string UserName
+        {
+            get => _Name;
+            set
+            {
+                if(this.CurrentTransaction != null)
+                {
+                    if(LockedObject != null && LockedObject != this)
+                    {
+                        throw new Exception("数据已经被其他UserInfoDbContext锁定");
+                    }
+                    LockedObject = this;
+                }
+                if (_Name != value)
+                {
+                    _Name = value;
+                }
+            }
+        }
         public int? Age { get; set; }
         public string Father { get; set; }
         public string Mather { get; set; }
@@ -57,6 +78,7 @@ namespace UnitTest.ServiceHosts
         {
             if (_disposed)
                 throw new Exception("UserInfoDbContext已经释放了");
+            LockedObject = null;
             if (BeganTransaction)
             {
                 if(this.UserName != null)
@@ -79,6 +101,10 @@ namespace UnitTest.ServiceHosts
 
         public void Dispose()
         {
+            if (_disposed)
+                return;
+
+            RollbackTransaction();
             _disposed = true;
             Debug.WriteLine("UserInfoDbContext释放了");
         }
@@ -87,7 +113,7 @@ namespace UnitTest.ServiceHosts
         {
             if (_disposed)
                 throw new Exception("UserInfoDbContext已经释放了");
-
+            LockedObject = null;
             if (BeganTransaction)
             {
                 Debug.WriteLine("UserInfoDbContext回滚事务了");
