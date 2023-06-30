@@ -32,8 +32,8 @@ namespace JMS.ServiceProvider.AspNetCore
         {
             this.AgreeCommit = true;
             var val = CurrentTranId.Value;
-            this.TransactionId = CurrentTranId.Value.tranId;
-            this.TransactionFlag = CurrentTranId.Value.tranFlag;
+            this.TransactionId = val.tranId;
+            this.TransactionFlag = val.tranFlag;
             CurrentTranId.Value = (null, null);
         }
 

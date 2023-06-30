@@ -247,14 +247,10 @@ namespace JMS.ServiceProvider.AspNetCore
                                     {
                                         if (tranDelegate.StorageEngine != null)
                                         {
-                                            foreach (var preDelegate in tranDelegateList)
+                                            if (tranDelegateList.Any(x => x.StorageEngine == tranDelegate.StorageEngine))
                                             {
-                                                if (preDelegate.StorageEngine == tranDelegate.StorageEngine)
-                                                {
-                                                    //同一个数据库对象，不用放入list
-                                                    addToList = false;
-                                                    break;
-                                                }
+                                                //同一个数据库对象，不用放入list
+                                                addToList = false;
                                             }
                                         }
                                     }
