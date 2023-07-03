@@ -213,54 +213,6 @@ namespace JMS.ServerCore
             }
         }
 
-        /// <summary>
-        /// 解析http请求头
-        /// </summary>
-        /// <param name="preRequestString"></param>
-        /// <param name="stream"></param>
-        /// <param name="headers"></param>
-        /// <returns>请求的第一行语句</returns>
-        /// <exception cref="SocketException"></exception>
-        static async Task<string> ReadHeaders(string preRequestString, Stream stream, IDictionary<string, string> headers)
-        {
-            List<byte> lineBuffer = new List<byte>(1024);
-            string line = null;
-            string requestPathLine = null;
-            byte[] bData = new byte[1];
-            int readed;
-            int indexFlag;
-            while (true)
-            {
-                readed = await stream.ReadAsync(bData, 0, 1);
-                if (readed <= 0)
-                    throw new SocketException();
-
-                if (bData[0] == 10)
-                {
-                    if (lineBuffer.Count == 0)
-                        break;
-
-                    line = Encoding.UTF8.GetString(lineBuffer.ToArray());
-                    lineBuffer.Clear();
-                    if (requestPathLine == null)
-                        requestPathLine = preRequestString + line;
-                    else if ((indexFlag = line.IndexOf(':', 0)) > 0 && indexFlag < line.Length - 1)
-                    {
-                        var key = line.Substring(0, indexFlag);
-                        var value = line.Substring(indexFlag + 1).Trim();
-                        headers[key] = value;
-                        if (headers.Count > 100)
-                            throw new Exception("too many header keys");
-                    }
-                }
-                else if (bData[0] != 13)
-                {
-                    lineBuffer.Add(bData[0]);
-                    if (lineBuffer.Count > 10240)
-                        throw new Exception("header too big");
-                }
-            }
-            return requestPathLine;
-        }
+       
     }
 }
