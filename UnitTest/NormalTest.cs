@@ -50,7 +50,7 @@ namespace UnitTest
 
         WebApplication StartWebApiService(int gateWayPort)
         {
-            var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:"+ _webApiServicePort });
+            var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:" + _webApiServicePort });
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
 
@@ -61,7 +61,8 @@ namespace UnitTest
     var featureProvider = new MyFeatureProvider();
     manager.FeatureProviders.Add(featureProvider);
 });
-            builder.Services.RegisterJmsService("http://127.0.0.1:"+ _webApiServicePort, "TestWebService", gateways, true,option => {
+            builder.Services.RegisterJmsService("http://127.0.0.1:" + _webApiServicePort, "TestWebService", gateways, true, option =>
+            {
                 option.RetryCommitPath += "9902";
             });
             var app = builder.Build();
@@ -214,7 +215,7 @@ namespace UnitTest
                 var msp = new MicroServiceHost(services);
                 msp.RetryCommitPath = "./$$JMS_RetryCommitPath" + _UserInfoServicePort;
                 //msp.ClientCheckCodeFile = "./code1.txt";
-                msp.Register<TestUserInfoController>("UserInfoService" , "用户服务" , true);
+                msp.Register<TestUserInfoController>("UserInfoService", "用户服务", true);
                 msp.Register<TestScopeController>("TestScopeService", "作用域测试服务", true);
                 msp.Register<TestWebSocketController>("TestWebSocketService");
                 msp.ServiceProviderBuilded += UserInfo_ServiceProviderBuilded;
@@ -368,7 +369,7 @@ namespace UnitTest
 
             ClientWebSocket clientWebsocket = new ClientWebSocket();
             clientWebsocket.Options.SetRequestHeader("X-Forwarded-For", "::1");
-            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiPort}/JMSRedirect/TestWebSocketService?q=1") , CancellationToken.None).GetAwaiter().GetResult();
+            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiPort}/JMSRedirect/TestWebSocketService?q=1"), CancellationToken.None).GetAwaiter().GetResult();
             var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
             if (text != "hello")
                 throw new Exception("error");
@@ -413,7 +414,7 @@ namespace UnitTest
             //用同一个连接，通过webapi反向代理访问webapi微服务
             JMS.NetClient netclient = new NetClient();
             netclient.Connect(new NetAddress("localhost", _webApiPort));
-            for(int i = 0; i < 10; i++)
+            for (int i = 0; i < 10; i++)
             {
                 netclient.WriteLine("GET /JMSRedirect/TestWebService/WeatherForecast HTTP/1.1");
                 netclient.WriteLine("Host: localhost");
@@ -423,7 +424,7 @@ namespace UnitTest
                 var content = ReadHeaders(null, netclient, headers).GetAwaiter().GetResult();
                 if (!content.StartsWith("HTTP/1.1 200 OK"))
                     throw new Exception("结果不对");
-                if(content.Contains("Transfer-Encoding: chunked") == false)
+                if (content.Contains("Transfer-Encoding: chunked") == false)
                     throw new Exception("结果不对");
             }
             netclient.Dispose();
@@ -633,7 +634,7 @@ namespace UnitTest
 
             Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName}");
 
-            if(UserInfoDbContext.NewInstanceCount != 1)
+            if (UserInfoDbContext.NewInstanceCount != 1)
             {
                 throw new Exception($"new了{UserInfoDbContext.NewInstanceCount}次");
             }
@@ -887,7 +888,7 @@ namespace UnitTest
             WaitGatewayReady(_gateWayPortCert);
 
             JMS.NetClient client = new JMS.NetClient();
-            client.Connect(new NetAddress( "127.0.0.1", _gateWayPortCert));
+            client.Connect(new NetAddress("127.0.0.1", _gateWayPortCert));
             client.AsSSLClient("127.0.0.1", RemoteCertificateValidationCallback);
             var content = @"GET /?GetAllServiceProviders HTTP/1.1
 Host: 127.0.0.1
@@ -914,7 +915,7 @@ Content-Length: 0
             if (true)
             {
                 JMS.CertClient client2 = new JMS.CertClient();
-                client2.Connect(new NetAddress("127.0.0.1", _gateWayPortCert , new X509Certificate2("../../../../pfx/client.pfx", "123456")));
+                client2.Connect(new NetAddress("127.0.0.1", _gateWayPortCert, new X509Certificate2("../../../../pfx/client.pfx", "123456")));
 
                 client2.Write(Encoding.UTF8.GetBytes(content));
 
@@ -931,6 +932,7 @@ Content-Length: 0
             UserInfoDbContext.Reset();
             StartGateway();
             StartUserInfoServiceHost();
+            StartCrashServiceHost(_CrashServicePort);
 
             //等待网关就绪
             WaitGatewayReady(_gateWayPort);
@@ -953,9 +955,13 @@ Content-Length: 0
                         serviceClient = client.TryGetMicroService("UserInfoService");
                     }
 
+                    var crashService = client.TryGetMicroService("CrashService");
+
                     client.BeginTransaction();
                     serviceClient.Invoke("SetUserName", "Jack");
                     serviceClient.Invoke("SetAge", 28);
+
+                    crashService.InvokeAsync("SetText", "Tom");
 
                     serviceClient.InvokeAsync("SetFather", "Tom");
                     serviceClient.InvokeAsync("SetMather", "Lucy");
@@ -963,6 +969,8 @@ Content-Length: 0
                     client.CommitTransaction();
 
                 }
+
+               
             }
             catch (Exception ex)
             {
@@ -970,6 +978,22 @@ Content-Length: 0
                 if (msg != "有意触发错误")
                     throw ex;
             }
+
+            bool hasNewClient = false;
+            NetClientPool.CreatedNewClient += (s, e) => {
+                hasNewClient = true;
+            };
+            //下面测试一下连接池是否正常
+            using (var client = new RemoteClient(gateways))
+            {
+                var crashService = client.TryGetMicroService("CrashService");
+                if (crashService.Invoke<string>("NoTran", "Tom") != "Tom")
+                {
+                    throw new Exception("结果错误");
+                }
+            }
+            if(hasNewClient)
+                throw new Exception("创建了新的连接");
 
             if (UserInfoDbContext.FinallyUserName != null ||
                 UserInfoDbContext.FinallyAge != 0 ||
@@ -1008,12 +1032,12 @@ Content-Length: 0
                     serviceClient = client.TryGetMicroService("UserInfoService");
                 }
 
-                using ( var otherclient = new RemoteClient("127.0.0.2" , 1))
+                using (var otherclient = new RemoteClient("127.0.0.2", 1))
                 {
                     var testservice = otherclient.GetMicroService("UserInfoService", serviceClient.ServiceLocation);
                     testservice = otherclient.GetMicroServiceAsync("UserInfoService", serviceClient.ServiceLocation).GetAwaiter().GetResult();
                 }
-                   
+
 
                 serviceClient.Invoke("SetUserName", "Jack");
                 serviceClient.Invoke("SetAge", 28);
@@ -1174,7 +1198,7 @@ Content-Length: 0
             ThreadPool.GetAvailableThreads(out int w, out int c);
         }
 
-       
+
         /// <summary>
         /// 测试网关集群
         /// </summary>

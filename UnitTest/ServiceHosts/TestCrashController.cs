@@ -19,13 +19,12 @@ namespace UnitTest.ServiceHosts
         public void SetText(string text)
         {
             _text = text;
+            this.TransactionControl = new JMS.TransactionDelegate(this, this);
         }
 
-        public override void OnAfterAction(string actionName, object[] parameters)
+        public async Task<string> NoTran(string text)
         {
-            base.OnAfterAction(actionName, parameters);
-
-            this.TransactionControl = new JMS.TransactionDelegate(this,this);
+            return text;
         }
 
         public void BeginTransaction()
