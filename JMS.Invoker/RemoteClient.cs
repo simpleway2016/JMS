@@ -973,9 +973,9 @@ namespace JMS
                     {
                         if (invokeType == InvokeType.CommitTranaction)
                         {
-                            var successed = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
-                            if (successed.Length > 0)
-                                _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${successed.ToJsonString()}");
+                            var successedList = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
+                            if (successedList.Length > 0)
+                                _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${successedList.ToJsonString()}");
                             foreach (var err in errors)
                                 _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
                         }
