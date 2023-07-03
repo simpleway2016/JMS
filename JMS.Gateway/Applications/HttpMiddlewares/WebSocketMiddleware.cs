@@ -119,9 +119,9 @@ namespace JMS.Applications.HttpMiddlewares
                 //发送头部到服务器
                 proxyClient.Write(data);
 
-                HttpHelper.ReadAndSendForLoop(proxyClient, client);
+                proxyClient.ReadAndSendForLoop( client);
 
-                await HttpHelper.ReadAndSendForLoop(client, proxyClient);
+                await client.ReadAndSendForLoop( proxyClient);
 
                 return true;
             }

@@ -37,7 +37,7 @@ namespace JMS.Applications.CommandHandles
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(client.PipeReader, cmd.Header);
+            var requestPathLine = await client.PipeReader.ReadHeaders( cmd.Header);
 
             if (cmd.Header.TryGetValue("Host", out string host) == false)
                 return;
@@ -110,7 +110,7 @@ namespace JMS.Applications.CommandHandles
                 if (inputContentLength > 0)
                 {
                     //发送upload数据到服务器
-                    await HttpHelper.ReadAndSend(client, proxyClient, inputContentLength);
+                    await client.ReadAndSend(proxyClient, inputContentLength);
 
                 }
                 else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
@@ -128,7 +128,7 @@ namespace JMS.Applications.CommandHandles
                         }
                         else
                         {
-                            await HttpHelper.ReadAndSend(client, proxyClient, inputContentLength);
+                            await client.ReadAndSend( proxyClient, inputContentLength);
 
                             line = await client.ReadLineAsync(512);
                             proxyClient.WriteLine(line);
@@ -138,7 +138,7 @@ namespace JMS.Applications.CommandHandles
 
                 //读取服务器发回来的头部
                 cmd.Header.Clear();
-                requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders(proxyClient.PipeReader, cmd.Header);
+                requestPathLine = await proxyClient.PipeReader.ReadHeaders(cmd.Header);
                 inputContentLength = 0;
                 if (cmd.Header.ContainsKey("Content-Length"))
                 {
@@ -162,7 +162,7 @@ namespace JMS.Applications.CommandHandles
 
                 if (inputContentLength > 0)
                 {
-                    await HttpHelper.ReadAndSend(proxyClient, client, inputContentLength);
+                    await proxyClient.ReadAndSend(client, inputContentLength);
                 }
                 else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
                 {
@@ -179,7 +179,7 @@ namespace JMS.Applications.CommandHandles
                         }
                         else
                         {
-                            await HttpHelper.ReadAndSend(proxyClient, client, inputContentLength);
+                            await proxyClient.ReadAndSend(client, inputContentLength);
 
                             line = await proxyClient.ReadLineAsync(512);
                             client.WriteLine(line);

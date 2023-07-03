@@ -99,7 +99,7 @@ namespace UnitTest
             {
                 var serverClient = new NetClient(socket);
 
-                reqline = await HttpHelper.ReadHeaders(serverClient.PipeReader, headers);
+                reqline = await serverClient.PipeReader.ReadHeaders( headers);
             });
             Task.Run(() =>
             {
@@ -253,13 +253,13 @@ Content-Length2: 0
             {
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 var reader = System.IO.Pipelines.PipeReader.Create(stream);
-                var line = await HttpHelper.ReadHeaders(reader, headers);
+                var line = await reader.ReadHeaders( headers);
 
                 stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 reader = System.IO.Pipelines.PipeReader.Create(stream);
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                line = await HttpHelper.ReadHeaders(reader, headers);
+                line = await reader.ReadHeaders( headers);
                 sw.Stop();
                 time = sw.ElapsedMilliseconds;
                 strRet.AppendLine(line);

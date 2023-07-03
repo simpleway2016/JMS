@@ -284,7 +284,10 @@ namespace JMS
                 throw new SocketException();
 
             var buffer = ret.Buffer.Slice(0, count);
-            buffer.CopyTo(new Span<byte>(data,offset,count));
+            if (data != null)
+            {
+                buffer.CopyTo(new Span<byte>(data, offset, count));
+            }
             this.PipeReader.AdvanceTo(buffer.End);
 
         }

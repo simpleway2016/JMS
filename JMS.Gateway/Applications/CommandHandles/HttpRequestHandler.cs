@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis;
 using JMS.Infrastructures;
 using System.Reflection.PortableExecutable;
 using JMS.ServerCore.Http;
-
+using JMS.ServerCore;
 namespace JMS.Applications.CommandHandles
 {
     /// <summary>
@@ -43,7 +43,7 @@ namespace JMS.Applications.CommandHandles
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = await JMS.ServerCore.HttpHelper.ReadHeaders( client.PipeReader, cmd.Header);
+            var requestPathLine = await client.PipeReader.ReadHeaders(cmd.Header);
             var requestPathLineArr = requestPathLine.Split(' ');
             var method = requestPathLineArr[0];
             var requestPath = requestPathLineArr[1];

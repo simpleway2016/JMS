@@ -13,6 +13,7 @@ using System.Net.Sockets;
 using Org.BouncyCastle.Ocsp;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using JMS.ServerCore;
 
 namespace JMS.Applications
 {
@@ -34,12 +35,49 @@ namespace JMS.Applications
             _connectionCounter = microServiceProvider.ServiceProvider.GetService<IConnectionCounter>();
         }
 
-       
+        /// <summary>
+        /// 获取websocket响应串
+        /// </summary>
+        public static string GetWebSocketResponse(IDictionary<string, string> header, ref string subProtocol)
+        {
+            string secWebSocketKey = header["Sec-WebSocket-Key"].ToString();
+            string m_Magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+            string responseKey = Convert.ToBase64String(SHA1.Create().ComputeHash(Encoding.ASCII.GetBytes(secWebSocketKey + m_Magic)));
+
+            StringBuilder response = new StringBuilder(); //响应串
+            response.Append("HTTP/1.1 101 Web Socket Protocol JMS\r\n");
+
+            //将请求串的键值转换为对应的响应串的键值并添加到响应串
+            response.AppendFormat("Upgrade: {0}\r\n", header["Upgrade"]);
+            response.AppendFormat("Connection: {0}\r\n", header["Connection"]);
+            response.AppendFormat("Sec-WebSocket-Accept: {0}\r\n", responseKey);
+            if (header.ContainsKey("Origin"))
+            {
+                response.AppendFormat("WebSocket-Origin: {0}\r\n", header["Origin"]);
+            }
+            if (header.ContainsKey("Host"))
+            {
+                response.AppendFormat("WebSocket-Location: {0}\r\n", header["Host"]);
+            }
+            if (subProtocol != null)
+            {
+                if (subProtocol.Contains(","))
+                {
+                    subProtocol = subProtocol.Split(',')[0];
+                }
+                response.AppendFormat("Sec-WebSocket-Protocol: {0}\r\n", subProtocol);
+            }
+
+            response.Append("\r\n");
+
+            return response.ToString();
+
+        }
 
         public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
             cmd.Header = new Dictionary<string, string>();
-            var urlLine = await JMS.ServerCore.HttpHelper.ReadHeaders( netclient.PipeReader, cmd.Header);
+            var urlLine = await netclient.PipeReader.ReadHeaders(cmd.Header);
 
 
 
@@ -83,7 +121,7 @@ namespace JMS.Applications
 
             try
             {
-                var responseText = JMS.ServerCore.HttpHelper.GetWebSocketResponse(cmd.Header , ref subProtocol);
+                var responseText = GetWebSocketResponse(cmd.Header , ref subProtocol);
                 netclient.InnerStream.Write(Encoding.UTF8.GetBytes(responseText));
             }
             catch (Exception)

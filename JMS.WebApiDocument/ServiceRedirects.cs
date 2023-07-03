@@ -165,7 +165,7 @@ namespace JMS.WebApiDocument
 
                 //读取服务器发回来的头部
                 var headers = new Dictionary<string, string>();
-                var requestPathLine = await HttpHelper.ReadHeaders(proxyClient.PipeReader, headers);
+                var requestPathLine = await proxyClient.PipeReader.ReadHeaders( headers);
                 inputContentLength = 0;
                 if (headers.ContainsKey("Content-Length"))
                 {

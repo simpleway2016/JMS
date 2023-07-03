@@ -13,9 +13,9 @@ using JMS.Common;
 
 namespace JMS.ServerCore
 {
-    public class HttpHelper
+    public static class NetClientExtensions
     {
-        public static async Task ReadAndSendForLoop(NetClient readClient, NetClient writeClient)
+        public static async Task ReadAndSendForLoop(this NetClient readClient, NetClient writeClient)
         {
             ReadResult ret;
             ReadOnlySequence<byte> buffer;
@@ -60,7 +60,7 @@ namespace JMS.ServerCore
             }
         }
 
-        public static async Task ReadAndSend(NetClient readClient, NetClient writeClient, long totalLength)
+        public static async Task ReadAndSend(this NetClient readClient, NetClient writeClient, long totalLength)
         {
             ReadResult ret;
             ReadOnlySequence<byte> buffer;
@@ -77,7 +77,6 @@ namespace JMS.ServerCore
                 totalLength -= buffer.Length;
 
 
-               
 
                 if (buffer.IsSingleSegment)
                 {
@@ -100,47 +99,9 @@ namespace JMS.ServerCore
                 }
             }
         }
+              
 
-        /// <summary>
-        /// 获取websocket响应串
-        /// </summary>
-        public static string GetWebSocketResponse(IDictionary<string, string> header, ref string subProtocol)
-        {
-            string secWebSocketKey = header["Sec-WebSocket-Key"].ToString();
-            string m_Magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-            string responseKey = Convert.ToBase64String(SHA1.Create().ComputeHash(Encoding.ASCII.GetBytes(secWebSocketKey + m_Magic)));
-
-            StringBuilder response = new StringBuilder(); //响应串
-            response.Append("HTTP/1.1 101 Web Socket Protocol JMS\r\n");
-
-            //将请求串的键值转换为对应的响应串的键值并添加到响应串
-            response.AppendFormat("Upgrade: {0}\r\n", header["Upgrade"]);
-            response.AppendFormat("Connection: {0}\r\n", header["Connection"]);
-            response.AppendFormat("Sec-WebSocket-Accept: {0}\r\n", responseKey);
-            if (header.ContainsKey("Origin"))
-            {
-                response.AppendFormat("WebSocket-Origin: {0}\r\n", header["Origin"]);
-            }
-            if (header.ContainsKey("Host"))
-            {
-                response.AppendFormat("WebSocket-Location: {0}\r\n", header["Host"]);
-            }
-            if (subProtocol != null)
-            {
-                if (subProtocol.Contains(","))
-                {
-                    subProtocol = subProtocol.Split(',')[0];
-                }
-                response.AppendFormat("Sec-WebSocket-Protocol: {0}\r\n", subProtocol);
-            }
-
-            response.Append("\r\n");
-
-            return response.ToString();
-
-        }
-
-        public static async Task<string> ReadHeaders(PipeReader reader, IDictionary<string, string> headers)
+        public static async Task<string> ReadHeaders(this PipeReader reader, IDictionary<string, string> headers)
         {
 
             ReadResult ret;
