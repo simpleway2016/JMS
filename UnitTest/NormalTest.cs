@@ -648,6 +648,37 @@ namespace UnitTest
                 throw new Exception("结果不正确");
         }
 
+        [TestMethod]
+        public void TestLockKey()
+        {
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            UserInfoDbContext.Reset();
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("TestScopeService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("TestScopeService");
+                }
+
+                serviceClient.Invoke("TestLockKey");
+            }
+
+        }
+
         /// <summary>
         /// 测试是否优先选择已有的服务器
         /// </summary>
