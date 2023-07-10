@@ -1005,7 +1005,9 @@ Content-Length: 0
             }
             catch (Exception ex)
             {
-                string msg = ex.InnerException.Message;
+                while (ex.InnerException != null)
+                    ex = ex.InnerException;
+                string msg = ex.Message;
                 if (msg != "有意触发错误")
                     throw ex;
             }

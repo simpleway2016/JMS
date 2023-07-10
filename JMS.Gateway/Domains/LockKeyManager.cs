@@ -10,11 +10,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib.ECC;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace JMS.Domains
 {
     public class LockKeyManager
     {
+        ClusterGatewayConnector _clusterGC;
         IRegisterServiceManager _registerServiceManager;
         System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject> _cache;
         Gateway _gateway;
@@ -22,11 +24,20 @@ namespace JMS.Domains
         int _timeout;
         ILogger<LockKeyManager> _logger;
 
+        ClusterGatewayConnector ClusterGatewayConnector
+        {
+            get
+            {
+                return _clusterGC ??= _gateway.ServiceProvider.GetService<ClusterGatewayConnector>();
+            }
+        }
+
         public event EventHandler<KeyObject> LockKey;
         public event EventHandler<KeyObject> UnlockKey;
 
         public int KeyTimeout => _timeout;
-        public LockKeyManager(Gateway gateway, IConfiguration configuration, IRegisterServiceManager registerServiceManager, ILogger<LockKeyManager> logger)
+        public LockKeyManager(Gateway gateway, IConfiguration configuration, IRegisterServiceManager registerServiceManager,
+            ILogger<LockKeyManager> logger)
         {
             this._registerServiceManager = registerServiceManager;
             _timeout = configuration.GetValue<int>("UnLockKeyTimeout");
@@ -46,7 +57,7 @@ namespace JMS.Domains
             return _cache.Values.ToArray();
         }
 
-        public void AddKey(string key,string locker)
+        public void AddKey(string key, string locker)
         {
             if (_cache.TryGetValue(key, out KeyObject keyObj) == false)
             {
@@ -54,15 +65,20 @@ namespace JMS.Domains
                 {
                     Key = key,
                     Locker = locker,
-            };
+                };
 
                 _cache.TryAdd(key, keyObj);
+            }
+            else if(_clusterGC.IsMaster == false)
+            {
+                //如果自己不是主网关，那么addkey应该是主网关发过来的
+                keyObj.Locker = locker;
             }
         }
 
         public void RemoveKey(string key)
         {
-            _cache.TryRemove(key,out KeyObject o);
+            _cache.TryRemove(key, out KeyObject o);
         }
 
         /// <summary>
@@ -176,55 +192,63 @@ namespace JMS.Domains
             }
         }
 
-        public bool TryLock(string key, RegisterServiceInfo locker)
+        public bool TryRelock(string key, RegisterServiceInfo locker)
         {
-            KeyObject keyObj = null;
-            while (true)
+            if (_cache.TryGetValue(key, out KeyObject keyObj))
             {
-                if (_cache.TryGetValue(key, out keyObj) == false)
+                if (keyObj.Locker == locker.ServiceId)
                 {
-                    KeyObject newKey = new KeyObject()
-                    {
-                        Key = key,
-                        Locker = locker.ServiceId
-                    };
-
-                    if (_cache.TryAdd(key, newKey))
-                    {
-                        if (LockKey != null)
-                        {
-                            LockKey(this, newKey);
-                        }
-
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    if (keyObj.Locker == locker.ServiceId)
-                    {
-                        keyObj.RemoveTime = null;
-                        if (LockKey != null)
-                        {
-                            LockKey(this, keyObj);
-                        }
-                        return true;
-                    }
-                    else
-                        return false;
+                    keyObj.RemoveTime = null;
+                    return true;
                 }
             }
+
+            return false;
+        }
+
+        public bool TryLock(string key, RegisterServiceInfo locker)
+        {
+
+            if (_cache.TryGetValue(key, out KeyObject keyObj) == false)
+            {
+                KeyObject newKey = new KeyObject()
+                {
+                    Key = key,
+                    Locker = locker.ServiceId
+                };
+
+                if (_cache.TryAdd(key, newKey))
+                {
+                    if (LockKey != null)
+                    {
+                        LockKey(this, newKey);
+                    }
+
+                    return true;
+                }
+            }
+            else
+            {
+                if (keyObj.Locker == locker.ServiceId)
+                {
+                    keyObj.RemoveTime = null;
+                    if (LockKey != null)
+                    {
+                        LockKey(this, keyObj);
+                    }
+                    return true;
+                }
+            }
+
+            return false;
+
         }
         public void UnLockServiceAllKey(RegisterServiceInfo service)
         {
             KeyObject o;
-            foreach( var pair in _cache)
+            foreach (var pair in _cache)
             {
-                if(pair.Value.Locker == service.ServiceId)
+                if (pair.Value.Locker == service.ServiceId)
                 {
                     _cache.TryRemove(pair.Key, out o);
                 }

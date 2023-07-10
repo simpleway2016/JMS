@@ -171,6 +171,7 @@ namespace JMS.Domains
                                         _lockKeyManager.ResetAllKeyExpireTime();
                                         this.IsMaster = true;
                                     }
+                                    uploadLockKeysToOtherGateway();
                                 }
                                 else
                                 {
@@ -182,7 +183,7 @@ namespace JMS.Domains
                                     _registerServiceManager.DisconnectAllServices();
 
                                     //上传所有lock key
-                                    uploadLockKeysToMaster();
+                                    uploadLockKeysToOtherGateway();
 
                                     this.keepAliveWithMaster();
                                 }
@@ -218,7 +219,7 @@ namespace JMS.Domains
             return client;
         }
 
-        void uploadLockKeysToMaster()
+        void uploadLockKeysToOtherGateway()
         {
             //上传已经lock的key
             var keys = _lockKeyManager.GetAllKeys();

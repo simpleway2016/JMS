@@ -32,7 +32,8 @@ namespace JMS.Applications.CommandHandles
                 List<string> failed = new List<string>();
                 foreach (var key in keys)
                 {
-                    if( _lockKeyManager.TryLock(key, service) == false)
+                    //为了防止服务端可能同时会有删除key的并发行为，这里就不进行添加操作了，只是尝试清空RemoveTime
+                    if( _lockKeyManager.TryRelock(key, service) == false)
                     {
                         failed.Add(key);
                     }
