@@ -35,6 +35,8 @@ namespace JMS.Domains
         ICpuInfo _cpuInfo;
         public event EventHandler<System.Version> ConnectCompleted;
         string _singletonErrorMsg = "相同的服务已经在运行，连接等待中...";
+
+        public DateTime? DisconnectTime { get; private set; }
         public GatewayConnector(MicroServiceHost microServiceHost,
             ICpuInfo cpuInfo,
             SSLConfiguration sSLConfiguration,
@@ -237,6 +239,8 @@ namespace JMS.Domains
                 }
 
                 _client = CreateClient(_microServiceHost.MasterGatewayAddress);
+
+                DisconnectTime = null;
                 var controllers = _controllerFactory.GetAllControllers();
 
                 _client.WriteServiceData(new GatewayCommand()
@@ -315,7 +319,6 @@ namespace JMS.Domains
                     }
                 }
 
-
                 ConnectCompleted?.Invoke(this, new Version(ret.Data));
 
                 //保持心跳，并且定期发送ClientConnected
@@ -333,6 +336,7 @@ namespace JMS.Domains
                 });
                 _client.Dispose();
                 _client = null;
+                DisconnectTime = DateTime.Now;
 
                 _logger?.LogError("和网关连接断开");
                 if (_microServiceHost.AutoExitProcess || _microServiceHost.SingletonService)
@@ -356,6 +360,7 @@ namespace JMS.Domains
             {
                 if (!_manualDisconnected)
                 {
+                    DisconnectTime = DateTime.Now;
                     Thread.Sleep(2000);
                     this.ConnectAsync();
                 }

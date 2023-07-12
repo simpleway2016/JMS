@@ -214,11 +214,11 @@ namespace JMS.Domains
             if (string.IsNullOrEmpty(transactionId))
                 throw new Exception("tranid is empty");
 
+            bool exit = false;
             if (LockedKeyDict.TryGetValue(key, out string locker))
             {
                 if (locker == transactionId)
                 {
-                    DateTime startime = DateTime.Now;
                     while (true)
                     {
                         NetClient netclient = null;
@@ -252,17 +252,21 @@ namespace JMS.Domains
                         }
                         catch (Exception)
                         {
+                            if (exit)
+                                throw;
+
+                            var disconnectTime = this.GatewayConnector.DisconnectTime;
                             //如果发生错误，可以不断重试，直到超时为止
-                            if ((DateTime.Now - startime).TotalMilliseconds > _gatewayKeyTimeout)
+                            if (disconnectTime == null || (DateTime.Now - disconnectTime.Value).TotalMilliseconds > _gatewayKeyTimeout + 1000)
                             {
                                 //如果已经连不上网关，网关会在10秒内释放这个key
                                 LockedKeyDict.TryRemove(key, out transactionId);
-                                throw;
+                                exit = true;
                             }
-                            else
-                            {
-                                Thread.Sleep(1000);
-                            }
+
+
+                            Thread.Sleep(1000);
+
                         }
                         finally
                         {
@@ -288,7 +292,7 @@ namespace JMS.Domains
             {
                 if (locker == transactionId)
                 {
-                    DateTime startime = DateTime.Now;
+                    bool exit = false;
                     while (true)
                     {
                         NetClient netclient = null;
@@ -323,17 +327,20 @@ namespace JMS.Domains
                         }
                         catch (Exception)
                         {
+                            if (exit)
+                                throw;
+
+                            var disconnectTime = this.GatewayConnector.DisconnectTime;
                             //如果发生错误，可以不断重试，直到超时为止
-                            if ((DateTime.Now - startime).TotalMilliseconds > _gatewayKeyTimeout)
+                            if (disconnectTime == null || (DateTime.Now - disconnectTime.Value).TotalMilliseconds > _gatewayKeyTimeout + 1000)
                             {
                                 //如果已经连不上网关，网关会在10秒内释放这个key
                                 LockedKeyDict.TryRemove(key, out transactionId);
-                                throw;
+                                exit = true;
                             }
-                            else
-                            {
-                                Thread.Sleep(1000);
-                            }
+
+                            await Task.Delay(1000);
+
                         }
                         finally
                         {
@@ -353,8 +360,8 @@ namespace JMS.Domains
             if (_microServiceHost.MasterGatewayAddress == null)
                 throw new MissMasterGatewayException("未连接上主网关");
 
+            bool exit = false;
             var transactionId = "";
-            DateTime startime = DateTime.Now;
             while (true)
             {
                 NetClient netclient = null;
@@ -384,17 +391,20 @@ namespace JMS.Domains
                 }
                 catch (Exception)
                 {
+                    if (exit)
+                        throw;
+
+                    var disconnectTime = this.GatewayConnector.DisconnectTime;
                     //如果发生错误，可以不断重试，直到超时为止
-                    if ((DateTime.Now - startime).TotalMilliseconds > _gatewayKeyTimeout)
+                    if (disconnectTime == null || (DateTime.Now - disconnectTime.Value).TotalMilliseconds > _gatewayKeyTimeout + 1000)
                     {
                         //如果已经连不上网关，网关会在10秒内释放这个key
                         LockedKeyDict.TryRemove(key, out transactionId);
-                        throw;
+                        exit = true;
                     }
-                    else
-                    {
-                        Thread.Sleep(1000);
-                    }
+
+                    Thread.Sleep(1000);
+
                 }
                 finally
                 {
@@ -410,8 +420,9 @@ namespace JMS.Domains
             if (_microServiceHost.MasterGatewayAddress == null)
                 throw new MissMasterGatewayException("未连接上主网关");
 
+            bool exit = false;
             var transactionId = "";
-            DateTime startime = DateTime.Now;
+
             while (true)
             {
                 NetClient netclient = null;
@@ -441,17 +452,20 @@ namespace JMS.Domains
                 }
                 catch (Exception)
                 {
+                    if (exit)
+                        throw;
+
+                    var disconnectTime = this.GatewayConnector.DisconnectTime;
                     //如果发生错误，可以不断重试，直到超时为止
-                    if ((DateTime.Now - startime).TotalMilliseconds > _gatewayKeyTimeout)
+                    if (disconnectTime == null || (DateTime.Now - disconnectTime.Value).TotalMilliseconds > _gatewayKeyTimeout + 1000)
                     {
                         //如果已经连不上网关，网关会在10秒内释放这个key
                         LockedKeyDict.TryRemove(key, out transactionId);
-                        throw;
+                        exit = true;
                     }
-                    else
-                    {
-                        await Task.Delay(1000);
-                    }
+
+                    await Task.Delay(1000);
+
                 }
                 finally
                 {

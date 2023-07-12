@@ -8,6 +8,11 @@ namespace JMS
 {
     public interface IGatewayConnector
     {
+        
+        /// <summary>
+        /// 掉线时间
+        /// </summary>
+        DateTime? DisconnectTime { get; }
         event EventHandler<System.Version> ConnectCompleted;
         NetClient CreateClient(NetAddress addr);
         void DisconnectGateway();
