@@ -12,9 +12,9 @@ namespace UnitTest.ServiceHosts
 {
     internal class TestScopeController : MicroServiceControllerBase
     {
-        readonly IKeyLocker _keyLocker;
+        readonly IScopedKeyLocker _keyLocker;
         UserInfoDbContext _userInfoDbContext;
-        public TestScopeController(UserInfoDbContext userInfoDbContext, IKeyLocker keyLocker)
+        public TestScopeController(UserInfoDbContext userInfoDbContext, IScopedKeyLocker keyLocker)
         {
             this._keyLocker = keyLocker;
             this._userInfoDbContext = userInfoDbContext;
@@ -42,25 +42,33 @@ namespace UnitTest.ServiceHosts
             _userInfoDbContext.Age = age;
         }
 
+        public void TestLockScopedKey()
+        {
+           if(!_keyLocker.TryLock("MyScopedKey"))
+            {
+                throw new Exception("lock key failed");
+            }
+        }
+
 
         public async Task TestLockKey()
         {
             var key = "TestKey";
-            var ret = _keyLocker.TryLock(this.TransactionId, key);
+            var ret = _keyLocker.TryLock( key);
             if (ret == false)
                 throw new Exception("TryLock失败");
 
             if (_keyLocker.GetLockedKeys().Contains(key) == false)
                 throw new Exception("TryLock失败");
 
-            ret = _keyLocker.TryUnLock(this.TransactionId, key);
+            ret = _keyLocker.TryUnLock(key);
             if (ret == false)
                 throw new Exception("TryUnLock失败");
 
             if (_keyLocker.GetLockedKeys().Length != 0)
                 throw new Exception("TryLock失败");
 
-            ret = _keyLocker.TryLock(this.TransactionId, key);
+            ret = _keyLocker.TryLock(key);
             if (ret == false)
                 throw new Exception("TryLock失败");
 
@@ -74,21 +82,21 @@ namespace UnitTest.ServiceHosts
 
 
             ////异步
-            ret = await _keyLocker.TryLockAsync(this.TransactionId, key);
+            ret = await _keyLocker.TryLockAsync( key);
             if (ret == false)
                 throw new Exception("TryLock失败");
 
             if (_keyLocker.GetLockedKeys().Contains(key) == false)
                 throw new Exception("TryLock失败");
 
-            ret = await _keyLocker.TryUnLockAsync(this.TransactionId, key);
+            ret = await _keyLocker.TryUnLockAsync(key);
             if (ret == false)
                 throw new Exception("TryUnLock失败");
 
             if (_keyLocker.GetLockedKeys().Length != 0)
                 throw new Exception("TryLock失败");
 
-            ret = await _keyLocker.TryLockAsync(this.TransactionId, key);
+            ret = await _keyLocker.TryLockAsync(key);
             if (ret == false)
                 throw new Exception("TryLock失败");
 

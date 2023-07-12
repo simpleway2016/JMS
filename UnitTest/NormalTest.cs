@@ -677,6 +677,21 @@ namespace UnitTest
                 serviceClient.Invoke("TestLockKey");
             }
 
+            using ( var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("TestScopeService");
+
+                serviceClient.Invoke("TestLockScopedKey");
+                serviceClient.Invoke("TestLockScopedKey");
+            }
+
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("TestScopeService");
+
+                serviceClient.Invoke("TestLockScopedKey");
+                serviceClient.Invoke("TestLockScopedKey");
+            }
         }
 
         /// <summary>
@@ -987,6 +1002,11 @@ Content-Length: 0
                     }
 
                     var crashService = client.TryGetMicroService("CrashService");
+                    while (crashService == null)
+                    {
+                        Thread.Sleep(10);
+                        crashService = client.TryGetMicroService("CrashService");
+                    }
 
                     client.BeginTransaction();
                     serviceClient.Invoke("SetUserName", "Jack");

@@ -36,7 +36,7 @@ public class MicroServiceControllerBase: BaseJmsController,IDisposable
             this.RequestPath = requestPath;
         }
     }
-    internal IKeyLocker _keyLocker;
+
     internal NetClient NetClient;
    
 
@@ -81,25 +81,6 @@ public class MicroServiceControllerBase: BaseJmsController,IDisposable
         throw new ResponseEndException();
     }
 
-
-
-    /// <summary>
-    /// 申请锁住指定的key，使用完务必保证调用UnLock释放锁定的key
-    /// </summary>
-    /// <param name="key"></param>
-    /// <returns>是否成功</returns>
-    public virtual bool TryLock(string key)
-    {
-        return _keyLocker.TryLock(this.TransactionId, key);
-    }
-    /// <summary>
-    /// 释放锁定的key
-    /// </summary>
-    /// <param name="key"></param>
-    public virtual bool TryUnLock(string key)
-    {
-        return _keyLocker.TryUnLock(this.TransactionId, key);
-    }
 
     /// <summary>
     /// 当调用Controller发生异常时触发的函数

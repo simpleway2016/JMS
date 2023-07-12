@@ -298,6 +298,7 @@ namespace JMS
             _services.AddSingleton<ScheduleTaskManager>(_scheduleTaskManager);
             _services.AddTransient<ScheduleTaskController>();
             _services.AddSingleton<IKeyLocker, KeyLocker>();
+            _services.AddScoped<IScopedKeyLocker, DefaultScopedKeyLocker>();
             _services.AddSingleton<ICodeBuilder, CodeBuilder>();
             _services.AddSingleton<IGatewayConnector, GatewayConnector>();
             _services.AddSingleton<IRequestReception, RequestReception>();

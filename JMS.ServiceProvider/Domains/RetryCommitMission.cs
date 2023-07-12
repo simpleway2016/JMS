@@ -234,7 +234,6 @@ namespace JMS.RetryCommit
 
                         controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                         controller.TransactionControl = null;
-                        controller._keyLocker = _microServiceHost.ServiceProvider.GetService<IKeyLocker>();
 
 
                         var methodInfo = controllerTypeInfo.Methods.FirstOrDefault(m => m.Method.Name == cmd.Method);

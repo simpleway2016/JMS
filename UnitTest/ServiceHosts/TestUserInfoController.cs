@@ -19,9 +19,11 @@ namespace UnitTest.ServiceHosts
     }
     internal class TestUserInfoController : MicroServiceControllerBase
     {
+        readonly IKeyLocker _keyLocker;
         UserInfoDbContext _userInfoDbContext;
-        public TestUserInfoController(UserInfoDbContext userInfoDbContext)
+        public TestUserInfoController(UserInfoDbContext userInfoDbContext, IKeyLocker keyLocker)
         {
+            this._keyLocker = keyLocker;
             this._userInfoDbContext = userInfoDbContext;
             if (this.ServiceProvider.GetService<UserInfoDbContext>() != userInfoDbContext)
                 throw new Exception("作用域对象出错");
@@ -80,15 +82,15 @@ namespace UnitTest.ServiceHosts
 
         public void LockName(string name,string a2,string a3,string a4)
         {
-            this.TryLock(name);
-            this.TryLock(a2);
-            this.TryLock(a3);
-            this.TryLock(a4);
+            _keyLocker.TryLock(this.TransactionId, name);
+            _keyLocker.TryLock(this.TransactionId, a2);
+            _keyLocker.TryLock(this.TransactionId, a3);
+            _keyLocker.TryLock(this.TransactionId, a4);
         }
 
         public void UnlockName(string name)
         {
-            this.TryUnLock(name);
+            _keyLocker.TryUnLock(this.TransactionId, name);
         }
 
         public override void OnAfterAction(string actionName, object[] parameters)
