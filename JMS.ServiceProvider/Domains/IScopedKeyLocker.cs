@@ -12,14 +12,14 @@ namespace JMS
     public interface IScopedKeyLocker
     {
         /// <summary>
-        /// 申请锁住指定的key，使用完毕务必调用UnLock释放
+        /// 申请锁住指定的key
         /// </summary>
        /// <param name="key"></param>
         /// <returns>是否成功</returns>
         bool TryLock(string key);
 
         /// <summary>
-        /// 申请锁住指定的key，使用完毕务必调用UnLock释放
+        /// 申请锁住指定的key
         /// </summary>
         /// <param name="key"></param>
         /// <returns>是否成功</returns>
