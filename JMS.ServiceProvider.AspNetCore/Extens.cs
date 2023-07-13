@@ -71,9 +71,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 services.AddSingleton<ApiRetryCommitMission>();
                 services.AddSingleton<ApiFaildCommitBuilder>();
                 services.AddSingleton<ControllerFactory>();
-               
+                services.AddScoped<IScopedKeyLocker, DefaultAspNetScopedKeyLocker>();
 
-                Gateways = gateways;
+                 Gateways = gateways;
                 host = new MicroServiceHost(services);
                 services.AddSingleton<MicroServiceHost>(host);
                
