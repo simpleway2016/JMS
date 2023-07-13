@@ -1,3 +1,4 @@
+using JMS;
 using JMS.ServiceProvider.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,12 +18,14 @@ namespace UnitTest.Controllers
     public class CrashController : ControllerBase
     {
         UserInfoDbContext _userInfoDbContext;
+        private readonly IScopedKeyLocker _scopedKeyLocker;
         ApiTransactionDelegate _apiTransactionDelegate;
 
         public static bool CanCrash = true;
-        public CrashController(ApiTransactionDelegate apiTransactionDelegate, UserInfoDbContext userInfoDbContext)
+        public CrashController(ApiTransactionDelegate apiTransactionDelegate, UserInfoDbContext userInfoDbContext , IScopedKeyLocker scopedKeyLocker)
         {
             this._userInfoDbContext = userInfoDbContext;
+            _scopedKeyLocker = scopedKeyLocker;
             this._apiTransactionDelegate = apiTransactionDelegate;
         }
 
@@ -56,6 +59,8 @@ namespace UnitTest.Controllers
         [HttpGet]
         public string GetName()
         {
+            if (_scopedKeyLocker.TryLock("testkey") == false)
+                throw new Exception("·Ö²¼Ê½ËøÊ§°Ü");
             return "Jack";
         }
     }
