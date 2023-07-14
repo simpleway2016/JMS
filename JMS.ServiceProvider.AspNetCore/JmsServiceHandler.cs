@@ -306,8 +306,6 @@ namespace JMS.ServiceProvider.AspNetCore
                                             InvokeInfo = tranDelegate.InvokeInfo,
                                             UserContent = tranDelegate.UserContent,
                                             StorageEngine = tranDelegate.StorageEngine,
-                                            CommitAction = tranDelegate.CommitAction,
-                                            RollbackAction = tranDelegate.RollbackAction
                                         });
                                     }
 

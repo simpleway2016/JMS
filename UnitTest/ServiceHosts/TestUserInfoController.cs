@@ -99,14 +99,7 @@ namespace UnitTest.ServiceHosts
 
             if (_userInfoDbContext.BeganTransaction)
             {
-                this.TransactionControl = new JMS.TransactionDelegate(this);
-                this.TransactionControl.CommitAction = () => {
-                    _userInfoDbContext.CommitTransaction();
-                };
-
-                this.TransactionControl.RollbackAction = () => {
-                    _userInfoDbContext.RollbackTransaction();
-                };
+                this.TransactionControl = new JMS.TransactionDelegate(this, _userInfoDbContext);
             }
         }
     }

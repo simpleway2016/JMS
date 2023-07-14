@@ -42,10 +42,8 @@ namespace JMS.ServiceProvider.AspNetCore
         /// </summary>
         public bool AgreeCommit { get; set; }
 
-        public Action CommitAction { get; set; }
-        public Action RollbackAction { get; set; }
 
-        public bool SupportTransaction => _storageEngine != null || CommitAction != null || RollbackAction != null;
+        public bool SupportTransaction => _storageEngine != null;
         public IStorageEngine StorageEngine
         {
             get
@@ -61,8 +59,6 @@ namespace JMS.ServiceProvider.AspNetCore
         internal void Clear()
         {
             _storageEngine = null;
-            CommitAction = null;
-            RollbackAction = null;
             AgreeCommit = true;
         }
         public void CommitTransaction()
@@ -72,11 +68,6 @@ namespace JMS.ServiceProvider.AspNetCore
                 _storageEngine.CommitTransaction();
                 _storageEngine = null;
             }
-            else if (CommitAction != null)
-            {
-                CommitAction();
-                CommitAction = null;
-            }
         }
 
         public void RollbackTransaction()
@@ -85,11 +76,6 @@ namespace JMS.ServiceProvider.AspNetCore
             {
                 _storageEngine.RollbackTransaction();
                 _storageEngine = null;
-            }
-            else if (RollbackAction != null)
-            {
-                RollbackAction();
-                RollbackAction = null;
             }
         }
 
@@ -196,7 +182,7 @@ namespace JMS.ServiceProvider.AspNetCore
             }
             finally
             {
-                CommitAction = null;
+                _storageEngine = null;
             }
 
             //logger?.LogInformation("事务{0}提交完毕", TransactionId);
@@ -242,7 +228,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
         void onHealthyCheck(List<ApiTransactionDelegate> transactionDelegateList, IGatewayConnector gatewayConnector, ApiFaildCommitBuilder faildCommitBuilder, NetClient netClient, ILogger logger)
         {
-            if (_storageEngine != null || CommitAction != null)
+            if (_storageEngine != null)
             {
                 if (transactionDelegateList != null && transactionDelegateList.Count > 0)
                 {

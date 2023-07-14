@@ -36,11 +36,9 @@ namespace JMS
         /// </summary>
         public bool AgreeCommit { get; set; }
 
-        public Action CommitAction { get; set; }
-        public Action RollbackAction { get; set; }
         internal bool Handled { get; set; }
 
-        public bool SupportTransaction => _storageEngine != null || CommitAction != null || RollbackAction != null;
+        public bool SupportTransaction => _storageEngine != null;
 
         /// <summary>
         /// 
@@ -79,11 +77,6 @@ namespace JMS
                 _storageEngine.CommitTransaction();
                 _storageEngine = null;
             }
-            else if (CommitAction != null)
-            {
-                CommitAction();
-                CommitAction = null;
-            }
         }
 
         public void RollbackTransaction()
@@ -92,11 +85,6 @@ namespace JMS
             {
                 _storageEngine.RollbackTransaction();
                 _storageEngine = null;
-            }
-            else if (RollbackAction != null)
-            {
-                RollbackAction();
-                RollbackAction = null;
             }
         }
 
@@ -211,7 +199,6 @@ namespace JMS
             }
             finally
             {
-                CommitAction = null;
                 _storageEngine = null;
             }
 
@@ -255,7 +242,7 @@ namespace JMS
         }
         void onHealthyCheck(List<TransactionDelegate> transactionDelegateList, IGatewayConnector gatewayConnector, FaildCommitBuilder faildCommitBuilder, NetClient netclient, ILogger logger)
         {
-            if (_storageEngine != null || CommitAction != null)
+            if (_storageEngine != null)
             {
                 if (transactionDelegateList != null && transactionDelegateList.Count > 0)
                 {

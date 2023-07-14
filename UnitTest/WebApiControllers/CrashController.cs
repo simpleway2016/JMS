@@ -17,11 +17,43 @@ namespace UnitTest.Controllers
     [Route("[controller]/[action]")]
     public class CrashController : ControllerBase
     {
+        class CrashControllerDB : IStorageEngine
+        {
+           
+            string _name;
+            public CrashControllerDB(string name)
+            {
+                this._name = name;
+
+            }
+            public object CurrentTransaction => _name;
+
+            public void BeginTransaction()
+            {
+            }
+
+            public void CommitTransaction()
+            {
+                if (CrashController.CanCrash)
+                {
+                    CrashController.CanCrash = false;
+                    throw new Exception("故意宕机");
+                }
+
+                UserInfoDbContext.FinallyUserName = _name;
+            }
+
+            public void RollbackTransaction()
+            {
+            }
+        }
+
+        public static bool CanCrash = true;
         UserInfoDbContext _userInfoDbContext;
         private readonly IScopedKeyLocker _scopedKeyLocker;
         ApiTransactionDelegate _apiTransactionDelegate;
 
-        public static bool CanCrash = true;
+       
         public CrashController(ApiTransactionDelegate apiTransactionDelegate, UserInfoDbContext userInfoDbContext , IScopedKeyLocker scopedKeyLocker)
         {
             this._userInfoDbContext = userInfoDbContext;
@@ -32,16 +64,7 @@ namespace UnitTest.Controllers
         [HttpGet]
         public string SetName(string name)
         {
-            _apiTransactionDelegate.CommitAction = () => {
-                if (CanCrash)
-                {
-                    CanCrash = false;
-                    throw new Exception("故意宕机");
-                }
-
-                UserInfoDbContext.FinallyUserName = name;
-
-            };
+            _apiTransactionDelegate.StorageEngine = new CrashControllerDB(name);
             return name;
         }
 

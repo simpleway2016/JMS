@@ -259,9 +259,7 @@ namespace JMS.ServiceProvider.AspNetCore
                         if (transactionDelegate.StorageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == transactionDelegate.StorageEngine) == false)
                         {
                             transactionDelegateList.Add(new ApiTransactionDelegate { 
-                                StorageEngine = transactionDelegate.StorageEngine,
-                                CommitAction = transactionDelegate.CommitAction,
-                                RollbackAction = transactionDelegate.RollbackAction,
+                                StorageEngine = transactionDelegate.StorageEngine
                             });
                         }
                         transactionDelegate.Clear();
