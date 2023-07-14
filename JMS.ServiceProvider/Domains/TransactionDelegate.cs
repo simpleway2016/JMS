@@ -58,7 +58,7 @@ namespace JMS
         }
 
         [Obsolete("建议使用另一个构造函数：TransactionDelegate(MicroServiceControllerBase controller, IStorageEngine storageEngine)\r\n 这样CommitAction、RollbackAction可以不再赋值")]
-        public TransactionDelegate(MicroServiceControllerBase controller)
+        internal TransactionDelegate(MicroServiceControllerBase controller)
         {
             _controller = controller;
             this.AgreeCommit = true;
