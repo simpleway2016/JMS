@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Pipelines;
@@ -22,6 +23,7 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,6 +33,25 @@ namespace JMS.ServiceProvider.AspNetCore
 {
     internal class JmsServiceHandler
     {
+        static ConcurrentDictionary<ControllerActionDescriptor, Microsoft.AspNetCore.Authorization.AuthorizeAttribute[]> AuthorizeAttributeCaches = new ConcurrentDictionary<ControllerActionDescriptor, Microsoft.AspNetCore.Authorization.AuthorizeAttribute[]>();
+        static bool checkRoles(Microsoft.AspNetCore.Authorization.AuthorizeAttribute[] authorizeAttributes , ClaimsPrincipal claimsPrincipal)
+        {
+            if (authorizeAttributes.Length > 0)
+            {
+                foreach (var authAttItem in authorizeAttributes)
+                {
+                    if (!string.IsNullOrWhiteSpace(authAttItem.Roles))
+                    {
+                        var attRoles = authAttItem.Roles.Split(',');
+                        if (attRoles.Any(x => claimsPrincipal.IsInRole(x.Trim())) == false)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
         public static async Task<bool> Handle(IApplicationBuilder app, HttpContext context)
         {
             using (var netClient = new NetClient(new ConnectionStream(context)))
@@ -85,6 +106,27 @@ namespace JMS.ServiceProvider.AspNetCore
                                     releaseNetClient(netClient);
                                     return true;
                                 }
+
+                                //缓存AuthorizeAttribute定义
+                                var authAtts = AuthorizeAttributeCaches.GetOrAdd(desc, key => {
+                                    List<Microsoft.AspNetCore.Authorization.AuthorizeAttribute> list = new List<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
+                                    list.AddRange(desc.ControllerTypeInfo.GetCustomAttributes<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>());
+                                    list.AddRange(desc.MethodInfo.GetCustomAttributes<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>());
+                                    return list.ToArray();
+                                });
+
+                                if (!checkRoles(authAtts, authRet.Principal))
+                                {
+                                    netClient.WriteServiceData(new InvokeResult
+                                    {
+                                        Success = false,
+                                        Error = "Authentication failed for roles",
+
+                                    });
+                                    releaseNetClient(netClient);
+                                    return true;
+                                }
+
                                 context.User = authRet.Principal;
                             }
                             catch (Exception ex)

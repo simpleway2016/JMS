@@ -168,9 +168,8 @@ namespace UnitTest
                     m.IsSpecialName == false &&
                     m.DeclaringType != typeof(MicroServiceControllerBase) &&
                     baseMethods.Contains(m.Name) == false &&
-                    m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
+                    m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo(m , typeof(TestController))
                     {
-                        Method = m,
                         NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null
                     }).ToArray()
             };

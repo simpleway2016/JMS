@@ -125,4 +125,13 @@ public class TypeMethodInfo
     public MethodInfo Method;
     public bool NeedAuthorize;
     public bool AllowAnonymous;
+    public List<JMS.AuthorizeAttribute> AuthorizeAttributes = new List<AuthorizeAttribute>();
+
+    public TypeMethodInfo(MethodInfo method,Type controllerType)
+    {
+        Method = method;
+
+        AuthorizeAttributes.AddRange(method.GetCustomAttributes<AuthorizeAttribute>());
+        AuthorizeAttributes.AddRange(controllerType.GetCustomAttributes<AuthorizeAttribute>());
+    }
 }

@@ -9,5 +9,9 @@ namespace JMS
     /// </summary>
     public class AuthorizeAttribute: Attribute
     {
+        /// <summary>
+        /// 获取或设置允许访问资源的角色的逗号分隔列表。
+        /// </summary>
+        public string Roles { get; set; }
     }
 }

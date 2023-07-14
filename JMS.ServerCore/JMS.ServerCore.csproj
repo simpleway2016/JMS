@@ -7,7 +7,7 @@
 	  <Authors>Jack.T</Authors>
 	  <Company>JMS</Company>
 	  <Product>JMS</Product>
-	  <Version>3.3.1</Version>
+	  <Version>3.3.2</Version>
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp3.1'">

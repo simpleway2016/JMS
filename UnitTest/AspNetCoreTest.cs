@@ -20,6 +20,8 @@ using JMS.ServerCore;
 using System.IO;
 using System.Net.Sockets;
 using JMS.Common;
+using System.Data;
+using System.Security.Claims;
 
 namespace UnitTest
 {
@@ -87,6 +89,36 @@ namespace UnitTest
 
             app.MapControllers();
             return app;
+        }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin , Normal")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ac , Normal")]
+        [TestMethod]
+        public void RoleTest()
+        {
+            var claimsIdentity = new ClaimsIdentity(new Claim[]
+        {
+                new Claim(ClaimTypes.Role , "Admin")
+        }, "JMS.Token"); ;
+
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+             
+            var authAtts = typeof(AspNetCoreTest).GetMethod("RoleTest").GetCustomAttributes<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>().ToArray();
+            var authAtts2 = authAtts.Where(m=>m.Roles.Contains("Admin")).ToArray();
+
+            var type = Assembly.LoadFrom("JMS.ServiceProvider.AspNetCore.dll").GetType("JMS.ServiceProvider.AspNetCore.JmsServiceHandler");
+            var method = type.GetMethod("checkRoles", BindingFlags.NonPublic | BindingFlags.Static);
+            var ret = (bool)method.Invoke(null, new object[] { authAtts , claimsPrincipal });
+            if (ret)
+            {
+                throw new Exception("结果不对");
+            }
+
+            ret = (bool)method.Invoke(null, new object[] { authAtts2, claimsPrincipal });
+            if (ret == false)
+            {
+                throw new Exception("结果不对");
+            }
         }
 
 

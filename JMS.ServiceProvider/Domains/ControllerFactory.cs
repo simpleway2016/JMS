@@ -47,9 +47,8 @@ namespace JMS.Domains
                     m.IsSpecialName == false &&
                     m.DeclaringType != typeof(MicroServiceControllerBase) &&
                     baseMethods.Contains(m.Name) == false &&
-                    m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo
+                    m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo(m,contollerType)
                     {
-                        Method = m,
                         NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null,
                         AllowAnonymous = m.GetCustomAttribute<AllowAnonymousAttribute>() != null
                     }).ToArray();

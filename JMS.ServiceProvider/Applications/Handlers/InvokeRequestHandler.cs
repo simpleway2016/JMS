@@ -13,6 +13,8 @@ using JMS.RetryCommit;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using System.Security.Authentication;
 
 namespace JMS.Applications
 {
@@ -50,6 +52,25 @@ namespace JMS.Applications
             }
         }
 
+        static bool checkRoles(List<JMS.AuthorizeAttribute> authorizeAttributes, ClaimsPrincipal claimsPrincipal)
+        {
+            if (authorizeAttributes.Count > 0)
+            {
+                foreach (var authAttItem in authorizeAttributes)
+                {
+                    if (!string.IsNullOrWhiteSpace(authAttItem.Roles))
+                    {
+                        var attRoles = authAttItem.Roles.Split(',');
+                        if (attRoles.Any(x => claimsPrincipal.IsInRole(x.Trim())) == false)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
         async Task handleInScope(NetClient netclient, InvokeCommand cmd, IServiceScope serviceScope)
         {
             List<TransactionDelegate> tranDelegateList = null;
@@ -76,6 +97,13 @@ namespace JMS.Applications
                             if (auth != null)
                             {
                                 userContent = auth.Authenticate(cmd.Header);
+                                if (userContent is ClaimsPrincipal principal)
+                                {
+                                    if (!checkRoles(methodInfo.AuthorizeAttributes, principal))
+                                    {
+                                        throw new AuthenticationException("Authentication failed for roles");
+                                    }
+                                }
                             }
                         }
                     }
@@ -205,7 +233,7 @@ namespace JMS.Applications
                     {
                         netclient.ReadTimeout = 0;
                         transactionDelegate.UserContent = controller.UserContent;
-                        var nextInvokeCmd = await transactionDelegate.WaitForCommandAsync(tranDelegateList , _gatewayConnector, _faildCommitBuilder, netclient, _loggerTran);
+                        var nextInvokeCmd = await transactionDelegate.WaitForCommandAsync(tranDelegateList, _gatewayConnector, _faildCommitBuilder, netclient, _loggerTran);
 
                         if (nextInvokeCmd != null)
                         {
@@ -223,7 +251,7 @@ namespace JMS.Applications
                                         //同一个数据库对象，不用放入list
                                         addToList = false;
                                     }
-                                }                               
+                                }
                             }
 
                             if (addToList)
@@ -253,7 +281,7 @@ namespace JMS.Applications
                             if (transactionDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == transactionDelegate.StorageEngine) == false)
                             {
                                 transactionDelegate.RollbackTransaction();
-                            }                            
+                            }
                         }
                         catch (Exception rollex)
                         {
