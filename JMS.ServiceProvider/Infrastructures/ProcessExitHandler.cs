@@ -16,6 +16,7 @@ namespace JMS
     {
         IConnectionCounter _connectionCounter;
         SafeTaskFactory _safeTaskFactory;
+        private readonly IGatewayConnector _gatewayConnector;
         public MicroServiceHost _microServiceHost;
         bool _ProcessExited = false;
         public bool ProcessExited => _ProcessExited;
@@ -26,11 +27,13 @@ namespace JMS
         public ProcessExitHandler(
             ScheduleTaskManager scheduleTaskManager,
             SafeTaskFactory safeTaskFactory,
+            IGatewayConnector gatewayConnector,
             IConnectionCounter connectionCounter,
             ILogger<ProcessExitHandler> logger)
         {
             this._connectionCounter = connectionCounter;
             this._safeTaskFactory = safeTaskFactory;
+            _gatewayConnector = gatewayConnector;
             _logger = logger;
             _scheduleTaskManager = scheduleTaskManager;
         }
@@ -93,14 +96,7 @@ namespace JMS
             _logger?.LogInformation("准备断开网关");
             try
             {
-                var client = new NetClient();
-                client.Connect(_microServiceHost.MasterGatewayAddress);
-                client.WriteServiceData(new GatewayCommand
-                {
-                    Type = (int)CommandType.UnRegisterSerivce,
-                    Content = _microServiceHost.Id
-                });
-                client.ReadServiceObject<InvokeResult>();
+                _gatewayConnector.DisconnectGateway();
             }
             catch (Exception ex)
             {

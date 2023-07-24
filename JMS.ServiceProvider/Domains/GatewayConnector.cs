@@ -385,6 +385,7 @@ namespace JMS.Domains
                 _client.Socket.Close();
                 _logger?.LogInformation("Socket closed");
                 _client.Dispose();
+                _client = null;
             }
         }
 

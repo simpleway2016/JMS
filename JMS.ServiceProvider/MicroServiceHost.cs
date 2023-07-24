@@ -359,7 +359,7 @@ namespace JMS
             {
                 _tcpServer = new JMS.ServerCore.MulitTcpListener(ServicePort);
                 _tcpServer.Connected += _tcpServer_Connected;
-                _logger?.LogInformation("Service host started , port:{0}", ServicePort);
+                _logger?.LogInformation("Service port:{0}", ServicePort);
             }
             _logger?.LogInformation("Gateways:" + AllGatewayAddresses.ToJsonString());
 
