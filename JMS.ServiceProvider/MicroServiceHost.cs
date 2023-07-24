@@ -357,9 +357,8 @@ namespace JMS
 
             if (ServicePort != 0 && !_isWebServer)
             {
-                _tcpServer = new JMS.ServerCore.MulitTcpListener(ServicePort);
+                _tcpServer = new JMS.ServerCore.MulitTcpListener(ServicePort, ServiceProvider.GetService<ILogger<MicroServiceHost>>());
                 _tcpServer.Connected += _tcpServer_Connected;
-                _logger?.LogInformation("Service port:{0}", ServicePort);
             }
             _logger?.LogInformation("Gateways:" + AllGatewayAddresses.ToJsonString());
 

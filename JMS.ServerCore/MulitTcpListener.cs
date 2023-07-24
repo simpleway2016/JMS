@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -10,16 +11,18 @@ namespace JMS.ServerCore
     public class MulitTcpListener
     {
         int _port;
+        private readonly ILogger _logger;
+
         public int Port => _port;
         TcpListener _tcpListener;
         TcpListener _tcpListenerV6;
         public event EventHandler<Socket> Connected;
         public event EventHandler<Exception> OnError;
         bool _stopped = true;
-        public MulitTcpListener(int port)
+        public MulitTcpListener(int port , ILogger logger)
         {
             this._port = port;
-           
+            _logger = logger;
         }
 
         public void Stop()
@@ -41,7 +44,10 @@ namespace JMS.ServerCore
             _tcpListener = new TcpListener(IPAddress.Any, _port);
             _tcpListenerV6 = new TcpListener(IPAddress.IPv6Any, _port);
 
+            _logger?.LogInformation($"Service is starting");
+
             new Thread(() => { runListener(_tcpListenerV6); }).Start();
+
             this.runListener(_tcpListener);
         }
 
@@ -49,7 +55,23 @@ namespace JMS.ServerCore
         {
             try
             {
+                bool isV6 = false;
+                if(((IPEndPoint)listener.LocalEndpoint).Address.AddressFamily == AddressFamily.InterNetworkV6)
+                {
+                    isV6 = true;
+                }
+
+               
                 listener.Start();
+
+                if (isV6)
+                {
+                    _logger?.LogInformation($"Listening on port {_port} of IPv6");
+                }
+                else
+                {
+                    _logger?.LogInformation($"Listening on port {_port}");
+                }
                 while (true)
                 {
                     var socket = listener.AcceptSocket();
@@ -61,6 +83,7 @@ namespace JMS.ServerCore
             }
             catch(Exception ex)
             {
+                _logger?.LogError(ex, "");
                 if (!_stopped)
                 {
                     OnError?.Invoke(this, ex);

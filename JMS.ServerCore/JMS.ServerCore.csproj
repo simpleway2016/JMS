@@ -7,13 +7,15 @@
 	  <Authors>Jack.T</Authors>
 	  <Company>JMS</Company>
 	  <Product>JMS</Product>
-	  <Version>3.3.2</Version>
+	  <Version>3.3.5</Version>
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp3.1'">
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.1" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
 	</ItemGroup>
   <ItemGroup>

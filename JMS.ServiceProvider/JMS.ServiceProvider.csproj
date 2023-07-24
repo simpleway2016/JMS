@@ -6,7 +6,7 @@
 		<AssemblyName>JMS.ServiceProvider</AssemblyName>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/simpleway2016/JMS</RepositoryUrl>
-		<Version>5.2.1</Version>
+		<Version>5.2.3</Version>
 		<Authors>Jack.T</Authors>
 		<Company>JMS</Company>
 		<Product>JMS</Product>
@@ -23,13 +23,13 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp3.1'">
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
+		
 		<PackageReference Include="System.CodeDom" Version="4.7.0" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="4.7.0" />
 
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.1" />
+		
 		<PackageReference Include="System.CodeDom" Version="4.7.0" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="4.7.0" />
 
