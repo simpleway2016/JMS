@@ -28,6 +28,7 @@ namespace ServiceStatusViewer
             services.AddSingleton<AddressProvider>();
             Global.ServiceProvider = services.BuildServiceProvider();
             Task.Run(() => {
+                //初始化数据库
                 using (var db = new SysDBContext())
                 {
                     db.InvokeHistory.FirstOrDefault();
