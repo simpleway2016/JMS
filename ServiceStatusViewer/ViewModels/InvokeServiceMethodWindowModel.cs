@@ -1,5 +1,7 @@
 ﻿using Avalonia.Controls;
 using JMS.GenerateCode;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using ReactiveUI;
 using ServiceStatusViewer.Views;
 using System;
@@ -38,39 +40,7 @@ namespace ServiceStatusViewer.ViewModels
             {
                 this.RaiseAndSetIfChanged(ref _MethodName, value);
 
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        using (var db = new SysDBContext())
-                        {
-                            var history = db.InvokeHistory.FirstOrDefault(m => m.ServiceName == _SelectedServiceName && m.MethodName == _MethodName);
-                            if (history != null)
-                            {
-                                if (history.Header != null)
-                                    this.Header = System.Text.Encoding.UTF8.GetString(history.Header);
-                                else
-                                    this.Header = "";
-                                if (history.Parameters != null)
-                                    this.ParameterString = System.Text.Encoding.UTF8.GetString(history.Parameters);
-                                else
-                                    this.ParameterString = "[]";
-                            }
-                            else
-                            {
-                                var methodItem = _controllerInfo?.items.FirstOrDefault(m => m.title == value);
-                                if(methodItem != null)
-                                {
-                                    this.ParameterString = $"[ { string.Join(',' , methodItem.data.items.Select(m=>" ")) } ]";
-                                }
-                            }
-                        }
-                    }
-                    catch
-                    {
-
-                    }
-                });
+                autoSetParameters();
             }
         }
         private string _Cursor;
@@ -138,6 +108,39 @@ namespace ServiceStatusViewer.ViewModels
             
         }
 
+        async void autoSetParameters()
+        {
+            try
+            {
+                using (var db = new SysDBContext())
+                {
+                    var history = await db.InvokeHistory.FirstOrDefaultAsync(m => m.ServiceName == _SelectedServiceName && m.MethodName == _MethodName);
+                    if (history != null)
+                    {
+                        if (history.Header != null)
+                            this.Header = System.Text.Encoding.UTF8.GetString(history.Header);
+                        else
+                            this.Header = "";
+                        if (history.Parameters != null)
+                            this.ParameterString = System.Text.Encoding.UTF8.GetString(history.Parameters);
+                        else
+                            this.ParameterString = "[]";
+                    }
+                    else
+                    {
+                        var methodItem = _controllerInfo?.items.FirstOrDefault(m => m.title == _MethodName);
+                        if (methodItem != null)
+                        {
+                            this.ParameterString = $"[ {string.Join(',', methodItem.data.items.Select(m => " "))} ]";
+                        }
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+        }
 
         async void loadMethods()
         {

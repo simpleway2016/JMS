@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
@@ -25,7 +27,12 @@ namespace ServiceStatusViewer
             ServiceCollection services = new ServiceCollection();
             services.AddSingleton<AddressProvider>();
             Global.ServiceProvider = services.BuildServiceProvider();
-           
+            Task.Run(() => {
+                using (var db = new SysDBContext())
+                {
+                    db.InvokeHistory.FirstOrDefault();
+                }
+            });
             BuildAvaloniaApp()
               .StartWithClassicDesktopLifetime(args);
         }

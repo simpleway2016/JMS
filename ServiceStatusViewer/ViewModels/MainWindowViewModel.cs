@@ -174,12 +174,14 @@ namespace ServiceStatusViewer.ViewModels
         bool _isFirstLoad = true;
         public MainWindowViewModel()
         {
+           
             _addressProvider = Global.ServiceProvider.GetService<AddressProvider>();
 
             resetTitle();
             this.ServiceList = new System.Collections.ObjectModel.ObservableCollection<ServiceInformation>();
             
             this.checkState();
+
         }
 
         void resetTitle()
