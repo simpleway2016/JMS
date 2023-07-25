@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using JMS.GenerateCode;
 using ReactiveUI;
 using ServiceStatusViewer.Views;
 using System;
@@ -15,7 +16,7 @@ namespace ServiceStatusViewer.ViewModels
     class InvokeServiceMethodWindowModel : ViewModelBase
     {
 
-        public string[] ServiceNames => _ServiceInformation._data.ServiceList.Select(m=>m.Name).ToArray();
+        public string[] ServiceNames => _ServiceInformation._data.ServiceList.Where(m=>m.Type == JMS.Dtos.ServiceType.JmsService).Select(m => m.Name).ToArray();
 
         private string _SelectedServiceName;
         public string SelectedServiceName
@@ -24,22 +25,7 @@ namespace ServiceStatusViewer.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _SelectedServiceName, value);
-                Task.Run(() => {
-                    try
-                    {
-                        using (var db = new SysDBContext())
-                        {
-                            this.MatchMethods = (from m in db.InvokeHistory
-                                                 where m.ServiceName == value
-                                                 orderby m.MethodName
-                                                 select m.MethodName).ToArray();
-                        }
-                    }
-                    catch
-                    {
-
-                    }
-                });
+                loadMethods();
             }
         }
 
@@ -52,13 +38,14 @@ namespace ServiceStatusViewer.ViewModels
             {
                 this.RaiseAndSetIfChanged(ref _MethodName, value);
 
-                Task.Run(() => {
+                Task.Run(() =>
+                {
                     try
                     {
                         using (var db = new SysDBContext())
                         {
                             var history = db.InvokeHistory.FirstOrDefault(m => m.ServiceName == _SelectedServiceName && m.MethodName == _MethodName);
-                            if(history != null)
+                            if (history != null)
                             {
                                 if (history.Header != null)
                                     this.Header = System.Text.Encoding.UTF8.GetString(history.Header);
@@ -68,6 +55,14 @@ namespace ServiceStatusViewer.ViewModels
                                     this.ParameterString = System.Text.Encoding.UTF8.GetString(history.Parameters);
                                 else
                                     this.ParameterString = "[]";
+                            }
+                            else
+                            {
+                                var methodItem = _controllerInfo?.items.FirstOrDefault(m => m.title == value);
+                                if(methodItem != null)
+                                {
+                                    this.ParameterString = $"[ { string.Join(',' , methodItem.data.items.Select(m=>" ")) } ]";
+                                }
                             }
                         }
                     }
@@ -119,13 +114,13 @@ namespace ServiceStatusViewer.ViewModels
             }
         }
 
-        private string[] _MatchMethods;
-        public string[] MatchMethods
+        private string[] _Methods;
+        public string[] Methods
         {
-            get => _MatchMethods;
+            get => _Methods;
             set
             {
-                this.RaiseAndSetIfChanged(ref _MatchMethods, value);
+                this.RaiseAndSetIfChanged(ref _Methods, value);
             }
         }
 
@@ -134,12 +129,24 @@ namespace ServiceStatusViewer.ViewModels
         public IReactiveCommand InvokeClick => ReactiveCommand.Create(Invoke);
 
         ServiceInformation _ServiceInformation;
+        ControllerInfo _controllerInfo;
         public InvokeServiceMethodWindowModel(ServiceInformation serviceInfo)
         {
             _ServiceInformation = serviceInfo;
             if (serviceInfo._data.ServiceList.Length == 1)
                 this.SelectedServiceName = serviceInfo._data.ServiceList[0].Name;
-           
+            
+        }
+
+
+        async void loadMethods()
+        {
+            using (var client = new MicroServiceClient())
+            {
+                var service = client.GetMicroService(this.SelectedServiceName, new JMS.Dtos.ClientServiceDetail(this._ServiceInformation._data.ServiceAddress, this._ServiceInformation._data.Port));
+                _controllerInfo = service.GetServiceInfo().FromJson<ControllerInfo>();
+                Methods = _controllerInfo.items.Select(m => m.title).OrderBy(m=>m).ToArray();
+            }
         }
 
         public async void Invoke()
@@ -161,10 +168,10 @@ namespace ServiceStatusViewer.ViewModels
                     if (!string.IsNullOrEmpty(this.ParameterString))
                         parameters = this.ParameterString.FromJson<object[]>();
 
-                    if(!string.IsNullOrEmpty(this.Header?.Trim()))
+                    if (!string.IsNullOrEmpty(this.Header?.Trim()))
                     {
-                        var dict = this.Header.FromJson<Dictionary<string,string>>();
-                        foreach( var pair in dict )
+                        var dict = this.Header.FromJson<Dictionary<string, string>>();
+                        foreach (var pair in dict)
                         {
                             client.SetHeader(pair.Key, pair.Value);
                         }
@@ -181,16 +188,16 @@ namespace ServiceStatusViewer.ViewModels
                             using (var db = new SysDBContext())
                             {
                                 DBModels.InvokeHistory history = db.InvokeHistory.FirstOrDefault(m => m.ServiceName == this.SelectedServiceName && m.MethodName == this.MethodName);
-                                if(history == null)
+                                if (history == null)
                                 {
                                     history = new DBModels.InvokeHistory
                                     {
                                         ServiceName = this.SelectedServiceName,
                                         MethodName = this.MethodName
                                     };
-                                }                             
+                                }
 
-                                if(!string.IsNullOrEmpty(this.Header?.Trim()))
+                                if (!string.IsNullOrEmpty(this.Header?.Trim()))
                                 {
                                     history.Header = System.Text.Encoding.UTF8.GetBytes(this.Header.Trim());
                                 }
@@ -231,12 +238,12 @@ namespace ServiceStatusViewer.ViewModels
             }
             catch (Exception ex)
             {
-                while(ex.InnerException != null)
+                while (ex.InnerException != null)
                 {
                     ex = ex.InnerException;
                 }
 
-                if ( ex is SocketException socketErr && socketErr.ErrorCode == 0)
+                if (ex is SocketException socketErr && socketErr.ErrorCode == 0)
                 {
                     await MessageBox.Show("调用失败，可能是参数传递不正确。");
                     return;
