@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="450" SizeToContent="WidthAndHeight"
+        mc:Ignorable="d" Width="1100" Height="600"
         x:Class="ServiceStatusViewer.Views.InvokeServiceMethodWindow"
         Title="调用服务方法">
   <Grid>
@@ -21,6 +21,6 @@
       <TextBox Margin="10,0,10,10" AcceptsReturn="True" Height="200" Text="{Binding ParameterString}"></TextBox>
       <Button Command="{Binding InvokeClick}" Margin="10">马上执行</Button>
     </StackPanel>
-    <TextBox Name="txtResult" AcceptsReturn="True" Grid.Column="1" Text="{Binding Result}" HorizontalAlignment="Stretch" MinWidth="500"></TextBox>
+    <TextBox Name="txtResult" AcceptsReturn="True" Grid.Column="1" Text="{Binding Result}" HorizontalAlignment="Stretch"></TextBox>
   </Grid>
 </Window>
