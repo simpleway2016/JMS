@@ -220,7 +220,14 @@ namespace ServiceStatusViewer.ViewModels
 
                     if (ret != null)
                     {
-                        this.Result = "执行结果：\r\n" + ret.ToJsonString(true);
+                        if (ret is string)
+                        {
+                            this.Result = "执行结果：\r\n" + ret;
+                        }
+                        else
+                        {
+                            this.Result = "执行结果：\r\n" + ret.ToJsonString(true);
+                        }
                     }
                     else
                     {
