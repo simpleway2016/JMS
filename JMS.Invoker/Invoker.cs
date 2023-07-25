@@ -153,5 +153,23 @@ namespace JMS
                 return ret.Data;
             }
         }
+
+        public async Task<string> GetServiceInfoAsync()
+        {
+            using (var netclient = new ProxyClient(RemoteClient.ProxyAddress))
+            {
+                await netclient.ConnectAsync(new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
+                netclient.ReadTimeout = this.RemoteClient.Timeout;
+                netclient.WriteServiceData(new InvokeCommand()
+                {
+                    Type = (int)InvokeType.GenerateServiceInfo,
+                    Service = _serviceName
+                });
+                var ret = await netclient.ReadServiceObjectAsync<InvokeResult<string>>();
+                if (!ret.Success)
+                    throw new RemoteException(null, ret.Data);
+                return ret.Data;
+            }
+        }
     }
 }

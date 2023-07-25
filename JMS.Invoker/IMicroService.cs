@@ -28,6 +28,11 @@ namespace JMS
         /// </summary>
         /// <returns></returns>
         string GetServiceInfo();
+        /// <summary>
+        /// 获取微服务的方法描述
+        /// </summary>
+        /// <returns></returns>
+        Task<string> GetServiceInfoAsync();
         void Invoke(string method, params object[] parameters);
         T Invoke<T>(string method, params object[] parameters);
         Task<T> InvokeAsync<T>(string method, params object[] parameters);

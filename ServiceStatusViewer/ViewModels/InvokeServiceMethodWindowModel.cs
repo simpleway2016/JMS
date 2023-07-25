@@ -144,11 +144,18 @@ namespace ServiceStatusViewer.ViewModels
 
         async void loadMethods()
         {
-            using (var client = new MicroServiceClient())
+            try
             {
-                var service = client.GetMicroService(this.SelectedServiceName, new JMS.Dtos.ClientServiceDetail(this._ServiceInformation._data.ServiceAddress, this._ServiceInformation._data.Port));
-                _controllerInfo = service.GetServiceInfo().FromJson<ControllerInfo>();
-                Methods = _controllerInfo.items.Select(m => m.title).OrderBy(m=>m).ToArray();
+                using (var client = new MicroServiceClient())
+                {
+                    var service = client.GetMicroService(this.SelectedServiceName, new JMS.Dtos.ClientServiceDetail(this._ServiceInformation._data.ServiceAddress, this._ServiceInformation._data.Port));
+                    _controllerInfo = (await service.GetServiceInfoAsync()).FromJson<ControllerInfo>();
+                    Methods = _controllerInfo.items.Select(m => m.title).OrderBy(m => m).ToArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                await MessageBox.Show(ex.Message);
             }
         }
 
