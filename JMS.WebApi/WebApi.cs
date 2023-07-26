@@ -68,7 +68,7 @@ namespace JMS
         {
             this.Port = port;
             _requestReception = ServiceProvider.GetService<IRequestReception>();
-            _tcpServer = new JMS.ServerCore.MulitTcpListener(port);
+            _tcpServer = new JMS.ServerCore.MulitTcpListener(port,null);
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 

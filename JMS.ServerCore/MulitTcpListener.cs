@@ -82,11 +82,17 @@ namespace JMS.ServerCore
                 }
             }
             catch(Exception ex)
-            {
-                _logger?.LogError(ex, "");
+            {               
                 if (!_stopped)
                 {
-                    OnError?.Invoke(this, ex);
+                    if (OnError == null)
+                    {
+                        _logger?.LogError(ex, "");
+                    }
+                    else
+                    {
+                        OnError(this, ex);
+                    }
                 }
             }
         }

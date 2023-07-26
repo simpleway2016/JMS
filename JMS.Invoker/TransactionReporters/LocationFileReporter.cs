@@ -26,10 +26,17 @@ namespace JMS.TransactionReporters
 
         public LocationFileReporter()
         {
-            if (Directory.Exists(SaveFolder) == false)
-                Directory.CreateDirectory(SaveFolder);
+            try
+            {
+                if (Directory.Exists(SaveFolder) == false)
+                    Directory.CreateDirectory(SaveFolder);
 
-            new Thread(retryExecTrancations).Start();
+                new Thread(retryExecTrancations).Start();
+            }
+            catch (System.PlatformNotSupportedException)
+            {
+
+            }           
         }
 
         /// <summary>

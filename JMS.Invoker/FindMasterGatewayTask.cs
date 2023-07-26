@@ -43,7 +43,7 @@ namespace JMS
 
         async void checkGateway(NetAddress addr,Action<object> continuation,object state)
         {
-            var client = NetClientPool.CreateClient(_proxyAddr, addr);
+            var client = await NetClientPool.CreateClientAsync(_proxyAddr, addr);
             try
             {
                 client.ReadTimeout = _timeout;
