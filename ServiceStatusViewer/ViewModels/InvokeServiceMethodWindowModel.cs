@@ -43,6 +43,18 @@ namespace ServiceStatusViewer.ViewModels
                 autoSetParameters();
             }
         }
+
+
+        private bool _IsLoadingMethodList;
+        public bool IsLoadingMethodList
+        {
+            get => _IsLoadingMethodList;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _IsLoadingMethodList, value);
+            }
+        }
+
         private string _Cursor;
         public string Cursor
         {
@@ -144,6 +156,7 @@ namespace ServiceStatusViewer.ViewModels
 
         async void loadMethods()
         {
+            this.IsLoadingMethodList = true;
             try
             {
                 using (var client = new MicroServiceClient())
@@ -156,6 +169,10 @@ namespace ServiceStatusViewer.ViewModels
             catch (Exception ex)
             {
                 await MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                this.IsLoadingMethodList = false;
             }
         }
 

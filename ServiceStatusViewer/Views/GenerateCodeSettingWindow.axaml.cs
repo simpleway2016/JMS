@@ -6,7 +6,7 @@ using System;
 
 namespace ServiceStatusViewer.Views
 {
-    public class GenerateCodeSettingWindow : Window
+    public partial class GenerateCodeSettingWindow : Window
     {
         public GenerateCodeSettingWindow()
         {
@@ -14,10 +14,6 @@ namespace ServiceStatusViewer.Views
 
         }
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
 
         protected override void OnDataContextChanged(EventArgs e)
         {

@@ -1,14 +1,8 @@
 ﻿<Application xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ServiceStatusViewer"
-             x:Class="ServiceStatusViewer.App">
-    <Application.DataTemplates>
-        <local:ViewLocator/>
-    </Application.DataTemplates>
-
-    <Application.Styles>     
-        <StyleInclude Source="avares://Avalonia.Themes.Default/DefaultTheme.xaml"/>
-        <StyleInclude Source="avares://Avalonia.Themes.Default/Accents/BaseLight.xaml"/>
-      <StyleInclude Source="/Styles/Default.axaml"/>
-    </Application.Styles>
+		 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		 x:Class="ServiceStatusViewer.App"
+		 RequestedThemeVariant="Default">
+	<Application.Styles>
+		<SimpleTheme />
+	</Application.Styles>
 </Application>

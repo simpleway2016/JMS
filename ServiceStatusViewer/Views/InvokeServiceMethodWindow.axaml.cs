@@ -7,17 +7,12 @@ using System;
 
 namespace ServiceStatusViewer.Views
 {
-    public class InvokeServiceMethodWindow : Window
+    public partial class InvokeServiceMethodWindow : Window
     {
         public InvokeServiceMethodWindow()
         {
             this.InitializeComponent();
 
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
         }
 
         protected override void OnDataContextChanged(EventArgs e)

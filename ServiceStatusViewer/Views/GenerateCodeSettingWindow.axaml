@@ -7,7 +7,7 @@
         Title="GenerateCodeSettingWindow">
   <StackPanel Orientation="Vertical">
     <TextBlock Text="选择服务：" Margin="10"/>
-    <ComboBox Margin="10,0,10,10" SelectedItem="{Binding SelectedServiceName}" Items="{Binding ServiceNames}"></ComboBox>
+    <ComboBox Margin="10,0,10,10" SelectedItem="{Binding SelectedServiceName}" ItemsSource="{Binding ServiceNames}"></ComboBox>
     <TextBlock Text="命名空间：" Margin="10"/>
     <TextBox Margin="10,0,10,10" Text="{Binding NamespaceName}" Width="300"></TextBox>
     <TextBlock Text="类名：" Margin="10"/>

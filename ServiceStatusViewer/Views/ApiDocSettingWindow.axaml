@@ -14,9 +14,6 @@
 			<Setter Property="Foreground" Value="#000000"/>
 			<Setter Property="FontWeight" Value="Bold"/>
 		</Style>
-		<Style Selector="ItemsRepeater[IsEnabled=false]">
-			<Setter Property="Opacity" Value="0.3"/>
-		</Style>
 	</Window.Styles>
 	<DockPanel>
 		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
@@ -25,7 +22,7 @@
 			<Button Content="编写Vue内部方法" Margin="10,0,0,0" Command="{Binding VueMethodsClick}"></Button>
 		</StackPanel>
 		<TextBlock DockPanel.Dock="Top" Margin="10">当前所有按钮：</TextBlock>
-		<ListBox DockPanel.Dock="Top" Items="{Binding Buttons}">
+		<ListBox DockPanel.Dock="Top" ItemsSource="{Binding Buttons}">
 			<ListBox.ItemTemplate>
 				<DataTemplate>
 					<Grid>

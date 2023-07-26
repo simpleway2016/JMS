@@ -1,11 +1,9 @@
-﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 using System.Threading.Tasks;
 
 namespace ServiceStatusViewer.Views
 {
-    public class MessageBox : Window
+    public partial class MessageBox : Window
     {
         public enum MessageBoxButtons
         {
@@ -24,14 +22,10 @@ namespace ServiceStatusViewer.Views
         }
         public MessageBox()
         {
-            this.InitializeComponent();
+            InitializeComponent();
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
         public static Task<MessageBoxResult> Show(string text)
         {
             return Show(null, text, null, MessageBoxButtons.Ok);
