@@ -122,7 +122,10 @@ namespace JMS.ScheduleTask
 
                     if (toRun)
                     {
-                        _logger?.LogInformation("执行任务：{0}", taskname);
+                        if (timers != null && timers.Length > 0)
+                        {
+                            _logger?.LogInformation("执行任务：{0}", taskname);
+                        }
                         _lastRunTime = DateTime.Now;
 
                         while (true)
