@@ -102,13 +102,13 @@ namespace UnitTest
         }, "JMS.Token"); ;
 
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-             
+
             var authAtts = typeof(AspNetCoreTest).GetMethod("RoleTest").GetCustomAttributes<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>().ToArray();
-            var authAtts2 = authAtts.Where(m=>m.Roles.Contains("Admin")).ToArray();
+            var authAtts2 = authAtts.Where(m => m.Roles.Contains("Admin")).ToArray();
 
             var type = Assembly.LoadFrom("JMS.ServiceProvider.AspNetCore.dll").GetType("JMS.ServiceProvider.AspNetCore.JmsServiceHandler");
             var method = type.GetMethod("checkRoles", BindingFlags.NonPublic | BindingFlags.Static);
-            var ret = (bool)method.Invoke(null, new object[] { authAtts , claimsPrincipal });
+            var ret = (bool)method.Invoke(null, new object[] { authAtts, claimsPrincipal });
             if (ret)
             {
                 throw new Exception("结果不对");
@@ -131,7 +131,7 @@ namespace UnitTest
             {
                 var serverClient = new NetClient(socket);
 
-                reqline = await serverClient.PipeReader.ReadHeaders( headers);
+                reqline = await serverClient.PipeReader.ReadHeaders(headers);
             });
             Task.Run(() =>
             {
@@ -285,13 +285,13 @@ Content-Length2: 0
             {
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 var reader = System.IO.Pipelines.PipeReader.Create(stream);
-                var line = await reader.ReadHeaders( headers);
+                var line = await reader.ReadHeaders(headers);
 
                 stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 reader = System.IO.Pipelines.PipeReader.Create(stream);
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                line = await reader.ReadHeaders( headers);
+                line = await reader.ReadHeaders(headers);
                 sw.Stop();
                 time = sw.ElapsedMilliseconds;
                 strRet.AppendLine(line);
@@ -570,6 +570,69 @@ Content-Length2: 0
         }
 
         [TestMethod]
+        public void WebApiReturnErrorTest()
+        {
+            CrashController.CanCrash = true;
+            var normalTest = new NormalTest();
+            normalTest.StartGateway();
+
+            var app = StartWebApi(normalTest._gateWayPort);
+            app?.RunAsync();
+
+            var crash_app = StartCrashWebApi(normalTest._gateWayPort);
+            crash_app?.RunAsync();
+
+            Thread.Sleep(1000);
+
+
+            try
+            {
+                normalTest.WaitGatewayReady(normalTest._gateWayPort);
+
+
+                var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = normalTest._gateWayPort
+                   }
+                };
+
+                using (var remoteClient = new RemoteClient(gateways))
+                {
+                    var service2 = remoteClient.TryGetMicroService("TestCrashService");
+                    while (service2 == null)
+                    {
+                        Thread.Sleep(100);
+                        service2 = remoteClient.TryGetMicroService("TestCrashService");
+                    }
+
+                    try
+                    {
+                        var name = service2.Invoke<string>("/Crash/TestReturnError");
+
+                        throw new Exception("居然没报错");
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message != "2")
+                        {
+                            throw ex;
+                        }
+                    }
+
+                    var ret = service2.Invoke<string>("/Crash/TestReturnOk");
+                    if (ret != "2")
+                        throw new Exception("结果不对");
+                }
+
+            }
+            finally
+            {
+
+            }
+        }
+
+        [TestMethod]
         public void CrashTest()
         {
             CrashController.CanCrash = true;
@@ -801,7 +864,7 @@ Content-Length2: 0
                 }
 
 
-               
+
 
                 if (createdNewClient)
                     throw new Exception("创建了新的连接");

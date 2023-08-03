@@ -193,9 +193,33 @@ namespace JMS.ServiceProvider.AspNetCore
                                 result = actionFilterProcessor.OnActionExecuted(result);
                                 if (result != null)
                                 {
-                                    if (result is ObjectResult oret)
+                                    if (result is ObjectResult oret )
                                     {
-                                        result = oret.Value;
+                                        if (oret.StatusCode >= 200 && oret.StatusCode < 300)
+                                        {
+                                            result = oret.Value;
+                                        }
+                                        else
+                                        {
+                                            if (tranDelegate != null)
+                                            {
+                                                if (tranDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == tranDelegate.StorageEngine) == false)
+                                                {
+                                                    tranDelegate.RollbackTransaction();
+                                                }
+                                                tranDelegate = null;
+                                            }
+                                            tranDelegateList.RollbackTransaction();
+
+                                            netClient.WriteServiceData(new InvokeResult
+                                            {
+                                                Success = false,
+                                                Error = oret.Value.ToString()
+
+                                            });
+                                            releaseNetClient(netClient);
+                                            return true;
+                                        }
                                     }
                                     else if (result is JsonResult jret)
                                     {

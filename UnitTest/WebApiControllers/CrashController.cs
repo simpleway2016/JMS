@@ -86,6 +86,18 @@ namespace UnitTest.Controllers
                 throw new Exception("·Ö²¼Ê½ËøÊ§°Ü");
             return "Jack";
         }
+
+        [HttpGet]
+        public IActionResult TestReturnError()
+        {
+            return BadRequest(2);
+        }
+
+        [HttpGet]
+        public IActionResult TestReturnOk()
+        {
+            return Ok(2);
+        }
     }
 
 }
