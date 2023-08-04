@@ -11,13 +11,19 @@ namespace JMS
         /// </summary>
         /// <param name="headers"></param>
         /// <returns></returns>
-        object Authenticate(IDictionary<string, string> headers);
+        TokenContent Authenticate(IDictionary<string, string> headers);
 
         /// <summary>
         /// 验证身份令牌
         /// </summary>
         /// <param name="token"></param>
         /// <returns>身份信息</returns>
-        object VerifyToken(string token);
+        TokenContent VerifyToken(string token);
+    }
+
+    public class TokenContent
+    {
+        public string Content { get; set; }
+        public string Role { get; set; }
     }
 }

@@ -27,7 +27,7 @@ namespace JMS.Token
         /// <param name="serverAddress">Token服务器地址,null表示不需要服务器，本地自行验证</param>
         public TokenClient(NetAddress serverAddress)
         {
-            if(serverAddress == null)
+            if (serverAddress == null)
             {
                 serverAddress = new NetAddress(null, 0);
             }
@@ -59,7 +59,7 @@ namespace JMS.Token
         }
 
         static Random _random = new Random();
-        void getKeyFromServer((string addr,int port) key)
+        void getKeyFromServer((string addr, int port) key)
         {
             string[] value;
             if (string.IsNullOrEmpty(_serverAddress.Address))
@@ -101,6 +101,21 @@ namespace JMS.Token
             return BuildForString(dict.ToJsonString());
         }
 
+        public string Build(string data, string role, DateTime expireTime)
+        {
+            expireTime = expireTime.ToUniversalTime();
+            long time = (long)(expireTime - new DateTime(1970, 1, 1)).TotalSeconds;
+
+            var dict = new StringToken()
+            {
+                d = data,
+                e = time,
+                r = role
+            };
+
+            return BuildForString(dict.ToJsonString());
+        }
+
         /// <summary>
         /// 验证Long类型的token，如果验证失败，抛出异常
         /// </summary>
@@ -108,9 +123,9 @@ namespace JMS.Token
         /// <returns></returns>
         long VerifyLong(string token)
         {
-           
+
             var data = this.ParseLongs(token);
-            if(data == null)
+            if (data == null)
                 throw new AuthenticationException("token is invalid");
             var expireTime = new DateTime(1970, 1, 1).AddSeconds(data[1]);
             if (expireTime < DateTime.Now.ToUniversalTime())
@@ -123,7 +138,7 @@ namespace JMS.Token
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        string VerifyString(string token)
+        TokenContent VerifyString(string token)
         {
 
             var ret = ParseString(token);
@@ -136,7 +151,7 @@ namespace JMS.Token
             var expireTime = new DateTime(1970, 1, 1).AddSeconds(data.e);
             if (expireTime < DateTime.Now.ToUniversalTime())
                 throw new AuthenticationException("token expired");
-            return data.d;
+            return new TokenContent { Content = data.d , Role = data.r};
         }
 
         /// <summary>
@@ -144,7 +159,7 @@ namespace JMS.Token
         /// </summary>
         /// <param name="token"></param>
         /// <returns>返回token内容</returns>
-        public object Verify(string token)
+        public TokenContent Verify(string token)
         {
             if (!_DisableTokenListener.CheckToken(token))
             {
@@ -167,12 +182,12 @@ namespace JMS.Token
         string BuildForString(string body)
         {
             var keys = ServerKeys[(_serverAddress.Address, _serverAddress.Port)];
-            var signstr = sign(body , keys);
+            var signstr = sign(body, keys);
             var text = new string[] { body, signstr }.ToJsonString(false);
             var bs = Encoding.UTF8.GetBytes(text);
-            var token = Convert.ToBase64String(bs).Replace("=" , "_").Replace("/", "-");
+            var token = Convert.ToBase64String(bs).Replace("=", "_").Replace("/", "-");
             var index = RandomObj.Next(1, token.Length / 2);
-            token = $"{token.Substring(0,index)}.{token.Substring(index)}";
+            token = $"{token.Substring(0, index)}.{token.Substring(index)}";
             return token;
         }
 
@@ -180,6 +195,7 @@ namespace JMS.Token
         {
             public string d;
             public long e;
+            public string r;
         }
 
         /// <summary>
@@ -225,7 +241,7 @@ namespace JMS.Token
             }
         }
 
-      
+
 
         /// <summary>
         /// 根据long数组，生成token，常用于存储用户id和过期时间戳
@@ -235,7 +251,7 @@ namespace JMS.Token
         string BuildForLongs(long[] values)
         {
             var keys = getKeys();
-            var signstr = sign(values.ToJsonString() , keys);
+            var signstr = sign(values.ToJsonString(), keys);
             var signbs = Encoding.UTF8.GetBytes(signstr);
             byte[] data = new byte[values.Length * 8 + 2 + signbs.Length];
             Array.Copy(BitConverter.GetBytes((short)values.Length), data, 2);
@@ -247,7 +263,7 @@ namespace JMS.Token
             return Convert.ToBase64String(data);
         }
 
-        static string sign(string body,string[] keys)
+        static string sign(string body, string[] keys)
         {
             var str = body;
             str += keys[1];
@@ -269,7 +285,7 @@ namespace JMS.Token
                 return null;
 
             var tokenInfo = Encoding.UTF8.GetString(Convert.FromBase64String(token)).FromJson<string[]>();
-            var signstr = sign(tokenInfo[0] , keys);
+            var signstr = sign(tokenInfo[0], keys);
             if (signstr == tokenInfo[1])
                 return tokenInfo[0];
             return null;
@@ -293,7 +309,7 @@ namespace JMS.Token
 
             var input = Encoding.UTF8.GetString(data, 2 + ret.Length * 8, data.Length - 2 - ret.Length * 8);
             var keys = getKeys();
-            var signstr = sign(ret.ToJsonString() , keys);
+            var signstr = sign(ret.ToJsonString(), keys);
             if (signstr == input)
                 return ret;
             return null;
@@ -326,4 +342,6 @@ namespace JMS.Token
             }
         }
     }
+
+   
 }

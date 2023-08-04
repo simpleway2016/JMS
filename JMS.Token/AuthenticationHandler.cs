@@ -19,7 +19,7 @@ namespace JMS
         /// <summary>
         /// token解码后内容，可在回调中修改
         /// </summary>
-        public object Content { get; set; }
+        public TokenContent Content { get; set; }
         public AuthenticationParameter(string token)
         {
             this.Token = token;
@@ -36,7 +36,7 @@ namespace JMS
             TokenClient.Logger = logger;
         }
 
-        public object Authenticate(IDictionary<string, string> headers)
+        public TokenContent Authenticate(IDictionary<string, string> headers)
         {
             string token = null;
             foreach (var header in HeaderNames)
@@ -54,7 +54,7 @@ namespace JMS
             return VerifyToken(token);
         }
 
-        public object VerifyToken(string token)
+        public TokenContent VerifyToken(string token)
         {
             if (token == null)
             {
@@ -64,7 +64,7 @@ namespace JMS
 
             try
             {
-                object ret = client.Verify(token);
+                var ret = client.Verify(token);
 
                 if (Callback != null)
                 {

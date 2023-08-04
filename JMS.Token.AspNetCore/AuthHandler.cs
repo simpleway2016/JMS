@@ -66,23 +66,23 @@ namespace JMS.Token.AspNetCore
             TokenClient client = new TokenClient(ServerAddress);
             try
             {
-                string strContent = client.Verify(token).ToString();
+                var ret = client.Verify(token);
                 
                 if(Callback != null)
                 {
                     AuthenticationParameter parameter = new AuthenticationParameter(token);
-                    parameter.Content = strContent;
+                    parameter.Content = ret;
                     if (!Callback(parameter))
                     {
                         return Task.FromResult(AuthenticateResult.Fail(""));
                     }
                     else
                     {
-                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content?.ToString())));
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content)));
                     }
                 }
 
-                return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(strContent)));
+                return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(ret)));
             }
             catch(AuthenticationException ex)
             {
@@ -91,7 +91,7 @@ namespace JMS.Token.AspNetCore
                     AuthenticationParameter parameter = new AuthenticationParameter(token);
                     if (Callback(parameter))
                     {
-                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content?.ToString())));
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content)));
                     }
                 }
 
@@ -104,7 +104,7 @@ namespace JMS.Token.AspNetCore
                     AuthenticationParameter parameter = new AuthenticationParameter(token);
                     if (Callback(parameter))
                     {
-                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content?.ToString())));
+                        return Task.FromResult(AuthenticateResult.Success(GetAuthTicket(parameter.Content)));
                     }
                 }
 
@@ -112,14 +112,16 @@ namespace JMS.Token.AspNetCore
             }            
         }
 
-        AuthenticationTicket GetAuthTicket(string content)
+        AuthenticationTicket GetAuthTicket(TokenContent tokenContent)
         {
-            if (content == null)
-                content = "";
+            if (tokenContent == null)
+                tokenContent = new TokenContent();
+
                var claimsIdentity = new ClaimsIdentity(new Claim[]
             {
-                new Claim("Content", content),
-                new Claim(ClaimTypes.NameIdentifier , content)
+                new Claim("Content", tokenContent.Content),
+                new Claim(ClaimTypes.NameIdentifier , tokenContent.Content),
+                new Claim(ClaimTypes.Role , tokenContent.Role),
             }, "JMS.Token"); ;
 
             var principal = new ClaimsPrincipal(claimsIdentity);
