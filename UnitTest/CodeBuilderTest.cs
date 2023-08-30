@@ -96,7 +96,7 @@ namespace UnitTest
         {
             return null;
         }
-
+        [DocumentGroup("3ϵ")]
         public Dictionary<string,string> Dict()
         {
             return null;
@@ -115,10 +115,14 @@ namespace UnitTest
         {
             return null;
         }
+
+       
         public System.Collections.ArrayList Hellow3()
         {
             return null;
         }
+
+        [DocumentGroup("3ϵ")]
         public async Task<Setting1> Test3()
         {
             return null;

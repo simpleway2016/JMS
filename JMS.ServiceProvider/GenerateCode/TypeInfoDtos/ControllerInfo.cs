@@ -31,6 +31,7 @@ namespace JMS.GenerateCode
     public class MethodItemInfo
     {
         public string title { get; set; }
+        public string titleGroup { get; set; }
         public string method { get; set; }
         public string desc { get; set; }
 

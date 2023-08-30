@@ -31,6 +31,12 @@ namespace JMS.GenerateCode
                 MethodItemInfo minfo = new MethodItemInfo();
                 controllerInfo.items.Add(minfo);
                 minfo.title = method.Name;
+
+                var docGrupAttr = method.GetCustomAttribute(typeof(DocumentGroupAttribute)) as DocumentGroupAttribute;
+                if(docGrupAttr != null)
+                {
+                    minfo.titleGroup = docGrupAttr.GroupName;
+                }
                 minfo.desc = GetMethodComment(controllerType, method);
                 minfo.method = "POST";
 
@@ -68,6 +74,8 @@ namespace JMS.GenerateCode
                     minfo.returnData.desc = GetMethodReturnComment(controllerType, method);
                 }
             }
+
+            controllerInfo.items = controllerInfo.items.OrderBy(m => m.titleGroup).ThenBy(m => m.title).ToList();
             return controllerInfo;
         }
 
