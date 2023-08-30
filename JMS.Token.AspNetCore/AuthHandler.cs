@@ -119,8 +119,8 @@ namespace JMS.Token.AspNetCore
 
                var claimsIdentity = new ClaimsIdentity(new Claim[]
             {
-                new Claim("Content", tokenContent.Content),
-                new Claim(ClaimTypes.NameIdentifier , tokenContent.Content),
+                new Claim("Content", tokenContent.Content.ToString()),
+                new Claim(ClaimTypes.NameIdentifier , tokenContent.Content.ToString()),
                 new Claim(ClaimTypes.Role , tokenContent.Role),
             }, "JMS.Token"); ;
 

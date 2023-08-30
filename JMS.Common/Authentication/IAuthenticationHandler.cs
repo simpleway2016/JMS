@@ -23,7 +23,7 @@ namespace JMS
 
     public class TokenContent
     {
-        public string Content { get; set; }
+        public object Content { get; set; }
         public string Role { get; set; }
     }
 }

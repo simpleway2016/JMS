@@ -46,10 +46,10 @@ namespace WebApiTest.Controllers
         public void OnActionExecuted(ActionExecutedContext context)
         {
             var ctrl = context.HttpContext.RequestServices.GetService<ApiTransactionDelegate>();
-            ctrl.CommitAction = () =>
-            {
-                Debug.WriteLine("提交事务了");
-            };
+            //ctrl.CommitAction = () =>
+            //{
+            //    Debug.WriteLine("提交事务了");
+            //};
         }
 
         public void OnActionExecuting(ActionExecutingContext context)

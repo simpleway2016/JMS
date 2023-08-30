@@ -15,7 +15,7 @@
 		this.User.FindFirstValue("Content")
 
 		用依赖注入获取TokenClient实例，生成token</Description>
-    <Version>2.2.6</Version>
+    <Version>2.2.7</Version>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 

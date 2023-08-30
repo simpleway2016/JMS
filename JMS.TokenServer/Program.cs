@@ -103,7 +103,7 @@ namespace JMS.TokenServer
                 AcceptCertHash = configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
             }
 
-            var listener = new JMS.ServerCore.MulitTcpListener(port);
+            var listener = new JMS.ServerCore.MulitTcpListener(port, Logger);
             listener.Connected += Listener_Connected;
             Logger?.LogInformation($"配置文件：{appSettingPath}");
             Logger?.LogInformation($"Token server started,port：{port}");

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Authentication;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -25,7 +26,7 @@ namespace JMS.IdentityModel.JWT.Authentication
         /// <summary>
         /// token解码后内容，可在回调中修改
         /// </summary>
-        public object Content { get; set; }
+        public TokenContent Content { get; set; }
         public AuthenticationParameter(string token)
         {
             this.Token = token;
@@ -68,7 +69,7 @@ namespace JMS.IdentityModel.JWT.Authentication
             }
         }
 
-        public object Authenticate(IDictionary<string, string> headers)
+        public TokenContent Authenticate(IDictionary<string, string> headers)
         {
             string token = null;
             foreach (var header in HeaderNames)
@@ -82,7 +83,7 @@ namespace JMS.IdentityModel.JWT.Authentication
             return VerifyToken(token);
         }
 
-        public object VerifyToken(string token)
+        public TokenContent VerifyToken(string token)
         {
             for (int i = 0; i < 8 && rsaSecurityKey == null; i++)
             {
@@ -103,11 +104,14 @@ namespace JMS.IdentityModel.JWT.Authentication
                 }
 
                 var ret = JwtHelper.Authenticate(rsaSecurityKey, token);
-
+                var tokenContent = new TokenContent { 
+                    Content = ret,
+                    Role = ret.FindFirst(ClaimTypes.Role)?.Value
+                };
                 if (Callback != null)
                 {
                     AuthenticationParameter authParameter = new AuthenticationParameter(token);
-                    authParameter.Content = ret;
+                    authParameter.Content = tokenContent;
                     if (!Callback(authParameter))
                     {
                         _logger?.LogDebug("身份验证回调处理不通过");
@@ -115,7 +119,7 @@ namespace JMS.IdentityModel.JWT.Authentication
                     }
                     return authParameter.Content;
                 }
-                return ret;
+                return tokenContent;
             }
             catch (AuthenticationException ex)
             {
