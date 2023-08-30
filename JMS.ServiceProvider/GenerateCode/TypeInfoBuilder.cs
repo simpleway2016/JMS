@@ -1,6 +1,7 @@
 ﻿using JMS.AssemblyDocumentReader;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Reflection;
@@ -32,10 +33,10 @@ namespace JMS.GenerateCode
                 controllerInfo.items.Add(minfo);
                 minfo.title = method.Name;
 
-                var docGrupAttr = method.GetCustomAttribute(typeof(DocumentGroupAttribute)) as DocumentGroupAttribute;
-                if(docGrupAttr != null)
+                var categoryAttr = method.GetCustomAttribute(typeof(CategoryAttribute)) as CategoryAttribute;
+                if(categoryAttr != null)
                 {
-                    minfo.titleGroup = docGrupAttr.GroupName;
+                    minfo.titleGroup = categoryAttr.Category;
                 }
                 minfo.desc = GetMethodComment(controllerType, method);
                 minfo.method = "POST";

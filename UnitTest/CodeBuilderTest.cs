@@ -9,6 +9,7 @@ using Way.Lib;
 using System.Reflection;
 using System.Linq;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace UnitTest
 {
@@ -96,7 +97,7 @@ namespace UnitTest
         {
             return null;
         }
-        [DocumentGroup("3ϵ")]
+        [Category("3ϵ")]
         public Dictionary<string,string> Dict()
         {
             return null;
@@ -122,7 +123,7 @@ namespace UnitTest
             return null;
         }
 
-        [DocumentGroup("3ϵ")]
+        [Category("3ϵ")]
         public async Task<Setting1> Test3()
         {
             return null;
