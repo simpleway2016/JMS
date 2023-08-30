@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Text;
 
 namespace JMS
@@ -11,19 +12,14 @@ namespace JMS
         /// </summary>
         /// <param name="headers"></param>
         /// <returns></returns>
-        TokenContent Authenticate(IDictionary<string, string> headers);
+        ClaimsPrincipal Authenticate(IDictionary<string, string> headers);
 
         /// <summary>
         /// 验证身份令牌
         /// </summary>
         /// <param name="token"></param>
         /// <returns>身份信息</returns>
-        TokenContent VerifyToken(string token);
+        ClaimsPrincipal VerifyToken(string token);
     }
 
-    public class TokenContent
-    {
-        public object Content { get; set; }
-        public string Role { get; set; }
-    }
 }

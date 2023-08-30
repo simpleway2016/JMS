@@ -88,7 +88,7 @@ namespace JMS.Applications
                     if (methodInfo == null)
                         throw new Exception($"{cmd.Service}没有提供{cmd.Method}方法");
 
-                    object userContent = null;
+                    ClaimsPrincipal userContent = null;
                     if (methodInfo.AllowAnonymous == false)
                     {
                         if (controllerTypeInfo.NeedAuthorize || methodInfo.NeedAuthorize)

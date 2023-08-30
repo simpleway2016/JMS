@@ -14,6 +14,7 @@ using JMS.Infrastructures;
 using System.Net;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Security.Claims;
 
 namespace JMS.RetryCommit
 {

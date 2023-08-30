@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using Way.Lib;
 
@@ -127,7 +128,7 @@ namespace JMS.RetryCommit
            
             public string UserContentValue;
 
-            public object GetUserContent( ILogger logger)
+            public ClaimsPrincipal GetUserContent( ILogger logger)
             {
                 if (this.UserContentValue != null)
                 {
@@ -142,10 +143,6 @@ namespace JMS.RetryCommit
                             {
                                 return new System.Security.Claims.ClaimsPrincipal(new BinaryReader(ms));
                             }
-                        }
-                        else
-                        {
-                            return Newtonsoft.Json.JsonConvert.DeserializeObject(this.UserContentValue, this.UserContentType);
                         }
                     }
                     catch (Exception ex)

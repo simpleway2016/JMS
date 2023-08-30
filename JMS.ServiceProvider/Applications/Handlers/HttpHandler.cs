@@ -14,6 +14,7 @@ using Org.BouncyCastle.Ocsp;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using JMS.ServerCore;
+using System.Security.Claims;
 
 namespace JMS.Applications
 {
@@ -98,7 +99,7 @@ namespace JMS.Applications
             }
             var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
-            object userContent = null;
+            ClaimsPrincipal userContent = null;
             if (controllerTypeInfo.NeedAuthorize)
             {
                 var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();

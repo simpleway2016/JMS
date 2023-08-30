@@ -4,6 +4,7 @@ using System.Text;
 using static MicroServiceControllerBase;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using System.Security.Claims;
 
 namespace JMS
 {
@@ -27,11 +28,11 @@ namespace JMS
             }
         }
 
-        object _userContent;
+        ClaimsPrincipal _userContent;
         /// <summary>
         /// 身份验证后获取的身份信息
         /// </summary>
-        public object UserContent
+        public ClaimsPrincipal UserContent
         {
             get
             {

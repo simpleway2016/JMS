@@ -9,6 +9,7 @@ using System.Threading;
 using Way.Lib;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
+using System.Security.Claims;
 
 public class MicroServiceControllerBase: BaseJmsController,IDisposable
 {
@@ -16,10 +17,10 @@ public class MicroServiceControllerBase: BaseJmsController,IDisposable
     {
         public InvokeCommand Command;
         public IServiceProvider ServiceProvider;
-        public object UserContent;
+        public ClaimsPrincipal UserContent;
         public string RequestPath;
         public EndPoint RemoteEndPoint;
-        internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider,object userContent)
+        internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent)
         {
             this.RemoteEndPoint = remoteEndPoint;
             this.Command = command;
@@ -27,7 +28,7 @@ public class MicroServiceControllerBase: BaseJmsController,IDisposable
             this.UserContent = userContent;
         }
 
-        internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider, object userContent,string requestPath)
+        internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent,string requestPath)
         {
             this.RemoteEndPoint = remoteEndPoint;
             this.Command = command;

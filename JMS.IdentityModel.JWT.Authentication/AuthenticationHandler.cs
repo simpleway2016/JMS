@@ -26,7 +26,7 @@ namespace JMS.IdentityModel.JWT.Authentication
         /// <summary>
         /// token解码后内容，可在回调中修改
         /// </summary>
-        public TokenContent Content { get; set; }
+        public ClaimsPrincipal Content { get; set; }
         public AuthenticationParameter(string token)
         {
             this.Token = token;
@@ -69,7 +69,7 @@ namespace JMS.IdentityModel.JWT.Authentication
             }
         }
 
-        public TokenContent Authenticate(IDictionary<string, string> headers)
+        public ClaimsPrincipal Authenticate(IDictionary<string, string> headers)
         {
             string token = null;
             foreach (var header in HeaderNames)
@@ -83,7 +83,7 @@ namespace JMS.IdentityModel.JWT.Authentication
             return VerifyToken(token);
         }
 
-        public TokenContent VerifyToken(string token)
+        public ClaimsPrincipal VerifyToken(string token)
         {
             for (int i = 0; i < 8 && rsaSecurityKey == null; i++)
             {
@@ -104,14 +104,11 @@ namespace JMS.IdentityModel.JWT.Authentication
                 }
 
                 var ret = JwtHelper.Authenticate(rsaSecurityKey, token);
-                var tokenContent = new TokenContent { 
-                    Content = ret,
-                    Role = ret.FindFirst(ClaimTypes.Role)?.Value
-                };
+
                 if (Callback != null)
                 {
                     AuthenticationParameter authParameter = new AuthenticationParameter(token);
-                    authParameter.Content = tokenContent;
+                    authParameter.Content = ret;
                     if (!Callback(authParameter))
                     {
                         _logger?.LogDebug("身份验证回调处理不通过");
@@ -119,7 +116,7 @@ namespace JMS.IdentityModel.JWT.Authentication
                     }
                     return authParameter.Content;
                 }
-                return tokenContent;
+                return ret;
             }
             catch (AuthenticationException ex)
             {

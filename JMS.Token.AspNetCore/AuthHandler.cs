@@ -112,20 +112,9 @@ namespace JMS.Token.AspNetCore
             }            
         }
 
-        AuthenticationTicket GetAuthTicket(TokenContent tokenContent)
+        AuthenticationTicket GetAuthTicket(ClaimsPrincipal claimsPrincipal)
         {
-            if (tokenContent == null)
-                tokenContent = new TokenContent();
-
-               var claimsIdentity = new ClaimsIdentity(new Claim[]
-            {
-                new Claim("Content", tokenContent.Content.ToString()),
-                new Claim(ClaimTypes.NameIdentifier , tokenContent.Content.ToString()),
-                new Claim(ClaimTypes.Role , tokenContent.Role),
-            }, "JMS.Token"); ;
-
-            var principal = new ClaimsPrincipal(claimsIdentity);
-            return new AuthenticationTicket(principal, _scheme.Name);
+            return new AuthenticationTicket(claimsPrincipal, _scheme.Name);
         }
 
         /// <summary>

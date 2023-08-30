@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Security;
 using System.Security.Authentication;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -138,7 +139,7 @@ namespace JMS.Token
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        TokenContent VerifyString(string token)
+        ClaimsPrincipal VerifyString(string token)
         {
 
             var ret = ParseString(token);
@@ -151,7 +152,16 @@ namespace JMS.Token
             var expireTime = new DateTime(1970, 1, 1).AddSeconds(data.e);
             if (expireTime < DateTime.Now.ToUniversalTime())
                 throw new AuthenticationException("token expired");
-            return new TokenContent { Content = data.d , Role = data.r};
+
+            var claimsIdentity = new ClaimsIdentity(new Claim[]
+          {
+                new Claim("Content", data.d),
+                new Claim(ClaimTypes.Role , data.r),
+          }, "JMS.Token"); ;
+
+            var principal = new ClaimsPrincipal(claimsIdentity);
+
+            return principal;
         }
 
         /// <summary>
@@ -159,7 +169,7 @@ namespace JMS.Token
         /// </summary>
         /// <param name="token"></param>
         /// <returns>返回token内容</returns>
-        public TokenContent Verify(string token)
+        public ClaimsPrincipal Verify(string token)
         {
             if (!_DisableTokenListener.CheckToken(token))
             {

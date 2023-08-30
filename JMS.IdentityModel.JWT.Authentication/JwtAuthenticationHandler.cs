@@ -31,7 +31,7 @@ namespace JMS.IdentityModel.JWT.Authentication
         }
 
 
-        public TokenContent Authenticate(IDictionary<string, string> headers)
+        public ClaimsPrincipal Authenticate(IDictionary<string, string> headers)
         {
             string token = null;
             foreach (var header in HeaderNames)
@@ -45,7 +45,7 @@ namespace JMS.IdentityModel.JWT.Authentication
             return VerifyToken(token);            
         }
 
-        public TokenContent VerifyToken(string token)
+        public ClaimsPrincipal VerifyToken(string token)
         {
             if (string.IsNullOrEmpty(token))
                 throw new AuthenticationException("Authentication failed");
@@ -63,15 +63,11 @@ namespace JMS.IdentityModel.JWT.Authentication
                     token = token.Replace("-", "/");
 
                 var ret = JwtHelper.Authenticate(JwtKey, token);
-                var tokenContent = new TokenContent
-                {
-                    Content = ret,
-                    Role = ret.FindFirst(ClaimTypes.Role)?.Value
-                };
+
                 if (Callback != null)
                 {
                     AuthenticationParameter authParameter = new AuthenticationParameter(token);
-                    authParameter.Content = tokenContent;
+                    authParameter.Content = ret;
                     if (!Callback(authParameter))
                     {
                         _logger?.LogDebug("身份验证回调处理不通过");
@@ -79,7 +75,7 @@ namespace JMS.IdentityModel.JWT.Authentication
                     }
                     return authParameter.Content;
                 }
-                return tokenContent;
+                return ret;
             }
             catch (AuthenticationException ex)
             {

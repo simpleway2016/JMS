@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Security.Authentication;
+using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace JMS
         /// <summary>
         /// token解码后内容，可在回调中修改
         /// </summary>
-        public TokenContent Content { get; set; }
+        public ClaimsPrincipal Content { get; set; }
         public AuthenticationParameter(string token)
         {
             this.Token = token;
@@ -36,7 +37,7 @@ namespace JMS
             TokenClient.Logger = logger;
         }
 
-        public TokenContent Authenticate(IDictionary<string, string> headers)
+        public ClaimsPrincipal Authenticate(IDictionary<string, string> headers)
         {
             string token = null;
             foreach (var header in HeaderNames)
@@ -54,7 +55,7 @@ namespace JMS
             return VerifyToken(token);
         }
 
-        public TokenContent VerifyToken(string token)
+        public ClaimsPrincipal VerifyToken(string token)
         {
             if (token == null)
             {
