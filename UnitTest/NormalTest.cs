@@ -1114,6 +1114,7 @@ Content-Length: 0
         [TestMethod]
         public void TestCrash()
         {
+            TestCrashController.CanCrash = true;
             UserInfoDbContext.Reset();
             StartGateway();
             StartUserInfoServiceHost();
@@ -1148,7 +1149,7 @@ Content-Length: 0
                 client.BeginTransaction();
 
                 serviceClient.Invoke("SetUserName", "Jack");
-                crashService.Invoke("SetText", "abc");
+                crashService.Invoke("SetTextWithUserContent", "abc");
                 try
                 {
                     client.CommitTransaction();

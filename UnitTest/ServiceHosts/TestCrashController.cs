@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UnitTest.ServiceHosts
 {
@@ -20,6 +22,27 @@ namespace UnitTest.ServiceHosts
         {
             _text = text;
             this.TransactionControl = new JMS.TransactionDelegate(this, this);
+        }
+
+        public void SetTextWithUserContent(string text)
+        {
+            if (CanCrash)
+            {
+                var claimsIdentity = new ClaimsIdentity(new Claim[]
+                {
+                new Claim("Content", text),
+                new Claim(ClaimTypes.Role , "admin"),
+          }, "JMS.Token"); ;
+
+                var field = typeof(BaseJmsController).GetField("_userContent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                field.SetValue(this, new ClaimsPrincipal(claimsIdentity));
+            }
+            else
+            {
+                if (this.UserContent == null || this.UserContent.FindFirstValue(ClaimTypes.Role) != "admin")
+                    throw new Exception("没有恢复身份");
+            }
+            SetText(text);
         }
 
         public async Task<string> NoTran(string text)
