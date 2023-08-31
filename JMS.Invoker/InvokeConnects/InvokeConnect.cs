@@ -29,7 +29,7 @@ namespace JMS
         public InvokingInformation InvokingInfo { get; private set; }
         public InvokeCommand Command { get; private set; }
         public Invoker Invoker { get; private set; }
-        public bool SupportScope { get; private set;}
+
         public bool HasTransactionHolding { get; private set; }
         public InvokeConnect(string serviceName, ClientServiceDetail location, Invoker invoker)
         {
@@ -80,10 +80,10 @@ namespace JMS
                     throw new RemoteException(tran.TransactionId, result.Error);
                 }
 
-                if (result.Attributes != null)
-                {
-                    this.SupportScope = result.Attributes.FromJson<InvokeAttributes>().SupportScope;
-                }
+                //if (result.Attributes != null)
+                //{
+                //    this.SupportScope = result.Attributes.FromJson<InvokeAttributes>().SupportScope;
+                //}
 
                 if (result.SupportTransaction)
                 {
@@ -164,10 +164,10 @@ namespace JMS
                     throw new RemoteException(tran.TransactionId, result.Error);
                 }
 
-                if(result.Attributes != null)
-                {
-                   this.SupportScope =  result.Attributes.FromJson<InvokeAttributes>().SupportScope;
-                }
+                //if(result.Attributes != null)
+                //{
+                //   this.SupportScope =  result.Attributes.FromJson<InvokeAttributes>().SupportScope;
+                //}
 
                 if (result.SupportTransaction)
                 {
