@@ -15,10 +15,6 @@ namespace JMS
         InvokingInformation InvokingInfo { get; }
         Invoker Invoker { get; }
         /// <summary>
-        /// 服务器是否支持多次请求整合到一个作用域当中
-        /// </summary>
-        bool SupportScope { get; }
-        /// <summary>
         /// 是否有事务正在挂起
         /// </summary>
         bool HasTransactionHolding { get; }
