@@ -14,7 +14,7 @@ namespace JMS.InvokeConnects
             {
                 if (remoteClient._SupportTransaction && remoteClient._Connects.Count > 0)
                 {
-                    var matchItem = remoteClient._Connects.FirstOrDefault(m => m.SupportScope && m.InvokingInfo.ServiceLocation.IsTheSameServer(serviceLocation));
+                    var matchItem = remoteClient._Connects.FirstOrDefault(m => m.InvokingInfo.ServiceLocation.IsTheSameServer(serviceLocation));
                     if (matchItem != null)
                     {
                         return matchItem;

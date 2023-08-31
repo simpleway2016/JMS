@@ -624,7 +624,7 @@ namespace UnitTest
                 }
 
                 client.BeginTransaction();
-                serviceClient.Invoke("SetFather", "Tom");
+                serviceClient.InvokeAsync("SetFather", "Tom");
                 serviceClient.InvokeAsync("SetUserName", "Jack1");
                 serviceClient.InvokeAsync("SetUserName", "Jack");
                 serviceClient.InvokeAsync("SetAge", 28);
