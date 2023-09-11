@@ -38,17 +38,28 @@ namespace JMS.Domains
             _Logger = logger;
             _lockKeyManager = lockKeyManager;
         }
-        public Task HealthyCheck(NetClient netclient, GatewayCommand registerCmd)
+        public async Task HealthyCheck(NetClient netclient, GatewayCommand registerCmd)
         {
             this.NetClient = netclient;
-            handleRegister(registerCmd);
-            if (this.ServiceInfo == null)
+            try
+            {
+                handleRegister(registerCmd);
+                if (this.ServiceInfo == null)
+                {
+                    _registerServiceManager.RemoveRegisterService(this);
+                    return;
+                }
+
+                await checkState();
+            }
+            catch (Exception ex)
+            {
+                _Logger?.LogInformation(ex, $"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+            }
+            finally
             {
                 _registerServiceManager.RemoveRegisterService(this);
-                return Task.CompletedTask;
-            }
-
-            return checkState();
+            }            
         }
 
         void handleRegister(GatewayCommand registerCmd)
@@ -106,15 +117,9 @@ namespace JMS.Domains
 
         }
 
-        void disconnect()
-        {
-            _registerServiceManager.RemoveRegisterService(this);
 
-        }
         public virtual void Close()
         {
-            _closed = true;
-            disconnect();
 
             NetClient?.Dispose();
         }
@@ -123,69 +128,38 @@ namespace JMS.Domains
             NetClient.ReadTimeout = 30000;
             while (!_closed)
             {
-                try
+                var command = await NetClient.ReadServiceObjectAsync<GatewayCommand>();
+
+                if (command.Type == (int)CommandType.ReportClientConnectQuantity)
                 {
-                    var command = await NetClient.ReadServiceObjectAsync<GatewayCommand>();
-
-                    if (command.Type == (int)CommandType.ReportClientConnectQuantity)
+                    //微服务向我报告当前它的请求连接数
+                    //_Logger?.LogDebug($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port} 当前连接数：{command.Content}");
+                    try
                     {
-                        //微服务向我报告当前它的请求连接数
-                        //_Logger?.LogDebug($"微服务{this.ServiceInfo.ServiceNames.ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port} 当前连接数：{command.Content}");
-                        try
-                        {
-                            var hardwareInfo = command.Content.FromJson<PerformanceInfo>();
-                            ServiceInfo.CpuUsage = hardwareInfo.CpuUsage.GetValueOrDefault();
+                        var hardwareInfo = command.Content.FromJson<PerformanceInfo>();
+                        ServiceInfo.CpuUsage = hardwareInfo.CpuUsage.GetValueOrDefault();
 
-                            if (ServiceInfo.RequestQuantity != hardwareInfo.RequestQuantity)
-                            {
-                                Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity);
-                                _registerServiceManager.RefreshServiceInfo(ServiceInfo);
-                            }
+                        if (ServiceInfo.RequestQuantity != hardwareInfo.RequestQuantity)
+                        {
+                            Interlocked.Exchange(ref ServiceInfo.RequestQuantity, hardwareInfo.RequestQuantity);
+                            _registerServiceManager.RefreshServiceInfo(ServiceInfo);
                         }
-                        catch
-                        {
-                        }
+                    }
+                    catch
+                    {
+                    }
 
-                        NetClient.WriteServiceData(new InvokeResult
-                        {
-                            Success = true
-                        });
-                    }
-                    else
+                    NetClient.WriteServiceData(new InvokeResult
                     {
-                        NetClient.WriteServiceData(new InvokeResult
-                        {
-                            Success = true
-                        });
-                    }
+                        Success = true
+                    });
                 }
-                catch (System.ObjectDisposedException)
+                else
                 {
-                    _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
-                    if (_closed == false)
+                    NetClient.WriteServiceData(new InvokeResult
                     {
-                        disconnect();
-                    }
-                    return;
-                }
-                catch (SocketException)
-                {
-                    _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
-                    if (_closed == false)
-                    {
-                        disconnect();
-                    }
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    _Logger?.LogInformation(ex, $"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
-
-                    if (_closed == false)
-                    {
-                        disconnect();
-                    }
-                    return;
+                        Success = true
+                    });
                 }
             }
         }
