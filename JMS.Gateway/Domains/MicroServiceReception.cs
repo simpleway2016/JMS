@@ -52,6 +52,14 @@ namespace JMS.Domains
 
                 await checkState();
             }
+            catch (System.ObjectDisposedException)
+            {
+                _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+            }
+            catch (SocketException)
+            {
+                _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+            }
             catch (Exception ex)
             {
                 _Logger?.LogInformation(ex, $"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
