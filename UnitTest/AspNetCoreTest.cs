@@ -820,11 +820,11 @@ Content-Length2: 0
                     remoteClient.BeginTransaction();
 
 
-                    service2.Invoke("/Crash/AsyncSetName", "Jack2");
-                    service2.Invoke("/Crash/AsyncSetName", "Jack");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack2");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack");
                     service2.InvokeAsync("/Crash/AsyncSetName", "Jack1");
                     service2.InvokeAsync("/Crash/AsyncSetName", "Jack2");
-                    service2.Invoke("/Crash/AsyncSetName", "Jack");
+                    service2.InvokeAsync("/Crash/AsyncSetName", "Jack");
 
                     remoteClient.CommitTransaction();
                 }
