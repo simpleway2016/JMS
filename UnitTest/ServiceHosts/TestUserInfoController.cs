@@ -111,9 +111,15 @@ namespace UnitTest.ServiceHosts
             Task.Run(async () => {
                 Thread.Sleep(1000);
                 await webSocket.SendString("hello");
+
+                if (!string.IsNullOrEmpty(this.RequestQuery["name"]))
+                {
+                    await webSocket.SendString(this.RequestQuery["name"]);
+                }
             });
             var ret = await webSocket.ReadString();
             await webSocket.SendString(ret);
+           
             await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "abc", System.Threading.CancellationToken.None);
         }
     }

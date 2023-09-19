@@ -10,6 +10,7 @@ using Way.Lib;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
+using System.Collections.Specialized;
 
 public class MicroServiceControllerBase: BaseJmsController,IDisposable
 {
@@ -19,6 +20,7 @@ public class MicroServiceControllerBase: BaseJmsController,IDisposable
         public IServiceProvider ServiceProvider;
         public ClaimsPrincipal UserContent;
         public string RequestPath;
+        public NameValueCollection RequestQuery;
         public EndPoint RemoteEndPoint;
         internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent)
         {

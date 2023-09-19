@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 using JMS.ServerCore;
 using System.Security.Claims;
+using System.Web;
+using System.Collections.Specialized;
 
 namespace JMS.Applications
 {
@@ -93,9 +95,13 @@ namespace JMS.Applications
 
             var route = path.Split('/');
             cmd.Service = route[1];
-            if (cmd.Service.Contains("?"))
+            int qIndex;
+            NameValueCollection requestQuery = null;
+            if ((qIndex = cmd.Service.IndexOf("?")) > 0 && qIndex < cmd.Service.Length - 1)
             {
-                cmd.Service = cmd.Service.Substring(0, cmd.Service.IndexOf("?"));
+                requestQuery = HttpUtility.ParseQueryString(cmd.Service.Substring(qIndex + 1));
+                cmd.Service = cmd.Service.Substring(0, qIndex);
+               
             }
             var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
@@ -139,8 +145,9 @@ namespace JMS.Applications
 
                  using (IServiceScope serviceScope = _MicroServiceProvider.ServiceProvider.CreateScope())
                 {
-                    MicroServiceControllerBase.RequestingObject.Value =
+                   var request = MicroServiceControllerBase.RequestingObject.Value =
                         new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
+                    request.RequestQuery = requestQuery??new NameValueCollection();
 
                     var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                     controller.SubProtocol = subProtocol;

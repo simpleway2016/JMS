@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -24,6 +25,22 @@ namespace JMS
                     _requestPath = RequestingObject.Value.RequestPath;
                 }
                 return _requestPath;
+            }
+        }
+
+        NameValueCollection _RequestQuery;
+        /// <summary>
+        /// 客户端请求的Query
+        /// </summary>
+        public NameValueCollection RequestQuery
+        {
+            get
+            {
+                if (_RequestQuery == null && RequestingObject.Value != null)
+                {
+                    _RequestQuery = RequestingObject.Value.RequestQuery;
+                }
+                return _RequestQuery;
             }
         }
 

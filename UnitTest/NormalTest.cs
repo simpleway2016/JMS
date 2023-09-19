@@ -24,6 +24,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using UnitTest.ServiceHosts;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -369,10 +370,15 @@ namespace UnitTest
 
             ClientWebSocket clientWebsocket = new ClientWebSocket();
             clientWebsocket.Options.SetRequestHeader("X-Forwarded-For", "::1");
-            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiPort}/JMSRedirect/TestWebSocketService?q=1"), CancellationToken.None).GetAwaiter().GetResult();
+            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiPort}/JMSRedirect/TestWebSocketService?q=1&name={HttpUtility.UrlEncode("你好")}"), CancellationToken.None).GetAwaiter().GetResult();
             var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
             if (text != "hello")
                 throw new Exception("error");
+
+            text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+            if (text != "你好")
+                throw new Exception("找不到query");
+
             clientWebsocket.SendString("test").ConfigureAwait(true).GetAwaiter().GetResult();
             text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
             if (text != "test")
@@ -1381,6 +1387,11 @@ Content-Length: 0
                 var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
                 if (text != "hello")
                     throw new Exception("error");
+
+                text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
+                if (text != "test")
+                    throw new Exception("获取不到query");
+
                 clientWebsocket.SendString("test").ConfigureAwait(true).GetAwaiter().GetResult();
                 text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
                 if (text != "test")
