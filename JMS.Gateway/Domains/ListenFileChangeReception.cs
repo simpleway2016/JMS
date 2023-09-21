@@ -46,7 +46,9 @@ namespace JMS.Domains
         {
             try
             {
+               
                 _listeningFiles = cmd.Content.FromJson<string[]>();
+                _logger.LogInformation($"远程服务连接监控文件变化，{client.RemoteEndPoint} {_listeningFiles.ToJsonString()}");
 
                 while (true)
                 {                    
@@ -108,6 +110,7 @@ namespace JMS.Domains
             }
             finally
             {
+                _logger.LogInformation($"断开监控文件变化，{client.RemoteEndPoint}");
                 SystemEventCenter.ShareFileChanged -= SystemEventCenter_ShareFileChanged;
             }
            
