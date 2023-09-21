@@ -26,7 +26,7 @@ namespace JMS.Domains
             _configuration = configuration;
             _logger = logger;
             _root = configuration.GetValue<string>("ShareFolder");
-            SystemEventCenter.ShareFileChanged += SystemEventCenter_ShareFileChanged;
+            
         }
 
         private void SystemEventCenter_ShareFileChanged(object sender, string file)
@@ -45,9 +45,9 @@ namespace JMS.Domains
         public async Task Handle(NetClient client,GatewayCommand cmd)
         {
             try
-            {
-               
+            {               
                 _listeningFiles = cmd.Content.FromJson<string[]>();
+                SystemEventCenter.ShareFileChanged += SystemEventCenter_ShareFileChanged;
                 _logger.LogInformation($"远程服务连接监控文件变化，{client.RemoteEndPoint} {_listeningFiles.ToJsonString()}");
 
                 while (true)
