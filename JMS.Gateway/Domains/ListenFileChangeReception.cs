@@ -32,7 +32,7 @@ namespace JMS.Domains
         private void SystemEventCenter_ShareFileChanged(object sender, string file)
         {
             _logger.LogInformation($"SystemEventCenter_ShareFileChanged=>{file}  {_listeningFiles.ToJsonString()}");
-            if(_listeningFiles != null && _listeningFiles.Contains(file) )
+            if (_listeningFiles != null && _listeningFiles.Contains(file) )
             {
                 lock (_changedFiles)
                 {
@@ -62,6 +62,7 @@ namespace JMS.Domains
                     }
                     else
                     {
+                        _logger.LogInformation($"ChangedFiles:{_changedFiles.ToJsonString()}");
                         string[] sendFiles = null;
                         lock (_changedFiles)
                         {
