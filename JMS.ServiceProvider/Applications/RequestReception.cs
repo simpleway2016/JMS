@@ -130,6 +130,10 @@ namespace JMS.Applications
             {
 
             }
+            catch (OperationCanceledException)
+            {
+
+            }
             catch (System.IO.IOException ex)
             {
                 if (ex.HResult != -2146232800)

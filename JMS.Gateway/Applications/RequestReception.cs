@@ -96,6 +96,10 @@ namespace JMS.Applications
             {
 
             }
+            catch (OperationCanceledException)
+            {
+
+            }
             catch (SizeLimitException)
             {
 

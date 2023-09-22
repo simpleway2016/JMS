@@ -174,6 +174,10 @@ namespace JMS.TokenServer
             {
 
             }
+            catch (OperationCanceledException)
+            {
+
+            }
             catch (Exception ex)
             {
                 while (ex.InnerException != null)

@@ -175,7 +175,7 @@ namespace JMS.Common
             this.Socket.SendTimeout = 16000;
             this.Socket.ReceiveTimeout = 16000;
             this.Socket.ReceiveBufferSize = 1024 * 100;
-            this.InnerStream = new NetworkStream(this.Socket);
+            this.InnerStream = new InsideNetworkStream(this.Socket);
             try
             {
                 this.Socket.IOControl(IOControlCode.KeepAliveValues, GetKeepAliveData(), null);
@@ -346,7 +346,7 @@ namespace JMS.Common
             }
 
             this.Socket = socket;
-            this.InnerStream = new NetworkStream(socket);
+            this.InnerStream = new InsideNetworkStream(socket);
             try
             {
                 this.Socket.IOControl(IOControlCode.KeepAliveValues, GetKeepAliveData(), null);
@@ -387,7 +387,7 @@ namespace JMS.Common
             }
 
             this.Socket = socket;
-            this.InnerStream = new NetworkStream(socket);
+            this.InnerStream = new InsideNetworkStream(socket);
             try
             {
                 this.Socket.IOControl(IOControlCode.KeepAliveValues, GetKeepAliveData(), null);

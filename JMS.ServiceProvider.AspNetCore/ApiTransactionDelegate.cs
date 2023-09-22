@@ -105,7 +105,7 @@ namespace JMS.ServiceProvider.AspNetCore
                     }
                 }
             }
-            catch (SocketException)
+            catch (Exception ex) when (ex is OperationCanceledException || ex is SocketException)
             {
                 if (checkedHealth)
                 {

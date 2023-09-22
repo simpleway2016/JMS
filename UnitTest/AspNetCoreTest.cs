@@ -135,7 +135,7 @@ namespace UnitTest
             });
             Task.Run(() =>
             {
-                var tcplistener = new TcpListener(10001);
+                var tcplistener = new TcpListener(20001);
                 tcplistener.Start();
 
                 while (true)
@@ -147,7 +147,7 @@ namespace UnitTest
 
             Thread.Sleep(500);
             var client = new NetClient();
-            client.Connect(new NetAddress("127.0.0.1", 10001));
+            client.Connect(new NetAddress("127.0.0.1", 20001));
             var data = Encoding.UTF8.GetBytes("GET /test");
             client.InnerStream.Write(data, 0, data.Length);
             Thread.Sleep(2000);
@@ -180,7 +180,7 @@ Host: abc.com
             }
             else
             {
-                throw new Exception("结果不对");
+                throw new Exception("结果不对" + reqline);
             }
 
             if (headers["Ca"] != "true")

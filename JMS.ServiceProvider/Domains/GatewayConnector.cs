@@ -370,6 +370,7 @@ namespace JMS.Domains
                 _logger?.LogError(ex, ex.Message);
                 if (!_manualDisconnected)
                 {
+                    DisconnectTime = DateTime.Now;
                     Thread.Sleep(2000);
                     this.ConnectAsync();
                 }

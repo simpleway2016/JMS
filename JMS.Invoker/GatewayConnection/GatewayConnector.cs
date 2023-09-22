@@ -199,6 +199,11 @@ namespace JMS.GatewayConnection
                 netclient.Dispose();
                 throw new MissMasterGatewayException(ex.Message);
             }
+            catch (OperationCanceledException ex)
+            {
+                netclient.Dispose();
+                throw new MissMasterGatewayException(ex.Message);
+            }
             catch (Exception)
             {
                 netclient.Dispose();
@@ -237,6 +242,11 @@ namespace JMS.GatewayConnection
                 return serviceLocation;
             }
             catch (SocketException ex)
+            {
+                netclient.Dispose();
+                throw new MissMasterGatewayException(ex.Message);
+            }
+            catch (OperationCanceledException ex)
             {
                 netclient.Dispose();
                 throw new MissMasterGatewayException(ex.Message);

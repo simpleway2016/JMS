@@ -38,11 +38,6 @@ namespace JMS.TransactionReporters
                 }
                 NetClientPool.AddClientToPool(netclient);
             }
-            catch (SocketException ex)
-            {
-                netclient.Dispose();
-                throw;
-            }
             catch (Exception)
             {
                 netclient.Dispose();
@@ -75,11 +70,6 @@ namespace JMS.TransactionReporters
                     netclient.ReadServiceObject<InvokeResult>();
                 }
                 NetClientPool.AddClientToPool(netclient);
-            }
-            catch (SocketException ex)
-            {
-                netclient.Dispose();
-                throw;
             }
             catch (Exception)
             {
