@@ -87,6 +87,8 @@ namespace JMS.WebApiDocument
                 proxyClient.Write(data);
 
                 NetClient client = new NetClient(new ConnectionStream(context));
+                client.ReadTimeout = 0;
+                proxyClient.ReadTimeout = 0;
 
                 readAndSend(proxyClient, client);
 
