@@ -36,6 +36,25 @@ namespace JMS.GatewayConnection
             }
         }
 
+        async void sendKeepAlivePackage(NetClient client)
+        {
+            try
+            {
+                while (true)
+                {
+                    await Task.Delay(8000);
+                    await _client.WriteServiceDataAsync(new GatewayCommand
+                    {
+                        Type = 0
+                    });
+                }
+            }
+            catch  
+            {
+ 
+            }
+        }
+
         async void keepConnect()
         {
             try
@@ -58,6 +77,7 @@ namespace JMS.GatewayConnection
                     }
 
                     _client.KeepAlive = false;
+                    _client.ReadTimeout = 0;
                     await _client.WriteServiceDataAsync(new GatewayCommand
                     {
                         Type = (int)CommandType.RemoteClientConnection
@@ -74,6 +94,10 @@ namespace JMS.GatewayConnection
                         _allServices.AddRange(services);
                     }
                     _loadServiceInfoCompleted = true;
+
+                    //不断发送心跳包
+                    sendKeepAlivePackage(_client);
+
                     while (!_disposed)
                     {
                         var ret = await _client.ReadServiceObjectAsync<GatewayConnectionResult>();
@@ -151,7 +175,7 @@ namespace JMS.GatewayConnection
                         _allServices.Clear();
                     }
                     await Task.Delay(2000);
-                    keepConnect();
+                    new Thread( keepConnect).Start();
                 }
             }
         }
