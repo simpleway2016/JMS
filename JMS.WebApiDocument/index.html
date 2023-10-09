@@ -148,6 +148,7 @@
         }
 
         .itemContainer {
+            position:relative;
             padding: 1rem;
             overflow-x: hidden;
             overflow-y: auto;
@@ -563,15 +564,16 @@
         if (!classType)
             return;
 
-        var x = event.clientX;
-        var y = event.clientY;
+        var containerDivEle = document.body.querySelector(".itemContainer");
+        var x = event.clientX - document.body.querySelector(".leftmenu").offsetWidth;
+        var y = event.clientY + containerDivEle.scrollTop;
         var divEle = document.createElement("DIV");
         divEle.innerHTML = demoDivHtml;
         divEle.className = "floatingItem";
         divEle.style.left = x + "px";
         divEle.style.top = y + "px";
         divEle.style.visibility = "hidden";
-        document.body.appendChild(divEle);
+        containerDivEle.appendChild(divEle);
 
 
         var myvueObj = new Vue({
@@ -602,7 +604,7 @@
                 },
                 lineBreak: function (v) {
                     return lineBreak(v);
-                }, 
+                },
                 getFirstLine: function (v) {
                     return getFirstLine(v);
                 }
@@ -615,11 +617,12 @@
         divEle = myvueObj.$el;
 
         var rect = divEle.getBoundingClientRect();
-        if (rect.x + rect.width + 10 > window.innerWidth && window.innerWidth - rect.width - 10 >= 0)
-            divEle.style.left = (window.innerWidth - rect.width - 10) + "px";
+
+        //  if (rect.x + rect.width + 10 > window.innerWidth && window.innerWidth - rect.width - 10 >= 0)
+        //      divEle.style.left = (window.innerWidth - rect.width - 10 - document.body.querySelector(".leftmenu").offsetWidth) + "px";
 
         if (rect.y + rect.height + 10 > window.innerHeight && window.innerHeight - rect.height - 10 >= 0)
-            divEle.style.top = (window.innerHeight - rect.height - 10) + "px";
+            divEle.style.top = (window.innerHeight - rect.height - 10 + containerDivEle.scrollTop) + "px";
         divEle.style.visibility = "";
     }
 
