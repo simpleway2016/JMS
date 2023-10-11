@@ -83,11 +83,16 @@ namespace JMS.Common
         public int ReadTimeout {
             get
             {
+                if (this.Socket == null)
+                    return 0;
                 return this.Socket.ReceiveTimeout;
             }
             set
             {
-                this.Socket.ReceiveTimeout = value;
+                if (this.Socket != null)
+                {
+                    this.Socket.ReceiveTimeout = value;
+                }
             }
         }
 

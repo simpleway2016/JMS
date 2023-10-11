@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JMS.Domains
+namespace JMS.Controllers
 {
     class ControllerFactory
     {
@@ -17,7 +17,7 @@ namespace JMS.Domains
         ConcurrentDictionary<string, ControllerTypeInfo> _controllerDict = new ConcurrentDictionary<string, ControllerTypeInfo>();
         public ControllerFactory(MicroServiceHost microServiceHost)
         {
-            this._microServiceHost = microServiceHost;
+            _microServiceHost = microServiceHost;
 
         }
 
@@ -47,7 +47,7 @@ namespace JMS.Domains
                     m.IsSpecialName == false &&
                     m.DeclaringType != typeof(MicroServiceControllerBase) &&
                     baseMethods.Contains(m.Name) == false &&
-                    m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo(m,contollerType)
+                    m.DeclaringType != typeof(object)).OrderBy(m => m.Name).Select(m => new TypeMethodInfo(m, contollerType)
                     {
                         NeedAuthorize = m.GetCustomAttribute<AuthorizeAttribute>() != null,
                         AllowAnonymous = m.GetCustomAttribute<AllowAnonymousAttribute>() != null
@@ -55,7 +55,7 @@ namespace JMS.Domains
 
             foreach (var method in methods)
             {
-                if ( method.Method.ReturnType == typeof(void) && method.Method.GetCustomAttribute<AsyncStateMachineAttribute>() != null)
+                if (method.Method.ReturnType == typeof(void) && method.Method.GetCustomAttribute<AsyncStateMachineAttribute>() != null)
                 {
                     throw new MethodDefineException($"请把{method.Method.DeclaringType.Name}.{method.Method.Name}()改为 async Task {method.Method.Name} 形式");
                 }

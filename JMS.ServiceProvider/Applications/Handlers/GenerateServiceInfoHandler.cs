@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,9 +6,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Way.Lib;
-using JMS.Infrastructures;
 using JMS.GenerateCode;
 using System.Threading.Tasks;
+using JMS.Controllers;
 
 namespace JMS.Applications
 {

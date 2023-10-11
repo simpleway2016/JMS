@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -15,6 +14,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Security.Claims;
+using JMS.Controllers;
 
 namespace JMS.RetryCommit
 {

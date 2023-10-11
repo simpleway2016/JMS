@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -14,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using JMS.Infrastructures.Hardware;
-using JMS.Infrastructures;
+using JMS.Controllers;
 
 namespace JMS.Domains
 {

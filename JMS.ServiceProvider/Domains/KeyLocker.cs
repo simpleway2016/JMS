@@ -1,5 +1,4 @@
-﻿using JMS.Domains;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
@@ -40,7 +39,7 @@ namespace JMS.Domains
         public KeyLocker(MicroServiceHost microServiceHost)
         {
             _microServiceHost = microServiceHost;
-            this.LockedKeyDict = new ConcurrentDictionary<string, string>();
+            LockedKeyDict = new ConcurrentDictionary<string, string>();
         }
 
         public void RemoveKeyFromLocal(string key)
@@ -255,7 +254,7 @@ namespace JMS.Domains
                             if (exit)
                                 throw;
 
-                            var disconnectTime = this.GatewayConnector.DisconnectTime;
+                            var disconnectTime = GatewayConnector.DisconnectTime;
                             //如果发生错误，可以不断重试，直到超时为止
                             if (disconnectTime == null || (DateTime.Now - disconnectTime.Value).TotalMilliseconds > _gatewayKeyTimeout + 1000)
                             {
@@ -330,7 +329,7 @@ namespace JMS.Domains
                             if (exit)
                                 throw;
 
-                            var disconnectTime = this.GatewayConnector.DisconnectTime;
+                            var disconnectTime = GatewayConnector.DisconnectTime;
                             //如果发生错误，可以不断重试，直到超时为止
                             if (disconnectTime == null || (DateTime.Now - disconnectTime.Value).TotalMilliseconds > _gatewayKeyTimeout + 1000)
                             {
@@ -394,7 +393,7 @@ namespace JMS.Domains
                     if (exit)
                         throw;
 
-                    var disconnectTime = this.GatewayConnector.DisconnectTime;
+                    var disconnectTime = GatewayConnector.DisconnectTime;
                     //如果发生错误，可以不断重试，直到超时为止
                     if (disconnectTime == null || (DateTime.Now - disconnectTime.Value).TotalMilliseconds > _gatewayKeyTimeout + 1000)
                     {
@@ -455,7 +454,7 @@ namespace JMS.Domains
                     if (exit)
                         throw;
 
-                    var disconnectTime = this.GatewayConnector.DisconnectTime;
+                    var disconnectTime = GatewayConnector.DisconnectTime;
                     //如果发生错误，可以不断重试，直到超时为止
                     if (disconnectTime == null || (DateTime.Now - disconnectTime.Value).TotalMilliseconds > _gatewayKeyTimeout + 1000)
                     {

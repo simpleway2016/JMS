@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,6 +16,7 @@ using JMS.ServerCore;
 using System.Security.Claims;
 using System.Web;
 using System.Collections.Specialized;
+using JMS.Controllers;
 
 namespace JMS.Applications
 {

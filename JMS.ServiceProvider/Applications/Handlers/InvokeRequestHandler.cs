@@ -1,5 +1,4 @@
-﻿using JMS.Domains;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -15,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Security.Authentication;
+using JMS.Controllers;
 
 namespace JMS.Applications
 {
