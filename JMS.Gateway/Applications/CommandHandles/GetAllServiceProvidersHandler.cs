@@ -15,15 +15,13 @@ namespace JMS.Applications.CommandHandles
     class GetAllServiceProvidersHandler : ICommandHandler
     {
         IAuthentication _authentication;
-        Gateway _gateway;
         IRegisterServiceManager _registerServiceManager;
         IConfiguration _configuration;
 
-        public GetAllServiceProvidersHandler(Gateway gateway, IRegisterServiceManager registerServiceManager, IConfiguration configuration,
+        public GetAllServiceProvidersHandler(IRegisterServiceManager registerServiceManager, IConfiguration configuration,
             IAuthentication authentication)
         {
             this._authentication = authentication;
-            this._gateway = gateway;
             this._registerServiceManager = registerServiceManager;
             this._configuration = configuration;
 

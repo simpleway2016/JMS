@@ -15,12 +15,10 @@ namespace JMS.Applications.CommandHandles
     class RemoveLockKeyHandler : ICommandHandler
     {
         LockKeyManager _lockKeyManager;
-        Gateway _gateway;
         IRegisterServiceManager _registerServiceManager;
-        public RemoveLockKeyHandler(LockKeyManager lockKeyManager, Gateway gateway, IRegisterServiceManager registerServiceManager)
+        public RemoveLockKeyHandler(LockKeyManager lockKeyManager, IRegisterServiceManager registerServiceManager)
         {
             this._lockKeyManager = lockKeyManager;
-            this._gateway = gateway;
             this._registerServiceManager = registerServiceManager;
         }
         public CommandType MatchCommandType => CommandType.RemoveLockKey;

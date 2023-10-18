@@ -14,13 +14,11 @@ namespace JMS.Applications.CommandHandles
     class AddLockKeyHandler : ICommandHandler
     {
         LockKeyManager _lockKeyManager;
-        Gateway _gateway;
         IRegisterServiceManager _registerServiceManager;
 
-        public AddLockKeyHandler(LockKeyManager lockKeyManager, Gateway gateway, IRegisterServiceManager registerServiceManager)
+        public AddLockKeyHandler(LockKeyManager lockKeyManager,  IRegisterServiceManager registerServiceManager)
         {
             this._lockKeyManager = lockKeyManager;
-            this._gateway = gateway;
             this._registerServiceManager = registerServiceManager;
 
         }

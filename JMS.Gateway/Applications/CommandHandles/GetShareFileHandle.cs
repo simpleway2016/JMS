@@ -17,12 +17,10 @@ namespace JMS.Applications.CommandHandles
 {
     class GetShareFileHandle : ICommandHandler
     {
-        Gateway _gateway;
         IConfiguration _configuration;
         ILogger<GetShareFileHandle> _logger;
-        public GetShareFileHandle(Gateway gateway, IConfiguration configuration, ILogger<GetShareFileHandle> logger)
+        public GetShareFileHandle(IConfiguration configuration, ILogger<GetShareFileHandle> logger)
         {
-            this._gateway = gateway;
             this._configuration = configuration;
             this._logger = logger;
         }
