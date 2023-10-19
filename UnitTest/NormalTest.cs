@@ -127,7 +127,7 @@ namespace UnitTest
         {
             var webapiBuilder = WebApiHostBuilder.Create(new string[] { "-s:appsettings-webapi.json" });
             var webapi = webapiBuilder.Build();
-            var webapiEnvironment = webapi.ServiceProvider.GetService<IWebApiEnvironment>();
+            var webapiEnvironment = webapi.ServiceProvider.GetService<IWebApiHostEnvironment>();
             webapiEnvironment.Port = _jmsWebapiPort;
             Task.Run(() =>
             {

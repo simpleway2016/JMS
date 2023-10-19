@@ -12,9 +12,9 @@ namespace JMS.Applications.HttpMiddlewares
 {
     internal class ProxyMiddleware : IHttpMiddleware
     {
-        private readonly IWebApiEnvironment _webApiEnvironment;
+        private readonly IWebApiHostEnvironment _webApiEnvironment;
 
-        public ProxyMiddleware(IWebApiEnvironment webApiEnvironment)
+        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment)
         {
             _webApiEnvironment = webApiEnvironment;
         }

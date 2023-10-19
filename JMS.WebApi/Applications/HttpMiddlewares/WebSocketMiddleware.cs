@@ -11,9 +11,9 @@ namespace JMS.Applications.HttpMiddlewares
 {
     internal class WebSocketMiddleware : IHttpMiddleware
     {
-        private readonly IWebApiEnvironment _webApiEnvironment;
+        private readonly IWebApiHostEnvironment _webApiEnvironment;
 
-        public WebSocketMiddleware(IWebApiEnvironment webApiEnvironment)
+        public WebSocketMiddleware(IWebApiHostEnvironment webApiEnvironment)
         {
             _webApiEnvironment = webApiEnvironment;
         }

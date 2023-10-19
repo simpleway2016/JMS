@@ -16,10 +16,10 @@ namespace JMS.Applications.HttpMiddlewares
 {
     internal class JmsDocMiddleware : IHttpMiddleware
     {
-        private readonly IWebApiEnvironment _webApiEnvironment;
+        private readonly IWebApiHostEnvironment _webApiEnvironment;
         private readonly IConfiguration _configuration;
 
-        public JmsDocMiddleware(IWebApiEnvironment webApiEnvironment,IConfiguration configuration)
+        public JmsDocMiddleware(IWebApiHostEnvironment webApiEnvironment,IConfiguration configuration)
         {
             _webApiEnvironment = webApiEnvironment;
             _configuration = configuration;

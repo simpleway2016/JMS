@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace JMS
 {
-    public interface IWebApiEnvironment
+    public interface IWebApiHostEnvironment
     {
         string AppSettingPath { get; }
         int Port { get; set; }
@@ -16,7 +16,7 @@ namespace JMS
         string[] AcceptCertHash { get; set; }
     }
 
-    class DefaultWebApiEnvironment : IWebApiEnvironment
+    class DefaultWebApiHostEnvironment : IWebApiHostEnvironment
     {
         public string AppSettingPath { get; }
         public int Port { get; set; }
@@ -24,7 +24,7 @@ namespace JMS
         public X509Certificate2 ServerCert { get; set; }
         public string[] AcceptCertHash { get; set; }
 
-        public DefaultWebApiEnvironment(string appSettingPath,int port)
+        public DefaultWebApiHostEnvironment(string appSettingPath,int port)
         {
             AppSettingPath = appSettingPath;
             Port = port;

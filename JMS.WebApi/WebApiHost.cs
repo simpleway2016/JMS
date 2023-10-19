@@ -23,7 +23,7 @@ namespace JMS
     {
         JMS.ServerCore.MulitTcpListener _tcpServer;
         ILogger<WebApiHost> _Logger;
-        private readonly IWebApiEnvironment _webApiEnvironment;
+        private readonly IWebApiHostEnvironment _webApiEnvironment;
         IRequestReception _requestReception;
 
       
@@ -31,7 +31,7 @@ namespace JMS
 
         internal bool Disposed { get; private set; }
 
-        public WebApiHost(ILogger<WebApiHost> logger,IWebApiEnvironment webApiEnvironment)
+        public WebApiHost(ILogger<WebApiHost> logger,IWebApiHostEnvironment webApiEnvironment)
         {
             _Logger = logger;
             _webApiEnvironment = webApiEnvironment;

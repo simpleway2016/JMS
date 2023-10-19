@@ -60,8 +60,8 @@ namespace JMS
 
             port = cmdArg.TryGetValue<int>("-p", port);
 
-            var webApiEnvironment = new DefaultWebApiEnvironment(appSettingPath, port);
-            this.Services.AddSingleton<IWebApiEnvironment>(webApiEnvironment);
+            var webApiEnvironment = new DefaultWebApiHostEnvironment(appSettingPath, port);
+            this.Services.AddSingleton<IWebApiHostEnvironment>(webApiEnvironment);
 
 
             Services.AddLogging(loggingBuilder =>

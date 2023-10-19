@@ -22,9 +22,9 @@ namespace JMS.Applications
     {
         HttpRequestHandler _httpRequestHandler;
         ILogger<RequestReception> _logger;
-        private readonly IWebApiEnvironment _webApiEnvironment;
+        private readonly IWebApiHostEnvironment _webApiEnvironment;
 
-        public RequestReception(ILogger<RequestReception> logger, IWebApiEnvironment webApiEnvironment,
+        public RequestReception(ILogger<RequestReception> logger, IWebApiHostEnvironment webApiEnvironment,
             HttpRequestHandler httpRequestHandler)
         {
             this._httpRequestHandler = httpRequestHandler;
