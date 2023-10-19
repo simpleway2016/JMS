@@ -113,11 +113,12 @@ namespace UnitTest
         {
             Task.Run(() =>
             {
-                var builder = new ConfigurationBuilder();
-                builder.AddJsonFile("appsettings-gateway.json", optional: true, reloadOnChange: true);
-                var configuration = builder.Build();
 
-                JMS.GatewayProgram.Run(configuration, _gateWayPort, out Gateway g);
+                var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway.json" });
+                var gateway = gatewayBuilder.Build();
+                var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
+                gatewayEnvironment.Port = _gateWayPort;
+                gateway.Run();
             });
         }
 
@@ -137,36 +138,40 @@ namespace UnitTest
         {
             Task.Run(() =>
             {
-                var builder = new ConfigurationBuilder();
-                builder.AddJsonFile("appsettings-gateway-cert.json", optional: true, reloadOnChange: true);
-                var configuration = builder.Build();
-
-                JMS.GatewayProgram.Run(configuration, _gateWayPortCert, out Gateway g);
+                var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway-cert.json" });
+                var gateway = gatewayBuilder.Build();
+                var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
+                gatewayEnvironment.Port = _gateWayPortCert;
+                gateway.Run();
             });
         }
 
-        public void StartGateway_Cluster1()
+        public Gateway StartGateway_Cluster1()
         {
+            var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway - cluster1.json" });
+            var gateway = gatewayBuilder.Build();
+            var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
+            gatewayEnvironment.Port = _clusterGateWayPort1;
             Task.Run(() =>
             {
-                var builder = new ConfigurationBuilder();
-                builder.AddJsonFile("appsettings-gateway - cluster1.json", optional: true, reloadOnChange: true);
-                var configuration = builder.Build();
-
-                JMS.GatewayProgram.Run(configuration, _clusterGateWayPort1, out _clusterGateway1);
+               
+                gateway.Run();
             });
+            return gateway;
         }
 
-        public void StartGateway_Cluster2()
+        public Gateway StartGateway_Cluster2()
         {
+            var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway - cluster2.json" });
+            var gateway = gatewayBuilder.Build();
+            var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
+            gatewayEnvironment.Port = _clusterGateWayPort2;
             Task.Run(() =>
             {
-                var builder = new ConfigurationBuilder();
-                builder.AddJsonFile("appsettings-gateway - cluster2.json", optional: true, reloadOnChange: true);
-                var configuration = builder.Build();
-
-                JMS.GatewayProgram.Run(configuration, _clusterGateWayPort2, out _clusterGateway2);
+             
+                gateway.Run();
             });
+            return gateway;
         }
 
         public void WaitGatewayReady(int port)
@@ -683,7 +688,7 @@ namespace UnitTest
                 serviceClient.Invoke("TestLockKey");
             }
 
-            using ( var client = new RemoteClient(gateways))
+            using (var client = new RemoteClient(gateways))
             {
                 var serviceClient = client.TryGetMicroService("TestScopeService");
 
@@ -1027,7 +1032,7 @@ Content-Length: 0
 
                 }
 
-               
+
             }
             catch (Exception ex)
             {
@@ -1039,7 +1044,8 @@ Content-Length: 0
             }
 
             bool hasNewClient = false;
-            NetClientPool.CreatedNewClient += (s, e) => {
+            NetClientPool.CreatedNewClient += (s, e) =>
+            {
                 hasNewClient = true;
             };
             //下面测试一下连接池是否正常
@@ -1051,7 +1057,7 @@ Content-Length: 0
                     throw new Exception("结果错误");
                 }
             }
-            if(hasNewClient)
+            if (hasNewClient)
                 throw new Exception("创建了新的连接");
 
             if (UserInfoDbContext.FinallyUserName != null ||
@@ -1266,8 +1272,8 @@ Content-Length: 0
         public void TestGatewayCluster()
         {
             UserInfoDbContext.Reset();
-            StartGateway_Cluster1();
-            StartGateway_Cluster2();
+            _clusterGateway1 = StartGateway_Cluster1();
+            _clusterGateway2 = StartGateway_Cluster2();
 
             //等待网关就绪
             WaitGatewayReady(_clusterGateWayPort1);
@@ -1285,10 +1291,10 @@ Content-Length: 0
                    }
                 };
 
-            var serviceProvider1 = (IServiceProvider)_clusterGateway1.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(_clusterGateway1);
+            var serviceProvider1 = _clusterGateway1.ServiceProvider;
             var clusterGatewayConnector1 = serviceProvider1.GetService<ClusterGatewayConnector>();
 
-            var serviceProvider2 = (IServiceProvider)_clusterGateway2.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(_clusterGateway2);
+            var serviceProvider2 = _clusterGateway2.ServiceProvider;
             var clusterGatewayConnector2 = serviceProvider2.GetService<ClusterGatewayConnector>();
 
             Debug.WriteLine("等待决出主网关");
@@ -1330,7 +1336,7 @@ Content-Length: 0
             //关闭主网关
             masterGateway.Dispose();
 
-            var serviceProvider = (IServiceProvider)slaveGateway.GetType().GetProperty("ServiceProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(slaveGateway);
+            var serviceProvider = slaveGateway.ServiceProvider;
             var clusterGatewayConnector = serviceProvider.GetService<ClusterGatewayConnector>();
 
             //等待从网关成为主网关

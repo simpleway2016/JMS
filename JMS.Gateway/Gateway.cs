@@ -24,20 +24,21 @@ namespace JMS
     {
         JMS.ServerCore.MulitTcpListener _tcpServer;
         ILogger<Gateway> _Logger;
+        private readonly IGatewayEnvironment _gatewayEnvironment;
         IRequestReception _requestReception;
-        internal int Port;
-        public X509Certificate2 ServerCert { get; set; }
-        public string[] AcceptCertHash { get; set; }
-        internal IServiceProvider ServiceProvider { get; set; }
+
+    
+        public IServiceProvider ServiceProvider { get; set; }
 
         internal bool Disposed { get; private set; }
 
-        public Gateway(ILogger<Gateway> logger)
+        public Gateway(ILogger<Gateway> logger,IGatewayEnvironment gatewayEnvironment)
         {
             _Logger = logger;
+            _gatewayEnvironment = gatewayEnvironment;
             _Logger.LogInformation($"版本号：{this.GetType().Assembly.GetName().Version}");
 
-            _Logger?.LogInformation("配置文件:{0}", GatewayProgram.AppSettingPath);
+            _Logger?.LogInformation("配置文件:{0}", gatewayEnvironment.AppSettingPath);
         }
 
         string _id;
@@ -64,18 +65,20 @@ namespace JMS
             }
         }
 
-        public void Run(int port)
+        public void Run()
         {
-            this.Port = port;
+           
             _requestReception = ServiceProvider.GetService<IRequestReception>();
-            _tcpServer = new JMS.ServerCore.MulitTcpListener(port,null);
+            var sslConfiguration = ServiceProvider.GetService<ISslConfiguration>();
+
+            _tcpServer = new JMS.ServerCore.MulitTcpListener(_gatewayEnvironment.Port, null);
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 
-            _Logger?.LogInformation("Gateway started, port:{0}", port);
-            if (ServerCert != null)
+            _Logger?.LogInformation("Gateway started, port:{0}", _gatewayEnvironment.Port);
+            if (sslConfiguration.ServerCert != null)
             {
-                _Logger?.LogInformation("Use ssl,certificate hash:{0}", ServerCert.GetCertHashString());
+                _Logger?.LogInformation("Use ssl,certificate hash:{0}", sslConfiguration.ServerCert.GetCertHashString());
             }
 
             //启动GatewayRefereeClient，申请成为主网关

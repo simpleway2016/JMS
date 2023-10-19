@@ -35,11 +35,11 @@ namespace UnitTest
         {
             Task.Run(() =>
             {
-                var builder = new ConfigurationBuilder();
-                builder.AddJsonFile("appsettings-gateway.json", optional: true, reloadOnChange: true);
-                var configuration = builder.Build();
-
-                JMS.GatewayProgram.Run(configuration, _gateWayPort, out Gateway g);
+                var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway.json" });
+                var gateway = gatewayBuilder.Build();
+                var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
+                gatewayEnvironment.Port = _gateWayPort;
+                gateway.Run();
             });
         }
 

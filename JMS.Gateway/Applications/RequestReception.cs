@@ -21,20 +21,20 @@ namespace JMS.Applications
     class RequestReception : IRequestReception
     {
         ILogger<RequestReception> _logger;
+        private readonly ISslConfiguration _sslConfiguration;
         ICommandHandlerRoute _manager;
-        Gateway _gateway;
         public RequestReception(ILogger<RequestReception> logger,
-            Gateway gateway,
+            ISslConfiguration sslConfiguration,
             ICommandHandlerRoute manager)
         {
             _logger = logger;
+            _sslConfiguration = sslConfiguration;
             _manager = manager;
-            _gateway = gateway;
         }
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (_gateway.AcceptCertHash != null && _gateway.AcceptCertHash.Length >0 && _gateway.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
+            if (_sslConfiguration.AcceptCertHash != null && _sslConfiguration.AcceptCertHash.Length >0 && _sslConfiguration.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
             {
                 return false;
             }
@@ -66,9 +66,9 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
-                    if (_gateway.ServerCert != null)
+                    if (_sslConfiguration.ServerCert != null)
                     {
-                        await client.AsSSLServerAsync(_gateway.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
+                        await client.AsSSLServerAsync(_sslConfiguration.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
 
                     }
 
