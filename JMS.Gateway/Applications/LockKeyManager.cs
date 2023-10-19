@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,14 +10,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib.ECC;
 using Microsoft.Extensions.DependencyInjection;
+using JMS.Cluster;
 
-namespace JMS.Domains
+namespace JMS.Applications
 {
     public class LockKeyManager
     {
         ClusterGatewayConnector _clusterGC;
         IRegisterServiceManager _registerServiceManager;
-        System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject> _cache;
+        ConcurrentDictionary<string, KeyObject> _cache;
         Gateway _gateway;
         IConfiguration _configuration;
         int _timeout;
@@ -39,9 +39,9 @@ namespace JMS.Domains
         public LockKeyManager(Gateway gateway, IConfiguration configuration, IRegisterServiceManager registerServiceManager,
             ILogger<LockKeyManager> logger)
         {
-            this._registerServiceManager = registerServiceManager;
+            _registerServiceManager = registerServiceManager;
             _timeout = configuration.GetValue<int>("UnLockKeyTimeout");
-            _cache = new System.Collections.Concurrent.ConcurrentDictionary<string, KeyObject>();
+            _cache = new ConcurrentDictionary<string, KeyObject>();
             _gateway = gateway;
             _configuration = configuration;
             _logger = logger;
@@ -69,7 +69,7 @@ namespace JMS.Domains
 
                 _cache.TryAdd(key, keyObj);
             }
-            else if(_clusterGC.IsMaster == false)
+            else if (_clusterGC.IsMaster == false)
             {
                 //如果自己不是主网关，那么addkey应该是主网关发过来的
                 keyObj.Locker = locker;

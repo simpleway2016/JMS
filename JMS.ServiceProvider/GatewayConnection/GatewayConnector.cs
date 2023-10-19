@@ -15,7 +15,7 @@ using System.Security.Cryptography.X509Certificates;
 using JMS.Infrastructures.Hardware;
 using JMS.Controllers;
 
-namespace JMS.Domains
+namespace JMS
 {
     /// <summary>
     /// 连接主网关，和维持主网关的心跳

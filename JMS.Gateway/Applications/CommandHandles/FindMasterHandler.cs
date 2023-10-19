@@ -1,5 +1,4 @@
-﻿using JMS.Domains;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using Way.Lib;
@@ -10,6 +9,7 @@ using System.Linq;
 using System.Net;
 using Microsoft.CodeAnalysis;
 using System.Threading.Tasks;
+using JMS.Cluster;
 
 namespace JMS.Applications.CommandHandles
 {

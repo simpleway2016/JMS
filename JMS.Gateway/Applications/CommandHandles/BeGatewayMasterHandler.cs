@@ -1,10 +1,10 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
+using JMS.Cluster;
 
 namespace JMS.Applications.CommandHandles
 {

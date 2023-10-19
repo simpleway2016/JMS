@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using JMS.Domains;
 using JMS.Dtos;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
@@ -17,6 +16,7 @@ using System.IO;
 using Microsoft.Extensions.Configuration;
 using JMS.Common.Net;
 using Org.BouncyCastle.Bcpg;
+using JMS.Cluster;
 
 namespace JMS
 {

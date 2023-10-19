@@ -1,6 +1,7 @@
 ﻿using Extreme.Net.Core.Proxy;
 using JMS;
-using JMS.Domains;
+using JMS.Applications;
+using JMS.Cluster;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

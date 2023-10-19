@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

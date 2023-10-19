@@ -1,12 +1,11 @@
-﻿using JMS.Domains;
-using JMS.Dtos;
+﻿using JMS.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JMS.Domains
+namespace JMS.Applications
 {
     /// <summary>
     /// 注册服务管理中心

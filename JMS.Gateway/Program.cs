@@ -3,7 +3,6 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
-using JMS.Domains;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
@@ -19,7 +18,7 @@ using JMS.ServerCore.Http.Middlewares;
 using JMS.ServerCore.Http;
 using JMS.Applications.HttpMiddlewares;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using JMS.Domains.ApiDocument;
+using JMS.ApiDocument;
 
 namespace JMS
 {

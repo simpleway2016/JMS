@@ -7,7 +7,6 @@ using JMS.Dtos;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net;
-using JMS.Domains;
 using System.Threading.Tasks;
 
 namespace JMS.Applications.CommandHandles

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace JMS.Domains
+namespace JMS.Applications
 {
     public class TransactionStatusManager
     {
@@ -14,18 +14,18 @@ namespace JMS.Domains
         public event EventHandler<string> TransactionRemove;
         public TransactionStatusManager()
         {
-            _dataContext = new Jack.Storage.MemoryList.StorageContext<TransactionStatusDataItem>("TransactionStatus","Tran");
+            _dataContext = new Jack.Storage.MemoryList.StorageContext<TransactionStatusDataItem>("TransactionStatus", "Tran");
             new Thread(checkForDelete).Start();
         }
 
         void checkForDelete()
         {
-            while(true)
+            while (true)
             {
                 var time = DateTime.Now.AddYears(-1);
-                foreach ( var item in _dataContext )
+                foreach (var item in _dataContext)
                 {
-                    if(item.CreateTime < time)
+                    if (item.CreateTime < time)
                     {
                         _dataContext.Remove(item);
                     }
@@ -36,11 +36,12 @@ namespace JMS.Domains
 
         public void AddSuccessTransaction(string tran)
         {
-            _dataContext.AddOrUpdate(new TransactionStatusDataItem { 
+            _dataContext.AddOrUpdate(new TransactionStatusDataItem
+            {
                 Tran = tran,
                 CreateTime = DateTime.Now,
             });
-            if(TransactionSuccess != null)
+            if (TransactionSuccess != null)
             {
                 TransactionSuccess(this, tran);
             }

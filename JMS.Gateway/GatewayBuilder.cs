@@ -1,8 +1,6 @@
 ﻿using JMS.Applications.HttpMiddlewares;
 using JMS.Applications;
 using JMS.Common;
-using JMS.Domains.ApiDocument;
-using JMS.Domains;
 using JMS.Infrastructures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +16,9 @@ using JMS.ServerCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using JMS.Applications.HttpMiddlewares;
 using Microsoft.Extensions.Logging;
+using JMS.ApiDocument;
+using JMS.Cluster;
+using JMS.Authentication;
 
 namespace JMS
 {
@@ -96,7 +97,7 @@ namespace JMS
             Services.AddSingleton<IRemoteClientManager, DefaultRemoteClientManager>();
             Services.AddSingleton<Gateway>();
             Services.AddSingleton<LockKeyManager>();
-            Services.AddSingleton<IAuthentication, Authentication>();
+            Services.AddSingleton<IAuthentication, DefaultAuthentication>();
             Services.AddTransient<IMicroServiceReception, MicroServiceReception>();
             Services.AddSingleton<FileChangeWatcher>();
             Services.AddTransient<ListenFileChangeReception>();

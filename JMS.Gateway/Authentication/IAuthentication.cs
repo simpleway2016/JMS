@@ -7,7 +7,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JMS.Domains
+namespace JMS.Authentication
 {
     internal interface IAuthentication
     {
@@ -20,14 +20,14 @@ namespace JMS.Domains
         Task<bool> Verify(NetClient netclient, GatewayCommand cmd);
     }
 
-    class Authentication : IAuthentication
+    class DefaultAuthentication : IAuthentication
     {
         ErrorUserMarker _errorUserMarker;
         IConfiguration _configuration;
-        public Authentication(IConfiguration configuration, ErrorUserMarker errorUserMarker)
+        public DefaultAuthentication(IConfiguration configuration, ErrorUserMarker errorUserMarker)
         {
-            this._errorUserMarker = errorUserMarker;
-            this._configuration = configuration;
+            _errorUserMarker = errorUserMarker;
+            _configuration = configuration;
 
         }
         void outputNeedLogin(NetClient netclient, GatewayCommand cmd)

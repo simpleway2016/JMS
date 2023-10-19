@@ -1,5 +1,4 @@
-﻿using JMS.Domains;
-using JMS.Dtos;
+﻿using JMS.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;

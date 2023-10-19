@@ -5,7 +5,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 
-namespace JMS.Domains
+namespace JMS
 {
     internal class ConnectionCounter : IConnectionCounter
     {

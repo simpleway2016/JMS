@@ -1,6 +1,5 @@
 ﻿
 using JMS.Dtos;
-using JMS.Domains;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,8 +11,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
+using JMS.Applications;
 
-namespace JMS.Domains
+namespace JMS.Cluster
 {
     public class ClusterGatewayConnector
     {
@@ -38,8 +38,8 @@ namespace JMS.Domains
             TransactionStatusManager transactionStatusManager,
             ILogger<ClusterGatewayConnector> logger)
         {
-            this._configuration = configuration;
-            this._registerServiceManager = registerServiceManager;
+            _configuration = configuration;
+            _registerServiceManager = registerServiceManager;
             _otherGatewayAddress = configuration.GetSection("Cluster:Gateway").Get<NetAddress>();
             _logger = logger;
             _lockKeyManager = lockKeyManager;
@@ -47,7 +47,7 @@ namespace JMS.Domains
 
             if (_otherGatewayAddress != null)
             {
-                this.IsMaster = configuration.GetSection("Cluster:IsMaster").Get<bool>();
+                IsMaster = configuration.GetSection("Cluster:IsMaster").Get<bool>();
                 transactionStatusManager.TransactionSuccess += OnTransactionSuccess;
                 transactionStatusManager.TransactionRemove += OnTransactionRemove;
 
@@ -58,7 +58,7 @@ namespace JMS.Domains
             }
             else
             {
-                this.IsMaster = true;
+                IsMaster = true;
             }
         }
 
@@ -159,17 +159,17 @@ namespace JMS.Domains
                                 client.WriteServiceData(new GatewayCommand
                                 {
                                     Type = (int)CommandType.BeGatewayMaster,
-                                    Content = new BeMasterContent { Id = _gateway.Id, IsMaster = this.IsMaster }.ToJsonString()
+                                    Content = new BeMasterContent { Id = _gateway.Id, IsMaster = IsMaster }.ToJsonString()
                                 });
                                 var cmd = client.ReadServiceObject<InvokeResult>();
                                 if (cmd.Success)
                                 {
                                     _logger.LogInformation($"网关{_otherGatewayAddress}同意我成为主网关");
-                                    if (this.IsMaster == false)
+                                    if (IsMaster == false)
                                     {
                                         //在没成为主网关前，将所有lockey设置一个有效期，成为主网关，等微服务提交所有lock key，会取消这个有效期
                                         _lockKeyManager.ResetAllKeyExpireTime();
-                                        this.IsMaster = true;
+                                        IsMaster = true;
                                     }
                                     uploadLockKeysToOtherGateway();
                                 }
@@ -177,7 +177,7 @@ namespace JMS.Domains
                                 {
                                     _logger.LogInformation($"网关{_otherGatewayAddress}拒绝我成为主网关");
 
-                                    this.IsMaster = false;
+                                    IsMaster = false;
 
                                     //不是主网关，需要断开所有微服务
                                     _registerServiceManager.DisconnectAllServices();
@@ -185,7 +185,7 @@ namespace JMS.Domains
                                     //上传所有lock key
                                     uploadLockKeysToOtherGateway();
 
-                                    this.keepAliveWithMaster();
+                                    keepAliveWithMaster();
                                 }
                                 return;
                             }
@@ -196,7 +196,7 @@ namespace JMS.Domains
                         }
                     }
 
-                    if (this.IsMaster == false)
+                    if (IsMaster == false)
                     {
                         _logger.LogInformation($"与网关{_otherGatewayAddress}连接失败，我自己成为master");
 
@@ -204,10 +204,10 @@ namespace JMS.Domains
                         _lockKeyManager.ResetAllKeyExpireTime();
 
                         //3次网络访问失败，自己当master
-                        this.IsMaster = true;
+                        IsMaster = true;
                     }
                     Thread.Sleep(3000);
-                    this.BeMaster(1);
+                    BeMaster(1);
                 });
             }
         }
@@ -225,7 +225,7 @@ namespace JMS.Domains
             var keys = _lockKeyManager.GetAllKeys();
             if (keys.Length > 0)
             {
-                foreach( var key in keys)
+                foreach (var key in keys)
                 {
                     _lockKeyManager_LockKey(null, key);
                 }
@@ -244,19 +244,19 @@ namespace JMS.Domains
                     Thread.Sleep(100);
                     _logger?.LogInformation("与主网关连接断开");
                 }
-                this.BeMaster(1);
+                BeMaster(1);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "");
-                this.BeMaster(1);
+                BeMaster(1);
             }
         }
 
         internal void SomeoneWantToBeMaster(NetClient netclient, GatewayCommand cmd)
         {
             BeMasterContent beMasterContent = cmd.Content.FromJson<BeMasterContent>();
-            if (this.IsMaster && beMasterContent.IsMaster == false)
+            if (IsMaster && beMasterContent.IsMaster == false)
             {
                 _logger.LogInformation($"拒绝{beMasterContent.Id}成为master");
                 netclient.WriteServiceData(new InvokeResult
@@ -265,7 +265,7 @@ namespace JMS.Domains
                 });
                 return;
             }
-            else if (this.IsMaster == false && beMasterContent.IsMaster)
+            else if (IsMaster == false && beMasterContent.IsMaster)
             {
                 _logger.LogInformation($"同意{beMasterContent.Id}成为master");
 

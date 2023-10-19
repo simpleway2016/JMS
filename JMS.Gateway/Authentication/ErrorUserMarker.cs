@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace JMS.Domains
+namespace JMS.Authentication
 {
     /// <summary>
     /// 记录无授权的用户
@@ -28,7 +28,7 @@ namespace JMS.Domains
 
                 if (errorItem.BlackListTime != null && DateTime.Now >= errorItem.BlackListTime.Value)
                 {
-                    this.Clear(ip);
+                    Clear(ip);
                 }
             }
 
@@ -51,7 +51,7 @@ namespace JMS.Domains
                 {
                     Count = 1
                 };
-            }          
+            }
         }
 
         /// <summary>

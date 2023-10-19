@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JMS.Domains.ApiDocument
+namespace JMS.ApiDocument
 {
     internal class ApiDocCodeBuilder
     {

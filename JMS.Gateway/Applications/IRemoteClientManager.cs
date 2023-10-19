@@ -1,5 +1,4 @@
-﻿using JMS.Applications;
-using JMS.Applications.CommandHandles;
+﻿using JMS.Applications.CommandHandles;
 using JMS.Common;
 using JMS.Dtos;
 using System;
@@ -11,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Way.Lib;
 
-namespace JMS.Domains
+namespace JMS.Applications
 {
     internal interface IRemoteClientManager
     {
@@ -27,8 +26,8 @@ namespace JMS.Domains
 
         public DefaultRemoteClientManager(IRegisterServiceManager registerServiceManager, ICommandHandlerRoute commandHandlerRoute)
         {
-            this._commandHandlerRoute = commandHandlerRoute;
-            this._registerServiceManager = registerServiceManager;
+            _commandHandlerRoute = commandHandlerRoute;
+            _registerServiceManager = registerServiceManager;
             _registerServiceManager.ServiceConnect += _registerServiceManager_ServiceConnect;
             _registerServiceManager.ServiceDisconnect += _registerServiceManager_ServiceDisconnect;
             _registerServiceManager.ServiceInfoRefresh += _registerServiceManager_ServiceInfoRefresh; ;
@@ -73,7 +72,7 @@ namespace JMS.Domains
             }
         }
 
-        private void _registerServiceManager_ServiceDisconnect(object sender, Dtos.RegisterServiceInfo serviceInfo)
+        private void _registerServiceManager_ServiceDisconnect(object sender, RegisterServiceInfo serviceInfo)
         {
             var obj = new
             {
@@ -93,7 +92,7 @@ namespace JMS.Domains
             }
         }
 
-        private void _registerServiceManager_ServiceConnect(object sender, Dtos.RegisterServiceInfo serviceInfo)
+        private void _registerServiceManager_ServiceConnect(object sender, RegisterServiceInfo serviceInfo)
         {
             if (!string.IsNullOrWhiteSpace(serviceInfo.ClientCheckCodeFile))
                 return;
@@ -142,7 +141,7 @@ namespace JMS.Domains
 
         RegisterServiceRunningInfo[] list()
         {
-            var list = _registerServiceManager.GetAllRegisterServices().Where(m=>string.IsNullOrWhiteSpace(m.ClientCheckCodeFile));
+            var list = _registerServiceManager.GetAllRegisterServices().Where(m => string.IsNullOrWhiteSpace(m.ClientCheckCodeFile));
 
             return list.Select(m => new RegisterServiceRunningInfo
             {

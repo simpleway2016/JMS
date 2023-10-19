@@ -1,5 +1,4 @@
-﻿using JMS.Domains;
-using JMS.Domains.ApiDocument;
+﻿using JMS.ApiDocument;
 using JMS.Dtos;
 using JMS.ServerCore.Http;
 using JMS.WebApiDocument;

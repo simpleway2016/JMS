@@ -1,5 +1,4 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Utilities.Net;
 using System;
@@ -12,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Way.Lib;
 
-namespace JMS.Domains
+namespace JMS.Applications
 {
     class MicroServiceReception : IMicroServiceReception
     {
@@ -32,7 +31,7 @@ namespace JMS.Domains
             IRegisterServiceManager registerServiceManager,
             IServiceProviderAllocator serviceProviderAllocator)
         {
-            this._registerServiceManager = registerServiceManager;
+            _registerServiceManager = registerServiceManager;
             _Gateway = gateway;
             _ServiceProviderAllocator = serviceProviderAllocator;
             _Logger = logger;
@@ -40,11 +39,11 @@ namespace JMS.Domains
         }
         public async Task HealthyCheck(NetClient netclient, GatewayCommand registerCmd)
         {
-            this.NetClient = netclient;
+            NetClient = netclient;
             try
             {
                 handleRegister(registerCmd);
-                if (this.ServiceInfo == null)
+                if (ServiceInfo == null)
                 {
                     _registerServiceManager.RemoveRegisterService(this);
                     return;
@@ -52,20 +51,20 @@ namespace JMS.Domains
 
                 await checkState();
             }
-            catch (System.ObjectDisposedException)
+            catch (ObjectDisposedException)
             {
-                _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+                _Logger?.LogInformation($"微服务{ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {ServiceInfo.Host}:{ServiceInfo.Port}断开");
                 throw;
             }
             catch (Exception)
             {
-                _Logger?.LogInformation($"微服务{this.ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {this.ServiceInfo.Host}:{this.ServiceInfo.Port}断开");
+                _Logger?.LogInformation($"微服务{ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {ServiceInfo.Host}:{ServiceInfo.Port}断开");
                 throw;
             }
             finally
             {
                 _registerServiceManager.RemoveRegisterService(this);
-            }            
+            }
         }
 
         void handleRegister(GatewayCommand registerCmd)
@@ -81,7 +80,7 @@ namespace JMS.Domains
                         Name = serviceItem.ServiceNames[i],
                         Type = ServiceType.JmsService
                     };
-                    if(serviceItem.Port == 0)
+                    if (serviceItem.Port == 0)
                     {
                         detail.Type = ServiceType.WebApi;
                         detail.AllowGatewayProxy = true;
@@ -93,7 +92,7 @@ namespace JMS.Domains
 
             if (serviceItem.SingletonService)
             {
-                if (_registerServiceManager.GetAllRegisterServices().Any(m => string.Join(',', m.ServiceList.Select(n=>n.Name).ToArray()) == string.Join(',', serviceItem.ServiceList.Select(n => n.Name).ToArray())))
+                if (_registerServiceManager.GetAllRegisterServices().Any(m => string.Join(',', m.ServiceList.Select(n => n.Name).ToArray()) == string.Join(',', serviceItem.ServiceList.Select(n => n.Name).ToArray())))
                 {
                     NetClient.WriteServiceData(new InvokeResult
                     {
@@ -112,13 +111,13 @@ namespace JMS.Domains
             NetClient.WriteServiceData(new InvokeResult<string>
             {
                 Success = true,
-                Data = this.GetType().Assembly.GetName().Version.ToString()
+                Data = GetType().Assembly.GetName().Version.ToString()
             });
 
-            this.ServiceInfo = serviceItem;
+            ServiceInfo = serviceItem;
             _registerServiceManager.AddRegisterService(this);
 
-            _Logger?.LogInformation($"微服务{serviceItem.ServiceList.Select(m=>m.Name).ToJsonString()} {serviceItem.Host}:{serviceItem.Port}注册");
+            _Logger?.LogInformation($"微服务{serviceItem.ServiceList.Select(m => m.Name).ToJsonString()} {serviceItem.Host}:{serviceItem.Port}注册");
 
 
         }

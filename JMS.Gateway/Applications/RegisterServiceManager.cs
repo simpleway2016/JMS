@@ -1,5 +1,4 @@
-﻿using JMS.Domains;
-using JMS.Dtos;
+﻿using JMS.Dtos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -9,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JMS.Domains
+namespace JMS.Applications
 {
     internal class RegisterServiceManager : IRegisterServiceManager
     {
@@ -18,16 +17,16 @@ namespace JMS.Domains
         public event EventHandler<RegisterServiceInfo> ServiceInfoRefresh;
         public event EventHandler<RegisterServiceInfo> ServiceDisconnect;
 
-        ConcurrentDictionary<IMicroServiceReception,bool> _allServiceReceptions = new ConcurrentDictionary<IMicroServiceReception, bool>();
+        ConcurrentDictionary<IMicroServiceReception, bool> _allServiceReceptions = new ConcurrentDictionary<IMicroServiceReception, bool>();
         bool? _SupportJmsDoc;
-        public bool SupportJmsDoc => _SupportJmsDoc??=_configuration.GetSection("Http:SupportJmsDoc").Get<bool>();
+        public bool SupportJmsDoc => _SupportJmsDoc ??= _configuration.GetSection("Http:SupportJmsDoc").Get<bool>();
 
         bool? _AllServiceInDoc;
-        public bool AllServiceInDoc => _AllServiceInDoc??=_configuration.GetSection("Http:AllServiceInDoc").Get<bool>();
+        public bool AllServiceInDoc => _AllServiceInDoc ??= _configuration.GetSection("Http:AllServiceInDoc").Get<bool>();
 
         public RegisterServiceManager(IConfiguration configuration)
         {
-            this._configuration = configuration;
+            _configuration = configuration;
 
         }
 
@@ -43,13 +42,13 @@ namespace JMS.Domains
 
         public IEnumerable<RegisterServiceInfo> GetAllRegisterServices()
         {
-            return (from m in _allServiceReceptions.Keys
-                    select m.ServiceInfo);
+            return from m in _allServiceReceptions.Keys
+                    select m.ServiceInfo;
         }
 
         public RegisterServiceInfo GetServiceById(string id)
-        {            
-            return _allServiceReceptions.Keys.FirstOrDefault(m=>m.ServiceInfo.ServiceId == id)?.ServiceInfo;
+        {
+            return _allServiceReceptions.Keys.FirstOrDefault(m => m.ServiceInfo.ServiceId == id)?.ServiceInfo;
         }
 
         public void RemoveRegisterService(IMicroServiceReception microServiceReception)
@@ -65,7 +64,7 @@ namespace JMS.Domains
 
         public void DisconnectAllServices()
         {
-            foreach( var item in _allServiceReceptions )
+            foreach (var item in _allServiceReceptions)
             {
                 item.Key.Close();
             }
@@ -86,7 +85,7 @@ namespace JMS.Domains
 
         public void RefreshServiceInfo(RegisterServiceInfo serviceInfo)
         {
-            if(ServiceInfoRefresh != null)
+            if (ServiceInfoRefresh != null)
             {
                 ServiceInfoRefresh(this, serviceInfo);
             }
