@@ -20,47 +20,50 @@ namespace JMS
         private readonly string[] _args;
         public JmsServiceCollection Services { get; }
         public IConfiguration Configuration { get; private set; }
+
+        CommandArgParser _cmdArg;
+        string _appSettingPath;
         WebApiHostBuilder(string[] args)
         {
             _args = args;
             this.Services = new JmsServiceCollection();
+
+            _cmdArg = new CommandArgParser(_args);
+            _appSettingPath = _cmdArg.TryGetValue<string>("-s");
+
+            if (_appSettingPath == null)
+                _appSettingPath = "appsettings.json";
+
+            var builder = new ConfigurationBuilder();
+            if (_appSettingPath == "share")
+            {
+                _appSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                _appSettingPath = Path.Combine(_appSettingPath, "jms.webapi");
+                if (Directory.Exists(_appSettingPath) == false)
+                {
+                    Directory.CreateDirectory(_appSettingPath);
+                }
+                _appSettingPath = Path.Combine(_appSettingPath, "appsettings.json");
+                if (File.Exists(_appSettingPath) == false)
+                {
+                    File.Copy("./appsettings.json", _appSettingPath);
+                }
+            }
+
+            builder.AddJsonFile(_appSettingPath, optional: true, reloadOnChange: true);
+            Configuration = builder.Build();
+            Services.AddSingleton(Configuration);
         }
 
         public WebApiHost Build()
         {
-
-            CommandArgParser cmdArg = new CommandArgParser(_args);
-            var appSettingPath = cmdArg.TryGetValue<string>("-s");
-
-            if (appSettingPath == null)
-                appSettingPath = "appsettings.json";
-
-            var builder = new ConfigurationBuilder();
-            if (appSettingPath == "share")
-            {
-                appSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-                appSettingPath = Path.Combine(appSettingPath, "jms.webapi");
-                if (Directory.Exists(appSettingPath) == false)
-                {
-                    Directory.CreateDirectory(appSettingPath);
-                }
-                appSettingPath = Path.Combine(appSettingPath, "appsettings.json");
-                if (File.Exists(appSettingPath) == false)
-                {
-                    File.Copy("./appsettings.json", appSettingPath);
-                }
-            }
-
-            builder.AddJsonFile(appSettingPath, optional: true, reloadOnChange: true);
-            Configuration = builder.Build();
-
             this.Services.AddSingleton(Configuration);
 
             var port = Configuration.GetValue<int>("Port");
 
-            port = cmdArg.TryGetValue<int>("-p", port);
+            port = _cmdArg.TryGetValue<int>("-p", port);
 
-            var webApiEnvironment = new DefaultWebApiHostEnvironment(appSettingPath, port);
+            var webApiEnvironment = new DefaultWebApiHostEnvironment(_appSettingPath, port);
             this.Services.AddSingleton<IWebApiHostEnvironment>(webApiEnvironment);
 
 
@@ -69,7 +72,7 @@ namespace JMS
                 loggingBuilder.AddConfiguration(Configuration.GetSection("Logging"));
                 loggingBuilder.AddConsole(); // 将日志输出到控制台
             });
-            Services.AddSingleton<IConfiguration>(Configuration);
+          
             Services.AddSingleton<IRequestReception, RequestReception>();
             Services.AddSingleton<HttpRequestHandler>();
             Services.AddSingleton<WebApiHost>();

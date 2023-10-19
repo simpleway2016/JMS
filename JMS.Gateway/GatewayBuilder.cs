@@ -28,47 +28,50 @@ namespace JMS
 
         public JmsServiceCollection Services { get;}
         public IConfiguration Configuration { get; private set; }
+
+        CommandArgParser _cmdArg;
+        string _appSettingPath;
         private GatewayBuilder(string[] args)
         {
             Services = new JmsServiceCollection();
             _args = args;
+
+            _cmdArg = new CommandArgParser(_args);
+
+            _appSettingPath = _cmdArg.TryGetValue<string>("-s");
+
+            if (_appSettingPath == null)
+                _appSettingPath = "appsettings.json";
+
+            var builder = new ConfigurationBuilder();
+            if (_appSettingPath == "share")
+            {
+                _appSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                _appSettingPath = Path.Combine(_appSettingPath, "jms.gateway");
+                if (Directory.Exists(_appSettingPath) == false)
+                {
+                    Directory.CreateDirectory(_appSettingPath);
+                }
+                _appSettingPath = Path.Combine(_appSettingPath, "appsettings.json");
+                if (File.Exists(_appSettingPath) == false)
+                {
+                    File.Copy("./appsettings.json", _appSettingPath);
+                }
+            }
+
+            builder.AddJsonFile(_appSettingPath, optional: true, reloadOnChange: true);
+            this.Configuration = builder.Build();
+            Services.AddSingleton<IConfiguration>(this.Configuration);
+
         }
 
         public Gateway Build()
         {
-            CommandArgParser cmdArg = new CommandArgParser(_args);
-
-            var appSettingPath = cmdArg.TryGetValue<string>("-s");
-
-            if (appSettingPath == null)
-                appSettingPath = "appsettings.json";
-
-            var builder = new ConfigurationBuilder();
-            if (appSettingPath == "share")
-            {
-                appSettingPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-                appSettingPath = Path.Combine(appSettingPath, "jms.gateway");
-                if (Directory.Exists(appSettingPath) == false)
-                {
-                    Directory.CreateDirectory(appSettingPath);
-                }
-                appSettingPath = Path.Combine(appSettingPath, "appsettings.json");
-                if (File.Exists(appSettingPath) == false)
-                {
-                    File.Copy("./appsettings.json", appSettingPath);
-                }
-            }
-
-            builder.AddJsonFile(appSettingPath, optional: true, reloadOnChange: true);
-            this.Configuration = builder.Build();
-
             var port = this.Configuration.GetValue<int>("Port");
-            port = cmdArg.TryGetValue<int>("-p", port);
+            port = _cmdArg.TryGetValue<int>("-p", port);
 
-            DefaultGatewayEnvironment gatewayEnvironment = new DefaultGatewayEnvironment(appSettingPath, port);
+            DefaultGatewayEnvironment gatewayEnvironment = new DefaultGatewayEnvironment(_appSettingPath, port);
             Services.AddSingleton<IGatewayEnvironment>(gatewayEnvironment);
-            Services.AddSingleton<IConfiguration>(this.Configuration);
-
 
             var sharefolder = this.Configuration.GetValue<string>("ShareFolder");
             if (!System.IO.Directory.Exists(sharefolder))
