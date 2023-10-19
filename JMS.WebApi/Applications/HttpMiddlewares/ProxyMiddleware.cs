@@ -12,6 +12,12 @@ namespace JMS.Applications.HttpMiddlewares
 {
     internal class ProxyMiddleware : IHttpMiddleware
     {
+        private readonly IWebApiEnvironment _webApiEnvironment;
+
+        public ProxyMiddleware(IWebApiEnvironment webApiEnvironment)
+        {
+            _webApiEnvironment = webApiEnvironment;
+        }
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> reqheaders)
         {
             int indexflag;
@@ -27,7 +33,7 @@ namespace JMS.Applications.HttpMiddlewares
                 int.TryParse(reqheaders["Content-Length"], out contentLength);
             }
 
-            using var rc = new RemoteClient(WebApiProgram.GatewayAddresses);
+            using var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses);
             var service = await rc.TryGetMicroServiceAsync(serviceName);
 
             if (service == null || service.ServiceLocation.AllowGatewayProxy == false)

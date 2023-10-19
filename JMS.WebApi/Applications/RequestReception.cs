@@ -20,20 +20,21 @@ namespace JMS.Applications
 {
     class RequestReception : IRequestReception
     {
-        WebApi _webApi;
         HttpRequestHandler _httpRequestHandler;
         ILogger<RequestReception> _logger;
-        public RequestReception(ILogger<RequestReception> logger, WebApi webApi,
+        private readonly IWebApiEnvironment _webApiEnvironment;
+
+        public RequestReception(ILogger<RequestReception> logger, IWebApiEnvironment webApiEnvironment,
             HttpRequestHandler httpRequestHandler)
         {
-            this._webApi = webApi;
             this._httpRequestHandler = httpRequestHandler;
             _logger = logger;
+            _webApiEnvironment = webApiEnvironment;
         }
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (_webApi.AcceptCertHash != null && _webApi.AcceptCertHash.Length >0 && _webApi.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
+            if (_webApiEnvironment.AcceptCertHash != null && _webApiEnvironment.AcceptCertHash.Length >0 && _webApiEnvironment.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
             {
                 return false;
             }
@@ -51,9 +52,9 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
-                    if (_webApi.ServerCert != null)
+                    if (_webApiEnvironment.ServerCert != null)
                     {
-                        await client.AsSSLServerAsync(_webApi.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
+                        await client.AsSSLServerAsync(_webApiEnvironment.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
 
                     }
 

@@ -123,16 +123,18 @@ namespace UnitTest
             });
         }
 
-        public void StartJmsWebApi()
+        public WebApiHost StartJmsWebApi()
         {
+            var webapiBuilder = WebApiHostBuilder.Create(new string[] { "-s:appsettings-webapi.json" });
+            var webapi = webapiBuilder.Build();
+            var webapiEnvironment = webapi.ServiceProvider.GetService<IWebApiEnvironment>();
+            webapiEnvironment.Port = _jmsWebapiPort;
             Task.Run(() =>
             {
-                var builder = new ConfigurationBuilder();
-                builder.AddJsonFile("appsettings-webapi.json", optional: true, reloadOnChange: true);
-                var configuration = builder.Build();
-
-                JMS.WebApiProgram.Run(configuration, _jmsWebapiPort, out WebApi g);
+            
+                webapi.Run();
             });
+            return webapi;
         }
 
         public void StartGatewayWithCert()

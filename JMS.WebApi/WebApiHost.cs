@@ -19,25 +19,26 @@ using Way.Lib;
 
 namespace JMS
 {
-    public class WebApi : IDisposable
+    public class WebApiHost : IDisposable
     {
         JMS.ServerCore.MulitTcpListener _tcpServer;
-        ILogger<WebApi> _Logger;
+        ILogger<WebApiHost> _Logger;
+        private readonly IWebApiEnvironment _webApiEnvironment;
         IRequestReception _requestReception;
-        internal int Port;
-        public X509Certificate2 ServerCert { get; set; }
-        public string[] AcceptCertHash { get; set; }
-        internal IServiceProvider ServiceProvider { get; set; }
+
+      
+        public IServiceProvider ServiceProvider { get; set; }
 
         internal bool Disposed { get; private set; }
 
-        public WebApi(ILogger<WebApi> logger)
+        public WebApiHost(ILogger<WebApiHost> logger,IWebApiEnvironment webApiEnvironment)
         {
             _Logger = logger;
+            _webApiEnvironment = webApiEnvironment;
             _Logger.LogInformation($"版本号：{this.GetType().Assembly.GetName().Version}");
 
-            _Logger?.LogInformation("配置文件:{0}", WebApiProgram.AppSettingPath);
-            _Logger?.LogInformation($"网关地址：{WebApiProgram.GatewayAddresses.ToJsonString()}");
+            _Logger?.LogInformation("配置文件:{0}", _webApiEnvironment.AppSettingPath);
+            _Logger?.LogInformation($"网关地址：{_webApiEnvironment.GatewayAddresses.ToJsonString()}");
         }
 
         string _id;
@@ -64,18 +65,17 @@ namespace JMS
             }
         }
 
-        public void Run(int port)
+        public void Run()
         {
-            this.Port = port;
             _requestReception = ServiceProvider.GetService<IRequestReception>();
-            _tcpServer = new JMS.ServerCore.MulitTcpListener(port,null);
+            _tcpServer = new JMS.ServerCore.MulitTcpListener(_webApiEnvironment.Port, null);
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 
-            _Logger?.LogInformation($"Listening {(ServerCert != null?"https":"http")}://*:{port}");
-            if (ServerCert != null)
+            _Logger?.LogInformation($"Listening {(_webApiEnvironment.ServerCert != null?"https":"http")}://*:{_webApiEnvironment.Port}");
+            if (_webApiEnvironment.ServerCert != null)
             {
-                _Logger?.LogInformation("Use ssl,certificate hash:{0}", ServerCert.GetCertHashString());
+                _Logger?.LogInformation("Use ssl,certificate hash:{0}", _webApiEnvironment.ServerCert.GetCertHashString());
             }
 
             _tcpServer.Run();

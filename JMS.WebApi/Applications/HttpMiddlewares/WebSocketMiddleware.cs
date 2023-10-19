@@ -11,6 +11,12 @@ namespace JMS.Applications.HttpMiddlewares
 {
     internal class WebSocketMiddleware : IHttpMiddleware
     {
+        private readonly IWebApiEnvironment _webApiEnvironment;
+
+        public WebSocketMiddleware(IWebApiEnvironment webApiEnvironment)
+        {
+            _webApiEnvironment = webApiEnvironment;
+        }
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
         {
             if (headers.TryGetValue("Connection", out string connection)
@@ -30,7 +36,7 @@ namespace JMS.Applications.HttpMiddlewares
                     serviceName = serviceName.Substring(0, serviceName.IndexOf("?"));
                 }
 
-                using var rc = new RemoteClient(WebApiProgram.GatewayAddresses);
+                using var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses);
                 var service = await rc.TryGetMicroServiceAsync(serviceName);
                 if (service == null || service.ServiceLocation.AllowGatewayProxy == false)
                 {

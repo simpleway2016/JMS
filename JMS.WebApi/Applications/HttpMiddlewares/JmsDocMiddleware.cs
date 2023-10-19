@@ -16,6 +16,14 @@ namespace JMS.Applications.HttpMiddlewares
 {
     internal class JmsDocMiddleware : IHttpMiddleware
     {
+        private readonly IWebApiEnvironment _webApiEnvironment;
+        private readonly IConfiguration _configuration;
+
+        public JmsDocMiddleware(IWebApiEnvironment webApiEnvironment,IConfiguration configuration)
+        {
+            _webApiEnvironment = webApiEnvironment;
+            _configuration = configuration;
+        }
         async void outputCode(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
         {
 
@@ -25,7 +33,7 @@ namespace JMS.Applications.HttpMiddlewares
             var buttonName = requestPath.Substring(requestPath.IndexOf("?button=") + 8);
             buttonName = HttpUtility.UrlDecode(buttonName);
 
-            using (var rc = new RemoteClient(WebApiProgram.GatewayAddresses))
+            using (var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses))
             {
                 var service = rc.TryGetMicroService(servicename);
                 if (service == null)
@@ -60,7 +68,7 @@ namespace JMS.Applications.HttpMiddlewares
         {
             if (requestPath.StartsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
             {
-                if (WebApiProgram.Configuration.GetSection("Http:SupportJmsDoc").Get<bool>() == false)
+                if (_configuration.GetSection("Http:SupportJmsDoc").Get<bool>() == false)
                 {
                     client.OutputHttpNotFund();
                     return true;
@@ -99,7 +107,7 @@ namespace JMS.Applications.HttpMiddlewares
 
                 List<ControllerInfo> controllerInfos = new List<ControllerInfo>();
                 List<ServiceDetail> doneList = new List<ServiceDetail>();
-                using (var rc = new RemoteClient(WebApiProgram.GatewayAddresses))
+                using (var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses))
                 {
                     ApiDocCodeBuilderInfo[] buttons;
                     try
@@ -111,7 +119,7 @@ namespace JMS.Applications.HttpMiddlewares
                         buttons = new ApiDocCodeBuilderInfo[0];
                     }
 
-                    var allServiceInDoc = WebApiProgram.Configuration.GetSection("Http:AllServiceInDoc").Get<bool>();
+                    var allServiceInDoc = _configuration.GetSection("Http:AllServiceInDoc").Get<bool>();
                     var allServices = await rc.ListMicroServiceAsync(null);
                     foreach (var serviceRunningInfo in allServices)
                     {
