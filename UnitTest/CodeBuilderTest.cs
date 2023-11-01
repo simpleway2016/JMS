@@ -73,6 +73,8 @@ namespace UnitTest
 
     /// <summary>
     /// ≤‚ ‘controller
+    ///     ¥ÌŒÛ¬Î£∫
+    ///     1=≤‚ ‘–≈œ¢
     /// </summary>
     class TestController : MicroServiceControllerBase
     {
@@ -139,6 +141,12 @@ namespace UnitTest
     public class CodeBuilderTest
     {
         [TestMethod]
+        public void DocumentReaderTest()
+        {
+            DocumentReader.GetTypeDocument(typeof(TestController));
+        }
+
+        [TestMethod]
         public void Test()
         {
             MicroServiceHost host = new MicroServiceHost(new ServiceCollection());
@@ -150,12 +158,6 @@ namespace UnitTest
             var str = type.GetMethod("GenerateCode").Invoke(builder, new object[] { "abc", "MyClass", "testService" });
         }
 
-        [TestMethod]
-        public void DocumentReaderTest()
-        {
-            var doc = DocumentReader.GetTypeDocument(typeof(TClass<int>.Enum1));
-            doc = DocumentReader.GetTypeDocument(typeof(TestController));
-        }
 
         [TestMethod]
         public void TypeinfoBuilderTest()

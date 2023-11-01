@@ -116,7 +116,7 @@ namespace JMS.AssemblyDocumentReader
                 {
                     try
                     {
-                        return node.SelectSingleNode("summary").InnerText?.Trim();
+                        return node.SelectSingleNode("summary").ToCommentString();
                     }
                     catch (Exception ex)
                     {
@@ -145,7 +145,7 @@ namespace JMS.AssemblyDocumentReader
                 {
                     try
                     {
-                        return node.SelectSingleNode("summary").InnerText?.Trim();
+                        return node.SelectSingleNode("summary").ToCommentString();
                     }
                     catch (Exception ex)
                     {
@@ -174,7 +174,7 @@ namespace JMS.AssemblyDocumentReader
                 {
                     try
                     {
-                        return node.SelectSingleNode("summary").InnerText?.Trim();
+                        return node.SelectSingleNode("summary").ToCommentString();
                     }
                     catch (Exception ex)
                     {
@@ -238,7 +238,7 @@ namespace JMS.AssemblyDocumentReader
                     try
                     {
                         xmlNode = node;
-                        return node.SelectSingleNode("summary").InnerText?.Trim();
+                        return node.SelectSingleNode("summary").ToCommentString();
                     }
                     catch (Exception ex)
                     {
