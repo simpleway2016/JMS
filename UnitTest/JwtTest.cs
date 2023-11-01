@@ -25,7 +25,7 @@ namespace UnitTest
         [TestMethod]
         public void TokenClientTest()
         {
-            var tokenClient = new TokenClient(new JMS.NetAddress("8.222.158.1",11027));
+            var tokenClient = new TokenClient(new JMS.NetAddress("127.0.0.1", 9911));
             var token = tokenClient.Build("r:123", DateTime.Now.AddMinutes(20));
             tokenClient.Verify(token);
         }
