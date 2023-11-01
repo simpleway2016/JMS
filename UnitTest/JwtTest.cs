@@ -15,12 +15,21 @@ using Extreme.Net.Core.Proxy;
 using JMS.IdentityModel.JWT.Authentication;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using JMS.Token;
 
 namespace UnitTest
 {
     [TestClass]
     public class JwtTest
     {
+        [TestMethod]
+        public void TokenClientTest()
+        {
+            var tokenClient = new TokenClient(new JMS.NetAddress("8.222.158.1",11027));
+            var token = tokenClient.Build("r:123", DateTime.Now.AddMinutes(20));
+            tokenClient.Verify(token);
+        }
+
         [TestMethod]
         public void Test()
         {

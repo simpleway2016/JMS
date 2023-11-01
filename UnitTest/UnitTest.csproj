@@ -31,6 +31,7 @@
     <ProjectReference Include="..\JMS.Proxy\JMS.Proxy.csproj" />
     <ProjectReference Include="..\JMS.ServiceProvider.AspNetCore\JMS.ServiceProvider.AspNetCore.csproj" />
     <ProjectReference Include="..\JMS.ServiceProvider\JMS.ServiceProvider.csproj" />
+    <ProjectReference Include="..\JMS.Token\JMS.Token.csproj" />
     <ProjectReference Include="..\JMS.WebApiDocument\JMS.WebApiDocument.csproj" />
     <ProjectReference Include="..\JMS.WebApi\JMS.WebApi.csproj" />
   </ItemGroup>
