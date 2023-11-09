@@ -26,6 +26,9 @@ namespace JMS.Applications.CommandHandles
     {
         public async Task WebSocketProxy(NetClient client,NetClient proxyClient, GatewayCommand cmd)
         {
+            client.ReadTimeout = 0;
+            proxyClient.ReadTimeout = 0;
+
             readSend(client, proxyClient);
             await readSend(proxyClient, client);
         }
