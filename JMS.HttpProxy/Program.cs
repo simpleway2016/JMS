@@ -14,6 +14,7 @@ using JMS.Applications;
 using System.Threading;
 using System.IO;
 using JMS.Applications.CommandHandles;
+using JMS.HttpProxy;
 
 namespace JMS
 {
@@ -78,7 +79,7 @@ namespace JMS
             services.AddSingleton<IRequestReception, RequestReception>();
             services.AddSingleton<HttpRequestHandler>();
             services.AddSingleton<HttpProxyServer>();
-
+            services.AddSingleton<RequestTimeLimter>();
           
             var serviceProvider = services.BuildServiceProvider();
 

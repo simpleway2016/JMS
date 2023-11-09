@@ -16,6 +16,7 @@ using System.Net;
 using System.Buffers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using JMS.ServerCore;
+using JMS.HttpProxy;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -24,6 +25,13 @@ namespace JMS.Applications.CommandHandles
     /// </summary>
     class HttpRequestHandler
     {
+        private readonly RequestTimeLimter _requestTimeLimter;
+
+        public HttpRequestHandler(RequestTimeLimter requestTimeLimter)
+        {
+            _requestTimeLimter = requestTimeLimter;
+        }
+
         public async Task WebSocketProxy(NetClient client,NetClient proxyClient, GatewayCommand cmd)
         {
             client.ReadTimeout = 0;
@@ -34,6 +42,14 @@ namespace JMS.Applications.CommandHandles
         }
         public async Task Handle(NetClient client, GatewayCommand cmd)
         {
+            var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
+            if (_requestTimeLimter.OnRequesting(ip) == false)
+            {
+                //输出401
+                client.KeepAlive = false;
+                client.OutputHttpCode(401 , "Forbidden");
+                return;
+            }
 
             if (cmd.Header == null)
             {
@@ -55,7 +71,7 @@ namespace JMS.Applications.CommandHandles
                 int.TryParse(cmd.Header["Content-Length"], out inputContentLength);
             }
 
-            var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
+            
             if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
             {
                 if (xff.Contains(ip) == false)
