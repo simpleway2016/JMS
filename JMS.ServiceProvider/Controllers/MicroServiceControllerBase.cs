@@ -14,31 +14,7 @@ using System.Collections.Specialized;
 
 public class MicroServiceControllerBase: BaseJmsController,IDisposable
 {
-    internal class LocalObject
-    {
-        public InvokeCommand Command;
-        public IServiceProvider ServiceProvider;
-        public ClaimsPrincipal UserContent;
-        public string RequestPath;
-        public NameValueCollection RequestQuery;
-        public EndPoint RemoteEndPoint;
-        internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent)
-        {
-            this.RemoteEndPoint = remoteEndPoint;
-            this.Command = command;
-            this.ServiceProvider = serviceProvider;
-            this.UserContent = userContent;
-        }
-
-        internal LocalObject(EndPoint remoteEndPoint, InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent,string requestPath)
-        {
-            this.RemoteEndPoint = remoteEndPoint;
-            this.Command = command;
-            this.ServiceProvider = serviceProvider;
-            this.UserContent = userContent;
-            this.RequestPath = requestPath;
-        }
-    }
+   
 
     internal NetClient NetClient;
    

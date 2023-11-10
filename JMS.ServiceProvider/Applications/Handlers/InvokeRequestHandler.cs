@@ -109,7 +109,7 @@ namespace JMS.Applications
                     }
 
 
-                    BaseJmsController.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent);
+                    BaseJmsController.RequestingObject.Value = new LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent);
 
                     controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                     controller.TransactionControl = null;

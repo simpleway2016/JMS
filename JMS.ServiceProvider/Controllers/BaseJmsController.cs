@@ -5,6 +5,8 @@ using static MicroServiceControllerBase;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
+using System.Collections.Specialized;
+using System.Net;
 
 namespace JMS
 {
@@ -72,6 +74,32 @@ namespace JMS
                 return auth.VerifyToken(token);
             }
             return null;
+        }
+    }
+
+    internal class LocalObject
+    {
+        public Dtos.InvokeCommand Command;
+        public IServiceProvider ServiceProvider;
+        public ClaimsPrincipal UserContent;
+        public string RequestPath;
+        public NameValueCollection RequestQuery;
+        public EndPoint RemoteEndPoint;
+        internal LocalObject(EndPoint remoteEndPoint, Dtos.InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent)
+        {
+            this.RemoteEndPoint = remoteEndPoint;
+            this.Command = command;
+            this.ServiceProvider = serviceProvider;
+            this.UserContent = userContent;
+        }
+
+        internal LocalObject(EndPoint remoteEndPoint, Dtos.InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent, string requestPath)
+        {
+            this.RemoteEndPoint = remoteEndPoint;
+            this.Command = command;
+            this.ServiceProvider = serviceProvider;
+            this.UserContent = userContent;
+            this.RequestPath = requestPath;
         }
     }
 }

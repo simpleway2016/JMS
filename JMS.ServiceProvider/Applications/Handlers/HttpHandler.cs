@@ -146,7 +146,7 @@ namespace JMS.Applications
                  using (IServiceScope serviceScope = _MicroServiceProvider.ServiceProvider.CreateScope())
                 {
                    var request = BaseJmsController.RequestingObject.Value =
-                        new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
+                        new LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
                     request.RequestQuery = requestQuery??new NameValueCollection();
 
                     var controller = (WebSocketController)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
