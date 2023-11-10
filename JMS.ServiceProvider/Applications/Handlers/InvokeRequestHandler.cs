@@ -116,7 +116,7 @@ namespace JMS.Applications
                     controller.NetClient = netclient;
                     if (_logger != null && _logger.IsEnabled(LogLevel.Trace))
                     {
-                        var str = string.Format("invoke service:{0} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters.ToJsonString());
+                        var str = string.Format("invoke service:{0} headers{3} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters.ToJsonString(true),cmd.Header.ToJsonString(true));
                         if (str != LastInvokingMsgString || (DateTime.Now - LastInvokingMsgStringTime).TotalSeconds > 5)
                         {
                             LastInvokingMsgStringTime = DateTime.Now;
