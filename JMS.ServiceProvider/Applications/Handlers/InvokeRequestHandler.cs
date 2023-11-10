@@ -109,7 +109,7 @@ namespace JMS.Applications
                     }
 
 
-                    MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent);
+                    BaseJmsController.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent);
 
                     controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                     controller.TransactionControl = null;
@@ -317,7 +317,7 @@ namespace JMS.Applications
                 finally
                 {
                     netclient.ReadTimeout = originalTimeout;
-                    MicroServiceControllerBase.RequestingObject.Value = null;
+                    BaseJmsController.RequestingObject.Value = null;
                 }
 
                 return;

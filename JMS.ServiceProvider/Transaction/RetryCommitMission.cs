@@ -230,7 +230,7 @@ namespace JMS.RetryCommit
                     var cmd = requestContent.Cmd;
                     try
                     {
-                        MicroServiceControllerBase.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0), cmd, serviceScope.ServiceProvider, requestContent.GetUserContent(_loggerTran));
+                        BaseJmsController.RequestingObject.Value = new MicroServiceControllerBase.LocalObject(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0), cmd, serviceScope.ServiceProvider, requestContent.GetUserContent(_loggerTran));
                         var controllerTypeInfo = _controllerFactory.GetControllerType(cmd.Service);
 
                         controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
@@ -309,7 +309,7 @@ namespace JMS.RetryCommit
                     }
                     finally
                     {
-                        MicroServiceControllerBase.RequestingObject.Value = null;
+                        BaseJmsController.RequestingObject.Value = null;
                     }
                 }
 

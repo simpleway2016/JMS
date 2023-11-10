@@ -145,7 +145,7 @@ namespace JMS.Applications
 
                  using (IServiceScope serviceScope = _MicroServiceProvider.ServiceProvider.CreateScope())
                 {
-                   var request = MicroServiceControllerBase.RequestingObject.Value =
+                   var request = BaseJmsController.RequestingObject.Value =
                         new MicroServiceControllerBase.LocalObject(netclient.RemoteEndPoint, cmd, serviceScope.ServiceProvider, userContent, path);
                     request.RequestQuery = requestQuery??new NameValueCollection();
 
@@ -177,7 +177,7 @@ namespace JMS.Applications
                     _connectionCounter.WebSockets.TryRemove(websocket, out bool o);
                     websocket.Dispose();
                 }
-                MicroServiceControllerBase.RequestingObject.Value = null;
+                BaseJmsController.RequestingObject.Value = null;
             }
 
         }
