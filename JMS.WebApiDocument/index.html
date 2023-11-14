@@ -329,7 +329,7 @@
                         <div class="subcon" v-if="!item.isComment" @click="selectDiv" style="cursor:pointer;">方法名称：{{item.title}}</div>
 
                         <div v-if="!item.isComment && item.data && item.data.type=='Array' && item.data.items.length">
-                            <div class="subtitle">Request 请求 (向服务器post的数组)</div>
+                            <div class="subtitle">参数说明</div>
                             <div class="subcon" style="background:unset;">
                                 <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
                                     <tr class="tableheader">
