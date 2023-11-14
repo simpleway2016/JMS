@@ -324,140 +324,179 @@
                     <div class="subtitle" v-if="item.isWebSocket&&item.method">说明：</div>
                     <div class="subcon" v-if="item.isWebSocket&&item.method" v-html="item.method.replace(/\r/g,'').replace(/\n/g,'<br>')"></div>
 
-                    <div class="subtitle" v-if="!item.isComment">{{item.method}} (请求路径url)</div>
-                    <div class="subcon" v-if="!item.isComment" @click="selectDiv" style="cursor:pointer;">{{item.url}}</div>
+                    <template v-if="controllers[selectedControllerIndex].isPrivate">
+                        <div class="subtitle" v-if="!item.isComment">服务名称：{{controllers[selectedControllerIndex].name}}</div>
+                        <div class="subcon" v-if="!item.isComment" @click="selectDiv" style="cursor:pointer;">方法名称：{{item.title}}</div>
 
-                    <div v-if="!item.isComment && item.query && item.query.length">
-                        <div class="subtitle">query (search参数)</div>
-                        <div class="subcon" style="background:unset;">
-                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
-                                <tr class="tableheader">
-                                    <td>参数</td>
-                                    <td>类型</td>
-                                    <td>说明</td>
-                                    <td>&nbsp;</td>
-                                </tr>
-                                <tr class="tabletr" v-for="param,index in item.query">
-                                    <td>{{param.name}}</td>
-                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
-                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td v-html="lineBreak(param.desc)"></td>
-                                    <td v-if="param.isNullable">可选项</td>
-                                    <td v-else>&nbsp;</td>
-                                </tr>
-                            </table>
+                        <div v-if="!item.isComment && item.data && item.data.type=='Array' && item.data.items.length">
+                            <div class="subtitle">Request 请求 (向服务器post的数组)</div>
+                            <div class="subcon" style="background:unset;">
+                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                    <tr class="tableheader">
+                                        <td>名称</td>
+                                        <td>类型</td>
+                                        <td>说明</td>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr class="tabletr" v-for="param,index in item.data.items">
+                                        <td>{{param.name}}</td>
+                                        <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                        <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                        <td v-html="param.desc?lineBreak(param.desc):''"></td>
+                                        <td v-if="param.isNullable">可以传null</td>
+                                        <td v-else>&nbsp;</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="subtitle">调用例子</div>
+                            <div class="subcon">
+                                service.Invoke( "{{item.title}}",
+                                <span v-for="param,index in item.data.items">
+                                    {{param.name}}
+                                    <span v-if="index<item.data.items.length-1">,</span>
+                                </span>
+                                );
+                            </div>
                         </div>
-                    </div>
+                    </template>
+                    <template v-else>
+                        <div class="subtitle" v-if="!item.isComment">{{item.method}} (请求路径url)</div>
+                        <div class="subcon" v-if="!item.isComment" @click="selectDiv" style="cursor:pointer;">{{item.url}}</div>
 
-                    <div v-if="!item.isComment && item.form && item.form.length">
-                        <div class="subtitle">form (提交的表单参数)</div>
-                        <div class="subcon" style="background:unset;">
-                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
-                                <tr class="tableheader">
-                                    <td>参数</td>
-                                    <td>类型</td>
-                                    <td>说明</td>
-                                    <td>&nbsp;</td>
-                                </tr>
-                                <tr class="tabletr" v-for="param,index in item.form">
-                                    <td>{{param.name}}</td>
-                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
-                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td v-html="lineBreak(param.desc)"></td>
-                                    <td v-if="param.isNullable">可选项</td>
-                                    <td v-else>&nbsp;</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div v-if="!item.isComment && item.data && item.data.type=='Array' && item.data.items.length">
-                        <div class="subtitle">Request 请求 (向服务器post的数组)</div>
-                        <div class="subcon" style="background:unset;">
-                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
-                                <tr class="tableheader">
-                                    <td>数组索引</td>
-                                    <td>类型</td>
-                                    <td>说明</td>
-                                    <td>&nbsp;</td>
-                                </tr>
-                                <tr class="tabletr" v-for="param,index in item.data.items">
-                                    <td>{{index}}</td>
-                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
-                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td v-html="param.desc?lineBreak(param.desc):param.name"></td>
-                                    <td v-if="param.isNullable">可选项</td>
-                                    <td v-else>&nbsp;</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="subtitle">axios例子</div>
-                        <div class="subcon">
-                            axios.post("{{item.url}}", [
-                            <span v-for="param,index in item.data.items">
-                                {{param.name}}
-                                <span v-if="index<item.data.items.length-1">,</span>
-                            </span>
-                            ]);
-                        </div>
-                    </div>
-                    <div v-if="!item.isComment && item.data && item.data.type=='Object' && item.data.items.length">
-                        <div class="subtitle">Request 请求 (向服务器post的JSON对象)</div>
-                        <div class="subcon" style="background:unset;">
-                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
-                                <tr class="tableheader">
-                                    <td>参数</td>
-                                    <td>类型</td>
-                                    <td>说明</td>
-                                    <td>&nbsp;</td>
-                                </tr>
-                                <tr class="tabletr" v-for="param,index in item.data.items">
-                                    <td>{{param.name}}</td>
-                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
-                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td v-html="lineBreak(param.desc)"></td>
-                                    <td v-if="param.isNullable">可选项</td>
-                                    <td v-else>&nbsp;</td>
-                                </tr>
-                            </table>
+                        <div v-if="!item.isComment && item.query && item.query.length">
+                            <div class="subtitle">query (search参数)</div>
+                            <div class="subcon" style="background:unset;">
+                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                    <tr class="tableheader">
+                                        <td>参数</td>
+                                        <td>类型</td>
+                                        <td>说明</td>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr class="tabletr" v-for="param,index in item.query">
+                                        <td>{{param.name}}</td>
+                                        <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                        <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                        <td v-html="lineBreak(param.desc)"></td>
+                                        <td v-if="param.isNullable">可选项</td>
+                                        <td v-else>&nbsp;</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
 
-                    </div>
+                        <div v-if="!item.isComment && item.form && item.form.length">
+                            <div class="subtitle">form (提交的表单参数)</div>
+                            <div class="subcon" style="background:unset;">
+                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                    <tr class="tableheader">
+                                        <td>参数</td>
+                                        <td>类型</td>
+                                        <td>说明</td>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr class="tabletr" v-for="param,index in item.form">
+                                        <td>{{param.name}}</td>
+                                        <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                        <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                        <td v-html="lineBreak(param.desc)"></td>
+                                        <td v-if="param.isNullable">可选项</td>
+                                        <td v-else>&nbsp;</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
 
-                    <div v-if="item.returnData && item.returnData.items && item.returnData.items.length">
-                        <div class="subtitle" v-if="!item.isComment">Response (服务器回复) {{item.returnData.desc}}</div>
-                        <div class="subcon" style="background:unset;">
-                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
-                                <tr class="tableheader">
-                                    <td>参数</td>
-                                    <td>类型</td>
-                                    <td>说明</td>
-                                </tr>
-                                <tr class="tabletr" v-for="param,index in item.returnData.items">
-                                    <td>{{param.name}}</td>
-                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
-                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                    <td v-html="lineBreak(param.desc)"></td>
-                                </tr>
-                            </table>
+                        <div v-if="!item.isComment && item.data && item.data.type=='Array' && item.data.items.length">
+                            <div class="subtitle">Request 请求 (向服务器post的数组)</div>
+                            <div class="subcon" style="background:unset;">
+                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                    <tr class="tableheader">
+                                        <td>数组索引</td>
+                                        <td>类型</td>
+                                        <td>说明</td>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr class="tabletr" v-for="param,index in item.data.items">
+                                        <td>{{index}}</td>
+                                        <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                        <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                        <td v-html="param.desc?lineBreak(param.desc):param.name"></td>
+                                        <td v-if="param.isNullable">可选项</td>
+                                        <td v-else>&nbsp;</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="subtitle">axios例子</div>
+                            <div class="subcon">
+                                axios.post("{{item.url}}", [
+                                <span v-for="param,index in item.data.items">
+                                    {{param.name}}
+                                    <span v-if="index<item.data.items.length-1">,</span>
+                                </span>
+                                ]);
+                            </div>
                         </div>
-                    </div>
-                    <div v-else-if="item.returnData && item.returnData.type!='Object'">
-                        <div class="subtitle" v-if="!item.isComment">Response (服务器回复)</div>
-                        <div class="subcon" style="background:unset;">
-                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
-                                <tr class="tableheader">
-                                    <td>类型</td>
-                                    <td>说明</td>
-                                </tr>
-                                <tr class="tabletr">
-                                    <td v-if="item.returnData.type.indexOf('#')!=0">{{showTypeName(item.returnData.type)}}</td>
-                                    <td class="link" v-else @click.stop="classClick($event,item.returnData.type.substr(1))">{{showTypeName(item.returnData.type)}}</td>
-                                    <td v-html="lineBreak(item.returnData.desc)"></td>
-                                </tr>
-                            </table>
+                        <div v-if="!item.isComment && item.data && item.data.type=='Object' && item.data.items.length">
+                            <div class="subtitle">Request 请求 (向服务器post的JSON对象)</div>
+                            <div class="subcon" style="background:unset;">
+                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                    <tr class="tableheader">
+                                        <td>参数</td>
+                                        <td>类型</td>
+                                        <td>说明</td>
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr class="tabletr" v-for="param,index in item.data.items">
+                                        <td>{{param.name}}</td>
+                                        <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                        <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                        <td v-html="lineBreak(param.desc)"></td>
+                                        <td v-if="param.isNullable">可选项</td>
+                                        <td v-else>&nbsp;</td>
+                                    </tr>
+                                </table>
+                            </div>
+
                         </div>
-                    </div>
+
+                        <div v-if="item.returnData && item.returnData.items && item.returnData.items.length">
+                            <div class="subtitle" v-if="!item.isComment">Response (服务器回复) {{item.returnData.desc}}</div>
+                            <div class="subcon" style="background:unset;">
+                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                    <tr class="tableheader">
+                                        <td>参数</td>
+                                        <td>类型</td>
+                                        <td>说明</td>
+                                    </tr>
+                                    <tr class="tabletr" v-for="param,index in item.returnData.items">
+                                        <td>{{param.name}}</td>
+                                        <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                        <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                        <td v-html="lineBreak(param.desc)"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div v-else-if="item.returnData && item.returnData.type!='Object'">
+                            <div class="subtitle" v-if="!item.isComment">Response (服务器回复)</div>
+                            <div class="subcon" style="background:unset;">
+                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                    <tr class="tableheader">
+                                        <td>类型</td>
+                                        <td>说明</td>
+                                    </tr>
+                                    <tr class="tabletr">
+                                        <td v-if="item.returnData.type.indexOf('#')!=0">{{showTypeName(item.returnData.type)}}</td>
+                                        <td class="link" v-else @click.stop="classClick($event,item.returnData.type.substr(1))">{{showTypeName(item.returnData.type)}}</td>
+                                        <td v-html="lineBreak(item.returnData.desc)"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+
                 </div>
             </div>
         </div>
