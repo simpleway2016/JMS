@@ -349,8 +349,16 @@
                                 </table>
                             </div>
                             <div class="subtitle">调用例子</div>
-                            <div class="subcon">
-                                service.Invoke( "{{item.title}}",
+                            <div class="subcon" v-if="item.returnData">
+                                service.InvokeAsync&lt;{{showTypeName(item.returnData.type)}}&gt;( "{{item.title}}",
+                                <span v-for="param,index in item.data.items">
+                                    {{param.name}}
+                                    <span v-if="index<item.data.items.length-1">,</span>
+                                </span>
+                                );
+                            </div>
+                            <div class="subcon" v-else>
+                                service.InvokeAsync( "{{item.title}}",
                                 <span v-for="param,index in item.data.items">
                                     {{param.name}}
                                     <span v-if="index<item.data.items.length-1">,</span>
