@@ -460,43 +460,43 @@
 
                         </div>
 
-                        <div v-if="item.returnData && item.returnData.items && item.returnData.items.length">
-                            <div class="subtitle" v-if="!item.isComment">Response (服务器回复) {{item.returnData.desc}}</div>
-                            <div class="subcon" style="background:unset;">
-                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
-                                    <tr class="tableheader">
-                                        <td>参数</td>
-                                        <td>类型</td>
-                                        <td>说明</td>
-                                    </tr>
-                                    <tr class="tabletr" v-for="param,index in item.returnData.items">
-                                        <td>{{param.name}}</td>
-                                        <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
-                                        <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
-                                        <td v-html="lineBreak(param.desc)"></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                        <div v-else-if="item.returnData && item.returnData.type!='Object'">
-                            <div class="subtitle" v-if="!item.isComment">Response (服务器回复)</div>
-                            <div class="subcon" style="background:unset;">
-                                <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
-                                    <tr class="tableheader">
-                                        <td>类型</td>
-                                        <td>说明</td>
-                                    </tr>
-                                    <tr class="tabletr">
-                                        <td v-if="item.returnData.type.indexOf('#')!=0">{{showTypeName(item.returnData.type)}}</td>
-                                        <td class="link" v-else @click.stop="classClick($event,item.returnData.type.substr(1))">{{showTypeName(item.returnData.type)}}</td>
-                                        <td v-html="lineBreak(item.returnData.desc)"></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+
                     </template>
 
-
+                    <div v-if="item.returnData && item.returnData.items && item.returnData.items.length">
+                        <div class="subtitle" v-if="!item.isComment">Response (服务器回复) {{item.returnData.desc}}</div>
+                        <div class="subcon" style="background:unset;">
+                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                <tr class="tableheader">
+                                    <td>参数</td>
+                                    <td>类型</td>
+                                    <td>说明</td>
+                                </tr>
+                                <tr class="tabletr" v-for="param,index in item.returnData.items">
+                                    <td>{{param.name}}</td>
+                                    <td v-if="param.type.indexOf('#')!=0">{{showTypeName(param.type)}}</td>
+                                    <td class="link" v-else @click.stop="classClick($event,param.type.substr(1))">{{showTypeName(param.type)}}</td>
+                                    <td v-html="lineBreak(param.desc)"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div v-else-if="item.returnData && item.returnData.type!='Object'">
+                        <div class="subtitle" v-if="!item.isComment">Response (服务器回复)</div>
+                        <div class="subcon" style="background:unset;">
+                            <table style="border-collapse:collapse;" border="1" bordercolor="#eaeef1">
+                                <tr class="tableheader">
+                                    <td>类型</td>
+                                    <td>说明</td>
+                                </tr>
+                                <tr class="tabletr">
+                                    <td v-if="item.returnData.type.indexOf('#')!=0">{{showTypeName(item.returnData.type)}}</td>
+                                    <td class="link" v-else @click.stop="classClick($event,item.returnData.type.substr(1))">{{showTypeName(item.returnData.type)}}</td>
+                                    <td v-html="lineBreak(item.returnData.desc)"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
