@@ -52,7 +52,7 @@ namespace JMS.GenerateCode
                     minfo.data.items.Add(pinfo);
                     pinfo.name = param.Name;
                     pinfo.desc = GetParameterComment(controllerType, method, param);
-                    pinfo.type = getType(dataTypeInfos, param.ParameterType);
+                    pinfo.type = getType(dataTypeInfos, param.ParameterType, controllerTypeInfo.Service.AllowGatewayProxy == false);
                     if (param.ParameterType.IsGenericType && param.ParameterType.GetGenericTypeDefinition() == typeof(System.Nullable<>))
                     {
                         pinfo.isNullable = true;
@@ -63,7 +63,7 @@ namespace JMS.GenerateCode
                 if (returnType != typeof(void))
                 {
                     minfo.returnData = new DataBodyInfo();
-                    minfo.returnData.type = getType(dataTypeInfos, returnType);
+                    minfo.returnData.type = getType(dataTypeInfos, returnType,controllerTypeInfo.Service.AllowGatewayProxy == false);
                     if (minfo.returnData.type.EndsWith("[]") == false)
                     {
                         var typeinfo = dataTypeInfos.FirstOrDefault(m => m.type == returnType);
@@ -99,35 +99,35 @@ namespace JMS.GenerateCode
             return type;
         }
 
-        static string getType(List<DataTypeInfo> dataTypeInfos, Type type)
+        static string getType(List<DataTypeInfo> dataTypeInfos, Type type,bool isPrivagte)
         {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>))
             {
                 type = type.GenericTypeArguments[0];
-                return getType(dataTypeInfos, type);
+                return getType(dataTypeInfos, type, isPrivagte);
             }
 
             if (type == typeof(object))
             {
-                return "any";
+                return isPrivagte ? "object" : "any";
             }
             else if (type.IsArray == false && type.GetInterfaces().Any(m => m.Name == "IDictionary"))
             {
-                return "any";
+                return isPrivagte ? "IDictionary" : "any";
             }
             else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IDictionary)))
             {
-                return "any";
+                return isPrivagte ? "IDictionary" : "any";
             }
             else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IList)))
             {
                 type = type.GenericTypeArguments[0];
-                return getType(dataTypeInfos, type) + "[]";
+                return getType(dataTypeInfos, type, isPrivagte) + "[]";
             }
             else if (type.IsArray == false && type.IsGenericType && type.GetInterfaces().Any(m => m == typeof(System.Collections.IEnumerable)))
             {
                 type = type.GenericTypeArguments[0];
-                return getType(dataTypeInfos, type) + "[]";
+                return getType(dataTypeInfos, type, isPrivagte) + "[]";
             }
             else if (type.IsArray == false && type.GetInterfaces().Any(m => m == typeof(System.Collections.IList)))
             {
@@ -136,7 +136,7 @@ namespace JMS.GenerateCode
             else if (type.IsArray == true)
             {
                 type = type.GetElementType();
-                return getType(dataTypeInfos, type) + "[]";
+                return getType(dataTypeInfos, type, isPrivagte) + "[]";
             }
 
             if (dataTypeInfos.Any(m => m.type == type))
@@ -144,73 +144,156 @@ namespace JMS.GenerateCode
                 return "#" + dataTypeInfos.FirstOrDefault(m => m.type == type).typeName;
             }
 
-            if (type == typeof(int))
-                return "number";
-            else if (type == typeof(long))
-                return "number";
-            else if (type == typeof(short))
-                return "number";
-            else if (type == typeof(float))
-                return "number";
-            else if (type == typeof(double))
-                return "number";
-            else if (type == typeof(decimal))
-                return "number";
-            else if (type == typeof(bool))
-                return "boolean";
-            else if (type == typeof(string))
-                return "string";
-            else if (type.IsArray == false && type.IsValueType == false && type != typeof(string))
+            if (isPrivagte)
             {
-                DataTypeInfo dataTypeInfo = new DataTypeInfo(type);
-                dataTypeInfo.typeName = GetFullName(dataTypeInfos, type);
-                dataTypeInfo.members = new List<ParameterInformation>();
-                dataTypeInfos.Add(dataTypeInfo);
-
-                var properties = type.GetProperties();
-                foreach (var pro in properties)
+                if (type == typeof(int))
+                    return "int";
+                else if (type == typeof(uint))
+                    return "uint";
+                else if (type == typeof(long))
+                    return "long";
+                else if (type == typeof(ulong))
+                    return "ulong";
+                else if (type == typeof(short))
+                    return "short";
+                else if (type == typeof(ushort))
+                    return "ushort";
+                else if (type == typeof(float))
+                    return "float";
+                else if (type == typeof(double))
+                    return "double";
+                else if (type == typeof(decimal))
+                    return "decimal";
+                else if (type == typeof(bool))
+                    return "bool";
+                else if (type == typeof(string))
+                    return "string";
+                else if (type.IsArray == false && type.IsValueType == false && type != typeof(string))
                 {
-                    var pinfo = new ParameterInformation();
-                    dataTypeInfo.members.Add(pinfo);
-                    pinfo.name = pro.Name;
-                    pinfo.desc = GetPropertyComment(type, pro);
-                    pinfo.type = getType(dataTypeInfos, pro.PropertyType);
+                    DataTypeInfo dataTypeInfo = new DataTypeInfo(type);
+                    dataTypeInfo.typeName = GetFullName(dataTypeInfos, type);
+                    dataTypeInfo.members = new List<ParameterInformation>();
+                    dataTypeInfos.Add(dataTypeInfo);
+
+                    var properties = type.GetProperties();
+                    foreach (var pro in properties)
+                    {
+                        var pinfo = new ParameterInformation();
+                        dataTypeInfo.members.Add(pinfo);
+                        pinfo.name = pro.Name;
+                        pinfo.desc = GetPropertyComment(type, pro);
+                        pinfo.type = getType(dataTypeInfos, pro.PropertyType, isPrivagte);
+                    }
+                    return "#" + dataTypeInfo.typeName;
                 }
-                return "#" + dataTypeInfo.typeName;
+                else if (type.IsEnum)
+                {
+                    var names = Enum.GetNames(type);
+                    var values = Enum.GetValues(type);
+
+                    DataTypeInfo dataTypeInfo = new DataTypeInfo(type);
+                    dataTypeInfo.typeName = GetFullName(dataTypeInfos, type);
+                    dataTypeInfo.members = new List<ParameterInformation>();
+                    dataTypeInfo.isEnum = true;
+                    dataTypeInfos.Add(dataTypeInfo);
+
+                    for (int i = 0; i < names.Length; i++)
+                    {
+                        var pinfo = new ParameterInformation();
+                        dataTypeInfo.members.Add(pinfo);
+                        try
+                        {
+                            pinfo.name = ((int)values.GetValue(i)).ToString();
+                        }
+                        catch
+                        {
+                            pinfo.name = values.GetValue(i)?.ToString();
+
+                        }
+                        pinfo.desc = GetEnumFieldComment(type, names[i]);
+                        pinfo.type = names[i];
+                    }
+                    return "#" + dataTypeInfo.typeName;
+                }
+
+                return type.Name;
             }
-            else if (type.IsEnum)
+            else
             {
-                var names = Enum.GetNames(type);
-                var values = Enum.GetValues(type);
-
-                DataTypeInfo dataTypeInfo = new DataTypeInfo(type);
-                dataTypeInfo.typeName = GetFullName(dataTypeInfos, type);
-                dataTypeInfo.members = new List<ParameterInformation>();
-                dataTypeInfo.isEnum = true;
-                dataTypeInfos.Add(dataTypeInfo);
-
-                for (int i = 0; i < names.Length; i++)
+                if (type == typeof(int))
+                    return "number";
+                else if (type == typeof(uint))
+                    return "number";
+                else if (type == typeof(long))
+                    return "number";
+                else if (type == typeof(ulong))
+                    return "number";
+                else if (type == typeof(short))
+                    return "number";
+                else if (type == typeof(ushort))
+                    return "number";
+                else if (type == typeof(float))
+                    return "number";
+                else if (type == typeof(double))
+                    return "number";
+                else if (type == typeof(decimal))
+                    return "number";
+                else if (type == typeof(bool))
+                    return "boolean";
+                else if (type == typeof(string))
+                    return "string";
+                else if (type.IsArray == false && type.IsValueType == false && type != typeof(string))
                 {
-                    var pinfo = new ParameterInformation();
-                    dataTypeInfo.members.Add(pinfo);
-                    try
-                    {
-                        pinfo.name = ((int)values.GetValue(i)).ToString();
-                    }
-                    catch
-                    {
-                        pinfo.name = values.GetValue(i)?.ToString();
+                    DataTypeInfo dataTypeInfo = new DataTypeInfo(type);
+                    dataTypeInfo.typeName = GetFullName(dataTypeInfos, type);
+                    dataTypeInfo.members = new List<ParameterInformation>();
+                    dataTypeInfos.Add(dataTypeInfo);
 
+                    var properties = type.GetProperties();
+                    foreach (var pro in properties)
+                    {
+                        var pinfo = new ParameterInformation();
+                        dataTypeInfo.members.Add(pinfo);
+                        pinfo.name = pro.Name;
+                        pinfo.desc = GetPropertyComment(type, pro);
+                        pinfo.type = getType(dataTypeInfos, pro.PropertyType, isPrivagte);
                     }
-                    pinfo.desc = GetEnumFieldComment(type, names[i]);
-                    pinfo.type = names[i];
+                    return "#" + dataTypeInfo.typeName;
                 }
-                return "#" + dataTypeInfo.typeName;
-            }
-            else if (type.IsValueType)
+                else if (type.IsEnum)
+                {
+                    var names = Enum.GetNames(type);
+                    var values = Enum.GetValues(type);
+
+                    DataTypeInfo dataTypeInfo = new DataTypeInfo(type);
+                    dataTypeInfo.typeName = GetFullName(dataTypeInfos, type);
+                    dataTypeInfo.members = new List<ParameterInformation>();
+                    dataTypeInfo.isEnum = true;
+                    dataTypeInfos.Add(dataTypeInfo);
+
+                    for (int i = 0; i < names.Length; i++)
+                    {
+                        var pinfo = new ParameterInformation();
+                        dataTypeInfo.members.Add(pinfo);
+                        try
+                        {
+                            pinfo.name = ((int)values.GetValue(i)).ToString();
+                        }
+                        catch
+                        {
+                            pinfo.name = values.GetValue(i)?.ToString();
+
+                        }
+                        pinfo.desc = GetEnumFieldComment(type, names[i]);
+                        pinfo.type = names[i];
+                    }
+                    return "#" + dataTypeInfo.typeName;
+                }
+
                 return "any";
+            }
 
-            return "any";
+           
         }
 
         static string GetFullName(List<DataTypeInfo> dataTypeInfos, Type type)
