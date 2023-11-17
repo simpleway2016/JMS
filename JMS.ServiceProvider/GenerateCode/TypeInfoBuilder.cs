@@ -104,7 +104,7 @@ namespace JMS.GenerateCode
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Nullable<>))
             {
                 type = type.GenericTypeArguments[0];
-                return getType(dataTypeInfos, type, isPrivagte);
+                return getType(dataTypeInfos, type, isPrivagte) + "?";
             }
 
             if (type == typeof(object))

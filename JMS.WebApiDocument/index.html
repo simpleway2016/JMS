@@ -606,8 +606,11 @@
     }
 
     function showClassInfo(event, typeName, parentVue) {
-        if (typeName.indexOf("[]") > 0) {
+        if (typeName.indexOf("[]") == typeName.length - 2) {
             typeName = typeName.substr(0, typeName.length - 2);
+        }
+        if (typeName.indexOf("?") == typeName.length - 1) {
+            typeName = typeName.substr(0, typeName.length - 1);
         }
 
         var classType;

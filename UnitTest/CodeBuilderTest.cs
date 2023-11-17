@@ -166,7 +166,8 @@ namespace UnitTest
             var typeinfo = new ControllerTypeInfo()
             {
                 Service = new JMS.Dtos.ServiceDetail { 
-                Name = "testService"
+                Name = "testService",
+                AllowGatewayProxy = true
                 },
                 Type = typeof(TestController),
                 Methods = typeof(TestController).GetTypeInfo().DeclaredMethods.Where(m =>
