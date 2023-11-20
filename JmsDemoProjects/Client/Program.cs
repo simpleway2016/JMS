@@ -7,7 +7,7 @@ namespace Client
         static async Task Main(string[] args)
         {
             var gateways = new NetAddress[] {
-                new NetAddress("127.0.0.1" , 8911)
+                new NetAddress("127.0.0.1" , 8912)
             };
 
             long userId,moneyAccountId;
