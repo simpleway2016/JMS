@@ -47,7 +47,7 @@ namespace UnitTest
             var time = DateTime.Now.AddMinutes(3);
             
             var token = JwtHelper.GenerateToken(claims, secretKey, time);
-            var userinfo = JwtHelper.Authenticate(secretKey, token);
+            var userinfo = JwtHelper.Authenticate("你的jwt加密key", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjMiLCJleHAiOjE3MzIxODE3OTJ9.qnlbwB5znadj1nZ9HfR7DU1VeDPdjYh22qut1_kDm7s");
 
             var subValue = userinfo.FindFirstValue(JwtRegisteredClaimNames.Sub);
             foreach ( var claim in userinfo.Claims)

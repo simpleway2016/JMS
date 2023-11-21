@@ -57,11 +57,6 @@ namespace JMS.IdentityModel.JWT.Authentication
                     token = token.Substring(7);
                 }
 
-                if (token.Contains("_"))
-                    token = token.Replace("_", "=");
-                if (token.Contains("-"))
-                    token = token.Replace("-", "/");
-
                 var ret = JwtHelper.Authenticate(JwtKey, token);
 
                 if (Callback != null)
