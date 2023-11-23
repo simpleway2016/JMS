@@ -147,6 +147,10 @@ namespace JMS.ServerCore
                         if (requestPathLine == null)
                         {
                             requestPathLine = line.Trim();
+                            while (requestPathLine.Contains("//"))
+                            {
+                                requestPathLine.Replace("//", "/");
+                            }
                             continue;
                         }
                         else if ((indexFlag = line.IndexOf(':', 0)) > 0 && indexFlag < line.Length - 1)
