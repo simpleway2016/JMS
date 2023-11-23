@@ -149,7 +149,7 @@ namespace JMS.ServerCore
                             requestPathLine = line.Trim();
                             while (requestPathLine.Contains("//"))
                             {
-                                requestPathLine.Replace("//", "/");
+                                requestPathLine = requestPathLine.Replace("//", "/");
                             }
                             continue;
                         }
