@@ -42,7 +42,7 @@ namespace JMS.Applications.CommandHandles
             }
 
             var requestPathLine = await client.PipeReader.ReadHeaders( cmd.Header);
-            _logger.LogDebug(cmd.Header.ToJsonString(true));
+            _logger.LogInformation(cmd.Header.ToJsonString(true));
             var requestPathLineArr = requestPathLine.Split(' ');
             var method = requestPathLineArr[0];
             var requestPath = requestPathLineArr[1];
