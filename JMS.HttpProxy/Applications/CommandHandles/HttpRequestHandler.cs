@@ -17,6 +17,7 @@ using System.Buffers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using JMS.ServerCore;
 using JMS.HttpProxy;
+using Microsoft.Extensions.Configuration;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -40,23 +41,48 @@ namespace JMS.Applications.CommandHandles
             readSend(client, proxyClient);
             await readSend(proxyClient, client);
         }
-        public async Task Handle(NetClient client, GatewayCommand cmd)
+
+        public string GetRemoteIpAddress(string remoteIpAddr,IDictionary<string,string> headers, string[] trustXForwardedFor)
         {
-            var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            if (_requestTimeLimter.OnRequesting(ip) == false)
+            if (trustXForwardedFor != null && trustXForwardedFor.Length > 0 && headers.TryGetValue("X-Forwarded-For", out string x_for))
             {
-                //输出401
-                client.KeepAlive = false;
-                client.OutputHttpCode(401 , "Forbidden");
-                return;
+                var x_forArr = x_for.Split(',').Select(m => m.Trim()).Where(m => m.Length > 0).ToArray();
+                if (trustXForwardedFor.Contains(remoteIpAddr))
+                {
+                    for (int i = x_forArr.Length - 1; i >= 0; i--)
+                    {
+                        var ip = x_forArr[i];
+                        if (trustXForwardedFor.Contains(ip) == false)
+                            return ip;
+                    }
+                }
+                else
+                {
+                    return remoteIpAddr;
+                }
             }
 
+            return remoteIpAddr;
+        }
+
+        public async Task Handle(NetClient client, GatewayCommand cmd)
+        {
             if (cmd.Header == null)
             {
                 cmd.Header = new Dictionary<string, string>();
             }
 
             var requestPathLine = await client.PipeReader.ReadHeaders( cmd.Header);
+
+            var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
+            ip = GetRemoteIpAddress(ip, cmd.Header, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>() );
+            if (_requestTimeLimter.OnRequesting(ip) == false)
+            {
+                //输出401
+                client.KeepAlive = false;
+                client.OutputHttpCode(401, "Forbidden");
+                return;
+            }
 
             if (cmd.Header.TryGetValue("Host", out string host) == false)
                 return;
