@@ -16,7 +16,6 @@ using JMS.ServerCore.Http;
 using System.IO.Pipelines;
 using System.Buffers;
 using JMS.ServerCore;
-using Microsoft.Extensions.Logging;
 namespace JMS.Applications.CommandHandles
 {
     /// <summary>
@@ -25,12 +24,10 @@ namespace JMS.Applications.CommandHandles
     class HttpRequestHandler
     {
         IHttpMiddlewareManager _httpMiddlewareManager;
-        private readonly ILogger<HttpRequestHandler> _logger;
-
-        public HttpRequestHandler(IHttpMiddlewareManager httpMiddlewareManager,ILogger<HttpRequestHandler> logger)
+        public HttpRequestHandler(IHttpMiddlewareManager httpMiddlewareManager)
         {
             this._httpMiddlewareManager = httpMiddlewareManager;
-            _logger = logger;
+
         }
 
         public async Task Handle(NetClient client, GatewayCommand cmd)
@@ -42,7 +39,6 @@ namespace JMS.Applications.CommandHandles
             }
 
             var requestPathLine = await client.PipeReader.ReadHeaders( cmd.Header);
-            _logger.LogInformation(cmd.Header.ToJsonString(true));
             var requestPathLineArr = requestPathLine.Split(' ');
             var method = requestPathLineArr[0];
             var requestPath = requestPathLineArr[1];
