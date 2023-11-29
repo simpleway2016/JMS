@@ -284,9 +284,9 @@ namespace JMS.Applications.HttpMiddlewares
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
 
-                if (ex.Message.StartsWith("Authentication failed"))
+                if (ex is RemoteException rex && rex.StatusCode != null)
                 {
-                    client.OutputHttp401();
+                    client.OutputHttpCode(rex.StatusCode.Value , "error" , ex.Message);
                 }
                 else
                 {

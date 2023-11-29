@@ -77,7 +77,7 @@ namespace JMS
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
-                    throw new RemoteException(tran.TransactionId, result.Error);
+                    throw new RemoteException(tran.TransactionId, result.GetStatusCode(), result.Error);
                 }
 
                 //if (result.Attributes != null)
@@ -111,7 +111,7 @@ namespace JMS
 
                 if (otherObj.Success == false)
                 {
-                    throw new RemoteException(tran.TransactionId, otherObj.Error);
+                    throw new RemoteException(tran.TransactionId, otherObj.GetStatusCode(), otherObj.Error);
                 }
 
                 if (otherObj != null)
@@ -161,7 +161,7 @@ namespace JMS
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
-                    throw new RemoteException(tran.TransactionId, result.Error);
+                    throw new RemoteException(tran.TransactionId,result.GetStatusCode(), result.Error);
                 }
 
                 //if(result.Attributes != null)
@@ -195,7 +195,7 @@ namespace JMS
 
                 if (otherObj.Success == false)
                 {
-                    throw new RemoteException(tran.TransactionId, otherObj.Error);
+                    throw new RemoteException(tran.TransactionId,otherObj.GetStatusCode(), otherObj.Error);
                 }
 
                 if (otherObj != null)

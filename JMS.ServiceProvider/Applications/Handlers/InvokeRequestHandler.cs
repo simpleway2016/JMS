@@ -307,11 +307,24 @@ namespace JMS.Applications
                     {
                         ex = ex.InnerException;
                     }
-                    netclient.WriteServiceData(new InvokeResult
+
+                    if (ex is AuthenticationException)
                     {
-                        Success = false,
-                        Error = ex.Message
-                    });
+                        netclient.WriteServiceData(new InvokeResult
+                        {
+                            Success = false,
+                            Data = 401,
+                            Error = ex.Message
+                        });
+                    }
+                    else
+                    {
+                        netclient.WriteServiceData(new InvokeResult
+                        {
+                            Success = false,
+                            Error = ex.Message
+                        });
+                    }
                     return;
                 }
                 finally

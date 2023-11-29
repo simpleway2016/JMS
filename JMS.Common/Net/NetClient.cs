@@ -100,6 +100,14 @@ namespace JMS
             this.Write(content);
         }
 
+        public void OutputHttpCode(int code, string desc , string message)
+        {
+            var content = Encoding.UTF8.GetBytes(message);
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 {code} {desc}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {content.Length}\r\nConnection: keep-alive\r\n\r\n");
+            this.Write(data);
+            this.Write(content);
+        }
+
         /// <summary>
         /// 
         /// </summary>

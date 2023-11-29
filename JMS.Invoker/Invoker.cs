@@ -131,7 +131,7 @@ namespace JMS
                 });
                 var ret = netclient.ReadServiceObject<InvokeResult<string>>();
                 if (!ret.Success)
-                    throw new RemoteException(null, ret.Data);
+                    throw new RemoteException(null,null, ret.Data);
                 return ret.Data;
             }
         }
@@ -149,7 +149,7 @@ namespace JMS
                 });
                 var ret = netclient.ReadServiceObject<InvokeResult<string>>();
                 if (!ret.Success)
-                    throw new RemoteException(null, ret.Data);
+                    throw new RemoteException(null,ret.GetStatusCode(), ret.Data);
                 return ret.Data;
             }
         }
@@ -167,7 +167,7 @@ namespace JMS
                 });
                 var ret = await netclient.ReadServiceObjectAsync<InvokeResult<string>>();
                 if (!ret.Success)
-                    throw new RemoteException(null, ret.Data);
+                    throw new RemoteException(null,null, ret.Data);
                 return ret.Data;
             }
         }

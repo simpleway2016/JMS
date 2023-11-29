@@ -115,7 +115,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
-                    throw new RemoteException(tran.TransactionId, result.Error);
+                    throw new RemoteException(tran.TransactionId, result.GetStatusCode(), result.Error);
                 }
 
                 if (result.SupportTransaction)
@@ -144,7 +144,7 @@ Accept-Language: zh-CN,zh;q=0.9
 
                 if (otherObj.Success == false)
                 {
-                    throw new RemoteException(tran.TransactionId, otherObj.Error);
+                    throw new RemoteException(tran.TransactionId, otherObj.GetStatusCode(), otherObj.Error);
                 }
 
                 if (otherObj != null)
@@ -204,7 +204,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
-                    throw new RemoteException(tran.TransactionId, result.Error);
+                    throw new RemoteException(tran.TransactionId,result.GetStatusCode(), result.Error);
                 }
 
                 if (result.SupportTransaction)
@@ -233,7 +233,7 @@ Accept-Language: zh-CN,zh;q=0.9
 
                 if (otherObj.Success == false)
                 {
-                    throw new RemoteException(tran.TransactionId, otherObj.Error);
+                    throw new RemoteException(tran.TransactionId, otherObj.GetStatusCode(), otherObj.Error);
                 }
 
                 if (otherObj != null)

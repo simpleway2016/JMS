@@ -23,6 +23,7 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Security.Claims;
 using System.Text;
 using System.Threading;
@@ -214,6 +215,7 @@ namespace JMS.ServiceProvider.AspNetCore
                                             netClient.WriteServiceData(new InvokeResult
                                             {
                                                 Success = false,
+                                                Data  = oret.StatusCode,
                                                 Error = oret.Value.ToString()
 
                                             });
@@ -242,6 +244,7 @@ namespace JMS.ServiceProvider.AspNetCore
                                             netClient.WriteServiceData(new InvokeResult
                                             {
                                                 Success = false,
+                                                Data = statusCodeResult.StatusCode,
                                                 Error = ((HttpStatusCode)statusCodeResult.StatusCode).ToString()
 
                                             });
@@ -361,13 +364,29 @@ namespace JMS.ServiceProvider.AspNetCore
                                 }
                                 tranDelegateList.RollbackTransaction();
 
-                                var outputObj = new InvokeResult
+                                if (ex is AuthenticationException)
                                 {
-                                    Success = false,
-                                    Error = ex.Message
+                                    var outputObj = new InvokeResult
+                                    {
+                                        Success = false,
+                                        Data = 401,
+                                        Error = ex.Message
 
-                                };
-                                netClient.WriteServiceData(outputObj);
+                                    };
+
+                                    netClient.WriteServiceData(outputObj);
+                                }
+                                else
+                                {
+                                    var outputObj = new InvokeResult
+                                    {
+                                        Success = false,
+                                        Error = ex.Message
+
+                                    };
+
+                                    netClient.WriteServiceData(outputObj);
+                                }
                                 break;
                             }
                             
