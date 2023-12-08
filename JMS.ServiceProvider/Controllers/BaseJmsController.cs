@@ -62,20 +62,25 @@ namespace JMS
                 }
                 return _ServiceProvider;
             }
+            set
+            {
+                _ServiceProvider = value;
+            }
         }
 
         /// <summary>
-        /// 验证当前用户身份，并返回身份信息
+        /// 验证当前用户身份，并把身份信息赋值给UserContent
         /// </summary>
         /// <returns></returns>
-        public virtual object Authenticate(string token)
+        public virtual void Authenticate(string token)
         {
             var auth = ServiceProvider?.GetService<IAuthenticationHandler>();
             if (auth != null)
             {
-                return auth.VerifyToken(token);
+                this._userContent = auth.VerifyToken(token);
             }
-            return null;
+            else
+                throw new Exception("未注册身份验证组件");
         }
 
         /// <summary>
