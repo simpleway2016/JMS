@@ -16,6 +16,7 @@ using JMS.IdentityModel.JWT.Authentication;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using JMS.Token;
+using Way.Lib;
 
 namespace UnitTest
 {
@@ -29,6 +30,8 @@ namespace UnitTest
             var token = tokenClient.Build("r:123", DateTime.Now.AddMinutes(20));
             tokenClient.Verify(token);
         }
+
+      
 
         [TestMethod]
         public void Test()

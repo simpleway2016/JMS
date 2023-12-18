@@ -65,7 +65,7 @@ namespace JMS
                 {
                     if (BaseJmsController.RequestingObject.Value != null)
                     {
-                        _transactionid = BaseJmsController.RequestingObject.Value.Command.Header["TranId"];
+                        _transactionid = BaseJmsController.RequestingObject.Value.Headers["TranId"];
                     }
                     else
                     {

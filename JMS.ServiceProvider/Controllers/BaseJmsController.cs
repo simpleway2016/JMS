@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Collections.Specialized;
 using System.Net;
 using System.Linq;
+using System.IO;
 
 namespace JMS
 {
@@ -25,7 +26,7 @@ namespace JMS
             {
                 if (_Headers == null && RequestingObject.Value != null)
                 {
-                    _Headers = RequestingObject.Value.Command.Header;
+                    _Headers = RequestingObject.Value.Headers;
                 }
                 return _Headers;
             }
@@ -117,7 +118,7 @@ namespace JMS
 
     internal class LocalObject
     {
-        public Dtos.InvokeCommand Command;
+        public IDictionary<string,string> Headers;
         public IServiceProvider ServiceProvider;
         public ClaimsPrincipal UserContent;
         public string RequestPath;
@@ -126,7 +127,7 @@ namespace JMS
         internal LocalObject(EndPoint remoteEndPoint, Dtos.InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent)
         {
             this.RemoteEndPoint = remoteEndPoint;
-            this.Command = command;
+            this.Headers = command.Header;
             this.ServiceProvider = serviceProvider;
             this.UserContent = userContent;
         }
@@ -134,7 +135,7 @@ namespace JMS
         internal LocalObject(EndPoint remoteEndPoint, Dtos.InvokeCommand command, IServiceProvider serviceProvider, ClaimsPrincipal userContent, string requestPath)
         {
             this.RemoteEndPoint = remoteEndPoint;
-            this.Command = command;
+            this.Headers = command.Header;
             this.ServiceProvider = serviceProvider;
             this.UserContent = userContent;
             this.RequestPath = requestPath;
