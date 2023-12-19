@@ -18,7 +18,7 @@ namespace JMS.Applications.HttpMiddlewares
             this._commandHandlerRoute = commandHandlerRoute;
 
         }
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
             if (requestPath.StartsWith("/?GetServiceProvider=") || requestPath.StartsWith("/?GetAllServiceProviders") || requestPath.StartsWith("/?FindMaster"))
             {

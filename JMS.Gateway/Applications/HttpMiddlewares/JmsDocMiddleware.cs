@@ -25,7 +25,7 @@ namespace JMS.Applications.HttpMiddlewares
 
         }
 
-        void outputCode(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        void outputCode(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
 
             var servicename = requestPath.Replace("/JmsDoc/OutputCode/", "");
@@ -67,7 +67,7 @@ namespace JMS.Applications.HttpMiddlewares
 
         }
 
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
             if (requestPath.StartsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
             {

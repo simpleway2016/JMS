@@ -24,7 +24,7 @@ namespace JMS.Applications.HttpMiddlewares
             _webApiEnvironment = webApiEnvironment;
             _configuration = configuration;
         }
-        async void outputCode(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        async void outputCode(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
 
             var servicename = requestPath.Replace("/JmsDoc/OutputCode/", "");
@@ -64,7 +64,7 @@ namespace JMS.Applications.HttpMiddlewares
 
         }
 
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
             if (requestPath.StartsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
             {

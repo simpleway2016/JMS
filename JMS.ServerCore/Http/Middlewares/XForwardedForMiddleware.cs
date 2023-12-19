@@ -8,7 +8,7 @@ namespace JMS.ServerCore.Http.Middlewares
 {
     internal class XForwardedForMiddleware : IHttpMiddleware
     {
-        public Task<bool> Handle(NetClient netClient, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        public Task<bool> Handle(NetClient netClient, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
             var ip = ((IPEndPoint)netClient.Socket.RemoteEndPoint).Address.ToString();
             if (headers.TryGetValue("X-Forwarded-For", out string xff))

@@ -43,7 +43,7 @@ namespace JMS.Dtos
     public class GatewayCommand
     {
         public int Type;
-        public IDictionary<string, string> Header;
+        public Dictionary<string, string> Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public string Content;
         public bool IsHttp;
     }
@@ -51,7 +51,7 @@ namespace JMS.Dtos
     public class GetServiceProviderRequest
     {
         public string ServiceName;
-        public IDictionary<string, string> Header;
+        public Dictionary<string, string> Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public string ClientAddress;
         public bool IsGatewayProxy;
     }

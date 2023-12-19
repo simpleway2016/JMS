@@ -14,6 +14,6 @@ namespace JMS.ServerCore.Http
         /// <param name="httpMethod"></param>
         /// <param name="requestPath"></param>
         /// <returns>false：继续处理下一个中间件，true：处理结束</returns>
-        Task<bool> Handle(NetClient netClient, string httpMethod, string requestPath, IDictionary<string, string> headers);
+        Task<bool> Handle(NetClient netClient, string httpMethod, string requestPath, Dictionary<string, string> headers);
     }
 }

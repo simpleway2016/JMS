@@ -16,7 +16,7 @@ namespace JMS.Applications.HttpMiddlewares
         {
             this._serviceProviderAllocator = serviceProviderAllocator;
         }
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
             if (headers.TryGetValue("Connection", out string connection)
                 && string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)

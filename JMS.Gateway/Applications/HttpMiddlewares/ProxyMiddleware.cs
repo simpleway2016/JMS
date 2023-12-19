@@ -19,7 +19,7 @@ namespace JMS.Applications.HttpMiddlewares
             this._serviceProviderAllocator = serviceProviderAllocator;
 
         }
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IDictionary<string, string> reqheaders)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> reqheaders)
         {
             int indexflag;
             var serviceName = requestPath.Substring(1);

@@ -10,7 +10,7 @@ namespace JMS.ServerCore.Http
     public interface IHttpMiddlewareManager
     {
         IHttpMiddlewareManager AddHttpMiddleware<T>() where T : IHttpMiddleware;
-        Task Handle(NetClient netClient, string httpMethod, string requestPath, IDictionary<string, string> headers);
+        Task Handle(NetClient netClient, string httpMethod, string requestPath, Dictionary<string, string> headers);
         void PrepareMiddlewares(IServiceProvider serviceProvider);
     }
 
@@ -42,7 +42,7 @@ namespace JMS.ServerCore.Http
 
         List<IHttpMiddleware> _httpMiddlewares = null;
         List<Type> _middlewareTypes = new List<Type>();
-        public async Task Handle(NetClient netClient, string httpMethod, string requestPath, IDictionary<string, string> headers)
+        public async Task Handle(NetClient netClient, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
             if(_httpMiddlewares == null)
             {

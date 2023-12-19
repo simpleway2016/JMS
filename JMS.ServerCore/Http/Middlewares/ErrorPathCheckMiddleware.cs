@@ -7,7 +7,7 @@ namespace JMS.ServerCore.Http.Middlewares
 {
     public class ErrorPathCheckMiddleware : IHttpMiddleware
     {
-        public Task<bool> Handle(NetClient netClient, string httpMethod, string requestPath,IDictionary<string,string> headers)
+        public Task<bool> Handle(NetClient netClient, string httpMethod, string requestPath, Dictionary<string,string> headers)
         {
             if (requestPath.Contains("../"))
             {
