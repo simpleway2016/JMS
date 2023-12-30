@@ -117,6 +117,21 @@ namespace JMS.Token
             return BuildForString(dict.ToJsonString());
         }
 
+        public string Build(string data, string[] roles, DateTime expireTime)
+        {
+            expireTime = expireTime.ToUniversalTime();
+            long time = (long)(expireTime - new DateTime(1970, 1, 1)).TotalSeconds;
+
+            var dict = new StringToken()
+            {
+                d = data,
+                e = time,
+                rs = roles
+            };
+
+            return BuildForString(dict.ToJsonString());
+        }
+
         /// <summary>
         /// 验证Long类型的token，如果验证失败，抛出异常
         /// </summary>
@@ -156,8 +171,20 @@ namespace JMS.Token
             var claimsIdentity = new ClaimsIdentity(new Claim[]
           {
                 new Claim("Content", data.d),
-                new Claim(ClaimTypes.Role , data.r == null ? "" : data.r),
-          }, "JMS.Token"); ;
+               
+          }, "JMS.Token"); 
+
+            if(data.r != null)
+            {
+                claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, data.r));
+            }
+            if (data.rs != null)
+            {
+                foreach (var role in data.rs)
+                {
+                    claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
+                }
+            }
 
             var principal = new ClaimsPrincipal(claimsIdentity);
 
@@ -199,6 +226,7 @@ namespace JMS.Token
             public string d;
             public long e;
             public string r;
+            public string[] rs;
         }
 
         /// <summary>
