@@ -80,6 +80,7 @@ namespace JMS.WebApiDocument.Dtos
     {
         public bool isComment { get; set; }
         public string title { get; set; }
+        public string titleGroup { get; set; }
         public string method { get; set; }
         public string desc { get; set; }
         public string url { get; set; }
