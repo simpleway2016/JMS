@@ -323,7 +323,7 @@
         </div>
         <div class="flex-1 itemContainer" v-if="controllers.length">
             <div style="text-align:right;"><button @click="btnClick(btnitem)" v-for="btnitem in controllers[selectedControllerIndex].buttons">{{btnitem.name}}</button></div>
-            <div class="funcItem" v-for="item in controllers[selectedControllerIndex].items">
+            <div class="funcItem" v-for="item,index in controllers[selectedControllerIndex].items">
 
                 <template v-if="item.titleGroup&&(index==0||controllers[selectedControllerIndex].items[index-1].titleGroup!=item.titleGroup)">
                     <div style="height:10px;"></div>
