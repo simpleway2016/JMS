@@ -286,6 +286,15 @@
                 height: 30px;
                 padding-left: 30px;
             }
+
+        .titleGroup {
+            background-color: #eee;
+            border-radius: 3px;
+            padding: 3px 5px;
+            font-size: 12px;
+            color: #999;
+            display: inline;
+        }
     </style>
 </head>
 
@@ -315,6 +324,13 @@
         <div class="flex-1 itemContainer" v-if="controllers.length">
             <div style="text-align:right;"><button @click="btnClick(btnitem)" v-for="btnitem in controllers[selectedControllerIndex].buttons">{{btnitem.name}}</button></div>
             <div class="funcItem" v-for="item in controllers[selectedControllerIndex].items">
+
+                <template v-if="item.titleGroup&&(index==0||controllers[selectedControllerIndex].items[index-1].titleGroup!=item.titleGroup)">
+                    <div style="height:10px;"></div>
+                    <div class="titleGroup">
+                        {{item.titleGroup}}
+                    </div>
+                </template>
 
                 <div class="title" @click="openClick(item)">{{item.title}} {{getFirstLine(item.desc)}}</div>
                 <div class="subitem" v-show="item.opened">
