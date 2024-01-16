@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -24,10 +25,25 @@ namespace JMS.GenerateCode
             CodeMemberMethod codeMethod = new CodeMemberMethod();
             codeMethod.Attributes = MemberAttributes.Public;
             codeMethod.Name = method.Name;
-            codeMethod.ReturnType = GetTypeCode(TypeInfoBuilder.GetReturnType(method.ReturnType), true);
+
+            bool isNullableReturn = false;
+            var attArr = method.GetCustomAttributes().ToArray();
+            if (attArr.Any(m => m.GetType().Name == "NullableContextAttribute"))
+            {
+                isNullableReturn = true;
+            }
+
+            codeMethod.ReturnType = GetTypeCode(TypeInfoBuilder.GetReturnType(method.ReturnType), true , isNullableReturn);
             foreach (var p in parameters)
             {
-                codeMethod.Parameters.Add(new CodeParameterDeclarationExpression(GetTypeCode(p.ParameterType), p.Name));
+                bool isNullableParam = false;
+                attArr = p.GetCustomAttributes().ToArray();
+                if (attArr.Any(m => m.GetType().Name == "NullableAttribute"))
+                {
+                    isNullableParam = true;
+                }
+
+                codeMethod.Parameters.Add(new CodeParameterDeclarationExpression(GetTypeCode(p.ParameterType,false, isNullableParam), p.Name));
 
             }
 
@@ -35,7 +51,7 @@ namespace JMS.GenerateCode
         }
 
 
-        public static CodeTypeReference GetTypeCode(Type type, bool findSubClass = false)
+        public static CodeTypeReference GetTypeCode(Type type, bool findSubClass = false , bool isNullable = false)
         {
             if (type.IsArray)
             {
@@ -107,6 +123,10 @@ namespace JMS.GenerateCode
             }
             else
             {
+                if(isNullable && type == typeof(string)  )
+                {
+                    return new CodeTypeReference("string?");
+                }
                 return new CodeTypeReference(type);
             }
         }

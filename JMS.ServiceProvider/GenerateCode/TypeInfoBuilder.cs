@@ -55,7 +55,17 @@ namespace JMS.GenerateCode
                     pinfo.type = getType(dataTypeInfos, param.ParameterType, controllerTypeInfo.Service.AllowGatewayProxy == false);
                     if (param.ParameterType.IsGenericType && param.ParameterType.GetGenericTypeDefinition() == typeof(System.Nullable<>))
                     {
+                        //{Name = "NullableAttribute" FullName = "System.Runtime.CompilerServices.NullableAttribute"}
                         pinfo.isNullable = true;
+                    }
+                    else if(param.ParameterType == typeof(string))
+                    {
+                        var attArr = param.GetCustomAttributes().ToArray();
+                        if(attArr.Any(m=>m.GetType().Name == "NullableAttribute"))
+                        {
+                            pinfo.isNullable = true;
+                            pinfo.type += "?";
+                        }
                     }
                 }
 
@@ -80,7 +90,7 @@ namespace JMS.GenerateCode
             return controllerInfo;
         }
 
-        public static Type GetReturnType(Type type)
+        public static Type GetReturnType(Type type,bool isNullable =false)
         {
             if (type == typeof(Task) || type == typeof(ValueTask))
             {
