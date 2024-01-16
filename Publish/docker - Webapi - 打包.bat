@@ -1,6 +1,6 @@
 @chcp 65001
 cd /d "%~dp0..\"
-set version=3.3.11
+set version=3.3.12
 dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Linux\WebApiDocker --self-contained true --runtime linux-x64
 cd Publish
 docker build -t jackframework/jmswebapi:%version% -f dockerfile_webapi .

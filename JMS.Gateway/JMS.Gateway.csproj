@@ -4,7 +4,7 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<RootNamespace>JMS</RootNamespace>
 		<AssemblyName>JMS.Gateway</AssemblyName>
-		<Version>3.3.13</Version>
+		<Version>3.3.15</Version>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>
 	<ItemGroup>
