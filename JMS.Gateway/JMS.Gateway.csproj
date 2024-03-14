@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net7.0</TargetFramework>
+		<RootNamespace>JMS</RootNamespace>
+		<AssemblyName>JMS.Gateway</AssemblyName>
+		<Version>3.3.17</Version>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Jack.Storage.MemoryList" Version="1.0.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.5" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.2.0" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
+		<ProjectReference Include="..\JMS.ServerCore\JMS.ServerCore.csproj" />
+		<ProjectReference Include="..\JMS.WebApiDocument\JMS.WebApiDocument.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="test.pfx">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ProjectExtensions>
+		<VisualStudio>
+			<UserProperties appsettings_1json__JsonSchema="" />
+		</VisualStudio>
+	</ProjectExtensions>
+</Project>

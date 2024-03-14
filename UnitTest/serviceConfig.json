@@ -1,0 +1,14 @@
+{
+  "JMS.ServiceRedirects": [
+    {
+      "ServiceName": "UserInfoService"
+    },
+    {
+      "ServiceName": "TestWebSocketService"
+    },
+    {
+      "ServiceName": "TestWebService"
+    }
+  ]
+
+}
