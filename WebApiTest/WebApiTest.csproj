@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <DocumentationFile>bin\WebApiTest.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JMS.ServiceProvider.AspNetCore\JMS.ServiceProvider.AspNetCore.csproj" />
+    <ProjectReference Include="..\JMS.ServiceProvider\JMS.ServiceProvider.csproj" />
+    <ProjectReference Include="..\JMS.WebApiDocument\JMS.WebApiDocument.csproj" />
+  </ItemGroup>
+
+</Project>

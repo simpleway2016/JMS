@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "JMS.Token.AspNetCore": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:1328;http://localhost:1333"
+    }
+  }
+}

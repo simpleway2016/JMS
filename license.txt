@@ -1,0 +1,25 @@
+MIT License
+
+Copyright (c) 2020 Jack.T, JMSFramework Project
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+JMSFramework and its components may contain trademarks, service marks, logos and icons of the JMS Framework Project. Unauthorized use is strictly prohibited.
+
+2020 Jack.T, JMSFramework Project. All rights reserved.
+
+MIT 许可
+
+版权所有 © 2020年 Jack.T，JMSFramework项目组
+
+特此授予任何获得 JMSFramework 和相关文档文件（以下称为“软件”）副本的人免费许可证，以无限制地处理本软件，包括无限制地使用、复制、修改、合并、发布、分发、再授权和/或销售本软件的副本，并允许其向其他人提供这样做的许可证，惟本软件的所有副本均需包含上述版声明和本许可声明。
+
+本软件按“原样”提供，不附带任何形式的明示或暗示的保证，包括但不限于对适销性或特定用途的适用性的保证。在任何情况下，作者或项目组均不对任何索赔、损害或其他责任承担任何责任，无论是在执行合同诉讼中、侵权行为中或其他方面的诉讼中，是否与软件有关或与使用或其他交易中的软件相关。
+
+JMSFramework及其部件中的所有商标、服务标记、图标和徽标，均为 JMS项目组 的商标或注册商标。未经授权，不得以任何方式使用这些商标或徽标。
+
+2020年 Jack.T，JMSFramework项目组 保留所有权利。

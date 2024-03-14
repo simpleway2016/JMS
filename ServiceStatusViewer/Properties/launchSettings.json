@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "ServiceStatusViewer": {
+      "commandName": "Project"
+    }
+  }
+}
