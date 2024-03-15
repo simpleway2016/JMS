@@ -3,6 +3,7 @@ using JMS.ServerCore;
 using JMS.WebApiDocument.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System;
@@ -110,6 +111,20 @@ namespace JMS.WebApiDocument
             var path = context.Request.GetEncodedPathAndQuery();
             var index = path.IndexOf("/JMSRedirect/");
             path = path.Substring(index + 12 + location.Name.Length + 1);
+
+            var serviceActionFilter = context.RequestServices.GetService<IServiceActionFilter>();
+            if (serviceActionFilter != null)
+            {
+                var invokingContext = new InvokingContext
+                {
+                    ServiceDetail = location,
+                    Headers = context.Request.Headers,
+                    Method = path,
+                };
+                await serviceActionFilter.OnAction(invokingContext);
+                path = invokingContext.Method;
+            }
+
             strBuffer.Append($"{context.Request.Method} {path} HTTP/1.1\r\n");
 
             var ip = context.Connection.RemoteIpAddress.ToString();
@@ -275,6 +290,7 @@ namespace JMS.WebApiDocument
             using (var client = ClientProviderFunc())
             {
                 var service = await client.GetMicroServiceAsync(config.ServiceName);
+               
                 if(ServiceRedirects.Configs == null && service.ServiceLocation.AllowGatewayProxy == false)
                 {
                     //不允许反向代理
@@ -298,6 +314,7 @@ namespace JMS.WebApiDocument
                     return null;
                 }
 
+                
 
                 byte[] postContent = null;
                 if (context.Request.ContentLength != null && context.Request.ContentLength > 0)
@@ -365,7 +382,21 @@ namespace JMS.WebApiDocument
                     client.SetHeader("X-Forwarded-For", ip);
                 }
 
-                
+                var serviceActionFilter = context.RequestServices.GetService<IServiceActionFilter>();
+                if (serviceActionFilter != null)
+                {
+                    var invokingContext = new InvokingContext
+                    {
+                        ServiceDetail = service.ServiceLocation,
+                        Method = method,
+                        Headers = context.Request.Headers,
+                        Parameters = _parames
+                    };
+                    await serviceActionFilter.OnAction(invokingContext);
+                    method = invokingContext.Method;
+                    _parames = invokingContext.Parameters;
+                }
+
                 if (_parames == null)
                 {
                     return await service.InvokeAsync<object>(method);

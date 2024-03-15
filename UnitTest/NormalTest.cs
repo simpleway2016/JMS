@@ -2,6 +2,7 @@
 using JMS;
 using JMS.Applications;
 using JMS.Cluster;
+using JMS.WebApiDocument;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -89,7 +90,7 @@ namespace UnitTest
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
 
-
+            builder.Services.AddSingleton<IServiceActionFilter, TestServiceActionFilter>();
             var app = builder.Build();
 
             app.UseAuthentication();    //认证
