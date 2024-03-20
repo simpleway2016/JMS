@@ -2,6 +2,7 @@
 using JMS.Common.Net;
 using JMS.Dtos;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -64,81 +65,88 @@ namespace JMS
             if (this.ProxyAddress != null)
             {
                 //发送socks5协议
-                byte[] buffer = new byte[128];
-                buffer[0] = 0x5;
-                buffer[1] = 0x1;
-                buffer[2] = 0x0;
-                this.InnerStream.Write(buffer, 0, 3);
-
-                this.ReadData(buffer, 0, 2);
-
-                byte[] addrBytes = null;
-                bool isdomain = false;
-                byte addrType;
-                if (IPAddress.TryParse(_netaddr.Address, out IPAddress ip))
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(128);
+                try
                 {
-                    addrBytes = ip.GetAddressBytes();
-                    if (addrBytes.Length > 4)
+                    buffer[0] = 0x5;
+                    buffer[1] = 0x1;
+                    buffer[2] = 0x0;
+                    this.InnerStream.Write(buffer, 0, 3);
+
+                    this.ReadData(buffer, 0, 2);
+
+                    byte[] addrBytes = null;
+                    bool isdomain = false;
+                    byte addrType;
+                    if (IPAddress.TryParse(_netaddr.Address, out IPAddress ip))
                     {
-                        addrType = 0x4;//ipv6
+                        addrBytes = ip.GetAddressBytes();
+                        if (addrBytes.Length > 4)
+                        {
+                            addrType = 0x4;//ipv6
+                        }
+                        else
+                        {
+                            addrType = 0x1;//ipv4
+                        }
                     }
                     else
                     {
-                        addrType = 0x1;//ipv4
+                        isdomain = true;
+                        addrType = 0x3;//域名
+                        addrBytes = Encoding.ASCII.GetBytes(_netaddr.Address);
+                    }
+
+
+                    byte[] portBytes = BitConverter.GetBytes((ushort)_netaddr.Port);
+
+                    var len = 0;
+                    buffer[0] = 0x5;
+                    buffer[1] = 0x1;
+                    buffer[2] = 0x0;
+                    buffer[3] = addrType;
+                    if (isdomain == false)
+                    {
+                        Array.Copy(addrBytes, 0, buffer, 4, addrBytes.Length);
+                        buffer[4 + addrBytes.Length] = portBytes[1];
+                        buffer[4 + addrBytes.Length + 1] = portBytes[0];
+                        len = 4 + addrBytes.Length + 2;
+                    }
+                    else
+                    {
+                        buffer[4] = (byte)addrBytes.Length;
+                        Array.Copy(addrBytes, 0, buffer, 5, addrBytes.Length);
+                        buffer[5 + addrBytes.Length] = portBytes[1];
+                        buffer[5 + addrBytes.Length + 1] = portBytes[0];
+                        len = 5 + addrBytes.Length + 2;
+                    }
+
+                    this.InnerStream.Write(buffer, 0, len);
+
+                    this.ReadData(buffer, 0, 4);
+                    if (buffer[1] != 0)
+                    {
+                        throw new ProxyException($"{_netaddr}代理服务器不能转发");
+                    }
+                    if (buffer[3] == 0x1)
+                    {
+                        this.ReadData(buffer, 0, 6);
+                    }
+                    else if (buffer[3] == 0x3)
+                    {
+                        len = this.InnerStream.ReadByte();
+                        if (len < 0)
+                            throw new SocketException();
+                        this.ReadData(buffer, 0, len + 2);
+                    }
+                    else if (buffer[3] == 0x4)
+                    {
+                        this.ReadData(buffer, 0, 18);
                     }
                 }
-                else
+                finally
                 {
-                    isdomain = true;
-                    addrType = 0x3;//域名
-                    addrBytes = Encoding.ASCII.GetBytes(_netaddr.Address);
-                }
-
-
-                byte[] portBytes = BitConverter.GetBytes((ushort)_netaddr.Port);
-
-                var len = 0;
-                buffer[0] = 0x5;
-                buffer[1] = 0x1;
-                buffer[2] = 0x0;
-                buffer[3] = addrType;
-                if (isdomain == false)
-                {
-                    Array.Copy(addrBytes, 0, buffer, 4, addrBytes.Length);
-                    buffer[4 + addrBytes.Length] = portBytes[1];
-                    buffer[4 + addrBytes.Length + 1] = portBytes[0];
-                    len = 4 + addrBytes.Length + 2;
-                }
-                else
-                {
-                    buffer[4] = (byte)addrBytes.Length;
-                    Array.Copy(addrBytes, 0, buffer, 5, addrBytes.Length);
-                    buffer[5 + addrBytes.Length] = portBytes[1];
-                    buffer[5 + addrBytes.Length + 1] = portBytes[0];
-                    len = 5 + addrBytes.Length + 2;
-                }
-
-                this.InnerStream.Write(buffer, 0, len);
-
-                this.ReadData(buffer, 0, 4);
-                if (buffer[1] != 0)
-                {
-                    throw new ProxyException($"{_netaddr}代理服务器不能转发");
-                }
-                if (buffer[3] == 0x1)
-                {
-                    this.ReadData(buffer, 0, 6);
-                }
-                else if (buffer[3] == 0x3)
-                {
-                    len = this.InnerStream.ReadByte();
-                    if (len < 0)
-                        throw new SocketException();
-                    this.ReadData(buffer, 0, len + 2);
-                }
-                else if (buffer[3] == 0x4)
-                {
-                    this.ReadData(buffer, 0, 18);
+                    ArrayPool<byte>.Shared.Return(buffer);
                 }
             }
         }

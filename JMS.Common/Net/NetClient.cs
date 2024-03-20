@@ -16,7 +16,7 @@ using Way.Lib;
 
 namespace JMS
 {
-    public class NetClient:BaseNetClient
+    public class NetClient : BaseNetClient
     {
         public const SslProtocols SSLProtocols = SslProtocols.Tls12;
         /// <summary>
@@ -24,11 +24,12 @@ namespace JMS
         /// </summary>
         const int CompressionMinSize = 2048;
         public bool KeepAlive { get; set; }
-      
-        public NetClient(){
-            
+
+        public NetClient()
+        {
+
         }
-        public NetClient(Socket socket):base(socket)
+        public NetClient(Socket socket) : base(socket)
         {
         }
 
@@ -48,7 +49,7 @@ namespace JMS
             this.Write(data.Concat(contentBytes).ToArray());
         }
 
-        public void OutputHttp204(IDictionary<string,string> requestHeaders)
+        public void OutputHttp204(IDictionary<string, string> requestHeaders)
         {
             StringBuilder otherHeaders = new StringBuilder();
             if (requestHeaders.ContainsKey("Access-Control-Request-Headers"))
@@ -86,7 +87,7 @@ namespace JMS
             this.Write(data);
         }
 
-        public void OutputHttpCode(int code,string desc)
+        public void OutputHttpCode(int code, string desc)
         {
             var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 {code} {desc}\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nConnection: keep-alive\r\n\r\n");
             this.Write(data);
@@ -100,7 +101,7 @@ namespace JMS
             this.Write(content);
         }
 
-        public void OutputHttpCode(int code, string desc , string message)
+        public void OutputHttpCode(int code, string desc, string message)
         {
             var content = Encoding.UTF8.GetBytes(message);
             var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 {code} {desc}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {content.Length}\r\nConnection: keep-alive\r\n\r\n");
@@ -114,10 +115,10 @@ namespace JMS
         /// <param name="message"></param>
         /// <param name="contentType"></param>
         /// <param name="headers">输入更多header,多个header用\r\n隔开，如: Name: Jack\r\nId: 1</param>
-        public void OutputHttp200(string message,string contentType = "text/html",string headers = null)
+        public void OutputHttp200(string message, string contentType = "text/html", string headers = null)
         {
             byte[] content = message == null ? null : Encoding.UTF8.GetBytes(message);
-            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n{headers}{(headers != null ? "\r\n":"")}Content-Type: {contentType}; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: keep-alive\r\n\r\n");
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n{headers}{(headers != null ? "\r\n" : "")}Content-Type: {contentType}; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: keep-alive\r\n\r\n");
             this.Write(data);
             if (content != null)
             {
@@ -131,7 +132,8 @@ namespace JMS
         public void KeepHeartBeating()
         {
 
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 while (true)
                 {
                     Thread.Sleep(10000);
@@ -156,7 +158,7 @@ namespace JMS
                 {
                     this.ReadServiceObject<InvokeResult>();
                 }
-                catch 
+                catch
                 {
                     return;
                 }
@@ -171,7 +173,8 @@ namespace JMS
         public void KeepHeartBeating(Func<object> cmdAction)
         {
             bool exited = false;
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 while (!exited)
                 {
                     Thread.Sleep(10000);
@@ -218,7 +221,7 @@ namespace JMS
                 throw new SocketException();
 
             var buffer = ret.Buffer.Slice(0, len);
-            
+
             var datas = buffer.ToArray();
             this.PipeReader.AdvanceTo(buffer.End);
 
@@ -227,7 +230,7 @@ namespace JMS
             return datas;
         }
 
-       byte[] ReadServiceDataBytes(int flag)
+        byte[] ReadServiceDataBytes(int flag)
         {
             if (flag == 1179010630)
                 return new byte[0];
@@ -249,33 +252,52 @@ namespace JMS
 
         public int ReadInt()
         {
-            byte[] data = new byte[4];
-            this.ReadData(data, 0, data.Length);
-            return BitConverter.ToInt32(data);
+            var data = ArrayPool<byte>.Shared.Rent(4);
+            try
+            {
+                this.ReadData(data, 0, 4);
+                return BitConverter.ToInt32(data);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(data);
+            }
         }
         public async Task<int> ReadIntAsync()
         {
-            byte[] data = new byte[4];
-            await this.ReadDataAsync(data, 0, data.Length);
-            return BitConverter.ToInt32(data);
+            var data = ArrayPool<byte>.Shared.Rent(4);
+            try
+            {
+                await this.ReadDataAsync(data, 0, 4);
+                return BitConverter.ToInt32(data);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(data);
+            }
         }
 
         public bool ReadBoolean()
         {
-            byte[] data = new byte[1];
-            this.ReadData(data, 0, data.Length);
-            return data[0] == 1;
+            return this.InnerStream.ReadByte() == 1;
         }
         public long ReadLong()
         {
-            byte[] data = new byte[8];
-            this.ReadData(data, 0, data.Length);
-            return BitConverter.ToInt64(data);
+            var data = ArrayPool<byte>.Shared.Rent(8);
+            try
+            {
+                this.ReadData(data, 0, 8);
+                return BitConverter.ToInt64(data);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(data);
+            }
         }
-     
+
         public void Write(bool value)
         {
-            this.InnerStream.WriteByte(value ? (byte)0x1:(byte)0x0);
+            this.InnerStream.WriteByte(value ? (byte)0x1 : (byte)0x0);
         }
 
         /// <summary>
@@ -285,7 +307,7 @@ namespace JMS
         /// <param name="offset"></param>
         /// <param name="count"></param>
         /// <returns></returns>
-        public virtual async Task ReadDataAsync(byte[] data,int offset,int count)
+        public virtual async Task ReadDataAsync(byte[] data, int offset, int count)
         {
             var ret = await this.PipeReader.ReadAtLeastAsync(count);
             if (ret.IsCompleted && ret.Buffer.Length < count)
@@ -317,10 +339,7 @@ namespace JMS
         {
             try
             {
-                var datas = new byte[4];
-                this.ReadData(datas, 0, datas.Length);
-
-                var flag = BitConverter.ToInt32(datas);
+                var flag = this.ReadInt();
 
                 return ReadServiceDataBytes(flag);
             }
@@ -354,7 +373,7 @@ namespace JMS
             }
         }
 
-        public  string ReadServiceData()
+        public string ReadServiceData()
         {
             var data = ReadServiceDataBytes();
             if (data.Length == 0)
@@ -370,7 +389,7 @@ namespace JMS
             return Encoding.UTF8.GetString(data);
         }
 
-        public  T ReadServiceObject<T>()
+        public T ReadServiceObject<T>()
         {
             var datas = ReadServiceDataBytes();
             string str = Encoding.UTF8.GetString(datas);
@@ -430,14 +449,14 @@ namespace JMS
                 byte* ptr = (byte*)&flag;
                 Marshal.Copy(new IntPtr(ptr), tosend, 0, 4);
 
-                this.InnerStream.Write(tosend , 0 , newLen);
+                this.InnerStream.Write(tosend, 0, newLen);
             }
             finally
             {
                 ArrayPool<byte>.Shared.Return(tosend);
             }
         }
-        public  void WriteServiceData(object value)
+        public void WriteServiceData(object value)
         {
             if (value == null)
             {

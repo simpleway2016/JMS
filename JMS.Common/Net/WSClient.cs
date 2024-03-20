@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
@@ -30,39 +31,46 @@ namespace JMS
         public string ReceiveData()
         {
             List<byte> list = null;
-            byte[] data = new byte[4096];
-            var buffer = new ArraySegment<byte>(data);
-            int len;
-            while (true)
+            byte[] data = ArrayPool<byte>.Shared.Rent(4096);
+            try
             {
-                var ret = _webSocket.ReceiveAsync(buffer, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
-                len = ret.Count;
-                if(len == 0)
+                var buffer = new ArraySegment<byte>(data);
+                int len;
+                while (true)
                 {
-                    if(_webSocket.State != WebSocketState.Open)
+                    var ret = _webSocket.ReceiveAsync(buffer, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+                    len = ret.Count;
+                    if (len == 0)
                     {
-                        throw new WebSocketException("websocket is not open,reason:" + _webSocket.CloseStatusDescription);
+                        if (_webSocket.State != WebSocketState.Open)
+                        {
+                            throw new WebSocketException("websocket is not open,reason:" + _webSocket.CloseStatusDescription);
+                        }
                     }
-                }
-                if (ret.EndOfMessage)
-                {
-                    if (list != null)
+                    if (ret.EndOfMessage)
                     {
+                        if (list != null)
+                        {
+                            list.AddRange(buffer.Slice(0, ret.Count));
+                        }
+                        break;
+                    }
+                    else
+                    {
+                        if (list == null)
+                            list = new List<byte>();
                         list.AddRange(buffer.Slice(0, ret.Count));
                     }
-                    break;
                 }
+                if (list != null)
+                    return Encoding.UTF8.GetString(list.ToArray());
                 else
-                {
-                    if (list == null)
-                        list = new List<byte>();
-                    list.AddRange(buffer.Slice(0, ret.Count));
-                }
+                    return Encoding.UTF8.GetString(data, 0, len);
             }
-            if (list != null)
-                return Encoding.UTF8.GetString(list.ToArray());
-            else
-                return Encoding.UTF8.GetString(data, 0, len);
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(data);
+            }
         }
 
         public void Dispose()
