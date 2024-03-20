@@ -416,18 +416,26 @@ namespace JMS
             if (KeepAlive)
                 flag |= 2;
 
-            byte[] tosend = new byte[data.Length + 4];
-            flag |= (data.Length << 2);
-
-            fixed( byte* ptrData = data )
+            var newLen = data.Length + 4;
+            byte[] tosend = ArrayPool<byte>.Shared.Rent(newLen);
+            try
             {
-                Marshal.Copy(new IntPtr(ptrData), tosend, 4, data.Length);
+                flag |= (data.Length << 2);
+
+                fixed (byte* ptrData = data)
+                {
+                    Marshal.Copy(new IntPtr(ptrData), tosend, 4, data.Length);
+                }
+
+                byte* ptr = (byte*)&flag;
+                Marshal.Copy(new IntPtr(ptr), tosend, 0, 4);
+
+                this.InnerStream.Write(tosend , 0 , newLen);
             }
-
-            byte* ptr = (byte*)&flag;
-            Marshal.Copy(new IntPtr(ptr), tosend, 0, 4);
-
-            this.Write(tosend);
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(tosend);
+            }
         }
         public  void WriteServiceData(object value)
         {
@@ -456,18 +464,26 @@ namespace JMS
             if (KeepAlive)
                 flag |= 2;
 
-            byte[] tosend = new byte[data.Length + 4];
-            flag |= (data.Length << 2);
-
-            fixed (byte* ptrData = data)
+            var newLen = data.Length + 4;
+            byte[] tosend = ArrayPool<byte>.Shared.Rent(newLen);
+            try
             {
-                Marshal.Copy(new IntPtr(ptrData), tosend, 4, data.Length);
+                flag |= (data.Length << 2);
+
+                fixed (byte* ptrData = data)
+                {
+                    Marshal.Copy(new IntPtr(ptrData), tosend, 4, data.Length);
+                }
+
+                byte* ptr = (byte*)&flag;
+                Marshal.Copy(new IntPtr(ptr), tosend, 0, 4);
+
+                return this.InnerStream.WriteAsync(tosend, 0, newLen);
             }
-
-            byte* ptr = (byte*)&flag;
-            Marshal.Copy(new IntPtr(ptr), tosend, 0, 4);
-
-            return this.InnerStream.WriteAsync(tosend,0,tosend.Length);
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(tosend);
+            }
         }
         public Task WriteServiceDataAsync(object value)
         {

@@ -58,10 +58,18 @@ namespace JMS.Common
         private System.IO.Pipelines.PipeReader _PipeReader;
         public System.IO.Pipelines.PipeReader PipeReader => _PipeReader;
 
+        Socket _Socket;
         public Socket Socket
         {
-            get;
-            set;
+            get => _Socket;
+            set
+            {
+                _Socket = value;
+                if(value != null)
+                {
+                    value.NoDelay = true;
+                }
+            }
         }
         public bool HasSocketException
         {
