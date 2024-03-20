@@ -1,5 +1,6 @@
 ﻿using JMS.Dtos;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
@@ -24,19 +25,26 @@ namespace JMS.TransactionReporters
                     Type = (int)CommandType.ReportTransactionStatus,
                     Content = tranid
                 });
-                byte[] data = new byte[4];
-                int readed = netclient.Socket.Receive(data, 4, SocketFlags.Peek);
-                if (readed == 0)
+                byte[] data = ArrayPool<byte>.Shared.Rent(4);
+                try
                 {
-                    //网关不支持此命令
-                    netclient.Dispose();
-                    return;
+                    int readed = netclient.Socket.Receive(data, 4, SocketFlags.Peek);
+                    if (readed == 0)
+                    {
+                        //网关不支持此命令
+                        netclient.Dispose();
+                        return;
+                    }
+                    else
+                    {
+                        netclient.ReadServiceObject<InvokeResult>();
+                    }
+                    NetClientPool.AddClientToPool(netclient);
                 }
-                else
+                finally
                 {
-                    netclient.ReadServiceObject<InvokeResult>();
+                    ArrayPool<byte>.Shared.Return(data);
                 }
-                NetClientPool.AddClientToPool(netclient);
             }
             catch (Exception)
             {
@@ -57,19 +65,26 @@ namespace JMS.TransactionReporters
                     Type = (int)CommandType.RemoveTransactionStatus,
                     Content = tranid
                 });
-                byte[] data = new byte[4];
-                int readed = netclient.Socket.Receive(data, 4, SocketFlags.Peek);
-                if (readed == 0)
+                byte[] data = ArrayPool<byte>.Shared.Rent(4);
+                try
                 {
-                    //网关不支持此命令
-                    netclient.Dispose();
-                    return;
+                    int readed = netclient.Socket.Receive(data, 4, SocketFlags.Peek);
+                    if (readed == 0)
+                    {
+                        //网关不支持此命令
+                        netclient.Dispose();
+                        return;
+                    }
+                    else
+                    {
+                        netclient.ReadServiceObject<InvokeResult>();
+                    }
+                    NetClientPool.AddClientToPool(netclient);
                 }
-                else
+                finally
                 {
-                    netclient.ReadServiceObject<InvokeResult>();
+                    ArrayPool<byte>.Shared.Return(data);
                 }
-                NetClientPool.AddClientToPool(netclient);
             }
             catch (Exception)
             {

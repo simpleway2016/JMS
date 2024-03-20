@@ -2,6 +2,7 @@
 using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -371,17 +372,25 @@ Accept-Language: zh-CN,zh;q=0.9
 
         public void AddClientToPool()
         {
-            byte[] data = new byte[1024];
-            int offset = 0;
-            while (true)
+            var dataLen = 1024;
+            byte[] data = ArrayPool<byte>.Shared.Rent(dataLen);
+            try
             {
-                var len = _client.InnerStream.Read(data , offset, data.Length - offset);
-                offset += len;
-                if (data[offset - 1] == 10 && data[offset - 2] == 13 && data[offset - 3] == 10 && data[offset - 4] == 13)
-                    break;
+                int offset = 0;
+                while (true)
+                {
+                    var len = _client.InnerStream.Read(data, offset, dataLen - offset);
+                    offset += len;
+                    if (data[offset - 1] == 10 && data[offset - 2] == 13 && data[offset - 3] == 10 && data[offset - 4] == 13)
+                        break;
+                }
+                NetClientPool.AddClientToPool(_client);
+                _client = null;
             }
-            NetClientPool.AddClientToPool(_client);
-            _client = null;
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(data);
+            }
         }
 
         public void Dispose()
