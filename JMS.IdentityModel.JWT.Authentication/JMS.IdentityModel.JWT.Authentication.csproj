@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.3.11</Version>
+    <Version>1.3.12</Version>
     <Authors>Jack.T</Authors>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Description>JMS工程使用的 jwt 身份验证组件</Description>

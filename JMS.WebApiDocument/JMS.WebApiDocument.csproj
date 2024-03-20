@@ -5,7 +5,7 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <DocumentationFile>bin\JMS.WebApiDocument.xml</DocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.5.2</Version>
+    <Version>1.6.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
