@@ -62,7 +62,7 @@ namespace JMS.ServerCore
                 }
 
                
-                listener.Start();
+                listener.Start(512);
 
                 if (isV6)
                 {

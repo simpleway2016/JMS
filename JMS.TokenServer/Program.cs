@@ -44,8 +44,7 @@ namespace JMS.TokenServer
 
         static void Main(string[] args)
         {
-            ThreadPool.GetMaxThreads(out int w, out int c);
-            ThreadPool.SetMinThreads(w, c);
+            ThreadPool.SetMinThreads(Environment.ProcessorCount * 10, Environment.ProcessorCount * 10);
 
             var builder = new ConfigurationBuilder();
 
