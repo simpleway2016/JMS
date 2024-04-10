@@ -67,8 +67,8 @@ namespace ServiceStatusViewer.ViewModels
                 {
                     using (var client = new MicroServiceClient())
                     {
-                        var service = client.GetMicroService(model.SelectedServiceName, new JMS.Dtos.ClientServiceDetail(this._data.ServiceAddress, this._data.Port));
-                        var code = service.GetServiceClassCode(model.NamespaceName, model.ClassName);
+                        var service = await client.TryGetMicroServiceAsync(model.SelectedServiceName, new JMS.Dtos.ClientServiceDetail(this._data.ServiceAddress, this._data.Port));
+                        var code = await service.GetServiceClassCodeAsync(model.NamespaceName, model.ClassName);
 
                         var dialog = new SaveFileDialog();
                         dialog.InitialFileName = model.ClassName + ".cs";

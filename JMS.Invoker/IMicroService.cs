@@ -24,6 +24,13 @@ namespace JMS
         /// <returns></returns>
         string GetServiceClassCode(string nameSpace,string className);
         /// <summary>
+        /// 获取微服务的客户端c#代码
+        /// </summary>
+        /// <param name="nameSpace">代码使用什么命名空间</param>
+        /// <param name="className">类名</param>
+        /// <returns></returns>
+        Task<string> GetServiceClassCodeAsync(string nameSpace, string className);
+        /// <summary>
         /// 获取微服务的方法描述
         /// </summary>
         /// <returns></returns>

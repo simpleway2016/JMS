@@ -136,6 +136,25 @@ namespace JMS
             }
         }
 
+        public async Task<string> GetServiceClassCodeAsync(string nameSpace, string className)
+        {
+            using (var netclient = new ProxyClient(RemoteClient.ProxyAddress))
+            {
+                await netclient.ConnectAsync(new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
+                netclient.ReadTimeout = this.RemoteClient.Timeout;
+                netclient.WriteServiceData(new InvokeCommand()
+                {
+                    Type = (int)InvokeType.GenerateInvokeCode,
+                    Service = _serviceName,
+                    Parameters = new string[] { nameSpace, className }
+                });
+                var ret = await netclient.ReadServiceObjectAsync<InvokeResult<string>>();
+                if (!ret.Success)
+                    throw new RemoteException(null, null, ret.Data);
+                return ret.Data;
+            }
+        }
+
         public string GetServiceInfo()
         {
             using (var netclient = new ProxyClient(RemoteClient.ProxyAddress))
