@@ -11,7 +11,7 @@ using System.Net.Mail;
 
 namespace JMS
 {
-    class FindMasterGatewayTask
+    public class FindMasterGatewayTask
     {
         public bool SupportRemoteConnection;
         private readonly NetAddress[] _gatewayAddrs;
@@ -65,10 +65,10 @@ namespace JMS
 
         async void tryConnect(NetAddress addr, int totalCount)
         {
-
-            var client = await NetClientPool.CreateClientAsync(_proxyAddr, addr);
+            NetClient client = null;
             try
             {
+                client = await NetClientPool.CreateClientAsync(_proxyAddr, addr);
                 client.ReadTimeout = _timeout;
                 client.WriteServiceData(new GatewayCommand
                 {
@@ -90,7 +90,8 @@ namespace JMS
             }
             catch (Exception ex)
             {
-                client.Dispose();
+                _lastError = ex;
+                client?.Dispose();
             }
             finally
             {
