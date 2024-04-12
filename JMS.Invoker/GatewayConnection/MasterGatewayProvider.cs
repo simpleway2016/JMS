@@ -64,9 +64,10 @@ namespace JMS.GatewayConnection
                 Parallel.For(0, _allGateways.Length, i => {
                     var addr = _allGateways[i];
 
-                    var client = NetClientPool.CreateClient(this._proxy, addr);
+                    NetClient client = null;
                     try
                     {
+                        client = NetClientPool.CreateClient(this._proxy, addr);
                         client.ReadTimeout = _timeout;
                         client.WriteServiceData(new GatewayCommand
                         {
@@ -85,7 +86,7 @@ namespace JMS.GatewayConnection
                     }
                     catch
                     {
-                        client.Dispose();
+                        client?.Dispose();
                     }
                 });
 
