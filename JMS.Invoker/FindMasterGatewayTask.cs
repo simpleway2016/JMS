@@ -7,42 +7,65 @@ using System.Threading;
 using System.Security.Cryptography.X509Certificates;
 using JMS.Dtos;
 using JMS.GatewayConnection;
+using System.Net.Mail;
 
 namespace JMS
 {
-    class FindMasterGatewayTask : IValueTaskSource<NetAddress>
+    class FindMasterGatewayTask
     {
         public bool SupportRemoteConnection;
-        int _timeout;
-        NetAddress _proxyAddr;
-        NetAddress[] _gatewayAddrs;
-        ValueTaskSourceStatus _status = ValueTaskSourceStatus.Pending;
-        NetAddress _masterGateway;
+        private readonly NetAddress[] _gatewayAddrs;
+        private readonly int _timeout;
+        private readonly NetAddress _proxyAddr;
         int _done = 0;
+        NetAddress _masterGateway;
+        /// <summary>
+        /// 0 waiting  1=success 2=error  3=tobeSuccess
+        /// </summary>
+        int _status = 0;
+
+        Exception _lastError = null;
+
         public FindMasterGatewayTask(NetAddress[] gatewayAddrs, int timeout, NetAddress proxyAddr)
         {
-            this._timeout = timeout;
-            this._proxyAddr = proxyAddr;
-            this._gatewayAddrs = gatewayAddrs;
-
+            _gatewayAddrs = gatewayAddrs;
+            _timeout = timeout;
+            _proxyAddr = proxyAddr;
         }
 
-        public NetAddress GetResult(short token)
-        {
-            if(_status == ValueTaskSourceStatus.Faulted)
+        public async ValueTask<NetAddress> GetMasterAsync()
+        {            
+            var totalCount = _gatewayAddrs.Length;
+
+            foreach (var addr in _gatewayAddrs)
             {
-                throw new MissMasterGatewayException("无法找到主网关");
+                if (_status == 1)
+                    break;
+
+                tryConnect(addr, totalCount);
+
             }
-            return _masterGateway;
+
+            while (_status == 0)
+                await Task.Delay(10);
+
+            if (_status == 2)
+                throw new MissMasterGatewayException("无法找到主网关");
+
+            while (_status == 3)
+                await Task.Delay(10);
+
+            var ret = _masterGateway;
+            _masterGateway = null;
+
+            return ret;
         }
 
-        public ValueTaskSourceStatus GetStatus(short token)
-        {
-            return _status;
-        }
 
-        async void checkGateway(NetAddress addr,Action<object> continuation,object state)
+
+        async void tryConnect(NetAddress addr, int totalCount)
         {
+
             var client = await NetClientPool.CreateClientAsync(_proxyAddr, addr);
             try
             {
@@ -56,10 +79,13 @@ namespace JMS
 
                 if (ret.Success == true && _masterGateway == null)
                 {
-                    SupportRemoteConnection = ret.Data != null && ret.Data.SupportRetmoteClientConnect;
-                    _masterGateway = addr;
-                    _status = ValueTaskSourceStatus.Succeeded;
-                    continuation(state);
+                    if (Interlocked.CompareExchange(ref _status, 3, 0) == 0)
+                    {
+                        SupportRemoteConnection = ret.Data != null && ret.Data.SupportRetmoteClientConnect;
+                        _masterGateway = addr;
+
+                        _status = 1;
+                    }
                 }
             }
             catch (Exception ex)
@@ -68,21 +94,15 @@ namespace JMS
             }
             finally
             {
-                Interlocked.Increment(ref _done);
-                if(_done == _gatewayAddrs.Length && _status == ValueTaskSourceStatus.Pending)
+                var ret = Interlocked.Increment(ref _done);
+
+                if (_lastError != null && ret == totalCount)
                 {
-                    _status = ValueTaskSourceStatus.Faulted;
-                    continuation(state);
+                    Interlocked.CompareExchange(ref _status, 2, 0);
                 }
             }
         }
 
-        public void OnCompleted(Action<object> continuation, object state, short token, ValueTaskSourceOnCompletedFlags flags)
-        {
-            for(int i = 0; i < _gatewayAddrs.Length; i++)
-            {
-                checkGateway(_gatewayAddrs[i], continuation, state);
-            }
-        }
     }
+
 }
