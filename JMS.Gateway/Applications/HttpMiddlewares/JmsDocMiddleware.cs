@@ -59,7 +59,7 @@ namespace JMS.Applications.HttpMiddlewares
                         var code = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m => m.Name == buttonName).Code;
                         var vueMethods = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m => m.Name == "vue methods")?.Code;
                         var text = Encoding.UTF8.GetString(bs).Replace("$$Controller$$", controllerInfo.ToJsonString()).Replace("$$code$$", code).Replace("$$vueMethods$$", vueMethods);
-                        client.OutputHttp200(text);
+                        client.OutputHttpGzip200(text);
                     }
                 }
             }
@@ -100,9 +100,8 @@ namespace JMS.Applications.HttpMiddlewares
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);
-                        var text = Encoding.UTF8.GetString(bs);
-
-                        client.OutputHttp200(text, "text/javascript", "Last-Modified: Fri , 12 May 2006 18:53:33 GMT");
+                      
+                        client.OutputHttpGzip200(bs, "text/javascript", "Last-Modified: Fri , 12 May 2006 18:53:33 GMT");
                     }
                     return true;
                 }
