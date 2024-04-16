@@ -4,6 +4,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -119,6 +120,48 @@ namespace JMS
         {
             byte[] content = message == null ? null : Encoding.UTF8.GetBytes(message);
             var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n{headers}{(headers != null ? "\r\n" : "")}Content-Type: {contentType}; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: keep-alive\r\n\r\n");
+            this.Write(data);
+            if (content != null)
+            {
+                this.Write(content);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="contentType"></param>
+        /// <param name="headers">输入更多header,多个header用\r\n隔开，如: Name: Jack\r\nId: 1</param>
+        public void OutputHttpGzip200(string message, string contentType = "text/html", string headers = null)
+        {
+            byte[] content = message == null ? null : Encoding.UTF8.GetBytes(message);
+
+            OutputHttpGzip200(content, contentType, headers);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="content"></param>
+        /// <param name="contentType"></param>
+        /// <param name="headers">输入更多header,多个header用\r\n隔开，如: Name: Jack\r\nId: 1</param>
+        public void OutputHttpGzip200(byte[] content, string contentType = "text/html", string headers = null)
+        {
+            if (content != null)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
+                    {
+                        gzipStream.Write(content, 0, content.Length);
+                    }
+
+                    content = memoryStream.ToArray();
+                }
+            }
+
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nAccess-Control-Allow-Origin: *\r\n{headers}{(headers != null ? "\r\n" : "")}Content-Type: {contentType}; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: keep-alive\r\n\r\n");
             this.Write(data);
             if (content != null)
             {

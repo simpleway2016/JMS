@@ -98,9 +98,8 @@ namespace JMS.Applications.HttpMiddlewares
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);
-                        var text = Encoding.UTF8.GetString(bs);
 
-                        client.OutputHttp200(text, "text/javascript", "Last-Modified: Fri , 12 May 2006 18:53:33 GMT");
+                        client.OutputHttpGzip200(bs, "text/javascript", "Last-Modified: Fri , 12 May 2006 18:53:33 GMT");
                     }
                     return true;
                 }
@@ -209,7 +208,7 @@ namespace JMS.Applications.HttpMiddlewares
                     var bs = new byte[ms.Length];
                     ms.Read(bs, 0, bs.Length);
                     var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.OrderBy(m => m.desc).ToJsonString()).Replace("$$Types$$", "[]");
-                    client.OutputHttp200(text);
+                    client.OutputHttpGzip200(text);
                 }
 
                 return true;
