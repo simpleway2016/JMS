@@ -176,7 +176,7 @@ namespace JMS.Applications.HttpMiddlewares
                     var bs = new byte[ms.Length];
                     ms.Read(bs, 0, bs.Length);
                     var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.OrderBy(m => m.desc).ToJsonString()).Replace("$$Types$$", "[]");
-                    client.OutputHttp200(text);
+                    client.OutputHttpGzip200(text);
                 }
 
                 return true;
