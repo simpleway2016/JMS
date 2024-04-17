@@ -206,7 +206,7 @@ namespace JMS.Applications.HttpMiddlewares
                     }
                     return true;
                 }
-                else if (requestPath.StartsWith("/JmsDoc/vue.js", StringComparison.OrdinalIgnoreCase))
+                else if (requestPath.StartsWith("/JmsDoc/vue.pako.js", StringComparison.OrdinalIgnoreCase))
                 {
                     if (headers.ContainsKey("If-Modified-Since"))
                     {
@@ -214,7 +214,7 @@ namespace JMS.Applications.HttpMiddlewares
                         return true;
                     }
 
-                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.js"))
+                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.pako.js"))
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);

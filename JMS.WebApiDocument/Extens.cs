@@ -70,7 +70,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         return context.Response.WriteAsync(ex.ToString());
                     }
                 }
-                else if (context.Request.Path.Value.EndsWith("/JmsDoc/vue.js", StringComparison.OrdinalIgnoreCase))
+                else if (context.Request.Path.Value.EndsWith("/JmsDoc/vue.pako.js", StringComparison.OrdinalIgnoreCase))
                 {
                     if (context.Request.Headers.ContainsKey("If-Modified-Since"))
                     {
@@ -79,7 +79,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     }
                     context.Response.ContentType = "text/javascript; charset=utf-8";
                     context.Response.Headers.Add("Last-Modified", "Fri , 12 May 2006 18:53:33 GMT");
-                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.js"))
+                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.pako.js"))
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);
