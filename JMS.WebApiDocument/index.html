@@ -610,6 +610,7 @@
             var decodedText = textDecoder.decode(new Uint8Array(decodedData.split('').map(c => c.charCodeAt(0))));
 
             var obj = JSON.parse(decodedText);
+            obj.isHide = false;
 
             if (model.controllers.some(m => m.name == obj.name))
                 return;
