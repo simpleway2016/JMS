@@ -1,4 +1,5 @@
 ﻿using JMS.AssemblyDocumentReader;
+using JMS.Common;
 using JMS.Dtos;
 using JMS.WebApiDocument.Dtos;
 using Microsoft.AspNetCore.Http;
@@ -27,7 +28,7 @@ namespace JMS.WebApiDocument
         public static async Task OutputCode(HttpContext context)
         {
             var requestPath = context.Request.Path.Value;
-            var index = requestPath.IndexOf("/JmsDoc/OutputCode/" ,  StringComparison.OrdinalIgnoreCase);
+            var index = requestPath.IndexOf("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase);
             var servicename = requestPath.Substring(index + 19);
 
             var buttonName = context.Request.Query["button"].ToString();
@@ -102,7 +103,7 @@ namespace JMS.WebApiDocument
                     }
                 }
 
-                foreach( var serviceInfo in doneList)
+                foreach (var serviceInfo in doneList)
                 {
                     var service = await client.TryGetMicroServiceAsync(serviceInfo.Name);
                     if (service != null)
@@ -111,7 +112,8 @@ namespace JMS.WebApiDocument
 
                 ConcurrentQueue<string> pendingOutputs = new ConcurrentQueue<string>();
 
-                await Parallel.ForEachAsync(services, async (service, cancelToken) => {
+                await Parallel.ForEachAsync(services, async (service, cancelToken) =>
+                {
                     try
                     {
                         ControllerInfo controllerInfo = null;
@@ -163,12 +165,12 @@ namespace JMS.WebApiDocument
                                 opened = true,
                                 url = $"/JMSRedirect/{HttpUtility.UrlEncode(service.ServiceLocation.Name)}"
                             });
-                           
+
                         }
 
                         if (controllerInfo != null)
                         {
-                            var outputContent = Convert.ToBase64String(Encoding.UTF8.GetBytes(controllerInfo.ToJsonString()));
+                            var outputContent = Convert.ToBase64String(GZipHelper.Compress(Encoding.UTF8.GetBytes(controllerInfo.ToJsonString())));
                             outputContent = $"data: {outputContent}\n\n";
                             if (Interlocked.CompareExchange(ref lockflag, 1, 0) == 0)
                             {

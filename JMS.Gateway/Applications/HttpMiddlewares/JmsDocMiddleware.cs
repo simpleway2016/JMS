@@ -162,7 +162,7 @@ namespace JMS.Applications.HttpMiddlewares
                         {
                             lock (doneList)
                             {
-                                var outputContent = Convert.ToBase64String(Encoding.UTF8.GetBytes(controllerInfo.ToJsonString()));
+                                var outputContent = Convert.ToBase64String(Common.GZipHelper.Compress(Encoding.UTF8.GetBytes(controllerInfo.ToJsonString())));
                                 var data = System.Text.Encoding.UTF8.GetBytes($"data: {outputContent}\n\n");
                                 client.Write(data);
                             }

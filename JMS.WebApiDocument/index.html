@@ -607,7 +607,9 @@
 
             // 创建一个TextDecoder实例来将字节序列转换为字符串
             var textDecoder = new TextDecoder('utf-8');
-            var decodedText = textDecoder.decode(new Uint8Array(decodedData.split('').map(c => c.charCodeAt(0))));
+            var byteArray = new Uint8Array(decodedData.split('').map(c => c.charCodeAt(0)));
+            byteArray = pako.ungzip(byteArray);
+            var decodedText = textDecoder.decode(byteArray);
 
             var obj = JSON.parse(decodedText);
             obj.isHide = false;

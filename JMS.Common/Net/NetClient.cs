@@ -150,15 +150,7 @@ namespace JMS
         {
             if (content != null)
             {
-                using (var memoryStream = new MemoryStream())
-                {
-                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
-                    {
-                        gzipStream.Write(content, 0, content.Length);
-                    }
-
-                    content = memoryStream.ToArray();
-                }
+                content = GZipHelper.Compress(content);
             }
 
             var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nAccess-Control-Allow-Origin: *\r\n{headers}{(headers != null ? "\r\n" : "")}Content-Type: {contentType}; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: keep-alive\r\n\r\n");
