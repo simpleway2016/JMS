@@ -77,6 +77,8 @@ namespace JMS.Applications.HttpMiddlewares
             client.Write(data);
 
             List<ServiceDetail> doneList = new List<ServiceDetail>();
+            List<IMicroService> services = new List<IMicroService>();
+
             using (var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses))
             {
                 ApiDocCodeBuilderInfo[] buttons;
@@ -103,24 +105,28 @@ namespace JMS.Applications.HttpMiddlewares
                     }
                 }
 
-                await Parallel.ForEachAsync(doneList, async (serviceInfo,cancelToken) =>
+                foreach (var serviceInfo in doneList)
+                {
+                    var service = await rc.TryGetMicroServiceAsync(serviceInfo.Name);
+                    if (service != null)
+                        services.Add(service);
+                }
+
+                await Parallel.ForEachAsync(services, async (service, cancelToken) =>
                 {
                     try
                     {
-                        var service = await rc.TryGetMicroServiceAsync(serviceInfo.Name);
-                        if (service == null)
-                            return;
-
+                       
                         ControllerInfo controllerInfo = null;
 
                         if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
                         {
                             var jsonContent = await service.GetServiceInfoAsync();
                             controllerInfo = jsonContent.FromJson<ControllerInfo>();
-                            controllerInfo.isPrivate = !serviceInfo.AllowGatewayProxy;
-                            if (!string.IsNullOrWhiteSpace(serviceInfo.Description))
+                            controllerInfo.isPrivate = !service.ServiceLocation.AllowGatewayProxy;
+                            if (!string.IsNullOrWhiteSpace(service.ServiceLocation.Description))
                             {
-                                controllerInfo.desc = serviceInfo.Description;
+                                controllerInfo.desc = service.ServiceLocation.Description;
                             }
                             controllerInfo.buttons = buttons.Where(m => m.Name != "vue methods").Select(m => new ButtonInfo
                             {
@@ -128,11 +134,11 @@ namespace JMS.Applications.HttpMiddlewares
                             }).ToList();
                             foreach (var btn in controllerInfo.buttons)
                             {
-                                btn.url += $"/JmsDoc/OutputCode/{serviceInfo.Name}?button={HttpUtility.UrlEncode(btn.name)}";
+                                btn.url += $"/JmsDoc/OutputCode/{service.ServiceLocation.Name}?button={HttpUtility.UrlEncode(btn.name)}";
                             }
                             foreach (var method in controllerInfo.items)
                             {
-                                method.url = $"/{HttpUtility.UrlEncode(serviceInfo.Name)}/{method.title}";
+                                method.url = $"/{HttpUtility.UrlEncode(service.ServiceLocation.Name)}/{method.title}";
                             }
                             if (controllerInfo.items.Count == 1)
                                 controllerInfo.items[0].opened = true;
@@ -146,9 +152,9 @@ namespace JMS.Applications.HttpMiddlewares
 
                             controllerInfo = new ControllerInfo()
                             {
-                                name = serviceInfo.Name,
-                                isPrivate = !serviceInfo.AllowGatewayProxy,
-                                desc = string.IsNullOrWhiteSpace(serviceInfo.Description) ? serviceInfo.Name : serviceInfo.Description,
+                                name = service.ServiceLocation.Name,
+                                isPrivate = !service.ServiceLocation.AllowGatewayProxy,
+                                desc = string.IsNullOrWhiteSpace(service.ServiceLocation.Description) ? service.ServiceLocation.Name : service.ServiceLocation.Description,
                             };
                             controllerInfo.items = new List<MethodItemInfo>();
                             controllerInfo.items.Add(new MethodItemInfo
@@ -158,7 +164,7 @@ namespace JMS.Applications.HttpMiddlewares
                                 isComment = true,
                                 isWebSocket = true,
                                 opened = true,
-                                url = $"/{HttpUtility.UrlEncode(serviceInfo.Name)}"
+                                url = $"/{HttpUtility.UrlEncode(service.ServiceLocation.Name)}"
                             });
                         }
 

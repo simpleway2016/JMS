@@ -614,9 +614,7 @@
             if (model.controllers.some(m => m.name == obj.name))
                 return;
 
-            var index = model.controllers.length - 1;
-            if (index < 0)
-                index = 0;
+            var index = model.controllers.length;
 
             for (var i = 0; i < model.controllers.length; i++) {
                 var item = model.controllers[i];
@@ -626,7 +624,7 @@
                     break;
                 }
             }
-            model.controllers.splice(index , 0 , obj);
+            model.controllers.splice(index, 0, obj);
         } catch (e) {
             console.error(e);
         }

@@ -329,7 +329,7 @@ namespace JMS.GatewayConnection
             //优先选择已有的地址
             if (remoteClient._microServices.Count > 0)
             {
-                var existItem = matchServices.FirstOrDefault(x => remoteClient._microServices.Any(m => m.ServiceLocation.IsTheSameServer(x.ServiceAddress, x.Port)));
+                var existItem = matchServices.FirstOrDefault(x => remoteClient._microServices.Any(m => m!= null && m.ServiceLocation.IsTheSameServer(x.ServiceAddress, x.Port)));
                 if (existItem != null)
                 {
                     Interlocked.Increment(ref existItem.PerformanceInfo.RequestQuantity);
@@ -405,7 +405,7 @@ namespace JMS.GatewayConnection
             //优先选择已有的地址
             if (remoteClient._microServices.Count > 0)
             {
-                var existItem = matchServices.FirstOrDefault(x => remoteClient._microServices.Any(m => m.ServiceLocation.IsTheSameServer(x.ServiceAddress, x.Port)));
+                var existItem = matchServices.FirstOrDefault(x => remoteClient._microServices.Any(m => m != null && m.ServiceLocation.IsTheSameServer(x.ServiceAddress, x.Port)));
                 if (existItem != null)
                 {
                     Interlocked.Increment(ref existItem.PerformanceInfo.RequestQuantity);
