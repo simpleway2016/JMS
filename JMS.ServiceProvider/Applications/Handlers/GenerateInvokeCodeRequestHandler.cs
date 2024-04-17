@@ -10,6 +10,7 @@ using Way.Lib;
 using JMS.Infrastructures;
 using JMS.GenerateCode;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace JMS.Applications
 {
@@ -17,9 +18,12 @@ namespace JMS.Applications
     {
         public InvokeType MatchType => InvokeType.GenerateInvokeCode;
         ICodeBuilder _codeBuilder;
-        public GenerateInvokeCodeRequestHandler(ICodeBuilder codeBuilder)
+        private readonly ILogger<GenerateInvokeCodeRequestHandler> _logger;
+
+        public GenerateInvokeCodeRequestHandler(ICodeBuilder codeBuilder,ILogger<GenerateInvokeCodeRequestHandler> logger)
         {
             _codeBuilder = codeBuilder;
+            _logger = logger;
         }
 
         bool? _IsDebug;
@@ -44,6 +48,7 @@ namespace JMS.Applications
                     }
                     catch (Exception ex)
                     {
+                        _logger.LogError(ex, "");
                         _IsDebug = false;
                     }
                   

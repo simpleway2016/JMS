@@ -9,17 +9,21 @@ using Way.Lib;
 using JMS.GenerateCode;
 using System.Threading.Tasks;
 using JMS.Controllers;
+using Microsoft.Extensions.Logging;
 
 namespace JMS.Applications
 {
     class GenerateServiceInfoHandler : IRequestHandler
     {
         ControllerFactory _controllerFactory;
+        private readonly ILogger<GenerateServiceInfoHandler> _logger;
+
         public InvokeType MatchType => InvokeType.GenerateServiceInfo;
 
-        public GenerateServiceInfoHandler(ControllerFactory controllerFactory)
+        public GenerateServiceInfoHandler(ControllerFactory controllerFactory,ILogger<GenerateServiceInfoHandler> logger)
         {
             this._controllerFactory = controllerFactory;
+            _logger = logger;
         }
 
 
@@ -36,6 +40,7 @@ namespace JMS.Applications
             }
             catch(Exception ex)
             {
+                _logger.LogError(ex, "");
                 code = ex.ToString();
                 success = false;
             }
