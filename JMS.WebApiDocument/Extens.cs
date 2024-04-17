@@ -1,4 +1,5 @@
 ﻿using JMS;
+using JMS.Common;
 using JMS.WebApiDocument;
 using JMS.WebApiDocument.Dtos;
 using Microsoft.AspNetCore.Authentication;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
@@ -72,20 +74,28 @@ namespace Microsoft.Extensions.DependencyInjection
                 }
                 else if (context.Request.Path.Value.EndsWith("/JmsDoc/vue.pako.js", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (context.Request.Headers.ContainsKey("If-Modified-Since"))
+                    DateTime dateTime = new DateTime(2023, 5, 12, 18, 53, 33);
+
+                    if (context.Request.Headers.TryGetValue("If-Modified-Since",out StringValues sinceTime) && Convert.ToDateTime(sinceTime.ToString()) == dateTime)
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.NotModified;
                         return context.Response.WriteAsync("");
                     }
+                   
+                    string formattedDateTime = dateTime.ToUniversalTime().ToString("r");
+
                     context.Response.ContentType = "text/javascript; charset=utf-8";
-                    context.Response.Headers.Add("Last-Modified", "Fri , 12 May 2006 18:53:33 GMT");
+                    context.Response.Headers.Add("Last-Modified", formattedDateTime);
+                    context.Response.Headers.Add("Content-Encoding", "gzip");
+
                     using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.pako.js"))
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);
-                        var text = Encoding.UTF8.GetString(bs);
+                        bs = GZipHelper.Compress(bs);
+                        context.Response.ContentLength = bs.Length;
 
-                        return context.Response.WriteAsync(text);
+                        return context.Response.Body.WriteAsync(bs,0,bs.Length);
                     }
                 }
                 return next();

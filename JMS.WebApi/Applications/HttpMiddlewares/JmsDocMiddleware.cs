@@ -57,7 +57,7 @@ namespace JMS.Applications.HttpMiddlewares
                         var code = buttons.FirstOrDefault(m => m.Name == buttonName).Code;
                         var vueMethods = buttons.FirstOrDefault(m => m.Name == "vue methods")?.Code;
                         var text = Encoding.UTF8.GetString(bs).Replace("$$Controller$$", controllerInfo.ToJsonString()).Replace("$$code$$", code).Replace("$$vueMethods$$", vueMethods);
-                        client.OutputHttp200(text);
+                        client.OutputHttpGzip200(text);
                     }
                 }
             }
@@ -220,18 +220,21 @@ namespace JMS.Applications.HttpMiddlewares
                 }
                 else if (requestPath.StartsWith("/JmsDoc/vue.pako.js", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (headers.ContainsKey("If-Modified-Since"))
+                    DateTime dateTime = new DateTime(2023, 5, 12, 18, 53, 33);
+                    if (headers.ContainsKey("If-Modified-Since") && Convert.ToDateTime(headers["If-Modified-Since"]) == dateTime)
                     {
                         client.OutputHttpCode(304, "NotModified");
                         return true;
                     }
+
+                    string formattedDateTime = dateTime.ToUniversalTime().ToString("r");
 
                     using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.pako.js"))
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);
 
-                        client.OutputHttpGzip200(bs, "text/javascript", "Last-Modified: Fri , 12 May 2006 18:53:33 GMT");
+                        client.OutputHttpGzip200(bs, "text/javascript", $"Last-Modified: {formattedDateTime}");
                     }
                     return true;
                 }

@@ -60,9 +60,13 @@ namespace JMS.WebApiDocument
                         var vueMethods = buttons.FirstOrDefault(m => m.Name == "vue methods")?.Code;
                         var text = Encoding.UTF8.GetString(bs).Replace("$$Controller$$", controllerInfo.ToJsonString()).Replace("$$code$$", code).Replace("$$vueMethods$$", vueMethods);
 
+                        bs = GZipHelper.Compress( Encoding.UTF8.GetBytes(text));
 
                         context.Response.ContentType = "text/html; charset=utf-8";
-                        await context.Response.WriteAsync(text);
+                        context.Response.Headers.Add("Content-Encoding", "gzip");
+                        context.Response.ContentLength = bs.Length;
+
+                        await context.Response.Body.WriteAsync(bs,0, bs.Length);
                     }
                 }
             }
@@ -210,13 +214,17 @@ namespace JMS.WebApiDocument
 
         public static async Task Build(HttpContext context, List<Type> controllerTypes)
         {
+            context.Response.Headers.Add("Content-Encoding", "gzip");
+
             using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.index.html"))
             {
                 context.Response.ContentType = "text/html; charset=utf-8";
                 var bs = new byte[ms.Length];
                 ms.Read(bs, 0, bs.Length);
-                var text = Encoding.UTF8.GetString(bs);
-                await context.Response.WriteAsync(text);
+                bs = GZipHelper.Compress(bs);
+                context.Response.ContentLength = bs.Length;
+
+                 await context.Response.Body.WriteAsync(bs,0,bs.Length);
             }
         }
 
