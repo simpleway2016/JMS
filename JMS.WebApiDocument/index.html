@@ -588,11 +588,49 @@
 <script>
     var model = {
         selectedControllerIndex: 0,
-        controllers: $$Controllers$$,
+        controllers: [],
     };
     modelInit();
 
-    var typeArr = $$Types$$;
+    var typeArr = [];
+
+    var source = new EventSource('JmsDocSse');
+    source.onmessage = function (event) {
+        if (event.data == "ok") {
+            console.info("传输完毕");
+            source.close();
+            return;
+        }
+        try {
+            // 使用atob()函数解码Base64字符串
+            var decodedData = atob(event.data);
+
+            // 创建一个TextDecoder实例来将字节序列转换为字符串
+            var textDecoder = new TextDecoder('utf-8');
+            var decodedText = textDecoder.decode(new Uint8Array(decodedData.split('').map(c => c.charCodeAt(0))));
+
+            var obj = JSON.parse(decodedText);
+
+            if (model.controllers.some(m => m.name == obj.name))
+                return;
+
+            var index = model.controllers.length - 1;
+            if (index < 0)
+                index = 0;
+
+            for (var i = 0; i < model.controllers.length; i++) {
+                var item = model.controllers[i];
+                var ret = obj.desc.localeCompare(item.desc);
+                if (ret < 0) {
+                    index = i;
+                    break;
+                }
+            }
+            model.controllers.splice(index , 0 , obj);
+        } catch (e) {
+            console.error(e);
+        }
+    };
 </script>
 <script>
     var demoDivHtml = document.body.querySelector("#classDivDemo").innerHTML;

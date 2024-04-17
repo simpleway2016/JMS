@@ -45,6 +45,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     return HtmlBuilder.OutputCode(context);
                 }
+                else if (context.Request.Path.Value.EndsWith("/JmsDocSse", StringComparison.OrdinalIgnoreCase))
+                {
+                    return HtmlBuilder.OutputSse(context);
+                }
                 else if (context.Request.Path.Value.EndsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
                 {
                     try

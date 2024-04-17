@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
@@ -65,184 +67,153 @@ namespace JMS.WebApiDocument
             }
 
         }
-        public static async Task Build(HttpContext context, List<Type> controllerTypes)
+
+        public static async Task OutputSse(HttpContext context)
         {
-            List<ControllerInfo> controllerInfos = new List<ControllerInfo>();
-            List<DataTypeInfo> dataTypeInfos = new List<DataTypeInfo>();
-            foreach (var controllerType in controllerTypes)
-            {
-                Build(context, dataTypeInfos, controllerInfos, controllerType);
-            }
+            var response = context.Response;
+            response.Headers["Content-Type"] = "text/event-stream";
+            response.Headers["Cache-Control"] = "no-cache";
+            response.Headers["Connection"] = "keep-alive";
 
-            if (ServiceRedirects.Configs != null)
+            int lockflag = 0;
+            List<ServiceDetail> doneList = new List<ServiceDetail>();
+            List<IMicroService> services = new List<IMicroService>();
+            using (var client = ServiceRedirects.ClientProviderFunc())
             {
-                foreach (var config in ServiceRedirects.Configs)
+                ApiDocCodeBuilderInfo[] buttons;
+                try
                 {
-                    using (var client = ServiceRedirects.ClientProviderFunc())
+                    buttons = await client.GetApiDocumentButtons<ApiDocCodeBuilderInfo>();
+                }
+                catch
+                {
+                    buttons = new ApiDocCodeBuilderInfo[0];
+                }
+                var allServices = await client.ListMicroServiceAsync(null);
+
+                foreach (var serviceRunningInfo in allServices)
+                {
+                    foreach (var serviceInfo in serviceRunningInfo.ServiceList)
                     {
-                        var service = await client.TryGetMicroServiceAsync(config.ServiceName);
-                        if (service != null)
-                        {
-                            try
-                            {
-                                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
-                                {
-                                    var jsonContent = service.GetServiceInfo();
-                                    var controllerInfo = jsonContent.FromJson<ControllerInfo>();
-                                    controllerInfo.desc = config.Description;
-                                    foreach (var method in controllerInfo.items)
-                                    {
-                                        method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}/{method.title}";
-                                    }
-                                    if (controllerInfo.items.Count == 1)
-                                        controllerInfo.items[0].opened = true;
+                        if (doneList.Any(m => m.Name == serviceInfo.Name))
+                            continue;
 
-                                    controllerInfo.buttons = config.Buttons?.Select(m => new ButtonInfo
-                                    {
-                                        name = m.Name,
-                                        url = m.Url
-                                    }).ToList();
-                                    controllerInfos.Add(controllerInfo);
-                                }
-                                else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
-                                {
-                                    var jsonContent = service.GetServiceInfo();
-                                    var serviceinfo = jsonContent.FromJson<ControllerInfo>();
-
-                                    var controllerInfo = new ControllerInfo()
-                                    {
-                                        name = config.ServiceName,
-                                        desc = config.Description,
-                                    };
-                                    controllerInfo.items = new List<MethodItemInfo>();
-                                    controllerInfo.items.Add(new MethodItemInfo
-                                    {
-                                        title = "WebSocket接口",
-                                        method = serviceinfo.desc,
-                                        isComment = true,
-                                        isWebSocket = true,
-                                        opened = true,
-                                        url = $"/JMSRedirect/{HttpUtility.UrlEncode(config.ServiceName)}"
-                                    });
-                                    controllerInfos.Add(controllerInfo);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogError(ex, "");
-                            }
-                        }
-                        else
-                        {
-                            context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogInformation($"没有在网关中获取到微服务:{config.ServiceName}");
-                        }
+                        doneList.Add(serviceInfo);
                     }
                 }
-            }
-            else
-            {
-                List<ServiceDetail> doneList = new List<ServiceDetail>();
-                using (var client = ServiceRedirects.ClientProviderFunc())
+
+                foreach( var serviceInfo in doneList)
                 {
-                    ApiDocCodeBuilderInfo[] buttons;
+                    var service = await client.TryGetMicroServiceAsync(serviceInfo.Name);
+                    if (service != null)
+                        services.Add(service);
+                }
+
+                ConcurrentQueue<string> pendingOutputs = new ConcurrentQueue<string>();
+
+                await Parallel.ForEachAsync(services, async (service, cancelToken) => {
                     try
                     {
-                        buttons = await client.GetApiDocumentButtons<ApiDocCodeBuilderInfo>();
-                    }
-                    catch
-                    {
-                        buttons = new ApiDocCodeBuilderInfo[0];
-                    }
-                    var allServices = await client.ListMicroServiceAsync(null);
+                        ControllerInfo controllerInfo = null;
 
-                    foreach( var serviceRunningInfo in allServices)
-                    {
-                        foreach( var serviceInfo in serviceRunningInfo.ServiceList)
+                        if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
                         {
-                            if (serviceInfo.AllowGatewayProxy == false || doneList.Any( m=>m.Name == serviceInfo.Name))
-                                continue;
-
-                            doneList.Add(serviceInfo);
-                        }
-                    }
-
-                    Parallel.ForEach(doneList, serviceInfo => {
-                        try
-                        {
-                            var service = client.TryGetMicroService(serviceInfo.Name);
-                            if (service == null)
-                                return;
-
-                            if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
+                            var jsonContent = await service.GetServiceInfoAsync();
+                            controllerInfo = jsonContent.FromJson<ControllerInfo>();
+                            controllerInfo.isPrivate = !service.ServiceLocation.AllowGatewayProxy;
+                            if (!string.IsNullOrWhiteSpace(service.ServiceLocation.Description))
                             {
-                                var jsonContent = service.GetServiceInfo();
-                                var controllerInfo = jsonContent.FromJson<ControllerInfo>();
-                                if (!string.IsNullOrWhiteSpace(serviceInfo.Description))
-                                {
-                                    controllerInfo.desc = serviceInfo.Description;
-                                }
-
-                                controllerInfo.buttons = buttons.Where(m => m.Name != "vue methods").Select(m => new ButtonInfo
-                                {
-                                    name = m.Name
-                                }).ToList();
-                                foreach (var btn in controllerInfo.buttons)
-                                {
-                                    btn.url += $"JmsDoc/OutputCode/{serviceInfo.Name}?button={HttpUtility.UrlEncode(btn.name)}";
-                                }
-
-                                foreach (var method in controllerInfo.items)
-                                {
-                                    method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}/{method.title}";
-                                }
-                                if (controllerInfo.items.Count == 1)
-                                    controllerInfo.items[0].opened = true;
-
-                                lock (controllerInfos)
-                                {
-                                    controllerInfos.Add(controllerInfo);
-                                }
+                                controllerInfo.desc = service.ServiceLocation.Description;
                             }
-                            else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
-                            {
-                                var jsonContent = service.GetServiceInfo();
-                                var cInfo = jsonContent.FromJson<ControllerInfo>();
 
-                                var controllerInfo = new ControllerInfo()
+                            controllerInfo.buttons = buttons.Where(m => m.Name != "vue methods").Select(m => new ButtonInfo
+                            {
+                                name = m.Name
+                            }).ToList();
+                            foreach (var btn in controllerInfo.buttons)
+                            {
+                                btn.url += $"JmsDoc/OutputCode/{service.ServiceLocation.Name}?button={HttpUtility.UrlEncode(btn.name)}";
+                            }
+
+                            foreach (var method in controllerInfo.items)
+                            {
+                                method.url = $"/JMSRedirect/{HttpUtility.UrlEncode(service.ServiceLocation.Name)}/{method.title}";
+                            }
+                            if (controllerInfo.items.Count == 1)
+                                controllerInfo.items[0].opened = true;
+
+                        }
+                        else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
+                        {
+                            var jsonContent = await service.GetServiceInfoAsync();
+                            var cInfo = jsonContent.FromJson<ControllerInfo>();
+
+                            controllerInfo = new ControllerInfo()
+                            {
+                                name = service.ServiceLocation.Name,
+                                desc = string.IsNullOrWhiteSpace(service.ServiceLocation.Description) ? service.ServiceLocation.Name : service.ServiceLocation.Description,
+                            };
+                            controllerInfo.items = new List<MethodItemInfo>();
+                            controllerInfo.items.Add(new MethodItemInfo
+                            {
+                                title = "WebSocket接口",
+                                method = cInfo.desc,
+                                isComment = true,
+                                isWebSocket = true,
+                                opened = true,
+                                url = $"/JMSRedirect/{HttpUtility.UrlEncode(service.ServiceLocation.Name)}"
+                            });
+                           
+                        }
+
+                        if (controllerInfo != null)
+                        {
+                            var outputContent = Convert.ToBase64String(Encoding.UTF8.GetBytes(controllerInfo.ToJsonString()));
+                            outputContent = $"data: {outputContent}\n\n";
+                            if (Interlocked.CompareExchange(ref lockflag, 1, 0) == 0)
+                            {
+                                await context.Response.WriteAsync(outputContent);
+                                if (pendingOutputs.Count > 0)
                                 {
-                                    name = serviceInfo.Name,
-                                    desc = string.IsNullOrWhiteSpace(serviceInfo.Description) ? serviceInfo.Name : serviceInfo.Description,
-                                };
-                                controllerInfo.items = new List<MethodItemInfo>();
-                                controllerInfo.items.Add(new MethodItemInfo
-                                {
-                                    title = "WebSocket接口",
-                                    method = cInfo.desc,
-                                    isComment = true,
-                                    isWebSocket = true,
-                                    opened = true,
-                                    url = $"/JMSRedirect/{HttpUtility.UrlEncode(serviceInfo.Name)}"
-                                });
-                                lock (controllerInfos)
-                                {
-                                    controllerInfos.Add(controllerInfo);
+                                    while (pendingOutputs.TryDequeue(out outputContent))
+                                    {
+                                        await context.Response.WriteAsync(outputContent);
+                                    }
                                 }
+                                lockflag = 0;
+                            }
+                            else
+                            {
+                                pendingOutputs.Enqueue(outputContent);
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogError(ex, "");
-                        }
-                    });
+                    }
+                    catch (Exception ex)
+                    {
+                        context.RequestServices.GetService<ILogger<JMS.WebApiDocument.HtmlBuilder>>()?.LogError(ex, "");
+                    }
+                });
+
+                if (pendingOutputs.Count > 0)
+                {
+                    while (pendingOutputs.TryDequeue(out string outputContent))
+                    {
+                        await context.Response.WriteAsync(outputContent);
+                    }
                 }
-            }
 
+                await context.Response.WriteAsync($"data: ok\n\n");
+            }
+        }
+
+        public static async Task Build(HttpContext context, List<Type> controllerTypes)
+        {
             using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.index.html"))
             {
                 context.Response.ContentType = "text/html; charset=utf-8";
                 var bs = new byte[ms.Length];
                 ms.Read(bs, 0, bs.Length);
-                var text = Encoding.UTF8.GetString(bs).Replace("$$Controllers$$", controllerInfos.OrderBy(m => m.desc).ToJsonString()).Replace("$$Types$$", dataTypeInfos.ToJsonString());
+                var text = Encoding.UTF8.GetString(bs);
                 await context.Response.WriteAsync(text);
             }
         }
