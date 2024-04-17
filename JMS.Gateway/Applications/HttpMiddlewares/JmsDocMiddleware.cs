@@ -60,7 +60,7 @@ namespace JMS.Applications.HttpMiddlewares
                         var code = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m => m.Name == buttonName).Code;
                         var vueMethods = _documentButtonProvider.ApiDocCodeBuilders.FirstOrDefault(m => m.Name == "vue methods")?.Code;
                         var text = Encoding.UTF8.GetString(bs).Replace("$$Controller$$", controllerInfo.ToJsonString()).Replace("$$code$$", code).Replace("$$vueMethods$$", vueMethods);
-                        client.OutputHttp200(text);
+                        client.OutputHttpGzip200(text);
                     }
                 }
             }
