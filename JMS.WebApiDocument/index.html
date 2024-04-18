@@ -296,6 +296,74 @@
             display: inline;
         }
     </style>
+    <style>
+        .itemContainer{
+            overflow:scroll;
+        }
+        .leftmenu::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0); /* 设置滚动滑块的背景颜色 */
+            border-radius: 999px;
+        }
+        .leftmenu::-webkit-scrollbar-track {
+            background: #f9fbfc;
+        }
+
+        .leftmenu:hover::-webkit-scrollbar-thumb {
+            background: #aaa;
+        }
+        .leftmenu::-webkit-scrollbar-thumb:hover {
+            background: #888; 
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px; 
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #aaa;
+            border-radius: 999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #888; 
+        }
+        
+
+       /* .leftmenu {
+            scrollbar-color: rgba(0,0,0,0) rgba(0,0,0,0);
+        }
+
+            .leftmenu:hover {
+                scrollbar-color: rgba(90,97,108, 0.2) rgba(0,0,0,0);
+            }*/
+
+        /* 整个滚动条 */
+        /*::-webkit-scrollbar {
+            width: 12px;*/ /* 设置滚动条的宽度 */
+           
+        /*}*/
+
+        /* 滚动轨迹 */
+        /*::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0);*/ /* 设置滚动轨迹的背景颜色 */
+        /*}*/
+
+        /* 滚动滑块 */
+        /*::-webkit-scrollbar-thumb {
+            background: rgba(90,97,108, 0.2);*/ /* 设置滚动滑块的背景颜色 */
+            /*border-radius: 12px;
+        }*/
+
+            /* 滑块悬停状态 */
+            /*::-webkit-scrollbar-thumb:hover {
+                background: rgba(90,97,108, 0.4);*/ /* 设置滚动滑块在悬停状态的背景颜色 */
+            /*}*/
+
+    </style>
 </head>
 
 <body>
