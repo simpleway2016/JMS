@@ -10,14 +10,14 @@
 
   <ItemGroup>
     <None Remove="index.html" />
+    <None Remove="jmsdoc.vue.pako.js" />
     <None Remove="outputCode.html" />
-    <None Remove="vue.pako.js" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="outputCode.html" />
     <EmbeddedResource Include="index.html" />
-    <EmbeddedResource Include="vue.pako.js" />
+    <EmbeddedResource Include="jmsdoc.vue.pako.js" />
   </ItemGroup>
 
   <ItemGroup>

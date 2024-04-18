@@ -72,7 +72,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         return context.Response.WriteAsync(ex.ToString());
                     }
                 }
-                else if (context.Request.Path.Value.EndsWith("/JmsDoc/vue.pako.js", StringComparison.OrdinalIgnoreCase))
+                else if (context.Request.Path.Value.EndsWith("/jmsdoc.vue.pako.js", StringComparison.OrdinalIgnoreCase))
                 {
                     DateTime dateTime = new DateTime(2023, 5, 12, 18, 53, 33);
 
@@ -88,7 +88,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     context.Response.Headers.Add("Last-Modified", formattedDateTime);
                     context.Response.Headers.Add("Content-Encoding", "gzip");
 
-                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.pako.js"))
+                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.jmsdoc.vue.pako.js"))
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);

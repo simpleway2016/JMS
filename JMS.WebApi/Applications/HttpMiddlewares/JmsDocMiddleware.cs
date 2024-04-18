@@ -218,7 +218,7 @@ namespace JMS.Applications.HttpMiddlewares
                     }
                     return true;
                 }
-                else if (requestPath.StartsWith("/JmsDoc/vue.pako.js", StringComparison.OrdinalIgnoreCase))
+                else if (requestPath.StartsWith("/jmsdoc.vue.pako.js", StringComparison.OrdinalIgnoreCase))
                 {
                     DateTime dateTime = new DateTime(2023, 5, 12, 18, 53, 33);
                     if (headers.ContainsKey("If-Modified-Since") && Convert.ToDateTime(headers["If-Modified-Since"]) == dateTime)
@@ -229,7 +229,7 @@ namespace JMS.Applications.HttpMiddlewares
 
                     string formattedDateTime = dateTime.ToUniversalTime().ToString("r");
 
-                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.vue.pako.js"))
+                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.jmsdoc.vue.pako.js"))
                     {
                         var bs = new byte[ms.Length];
                         ms.Read(bs, 0, bs.Length);
