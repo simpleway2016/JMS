@@ -144,7 +144,7 @@
         .main {
             width: 100%;
             height: 100%;
-            background-color: #f9fbfc;
+            background-color: #fff;
         }
 
         .itemContainer {
@@ -162,9 +162,13 @@
             font-weight: 600;
             font-size: 16px;
             padding: 8px 0;
-            border-bottom: 1px solid #9d9ea6;
+            border-bottom: 1px solid #aaa;
             cursor: pointer;
         }
+
+            .title[actived='1'] {
+               
+            }
 
         .subitem {
             padding-bottom: 48px;
@@ -244,12 +248,15 @@
             height: 48px;
             line-height: 48px;
             padding: 0 48px 0 16px;
-            border-bottom: 1px solid #a3adb8;
+            border-radius: 8px;
+            margin: 0 10px;
         }
 
         .actived {
             color: #4c94d1;
             background: #f9fbfc;
+            border-radius: 8px;
+            margin: 0 10px;
         }
 
         .lefttitle svg {
@@ -258,8 +265,8 @@
         }
 
         button {
-            background-color: #209aed;
-            border-radius: 3px;
+            background-color: #409eff;
+            border-radius: 4px;
             padding: 6px 9px;
             border: 0;
             color: #fff;
@@ -280,12 +287,16 @@
 
             .search input {
                 width: 80%;
-                border-radius: 3px;
+                border-radius: 5px;
                 border: 0;
                 background-color: #f2f7fd;
                 height: 30px;
                 padding-left: 30px;
             }
+
+                .search input:focus {
+                    outline: none; /* 移除默认的聚焦轮廓线 */
+                }
 
         .titleGroup {
             background-color: #eee;
@@ -297,13 +308,16 @@
         }
     </style>
     <style>
-        .itemContainer{
-            overflow:scroll;
+        .itemContainer {
+            overflow: scroll;
+            background: #f9fbfc;
         }
+
         .leftmenu::-webkit-scrollbar-thumb {
             background: rgba(0,0,0,0); /* 设置滚动滑块的背景颜色 */
             border-radius: 999px;
         }
+
         .leftmenu::-webkit-scrollbar-track {
             background: #f9fbfc;
         }
@@ -311,12 +325,13 @@
         .leftmenu:hover::-webkit-scrollbar-thumb {
             background: #aaa;
         }
+
         .leftmenu::-webkit-scrollbar-thumb:hover {
-            background: #888; 
+            background: #888;
         }
 
         ::-webkit-scrollbar {
-            width: 8px; 
+            width: 8px;
         }
 
         ::-webkit-scrollbar-track {
@@ -328,41 +343,9 @@
             border-radius: 999px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #888; 
-        }
-        
-
-       /* .leftmenu {
-            scrollbar-color: rgba(0,0,0,0) rgba(0,0,0,0);
-        }
-
-            .leftmenu:hover {
-                scrollbar-color: rgba(90,97,108, 0.2) rgba(0,0,0,0);
-            }*/
-
-        /* 整个滚动条 */
-        /*::-webkit-scrollbar {
-            width: 12px;*/ /* 设置滚动条的宽度 */
-           
-        /*}*/
-
-        /* 滚动轨迹 */
-        /*::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0);*/ /* 设置滚动轨迹的背景颜色 */
-        /*}*/
-
-        /* 滚动滑块 */
-        /*::-webkit-scrollbar-thumb {
-            background: rgba(90,97,108, 0.2);*/ /* 设置滚动滑块的背景颜色 */
-            /*border-radius: 12px;
-        }*/
-
-            /* 滑块悬停状态 */
-            /*::-webkit-scrollbar-thumb:hover {
-                background: rgba(90,97,108, 0.4);*/ /* 设置滚动滑块在悬停状态的背景颜色 */
-            /*}*/
-
+            ::-webkit-scrollbar-thumb:hover {
+                background: #888;
+            }
     </style>
 </head>
 
@@ -384,9 +367,7 @@
             <div class="lefttitle display-flex flex-direction-row align-items-center" v-if="!controller.isHide" :class="{actived:index==selectedControllerIndex}" @click="selectedControllerIndex=index" v-for="controller,index in controllers">
                 <div v-if="controller.isPrivate" style="opacity:0.39;">{{controller.desc}}</div>
                 <div v-else>{{controller.desc}}</div>
-                <svg viewBox="0 0 100 100" style="width:0.5rem;height:0.5rem;">
-                    <path d="M0 0 L80 50 L0 100" stroke="#5a616c" fill="none" stroke-width="10"></path>
-                </svg>
+
             </div>
         </div>
         <div class="flex-1 itemContainer" v-if="controllers.length">
@@ -400,7 +381,7 @@
                     </div>
                 </template>
 
-                <div class="title" @click="openClick(item)">{{item.title}} {{getFirstLine(item.desc)}}</div>
+                <div class="title" :actived="item.opened?'1':''" @click="openClick(item)">{{item.title}} {{getFirstLine(item.desc)}}</div>
                 <div class="subitem" v-show="item.opened">
                     <div class="subcon" v-html="lineBreak(item.desc)"></div>
                     <div class="subtitle" v-if="item.isWebSocket">请求路径url</div>
