@@ -43,59 +43,62 @@ namespace Microsoft.Extensions.DependencyInjection
 
             app.Use((context, next) =>
             {
-                if (context.Request.Path.Value.Contains("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase))
+                if (context.Request.Path.Value.Contains("/JmsDoc", StringComparison.OrdinalIgnoreCase))
                 {
-                    return HtmlBuilder.OutputCode(context);
-                }
-                else if (context.Request.Path.Value.EndsWith("/JmsDocSse", StringComparison.OrdinalIgnoreCase))
-                {
-                    return HtmlBuilder.OutputSse(context);
-                }
-                else if (context.Request.Path.Value.EndsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
-                {
-                    try
+                    if (context.Request.Path.Value.Contains("/jmsdoc.vue.pako.js", StringComparison.OrdinalIgnoreCase))
                     {
-                        var manager = app.ApplicationServices.GetService<ApplicationPartManager>();
-                        List<Type> controllerTypes = new List<Type>();
-                        foreach (var part in manager.ApplicationParts)
+                        DateTime dateTime = new DateTime(2023, 5, 12, 18, 53, 33);
+
+                        if (context.Request.Headers.TryGetValue("If-Modified-Since", out StringValues sinceTime) && Convert.ToDateTime(sinceTime.ToString()) == dateTime)
                         {
-                            if (part is AssemblyPart assemblyPart)
-                            {
-                                controllerTypes.AddRange(assemblyPart.Types.Where(m => m.GetCustomAttribute<WebApiDocAttribute>() != null).ToArray());
-                            }
+                            context.Response.StatusCode = (int)HttpStatusCode.NotModified;
+                            return context.Response.WriteAsync("");
                         }
-                         
-                        return HtmlBuilder.Build(context, controllerTypes);
+
+                        string formattedDateTime = dateTime.ToUniversalTime().ToString("r");
+
+                        context.Response.ContentType = "text/javascript; charset=utf-8";
+                        context.Response.Headers.Add("Last-Modified", formattedDateTime);
+                        context.Response.Headers.Add("Content-Encoding", "gzip");
+
+                        using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.jmsdoc.vue.pako.js"))
+                        {
+                            var bs = new byte[ms.Length];
+                            ms.Read(bs, 0, bs.Length);
+                            bs = GZipHelper.Compress(bs);
+                            context.Response.ContentLength = bs.Length;
+
+                            return context.Response.Body.WriteAsync(bs, 0, bs.Length);
+                        }
                     }
-                    catch (Exception ex)
+                    else if (context.Request.Path.Value.Contains("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase))
                     {
-                        return context.Response.WriteAsync(ex.ToString());
+                        return HtmlBuilder.OutputCode(context);
                     }
-                }
-                else if (context.Request.Path.Value.Contains("/jmsdoc.vue.pako.js", StringComparison.OrdinalIgnoreCase))
-                {
-                    DateTime dateTime = new DateTime(2023, 5, 12, 18, 53, 33);
-
-                    if (context.Request.Headers.TryGetValue("If-Modified-Since",out StringValues sinceTime) && Convert.ToDateTime(sinceTime.ToString()) == dateTime)
+                    else if (context.Request.Path.Value.EndsWith("/JmsDocSse", StringComparison.OrdinalIgnoreCase))
                     {
-                        context.Response.StatusCode = (int)HttpStatusCode.NotModified;
-                        return context.Response.WriteAsync("");
+                        return HtmlBuilder.OutputSse(context);
                     }
-                   
-                    string formattedDateTime = dateTime.ToUniversalTime().ToString("r");
-
-                    context.Response.ContentType = "text/javascript; charset=utf-8";
-                    context.Response.Headers.Add("Last-Modified", formattedDateTime);
-                    context.Response.Headers.Add("Content-Encoding", "gzip");
-
-                    using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.jmsdoc.vue.pako.js"))
+                    else if (context.Request.Path.Value.EndsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
                     {
-                        var bs = new byte[ms.Length];
-                        ms.Read(bs, 0, bs.Length);
-                        bs = GZipHelper.Compress(bs);
-                        context.Response.ContentLength = bs.Length;
+                        try
+                        {
+                            var manager = app.ApplicationServices.GetService<ApplicationPartManager>();
+                            List<Type> controllerTypes = new List<Type>();
+                            foreach (var part in manager.ApplicationParts)
+                            {
+                                if (part is AssemblyPart assemblyPart)
+                                {
+                                    controllerTypes.AddRange(assemblyPart.Types.Where(m => m.GetCustomAttribute<WebApiDocAttribute>() != null).ToArray());
+                                }
+                            }
 
-                        return context.Response.Body.WriteAsync(bs,0,bs.Length);
+                            return HtmlBuilder.Build(context, controllerTypes);
+                        }
+                        catch (Exception ex)
+                        {
+                            return context.Response.WriteAsync(ex.ToString());
+                        }
                     }
                 }
                 return next();
