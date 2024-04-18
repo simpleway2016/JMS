@@ -72,7 +72,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         return context.Response.WriteAsync(ex.ToString());
                     }
                 }
-                else if (context.Request.Path.Value.EndsWith("/jmsdoc.vue.pako.js", StringComparison.OrdinalIgnoreCase))
+                else if (context.Request.Path.Value.Contains("/jmsdoc.vue.pako.js", StringComparison.OrdinalIgnoreCase))
                 {
                     DateTime dateTime = new DateTime(2023, 5, 12, 18, 53, 33);
 
