@@ -342,7 +342,7 @@
 
                     <template v-if="controllers[selectedControllerIndex].isPrivate">
                         <div class="subtitle" v-if="!item.isComment">服务名称：{{controllers[selectedControllerIndex].name}}</div>
-                        <div class="subcon" v-if="!item.isComment" @click="selectDiv" style="cursor:pointer;">方法名称：{{item.title}}</div>
+                        <div class="subcon" v-if="!item.isComment">方法名称：{{item.title}}</div>
 
                         <div v-if="!item.isComment && item.data && item.data.type=='Array' && item.data.items.length">
                             <div class="subtitle">参数说明</div>
