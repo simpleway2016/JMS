@@ -206,19 +206,7 @@ namespace JMS.Applications.HttpMiddlewares
                     return true;
                 }
 
-                if (requestPath.StartsWith("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase))
-                {
-                    try
-                    {
-                        outputCode(client, httpMethod, requestPath, headers);
-                    }
-                    catch (Exception ex)
-                    {
-                        client.OutputHttp200(ex.ToString());
-                    }
-                    return true;
-                }
-                else if (requestPath.Contains("/jmsdoc.vue.pako.js", StringComparison.OrdinalIgnoreCase))
+                if (requestPath.Contains("/jmsdoc.vue.pako.js", StringComparison.OrdinalIgnoreCase))
                 {
                     DateTime dateTime = new DateTime(2023, 5, 12, 18, 53, 33);
                     if (headers.ContainsKey("If-Modified-Since") && Convert.ToDateTime(headers["If-Modified-Since"]) == dateTime)
@@ -238,6 +226,19 @@ namespace JMS.Applications.HttpMiddlewares
                     }
                     return true;
                 }
+                else if (requestPath.StartsWith("/JmsDoc/OutputCode/", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        outputCode(client, httpMethod, requestPath, headers);
+                    }
+                    catch (Exception ex)
+                    {
+                        client.OutputHttp200(ex.ToString());
+                    }
+                    return true;
+                }
+                
 
 
                 using (var ms = typeof(HtmlBuilder).Assembly.GetManifestResourceStream("JMS.WebApiDocument.index.html"))
