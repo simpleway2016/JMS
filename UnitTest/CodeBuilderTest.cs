@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using JMS.Controllers.ComponentModel;
 
 namespace UnitTest
 {
@@ -151,6 +152,7 @@ namespace UnitTest
         [TestMethod]
         public void Test()
         {
+
             MicroServiceHost host = new MicroServiceHost(new ServiceCollection());
 
             host.Register<TestController>("testService");

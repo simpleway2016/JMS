@@ -9,6 +9,9 @@ using System.Collections.Specialized;
 using System.Net;
 using System.Linq;
 using System.IO;
+using System.ComponentModel.DataAnnotations;
+using JMS.Controllers;
+using Way.Lib;
 
 namespace JMS
 {
@@ -107,6 +110,37 @@ namespace JMS
             }
 
             return remoteIpAddr;
+        }
+
+        /// <summary>
+        /// 对模型进行数据验证
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public virtual ModelValidationResult ValidateModel( string methodName,string parameterName, object model)
+        {
+            // 创建ValidationContext
+            ValidationContext context = new ValidationContext(model, this.ServiceProvider, null);
+            var results = new System.Collections.Generic.List<ValidationResult>();
+
+            // 调用Validator来验证模型
+            bool isValid = Validator.TryValidateObject(model, context, results, true);
+
+            if (!isValid && results.Count > 0)
+            {
+                return new ModelValidationResult { 
+                    Success = false,
+                    Error = new
+                    {
+                        Message = results[0].ErrorMessage,
+                        Names = results[0].MemberNames
+                    }.ToJsonString()
+                };
+            }
+            else
+            {
+                return new ModelValidationResult { Success = true};
+            }
         }
     }
 

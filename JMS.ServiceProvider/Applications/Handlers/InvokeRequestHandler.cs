@@ -125,14 +125,14 @@ namespace JMS.Applications
                         }
                     }
 
-                    var parameterInfos = methodInfo.Method.GetParameters();
+                    var parameterInfos = methodInfo.Parameters;
                     object result = null;
 
                     int startPIndex = 0;
                     if (parameterInfos.Length > 0)
                     {
                         parameters = new object[parameterInfos.Length];
-                        if (parameterInfos[0].ParameterType == typeof(TransactionDelegate))
+                        if (parameterInfos[0].IsTransactionDelegate)
                         {
                             startPIndex = 1;
                             parameters[0] = transactionDelegate = new TransactionDelegate(controller);
@@ -151,13 +151,27 @@ namespace JMS.Applications
                             if (pvalue == null)
                                 continue;
 
+                            var pinfo = parameterInfos[i];
                             try
                             {
-                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
+                                var pValue = parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, pinfo.ParameterInfo.ParameterType);
+                                if( _MicroServiceProvider.SuppressModelStateInvalidFilter == false && pValue != null && pinfo.IsRequiredValidation)
+                                {
+                                    var validationResult = controller.ValidateModel(methodInfo.Method.Name , pinfo.ParameterInfo.Name,  pValue);
+                                    if(validationResult.Success == false)
+                                    {
+                                        netclient.WriteServiceData(new InvokeResult
+                                        {
+                                            Success = false,
+                                            Error = validationResult.Error
+                                        });
+                                        return;
+                                    }
+                                }
                             }
                             catch (Exception ex)
                             {
-                                var msg = $"转换参数出错，name:{parameterInfos[i].Name} value:{pvalue} err:{ex.Message}";
+                                var msg = $"转换参数出错，name:{parameterInfos[i].ParameterInfo.Name} value:{pvalue} err:{ex.Message}";
                                 netclient.WriteServiceData(new InvokeResult
                                 {
                                     Success = false,

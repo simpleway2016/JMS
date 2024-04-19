@@ -40,5 +40,14 @@ namespace JMS
             get;
             set;
         }
+
+        /// <summary>
+        /// 是否禁用模型验证
+        /// </summary>
+        bool SuppressModelStateInvalidFilter
+        {
+            get;
+            set;
+        }
     }
 }

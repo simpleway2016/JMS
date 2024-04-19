@@ -11,13 +11,15 @@ using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 using System.Collections.Specialized;
+using System.Linq;
+using System.ComponentModel.DataAnnotations;
 
-public class MicroServiceControllerBase: BaseJmsController,IDisposable
+public class MicroServiceControllerBase : BaseJmsController, IDisposable
 {
-   
+
 
     internal NetClient NetClient;
-   
+
 
 
 
@@ -36,7 +38,7 @@ public class MicroServiceControllerBase: BaseJmsController,IDisposable
     {
         get
         {
-            if(_transactionid == null)
+            if (_transactionid == null)
             {
                 _transactionid = this.Headers["TranId"];
             }
@@ -88,29 +90,7 @@ public class MicroServiceControllerBase: BaseJmsController,IDisposable
     }
 }
 
-public class ControllerTypeInfo
-{
-    public ServiceDetail Service;
-    public Type Type;
-    public TypeMethodInfo[] Methods;
-    public bool Enable;
-    /// <summary>
-    /// 是否需要身份验证
-    /// </summary>
-    public bool NeedAuthorize = false;
-}
-public class TypeMethodInfo
-{
-    public MethodInfo Method;
-    public bool NeedAuthorize;
-    public bool AllowAnonymous;
-    public List<JMS.AuthorizeAttribute> AuthorizeAttributes = new List<AuthorizeAttribute>();
 
-    public TypeMethodInfo(MethodInfo method,Type controllerType)
-    {
-        Method = method;
 
-        AuthorizeAttributes.AddRange(method.GetCustomAttributes<AuthorizeAttribute>());
-        AuthorizeAttributes.AddRange(controllerType.GetCustomAttributes<AuthorizeAttribute>());
-    }
-}
+
+

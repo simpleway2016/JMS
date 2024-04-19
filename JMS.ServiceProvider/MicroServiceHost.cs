@@ -129,6 +129,12 @@ namespace JMS
             get;
             set;
         }
+
+        /// <summary>
+        /// 是否禁用模型验证
+        /// </summary>
+        public bool SuppressModelStateInvalidFilter { get; set; }
+
         /// <summary>
         /// 依赖注入容器就绪事件
         /// </summary>
