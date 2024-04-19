@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Security.Authentication;
 using JMS.Controllers;
+using Newtonsoft.Json.Linq;
+using System.ComponentModel.DataAnnotations;
 
 namespace JMS.Applications
 {
@@ -154,20 +156,8 @@ namespace JMS.Applications
                             var pinfo = parameterInfos[i];
                             try
                             {
-                                var pValue = parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, pinfo.ParameterInfo.ParameterType);
-                                if( _MicroServiceProvider.SuppressModelStateInvalidFilter == false && pValue != null && pinfo.IsRequiredValidation)
-                                {
-                                    var validationResult = controller.ValidateModel(methodInfo.Method.Name , pinfo.ParameterInfo.Name,  pValue);
-                                    if(validationResult.Success == false)
-                                    {
-                                        netclient.WriteServiceData(new InvokeResult
-                                        {
-                                            Success = false,
-                                            Error = validationResult.Error
-                                        });
-                                        return;
-                                    }
-                                }
+                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, pinfo.ParameterInfo.ParameterType);
+                                
                             }
                             catch (Exception ex)
                             {
@@ -180,6 +170,31 @@ namespace JMS.Applications
                                 return;
                             }
 
+                            if (_MicroServiceProvider.SuppressModelStateInvalidFilter == false && parameters[i] != null && pinfo.IsRequiredValidation)
+                            {
+                                try
+                                {
+                                    var validationResult = controller.ValidateModel(methodInfo.Method.Name, pinfo.ParameterInfo.Name, parameters[i]);
+                                    if (validationResult.Success == false)
+                                    {
+                                        netclient.WriteServiceData(new InvokeResult
+                                        {
+                                            Success = false,
+                                            Error = validationResult.Error
+                                        });
+                                        return;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    netclient.WriteServiceData(new InvokeResult
+                                    {
+                                        Success = false,
+                                        Error = ex.Message
+                                    });
+                                    return;
+                                }
+                            }
                         }
 
                     }
