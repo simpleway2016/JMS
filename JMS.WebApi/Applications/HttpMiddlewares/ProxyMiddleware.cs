@@ -1,6 +1,7 @@
 ﻿using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,12 @@ namespace JMS.Applications.HttpMiddlewares
     internal class ProxyMiddleware : IHttpMiddleware
     {
         private readonly IWebApiHostEnvironment _webApiEnvironment;
+        private readonly ILogger<ProxyMiddleware> _logger;
 
-        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment)
+        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment,ILogger<ProxyMiddleware> logger)
         {
             _webApiEnvironment = webApiEnvironment;
+            _logger = logger;
         }
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> reqheaders)
         {
@@ -32,7 +35,7 @@ namespace JMS.Applications.HttpMiddlewares
             {
                 int.TryParse(reqheaders["Content-Length"], out contentLength);
             }
-
+            _logger.LogDebug($"连接网关{_webApiEnvironment.GatewayAddresses.ToJsonString()}");
             using var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses);
             var service = await rc.TryGetMicroServiceAsync(serviceName);
 
@@ -55,6 +58,7 @@ namespace JMS.Applications.HttpMiddlewares
             }
             else if (service.ServiceLocation.Type == ServiceType.JmsService)
             {
+                _logger.LogDebug($"执行方法：{service.ServiceLocation.ToJsonString()} {serviceName}");
                 await ProxyJmsService(rc, service, serviceName, client, requestPath, contentLength, reqheaders);
                 return true;
             }
