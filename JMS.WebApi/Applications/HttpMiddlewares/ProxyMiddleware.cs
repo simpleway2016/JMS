@@ -35,7 +35,7 @@ namespace JMS.Applications.HttpMiddlewares
             {
                 int.TryParse(reqheaders["Content-Length"], out contentLength);
             }
-            _logger.LogDebug($"连接网关{_webApiEnvironment.GatewayAddresses.ToJsonString()}");
+            _logger.LogInformation($"连接网关{_webApiEnvironment.GatewayAddresses.ToJsonString()}");
             using var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses);
             var service = await rc.TryGetMicroServiceAsync(serviceName);
 
@@ -58,7 +58,7 @@ namespace JMS.Applications.HttpMiddlewares
             }
             else if (service.ServiceLocation.Type == ServiceType.JmsService)
             {
-                _logger.LogDebug($"执行方法：{service.ServiceLocation.ToJsonString()} {serviceName}");
+                _logger.LogInformation($"执行方法：{service.ServiceLocation.ToJsonString()} {serviceName}");
                 await ProxyJmsService(rc, service, serviceName, client, requestPath, contentLength, reqheaders);
                 return true;
             }
