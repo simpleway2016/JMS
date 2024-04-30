@@ -194,76 +194,104 @@ namespace JMS.ServiceProvider.AspNetCore
                                 result = actionFilterProcessor.OnActionExecuted(result);
                                 if (result != null)
                                 {
-                                    if (result is ObjectResult oret )
+                                    if (result is IActionResult)
                                     {
-                                        if (oret.StatusCode >= 200 && oret.StatusCode < 300)
+                                        if (result is ObjectResult oret)
                                         {
-                                            result = oret.Value;
+                                            if (oret.StatusCode >= 200 && oret.StatusCode < 300)
+                                            {
+                                                result = oret.Value;
+                                            }
+                                            else
+                                            {
+                                                if (tranDelegate != null)
+                                                {
+                                                    if (tranDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == tranDelegate.StorageEngine) == false)
+                                                    {
+                                                        tranDelegate.RollbackTransaction();
+                                                    }
+                                                    tranDelegate = null;
+                                                }
+                                                tranDelegateList.RollbackTransaction();
+
+                                                netClient.WriteServiceData(new InvokeResult
+                                                {
+                                                    Success = false,
+                                                    Data = oret.StatusCode,
+                                                    Error = oret.Value.ToString()
+
+                                                });
+                                                releaseNetClient(netClient);
+                                                return true;
+                                            }
+                                        }
+                                        else if (result is ContentResult cret)
+                                        {
+                                            if (cret.StatusCode == null || (cret.StatusCode >= 200 && cret.StatusCode < 300))
+                                            {
+                                                result = cret.Content;
+                                            }
+                                            else
+                                            {
+                                                if (tranDelegate != null)
+                                                {
+                                                    if (tranDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == tranDelegate.StorageEngine) == false)
+                                                    {
+                                                        tranDelegate.RollbackTransaction();
+                                                    }
+                                                    tranDelegate = null;
+                                                }
+                                                tranDelegateList.RollbackTransaction();
+
+                                                netClient.WriteServiceData(new InvokeResult
+                                                {
+                                                    Success = false,
+                                                    Data = cret.StatusCode,
+                                                    Error = cret.Content
+
+                                                });
+                                                releaseNetClient(netClient);
+                                                return true;
+                                            }
+                                        }
+                                        else if (result is JsonResult jret)
+                                        {
+                                            result = jret.Value;
+                                        }
+                                        else if (result is StatusCodeResult statusCodeResult)
+                                        {
+                                            if (statusCodeResult.StatusCode < 200 || statusCodeResult.StatusCode >= 300)
+                                            {
+                                                if (tranDelegate != null)
+                                                {
+                                                    if (tranDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == tranDelegate.StorageEngine) == false)
+                                                    {
+                                                        tranDelegate.RollbackTransaction();
+                                                    }
+                                                    tranDelegate = null;
+                                                }
+                                                tranDelegateList.RollbackTransaction();
+
+                                                netClient.WriteServiceData(new InvokeResult
+                                                {
+                                                    Success = false,
+                                                    Data = statusCodeResult.StatusCode,
+                                                    Error = ((HttpStatusCode)statusCodeResult.StatusCode).ToString()
+
+                                                });
+                                                releaseNetClient(netClient);
+                                                return true;
+                                            }
+                                            else
+                                                result = statusCodeResult.StatusCode;
+                                        }
+                                        else if (result is OkObjectResult okobjret)
+                                        {
+                                            result = okobjret.Value;
                                         }
                                         else
-                                        {
-                                            if (tranDelegate != null)
-                                            {
-                                                if (tranDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == tranDelegate.StorageEngine) == false)
-                                                {
-                                                    tranDelegate.RollbackTransaction();
-                                                }
-                                                tranDelegate = null;
-                                            }
-                                            tranDelegateList.RollbackTransaction();
-
-                                            netClient.WriteServiceData(new InvokeResult
-                                            {
-                                                Success = false,
-                                                Data  = oret.StatusCode,
-                                                Error = oret.Value.ToString()
-
-                                            });
-                                            releaseNetClient(netClient);
-                                            return true;
-                                        }
+                                            throw new Exception("不支持返回值类型" + result.GetType().FullName);
                                     }
-                                    else if (result is JsonResult jret)
-                                    {
-                                        result = jret.Value;
-                                    }
-                                    else if (result is StatusCodeResult statusCodeResult)
-                                    {
-                                        if (statusCodeResult.StatusCode < 200 || statusCodeResult.StatusCode >= 300)
-                                        {
-                                            if (tranDelegate != null)
-                                            {
-                                                if (tranDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == tranDelegate.StorageEngine) == false)
-                                                {
-                                                    tranDelegate.RollbackTransaction();
-                                                }
-                                                tranDelegate = null;
-                                            }
-                                            tranDelegateList.RollbackTransaction();
-
-                                            netClient.WriteServiceData(new InvokeResult
-                                            {
-                                                Success = false,
-                                                Data = statusCodeResult.StatusCode,
-                                                Error = ((HttpStatusCode)statusCodeResult.StatusCode).ToString()
-
-                                            });
-                                            releaseNetClient(netClient);
-                                            return true;
-                                        }
-                                        else
-                                            result = statusCodeResult.StatusCode;
-                                    }
-                                    else if (result is OkObjectResult okobjret)
-                                    {
-                                        result = okobjret.Value;
-                                    }
-                                    else if (result is IActionResult)
-                                        throw new Exception("不支持返回值类型" + result.GetType().FullName);
-                                }
-                                else
-                                {
-                                    result = null;
                                 }
 
                                 if (tranDelegate.SupportTransaction && !supportTran)
