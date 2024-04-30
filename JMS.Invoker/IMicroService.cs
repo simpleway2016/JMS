@@ -44,5 +44,7 @@ namespace JMS
         T Invoke<T>(string method, params object[] parameters);
         Task<T> InvokeAsync<T>(string method, params object[] parameters);
         Task InvokeAsync(string method, params object[] parameters);
+
+        Task<InvokeResult<T>> InvokeExAsync<T>(string method, params object[] parameters);
     }
 }

@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace JMS
 {
-    class InvokeAttributes
+    public class InvokeAttributes
     {
-        public bool SupportScope { get; set; }
+        public int? StatusCode { get; set; }
     }
     internal interface IInvokeConnect : IDisposable
     {
@@ -20,6 +20,7 @@ namespace JMS
         bool HasTransactionHolding { get; }
 
         Task<T> InvokeAsync<T>(string method, RemoteClient tran, params object[] parameter);
+        Task<InvokeResult<T>> InvokeExAsync<T>(string method, RemoteClient tran, params object[] parameter);
         T Invoke<T>(string method, RemoteClient tran, params object[] parameters);
 
         /// <summary>

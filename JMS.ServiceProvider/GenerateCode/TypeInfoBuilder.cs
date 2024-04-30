@@ -1,5 +1,6 @@
 ﻿using JMS.AssemblyDocumentReader;
 using JMS.Controllers;
+using JMS.ServerCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -93,7 +94,11 @@ namespace JMS.GenerateCode
 
         public static Type GetReturnType(Type type,bool isNullable =false)
         {
-            if (type == typeof(Task) || type == typeof(ValueTask))
+            if (type == typeof(HttpResult) )
+            {
+                return typeof(object);
+            }
+            else if (type == typeof(Task) || type == typeof(ValueTask))
             {
                 return typeof(void);
             }

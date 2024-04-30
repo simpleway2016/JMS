@@ -10,7 +10,8 @@ using System.Reflection;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel;
-using JMS.Controllers.ComponentModel;
+using JMS.Controllers;
+using JMS.ServerCore.Http;
 
 namespace UnitTest
 {
@@ -130,6 +131,15 @@ namespace UnitTest
 
         [Category("3ϵ")]
         public async Task<Setting1> Test3()
+        {
+            return null;
+        }
+
+        public HttpResult http1()
+        {
+            return null;
+        }
+        public async Task<HttpResult> http2()
         {
             return null;
         }

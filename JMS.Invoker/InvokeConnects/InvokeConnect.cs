@@ -80,10 +80,6 @@ namespace JMS
                     throw new RemoteException(tran.TransactionId, result.GetStatusCode(), result.Error);
                 }
 
-                //if (result.Attributes != null)
-                //{
-                //    this.SupportScope = result.Attributes.FromJson<InvokeAttributes>().SupportScope;
-                //}
 
                 if (result.SupportTransaction)
                 {
@@ -129,6 +125,12 @@ namespace JMS
         }
         public async Task<T> InvokeAsync<T>(string method, RemoteClient tran, params object[] parameters)
         {
+            var ret = await InvokeExAsync<T>(method, tran, parameters);
+            return ret.Data;
+        }
+
+        public async Task<InvokeResult<T>> InvokeExAsync<T>(string method, RemoteClient tran, params object[] parameters)
+        {
             var headers = tran.GetCommandHeader();
 
             if (tran == null)
@@ -161,13 +163,8 @@ namespace JMS
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
-                    throw new RemoteException(tran.TransactionId,result.GetStatusCode(), result.Error);
+                    throw new RemoteException(tran.TransactionId, result.GetStatusCode(), result.Error);
                 }
-
-                //if(result.Attributes != null)
-                //{
-                //   this.SupportScope =  result.Attributes.FromJson<InvokeAttributes>().SupportScope;
-                //}
 
                 if (result.SupportTransaction)
                 {
@@ -179,7 +176,7 @@ namespace JMS
                     this.Dispose();
                 }
 
-                return result.Data;
+                return result;
             }
             catch (ConvertException ex)
             {
@@ -195,7 +192,7 @@ namespace JMS
 
                 if (otherObj.Success == false)
                 {
-                    throw new RemoteException(tran.TransactionId,otherObj.GetStatusCode(), otherObj.Error);
+                    throw new RemoteException(tran.TransactionId, otherObj.GetStatusCode(), otherObj.Error);
                 }
 
                 if (otherObj != null)

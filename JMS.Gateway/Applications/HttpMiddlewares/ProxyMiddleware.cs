@@ -258,31 +258,42 @@ namespace JMS.Applications.HttpMiddlewares
                         proxyRemoteClient.SetHeader(header.Key, header.Value.ToString());
                     }
 
-                    object ret = null;
+                    InvokeResult<object> result = null;
+                    InvokeAttributes invokeAttributes = null;
+                    int statusCode = 200;
                     if (_parames == null)
                     {
-                        ret = await service.InvokeAsync<object>(method);
+                        result = await service.InvokeExAsync<object>(method);
                     }
                     else
-                        ret = await service.InvokeAsync<object>(method, _parames);
+                        result = await service.InvokeExAsync<object>(method, _parames);
 
-                    if (ret == null)
+                    if (result.Attributes != null)
                     {
-                        client.OutputHttp200(null);
+                        invokeAttributes = result.Attributes.FromJson<InvokeAttributes>();
+                        if (invokeAttributes.StatusCode != null)
+                        {
+                            statusCode = invokeAttributes.StatusCode.Value;
+                        }
                     }
-                    else if (ret is string)
+
+                    if (result.Data == null)
                     {
-                        client.OutputHttp200((string)ret);
+                        client.OutputHttpCode(statusCode, Defines.GetStatusDescription(statusCode), null);
+                    }
+                    else if (result.Data is string)
+                    {
+                        client.OutputHttpCode(statusCode, Defines.GetStatusDescription(statusCode), (string)result.Data);
                     }
                     else
                     {
-                        if (ret.GetType().IsValueType)
+                        if (result.Data.GetType().IsValueType)
                         {
-                            client.OutputHttp200(ret.ToString());
+                            client.OutputHttpCode(statusCode, Defines.GetStatusDescription(statusCode), result.Data.ToString());
                         }
                         else
                         {
-                            client.OutputHttp200(ret.ToJsonString());
+                            client.OutputHttpCode(statusCode, Defines.GetStatusDescription(statusCode), result.Data.ToJsonString());
                         }
                     }
                 }

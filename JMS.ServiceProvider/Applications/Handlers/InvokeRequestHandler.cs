@@ -17,6 +17,7 @@ using System.Security.Authentication;
 using JMS.Controllers;
 using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations;
+using JMS.ServerCore.Http;
 
 namespace JMS.Applications
 {
@@ -235,15 +236,6 @@ namespace JMS.Applications
                         supportTran = false;
                     }
 
-                    var resultdata = Encoding.UTF8.GetBytes(new InvokeResult
-                    {
-                        Success = true,
-                        SupportTransaction = supportTran,
-                        Data = result,
-                        Attributes = "{'SupportScope':true}",
-
-                    }.ToJsonString());
-
                     if (!supportTran && transactionDelegate != null)
                     {
                         //不需要事务支持，提交现有事务
@@ -251,7 +243,29 @@ namespace JMS.Applications
                         transactionDelegate = null;
                     }
 
-                    netclient.WriteServiceData(resultdata);
+                    if (result is HttpResult httpResult)
+                    {
+                        var resultdata = Encoding.UTF8.GetBytes(new InvokeResult
+                        {
+                            Success = true,
+                            SupportTransaction = supportTran,
+                            Data = httpResult.Data,
+                            Attributes = $"{{'StatusCode':{httpResult.StatusCode}}}",
+
+                        }.ToJsonString());
+                        netclient.WriteServiceData(resultdata);
+                    }
+                    else
+                    {
+                        var resultdata = Encoding.UTF8.GetBytes(new InvokeResult
+                        {
+                            Success = true,
+                            SupportTransaction = supportTran,
+                            Data = result
+
+                        }.ToJsonString());
+                        netclient.WriteServiceData(resultdata);
+                    }
 
                     if (!supportTran)
                     {

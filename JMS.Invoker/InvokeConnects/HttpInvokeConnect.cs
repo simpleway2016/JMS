@@ -163,6 +163,12 @@ Accept-Language: zh-CN,zh;q=0.9
         }
         public async Task<T> InvokeAsync<T>(string method, RemoteClient tran, params object[] parameters)
         {
+            var ret = await InvokeExAsync<T>(method, tran, parameters);
+            return ret.Data;
+        }
+
+        public async Task<InvokeResult<T>> InvokeExAsync<T>(string method, RemoteClient tran, params object[] parameters)
+        {
             var headers = tran.GetCommandHeader();
             if (tran == null)
             {
@@ -171,7 +177,7 @@ Accept-Language: zh-CN,zh;q=0.9
             InvokingInfo.MethodName = method;
             InvokingInfo.Parameters = parameters;
             var isNewClient = false;
-            var uri = getServiceUri(InvokingInfo.ServiceLocation.ServiceAddress , method);
+            var uri = getServiceUri(InvokingInfo.ServiceLocation.ServiceAddress, method);
 
             if (_client == null)
             {
@@ -205,7 +211,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
-                    throw new RemoteException(tran.TransactionId,result.GetStatusCode(), result.Error);
+                    throw new RemoteException(tran.TransactionId, result.GetStatusCode(), result.Error);
                 }
 
                 if (result.SupportTransaction)
@@ -218,7 +224,7 @@ Accept-Language: zh-CN,zh;q=0.9
                     this.Dispose();
                 }
 
-                return result.Data;
+                return result;
             }
             catch (ConvertException ex)
             {
