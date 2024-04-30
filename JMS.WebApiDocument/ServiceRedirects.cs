@@ -285,7 +285,7 @@ namespace JMS.WebApiDocument
         /// <param name="context"></param>
         /// <param name="method"></param>
         /// <returns></returns>
-        internal static async Task<object> InvokeServiceMethod(ServiceRedirectConfig config,HttpContext context,string method, string[] redirectHeaders)
+        internal static async Task<InvokeResult<object>> InvokeServiceMethod(ServiceRedirectConfig config,HttpContext context,string method, string[] redirectHeaders)
         {
             using (var client = ClientProviderFunc())
             {
@@ -399,10 +399,10 @@ namespace JMS.WebApiDocument
 
                 if (_parames == null)
                 {
-                    return await service.InvokeAsync<object>(method);
+                    return await service.InvokeExAsync<object>(method);
                 }
                 else
-                    return await service.InvokeAsync<object>(method, _parames);
+                    return await service.InvokeExAsync<object>(method, _parames);
             }
         }
     }

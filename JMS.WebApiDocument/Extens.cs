@@ -175,28 +175,38 @@ namespace Microsoft.Extensions.DependencyInjection
 
                     try
                     {
-                        var ret = await ServiceRedirects.InvokeServiceMethod(config, context, method, redirectHeaders);
+                        InvokeAttributes invokeAttributes = null;
+                        var result = await ServiceRedirects.InvokeServiceMethod(config, context, method, redirectHeaders);
                         if (config.Handled)
                             return;
 
+                        if (result.Attributes != null)
+                        {
+                            invokeAttributes = result.Attributes.FromJson<InvokeAttributes>();
+                            if (invokeAttributes.StatusCode != null)
+                            {
+                                context.Response.StatusCode = invokeAttributes.StatusCode.Value;
+                            }
+                        }
+
                         if (config.OutputText)
                         {
-                            if (ret is string)
+                            if (result.Data is string)
                             {
                                 context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                                await context.Response.WriteAsync((string)ret);
+                                await context.Response.WriteAsync((string)result.Data);
                             }
-                            else if (ret != null)
+                            else if (result.Data != null)
                             {                              
-                                if (ret.GetType().IsValueType)
+                                if (result.Data.GetType().IsValueType)
                                 {
                                     context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                                    await context.Response.WriteAsync(ret.ToString());
+                                    await context.Response.WriteAsync(result.Data.ToString());
                                 }
                                 else
                                 {
                                     context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
-                                    await context.Response.WriteAsync(ret.ToJsonString());
+                                    await context.Response.WriteAsync(result.Data.ToJsonString());
                                 }
                             }
 
@@ -207,7 +217,7 @@ namespace Microsoft.Extensions.DependencyInjection
                             await context.Response.WriteAsync(new
                             {
                                 code = 200,
-                                data = ret
+                                data = result.Data
                             }.ToJsonString());
                         }
 
