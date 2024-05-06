@@ -50,6 +50,11 @@ namespace JMS
             }
         }
 
+        public void Clear()
+        {
+            _tasks.Clear();
+        }
+
         /// <summary>
         /// 等待所有任务执行完毕
         /// </summary>

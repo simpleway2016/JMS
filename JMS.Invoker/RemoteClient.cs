@@ -26,7 +26,6 @@ namespace JMS
     {
         internal List<IInvokeConnect> _Connects = new List<IInvokeConnect>();
         TaskCollection _transactionTasks = new TaskCollection();
-        TaskCollection _normalTasks = new TaskCollection();
         public bool SupportTransaction => _SupportTransaction;
         internal int InvokingId = 0;
         private string _TransactionId;
@@ -660,10 +659,7 @@ namespace JMS
             {
                 await _transactionTasks.WaitConnectComplete(invokingId, invokeConnect);
             }
-            else
-            {
-                await _normalTasks.WaitConnectComplete(invokingId, invokeConnect);
-            }
+           
         }
 
         internal void AddTask( IInvokeConnect invokeConnect,int invokingId, Task task)
@@ -672,10 +668,7 @@ namespace JMS
             {
                 _transactionTasks.AddTask( invokeConnect, invokingId, task);
             }
-            else
-            {
-                _normalTasks.AddTask(invokeConnect, invokingId, task);
-            }
+           
         }
 
         void waitTasks()
@@ -1047,9 +1040,6 @@ namespace JMS
                 RollbackTransaction();
             }
 
-            var errs = _normalTasks.Wait();
-            if (errs != null && errs.Count > 0)
-                throw errs[0];
         }
     }
 }
