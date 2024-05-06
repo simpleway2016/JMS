@@ -96,18 +96,24 @@ namespace JMS
 
         public void OutputHttp500(string message)
         {
-            var content = Encoding.UTF8.GetBytes(message);
-            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 500 Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {content.Length}\r\nConnection: keep-alive\r\n\r\n");
+            var content = message == null ? null : Encoding.UTF8.GetBytes(message);
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 500 Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: keep-alive\r\n\r\n");
             this.Write(data);
-            this.Write(content);
+            if (content != null)
+            {
+                this.Write(content);
+            }
         }
 
         public void OutputHttpCode(int code, string desc, string message)
         {
-            var content = Encoding.UTF8.GetBytes(message);
-            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 {code} {desc}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {content.Length}\r\nConnection: keep-alive\r\n\r\n");
+            var content = message == null ? null : Encoding.UTF8.GetBytes(message);
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 {code} {desc}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: keep-alive\r\n\r\n");
             this.Write(data);
-            this.Write(content);
+            if (content != null)
+            {
+                this.Write(content);
+            }
         }
 
         /// <summary>
