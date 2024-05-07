@@ -38,6 +38,10 @@ namespace UnitTest.ServiceHosts
         {
             return "Jack";
         }
+        public void Nothing()
+        {
+            
+        }
         public string GetMyNameError()
         {
             throw new Exception("ErrMsg");

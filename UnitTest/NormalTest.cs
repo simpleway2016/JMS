@@ -518,6 +518,19 @@ namespace UnitTest
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             if (text != "{\"code\":500,\"msg\":\"ErrMsg\"}")
                 throw new Exception("http返回结果错误");
+
+            //测试返回值是null的情况
+            ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/Nothing").ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == false)
+                throw new Exception("http访问失败");
+
+            ret = client.GetAsync($"http://localhost:{_jmsWebapiPort}/UserInfoService/Nothing").ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == false)
+                throw new Exception("http访问失败");
+
+            ret = client.GetAsync($"http://localhost:{_gateWayPort}/UserInfoService/Nothing").ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == false)
+                throw new Exception("http访问失败");
         }
 
         [TestMethod]
