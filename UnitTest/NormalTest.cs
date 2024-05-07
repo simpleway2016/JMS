@@ -1124,8 +1124,8 @@ Content-Length: 0
 
                 serviceClient.Invoke("SetUserName", "Jack");
                 serviceClient.Invoke("SetAge", 28);
-                serviceClient.InvokeAsync("SetFather", "Tom");
-                serviceClient.InvokeAsync("SetMather", "Lucy");
+                serviceClient.InvokeAsync("SetFather", "Tom").GetAwaiter().GetResult();
+                serviceClient.InvokeAsync("SetMather", "Lucy").GetAwaiter().GetResult();
             }
 
             Debug.WriteLine($"结果：{UserInfoDbContext.FinallyUserName}");
@@ -1134,7 +1134,7 @@ Content-Length: 0
                 UserInfoDbContext.FinallyAge != 28 ||
                 UserInfoDbContext.FinallyFather != "Tom" ||
                 UserInfoDbContext.FinallyMather != "Lucy")
-                throw new Exception("结果不正确");
+                throw new Exception($"结果不正确, {UserInfoDbContext.FinallyUserName} {UserInfoDbContext.FinallyAge} {UserInfoDbContext.FinallyFather} {UserInfoDbContext.FinallyMather}");
         }
 
         /// <summary>
