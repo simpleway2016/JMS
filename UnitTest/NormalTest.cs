@@ -1124,7 +1124,7 @@ Content-Length: 0
 
                 serviceClient.Invoke("SetUserName", "Jack");
                 serviceClient.Invoke("SetAge", 28);
-                serviceClient.InvokeAsync("SetFather", "Tom").GetAwaiter().GetResult();
+                serviceClient.InvokeAsync("SetFather", "Tom");
                 serviceClient.InvokeAsync("SetMather", "Lucy").GetAwaiter().GetResult();
             }
 
