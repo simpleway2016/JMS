@@ -43,7 +43,7 @@ namespace JMS.GatewayConnection
                 while (true)
                 {
                     await Task.Delay(8000);
-                    await _client.WriteServiceDataAsync(new GatewayCommand
+                    await client.WriteServiceDataAsync(new GatewayCommand
                     {
                         Type = 0
                     });
