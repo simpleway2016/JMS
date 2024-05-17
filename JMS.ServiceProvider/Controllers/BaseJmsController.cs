@@ -106,7 +106,8 @@ namespace JMS
                     if (trustXForwardedFor.Contains(ip) && i > 0)
                         return x_forArr[i - 1];
                 }
-
+                if (x_forArr.Length > 0)
+                    return x_forArr.Last();
             }
 
             return remoteIpAddr;
