@@ -12,6 +12,8 @@ using System.IO;
 using System.ComponentModel.DataAnnotations;
 using JMS.Controllers;
 using Way.Lib;
+using Microsoft.Extensions.Primitives;
+using System.Net.Http;
 
 namespace JMS
 {
@@ -97,17 +99,23 @@ namespace JMS
         public string GetRemoteIpAddress(string[] trustXForwardedFor)
         {
             var remoteIpAddr = ((IPEndPoint)RequestingObject.Value.RemoteEndPoint).Address.ToString();
-            if(trustXForwardedFor != null && trustXForwardedFor.Length > 0 && this.Headers.TryGetValue("X-Forwarded-For" , out string x_for))
+
+            if (trustXForwardedFor != null && trustXForwardedFor.Length > 0 && this.Headers.TryGetValue("X-Forwarded-For", out string x_for))
             {
                 var x_forArr = x_for.Split(',').Select(m => m.Trim()).Where(m => m.Length > 0).ToArray();
-                for(int i = 0; i < x_forArr.Length; i++)
+                if (trustXForwardedFor.Contains(remoteIpAddr))
                 {
-                    var ip = x_forArr[i];
-                    if (trustXForwardedFor.Contains(ip) && i > 0)
-                        return x_forArr[i - 1];
+                    for (int i = x_forArr.Length - 1; i >= 0; i--)
+                    {
+                        var ip = x_forArr[i];
+                        if (trustXForwardedFor.Contains(ip) == false)
+                            return ip;
+                    }
                 }
-                if (x_forArr.Length > 0)
-                    return x_forArr.Last();
+                else
+                {
+                    return remoteIpAddr;
+                }
             }
 
             return remoteIpAddr;
