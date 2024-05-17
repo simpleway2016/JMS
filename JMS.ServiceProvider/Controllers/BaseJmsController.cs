@@ -101,10 +101,10 @@ namespace JMS
             var remoteIpAddr = ((IPEndPoint)RequestingObject.Value.RemoteEndPoint).Address.ToString();
 
             if (trustXForwardedFor != null && trustXForwardedFor.Length > 0 && this.Headers.TryGetValue("X-Forwarded-For", out string x_for))
-            {
-                var x_forArr = x_for.Split(',').Select(m => m.Trim()).Where(m => m.Length > 0).ToArray();
+            {              
                 if (trustXForwardedFor.Contains(remoteIpAddr))
                 {
+                    var x_forArr = x_for.Split(',').Select(m => m.Trim()).Where(m => m.Length > 0).ToArray();
                     for (int i = x_forArr.Length - 1; i >= 0; i--)
                     {
                         var ip = x_forArr[i];
