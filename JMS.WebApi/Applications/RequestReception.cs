@@ -15,6 +15,7 @@ using JMS.Applications.CommandHandles;
 using System.Threading.Tasks;
 using System.Net;
 using JMS.Common;
+using System.Security.Authentication;
 
 namespace JMS.Applications
 {
@@ -54,7 +55,7 @@ namespace JMS.Applications
                 {
                     if (_webApiEnvironment.ServerCert != null)
                     {
-                        await client.AsSSLServerAsync(_webApiEnvironment.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), NetClient.SSLProtocols);
+                        await client.AsSSLServerAsync(_webApiEnvironment.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _webApiEnvironment.SslProtocols);
 
                     }
 
@@ -77,6 +78,10 @@ namespace JMS.Applications
 
             }
             catch (OperationCanceledException)
+            {
+
+            }
+            catch (AuthenticationException)
             {
 
             }

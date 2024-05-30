@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -13,6 +14,7 @@ namespace JMS
         /// 微服务证书
         /// </summary>
         public X509Certificate2 ServerCertificate { get; set; }
+        public SslProtocols SslProtocols { get; set; } = SslProtocols.None;
         /// <summary>
         /// 哪些客户端证书被信任，空表示信任所有证书
         /// </summary>

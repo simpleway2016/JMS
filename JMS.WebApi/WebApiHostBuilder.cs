@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using JMS.ServerCore.Http;
 using Microsoft.Extensions.Logging;
+using System.Security.Authentication;
 
 namespace JMS
 {
@@ -94,6 +95,11 @@ namespace JMS
             {
                 webApiEnvironment.ServerCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, Configuration.GetValue<string>("SSL:Password"));
                 webApiEnvironment.AcceptCertHash = Configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
+                var sslProtocols = Configuration.GetSection("SSL:SslProtocols").Get<SslProtocols?>();
+                if(sslProtocols != null)
+                {
+                    webApiEnvironment.SslProtocols = sslProtocols.Value;
+                }
             }
 
             server.ServiceProvider = serviceProvider;

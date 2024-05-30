@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using JMS.ApiDocument;
 using JMS.Cluster;
 using JMS.Authentication;
+using System.Security.Authentication;
 
 namespace JMS
 {
@@ -130,11 +131,14 @@ namespace JMS
             {
                 var serverCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, this.Configuration.GetValue<string>("SSL:Password"));
                 var acceptCertHash = this.Configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
-                Services.AddSingleton<ISslConfiguration>(new DefaultSslConfiguration(serverCert, acceptCertHash));
+                var sslProtocols = this.Configuration.GetSection("SSL:SslProtocols").Get<SslProtocols?>();
+                if (sslProtocols == null)
+                    sslProtocols = SslProtocols.None;
+                Services.AddSingleton<ISslConfiguration>(new DefaultSslConfiguration(serverCert, sslProtocols.Value, acceptCertHash));
             }
             else
             {
-                Services.AddSingleton<ISslConfiguration>(new DefaultSslConfiguration(null, null));
+                Services.AddSingleton<ISslConfiguration>(new DefaultSslConfiguration(null, SslProtocols.None, null));
             }
 
             var serviceProvider = Services.BuildServiceProvider();

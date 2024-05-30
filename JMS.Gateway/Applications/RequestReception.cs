@@ -14,6 +14,7 @@ using JMS.Applications.CommandHandles;
 using System.Threading.Tasks;
 using System.Net;
 using JMS.Common;
+using System.Security.Authentication;
 
 namespace JMS.Applications
 {
@@ -92,6 +93,10 @@ namespace JMS.Applications
                 }
             }
             catch(SocketException)
+            {
+
+            }
+            catch (AuthenticationException)
             {
 
             }

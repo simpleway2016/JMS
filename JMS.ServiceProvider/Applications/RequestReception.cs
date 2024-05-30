@@ -13,6 +13,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
+using System.Security.Authentication;
 
 namespace JMS.Applications
 {
@@ -86,7 +87,7 @@ namespace JMS.Applications
                 {
                     if (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     {
-                        await netclient.AsSSLServerAsync(_SSLConfiguration.ServerCertificate, CheckCert, NetClient.SSLProtocols);
+                        await netclient.AsSSLServerAsync(_SSLConfiguration.ServerCertificate, CheckCert, _SSLConfiguration.SslProtocols);
                     }
 
                     while (true)
@@ -127,6 +128,10 @@ namespace JMS.Applications
 
             }
             catch (SocketException)
+            {
+
+            }
+            catch (AuthenticationException)
             {
 
             }
