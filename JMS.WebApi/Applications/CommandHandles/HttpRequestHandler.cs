@@ -30,7 +30,7 @@ namespace JMS.Applications.CommandHandles
 
         }
 
-        public async Task Handle(NetClient client, GatewayCommand cmd)
+        public async Task Handle(NetClient client, GatewayCommand cmd,bool redirectHttps)
         {
 
             if (cmd.Header == null)
@@ -42,6 +42,12 @@ namespace JMS.Applications.CommandHandles
             var requestPathLineArr = requestPathLine.Split(' ');
             var method = requestPathLineArr[0];
             var requestPath = requestPathLineArr[1];
+
+            if (redirectHttps)
+            {
+                client.OutputHttpRedirect301($"https://{cmd.Header["Host"]}{requestPath}");
+                return;
+            }
 
             if (cmd.Header.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {

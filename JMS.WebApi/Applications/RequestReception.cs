@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Net;
 using JMS.Common;
 using System.Security.Authentication;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace JMS.Applications
 {
@@ -53,17 +54,25 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
+                    bool redirectHttps = false;
                     if (_webApiEnvironment.ServerCert != null)
                     {
-                        await client.AsSSLServerAsync(_webApiEnvironment.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _webApiEnvironment.SslProtocols);
-
+                        var text = await client.PreReadBytesAsync(4);
+                        if (text == "GET " || text == "POST" || text == "PUT " || text == "OPTI" || text == "DELE")
+                        {
+                            redirectHttps = true;
+                        }
+                        else
+                        {
+                            await client.AsSSLServerAsync(_webApiEnvironment.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _webApiEnvironment.SslProtocols);
+                        }
                     }
 
                     while (true)
                     {
                         var cmd = await GetRequestCommand(client);
 
-                        await _httpRequestHandler.Handle(client, cmd);
+                        await _httpRequestHandler.Handle(client, cmd, redirectHttps);
 
                         if (client.HasSocketException || !client.KeepAlive)
                             break;
