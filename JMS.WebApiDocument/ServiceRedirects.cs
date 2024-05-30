@@ -129,6 +129,9 @@ namespace JMS.WebApiDocument
 
             var ip = context.Connection.RemoteIpAddress.ToString();
             string strForwared = null;
+
+            Uri gatewayUri = new Uri($"http://{context.Request.Headers["Host"]}");
+
             if (context.Request.Headers.TryGetValue("X-Forwarded-For", out StringValues forwardedFor))
             {
                 context.Request.Headers.Remove("X-Forwarded-For");
@@ -148,8 +151,32 @@ namespace JMS.WebApiDocument
             {
                 if (pair.Key == "Host" && hostUri != null)
                 {
-                    strBuffer.Append($"Host: {hostUri.Host}\r\n");
+                    strBuffer.Append($"Host: {hostUri.Authority}\r\n");
+                    strBuffer.Append($"Original-Host: {pair.Value}\r\n");
                 }
+                else if (pair.Key == "Origin")
+                {
+                    try
+                    {
+                        var uri = new Uri(pair.Value);
+                        if (uri.Host == gatewayUri.Host)
+                        {
+                            strBuffer.Append($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}\r\n");
+                        }
+                        else
+                        {
+                            strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
+                        }
+                    }
+                    catch
+                    {
+                        strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
+                    }
+                }
+                else if(pair.Key == "X-Forwarded-For")
+                {
+                    continue;
+                }    
                 else
                 {
                     strBuffer.Append($"{pair.Key}: {pair.Value.ToString()}\r\n");

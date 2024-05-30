@@ -96,7 +96,8 @@ namespace JMS.Applications.HttpMiddlewares
                         continue;
                     else if (pair.Key == "Host")
                     {
-                        strBuffer.Append($"Host: {hostUri.Host}\r\n");
+                        strBuffer.Append($"Host: {hostUri.Authority}\r\n");
+                        strBuffer.Append($"Original-Host: {pair.Value}\r\n");
                     }
                     else if (pair.Key == "Origin")
                     {
