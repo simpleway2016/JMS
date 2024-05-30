@@ -58,6 +58,9 @@ namespace JMS.Applications
                     if (_webApiEnvironment.ServerCert != null)
                     {
                         var text = await client.PreReadBytesAsync(4);
+                        if (text == null)
+                            return;
+
                         if (text == "GET " || text == "POST" || text == "PUT " || text == "OPTI" || text == "DELE")
                         {
                             redirectHttps = true;

@@ -77,40 +77,12 @@ namespace JMS
             this.Write(data);
         }
 
+       
         /// <summary>
-        /// 从socket预读取一行
+        /// 从socket中预读取一定的字节数据
         /// </summary>
-        /// <returns></returns>
-        public async Task< string> PreReadLineAsync()
-        {
-            int i;
-            byte[] data = ArrayPool<byte>.Shared.Rent(10240);
-            try
-            {
-                while (true)
-                {
-                    var readed = await this.Socket.ReceiveAsync(data, SocketFlags.Peek);
-                    if(readed == 0)
-                    {
-                        throw new SocketException();
-                    }
-                    for(i=0; i < readed; i ++ )
-                    {
-                        if (data[i] == 10)
-                            return Encoding.UTF8.GetString(data, 0, i);
-                    }
-
-                    if(readed == data.Length)
-                        throw new SizeLimitException("too many header keys");
-                }
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(data);
-            }
-           
-        }
-
+        /// <param name="count"></param>
+        /// <returns>如果返回null，则网络已中断</returns>
         public async Task<string> PreReadBytesAsync(int count)
         {
             int i;
@@ -120,8 +92,9 @@ namespace JMS
                 while (true)
                 {
                     var readed = await this.Socket.ReceiveAsync(data, SocketFlags.Peek);
-                    if (readed == 0)
-                        throw new SocketException();
+                    if (readed <= 0)
+                        return null;
+
                     if (readed >= count)
                     {
                         return Encoding.UTF8.GetString(data, 0, count);
