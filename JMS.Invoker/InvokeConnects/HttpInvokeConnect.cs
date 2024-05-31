@@ -112,7 +112,12 @@ Accept-Language: zh-CN,zh;q=0.9
                     _client.WriteServiceData(Encoding.UTF8.GetBytes(uri.PathAndQuery));
                 }
                 _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
+
+                var originalSize = _client.MaxCommandSize;
+                _client.MaxCommandSize = int.MaxValue;
                 var result = _client.ReadServiceObject<InvokeResult<T>>();
+                _client.MaxCommandSize = originalSize;
+
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
@@ -207,7 +212,12 @@ Accept-Language: zh-CN,zh;q=0.9
                 }
 
                 _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
+
+                var originalSize = _client.MaxCommandSize;
+                _client.MaxCommandSize = int.MaxValue;
                 var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>();
+                _client.MaxCommandSize = originalSize;
+
                 if (result.Success == false)
                 {
                     this.AddClientToPool();

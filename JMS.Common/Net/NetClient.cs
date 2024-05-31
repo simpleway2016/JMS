@@ -25,6 +25,10 @@ namespace JMS
         /// 启动GZip压缩的起点
         /// </summary>
         const int CompressionMinSize = 2048;
+        /// <summary>
+        /// 协议包最大尺寸，默认102400
+        /// </summary>
+        public int MaxCommandSize = 102400;
         public bool KeepAlive { get; set; }
 
         public NetClient()
@@ -287,7 +291,7 @@ namespace JMS
         }
 
 
-        async Task<byte[]> ReadServiceDataBytesAsync(int flag)
+        async Task<byte[]> readBytesByFlagAsync(int flag)
         {
             if (flag == 1179010630)
                 return new byte[0];
@@ -296,7 +300,7 @@ namespace JMS
             this.KeepAlive = (flag & 2) == 2;
             var len = flag >> 2;
 
-            if (len > 102400)
+            if (len > MaxCommandSize)
                 throw new SizeLimitException("command size is too big");
             var ret = await this.PipeReader.ReadAtLeastAsync(len);
             if (ret.IsCompleted && ret.Buffer.Length < len)
@@ -312,7 +316,7 @@ namespace JMS
             return datas;
         }
 
-        byte[] ReadServiceDataBytes(int flag)
+        byte[] readBytesByFlag(int flag)
         {
             if (flag == 1179010630)
                 return new byte[0];
@@ -321,7 +325,7 @@ namespace JMS
             this.KeepAlive = (flag & 2) == 2;
             var len = flag >> 2;
 
-            if (len > 102400)
+            if (len > MaxCommandSize)
                 throw new SizeLimitException("command size is too big");
 
             var datas = new byte[len];
@@ -423,7 +427,7 @@ namespace JMS
             {
                 var flag = this.ReadInt();
 
-                return ReadServiceDataBytes(flag);
+                return readBytesByFlag(flag);
             }
             catch (System.IO.IOException ex)
             {
@@ -445,7 +449,7 @@ namespace JMS
                 var flag = BitConverter.ToInt32(buffer.First.Span);
                 this.PipeReader.AdvanceTo(buffer.End);
 
-                return await ReadServiceDataBytesAsync(flag);
+                return await readBytesByFlagAsync(flag);
             }
             catch (System.IO.IOException ex)
             {

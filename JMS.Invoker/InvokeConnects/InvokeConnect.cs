@@ -73,7 +73,12 @@ namespace JMS
 
 
                 _client.WriteServiceData(Command);
+
+                var originalSize = _client.MaxCommandSize;
+                _client.MaxCommandSize = int.MaxValue;
                 var result = _client.ReadServiceObject<InvokeResult<T>>();
+                _client.MaxCommandSize = originalSize;
+
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
@@ -159,7 +164,12 @@ namespace JMS
 
 
                 _client.WriteServiceData(Command);
+
+                var originalSize = _client.MaxCommandSize;
+                _client.MaxCommandSize = int.MaxValue;
                 var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>();
+                _client.MaxCommandSize = originalSize;
+
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
