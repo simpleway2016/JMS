@@ -159,7 +159,7 @@ namespace JMS.WebApiDocument
                     try
                     {
                         var uri = new Uri(pair.Value);
-                        if (uri.Host == gatewayUri.Host)
+                        if (uri.Authority == gatewayUri.Authority)
                         {
                             strBuffer.Append($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}\r\n");
                         }
