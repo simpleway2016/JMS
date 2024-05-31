@@ -18,7 +18,6 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using JMS.ServerCore;
 using JMS.HttpProxy;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -28,15 +27,13 @@ namespace JMS.Applications.CommandHandles
     class HttpRequestHandler
     {
         private readonly RequestTimeLimter _requestTimeLimter;
-        private readonly ILogger<HttpRequestHandler> _logger;
 
-        public HttpRequestHandler(RequestTimeLimter requestTimeLimter, ILogger<HttpRequestHandler> logger)
+        public HttpRequestHandler(RequestTimeLimter requestTimeLimter)
         {
             _requestTimeLimter = requestTimeLimter;
-            _logger = logger;
         }
 
-        public async Task WebSocketProxy(NetClient client, NetClient proxyClient, GatewayCommand cmd)
+        public async Task WebSocketProxy(NetClient client,NetClient proxyClient, GatewayCommand cmd)
         {
             client.ReadTimeout = 0;
             proxyClient.ReadTimeout = 0;
@@ -45,7 +42,7 @@ namespace JMS.Applications.CommandHandles
             await readSend(proxyClient, client);
         }
 
-        public string GetRemoteIpAddress(string remoteIpAddr, IDictionary<string, string> headers, string[] trustXForwardedFor)
+        public string GetRemoteIpAddress(string remoteIpAddr,IDictionary<string,string> headers, string[] trustXForwardedFor)
         {
             if (trustXForwardedFor != null && trustXForwardedFor.Length > 0 && headers.TryGetValue("X-Forwarded-For", out string x_for))
             {
@@ -64,30 +61,17 @@ namespace JMS.Applications.CommandHandles
 
         public async Task Handle(NetClient client, GatewayCommand cmd)
         {
-            var tolog = _logger.IsEnabled(LogLevel.Trace);
-            if (tolog)
-            {
-                _logger.LogTrace("收到请求");
-            }
             if (cmd.Header == null)
             {
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = await client.PipeReader.ReadHeaders(cmd.Header);
-            if (tolog)
-            {
-                _logger.LogTrace(requestPathLine);
-                _logger.LogTrace(cmd.Header.ToJsonString(true));
-            }
+            var requestPathLine = await client.PipeReader.ReadHeaders( cmd.Header);
+
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            ip = GetRemoteIpAddress(ip, cmd.Header, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>());
+            ip = GetRemoteIpAddress(ip, cmd.Header, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>() );
             if (_requestTimeLimter.OnRequesting(ip) == false)
             {
-                if (tolog)
-                {
-                    _logger.LogTrace("_requestTimeLimter没通过");
-                }
                 //输出401
                 client.KeepAlive = false;
                 client.OutputHttpCode(401, "Forbidden");
@@ -97,7 +81,7 @@ namespace JMS.Applications.CommandHandles
             if (cmd.Header.TryGetValue("Host", out string host) == false)
                 return;
 
-            var config = HttpProxyServer.ProxyConfigs.FirstOrDefault(m => string.Equals(m.Host, host, StringComparison.OrdinalIgnoreCase));
+            var config = HttpProxyServer.ProxyConfigs.FirstOrDefault(m =>string.Equals( m.Host , host, StringComparison.OrdinalIgnoreCase));
             if (config == null)
                 return;
 
@@ -107,7 +91,7 @@ namespace JMS.Applications.CommandHandles
                 int.TryParse(cmd.Header["Content-Length"], out inputContentLength);
             }
 
-
+            
             if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
             {
                 if (xff.Contains(ip) == false)
@@ -127,7 +111,7 @@ namespace JMS.Applications.CommandHandles
                 client.KeepAlive = true;
             }
 
-
+            
 
             var targetUri = new Uri(config.Target);
 
@@ -145,8 +129,7 @@ namespace JMS.Applications.CommandHandles
 
             var data = Encoding.UTF8.GetBytes(buffer.ToString());
 
-            var proxyClient = await NetClientPool.CreateClientAsync(null, new NetAddress(targetUri.Host, targetUri.Port)
-            {
+            var proxyClient = await NetClientPool.CreateClientAsync(null, new NetAddress(targetUri.Host, targetUri.Port) { 
                 UseSsl = string.Equals(targetUri.Scheme, "https", StringComparison.OrdinalIgnoreCase) || string.Equals(targetUri.Scheme, "wss", StringComparison.OrdinalIgnoreCase),
                 CertDomain = targetUri.Host
             });
@@ -184,7 +167,7 @@ namespace JMS.Applications.CommandHandles
                         }
                         else
                         {
-                            await client.ReadAndSend(proxyClient, inputContentLength);
+                            await client.ReadAndSend( proxyClient, inputContentLength);
 
                             line = await client.ReadLineAsync(512);
                             proxyClient.WriteLine(line);
