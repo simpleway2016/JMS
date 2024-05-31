@@ -104,7 +104,7 @@ namespace JMS.Applications.HttpMiddlewares
                         try
                         {
                             var uri = new Uri(pair.Value);
-                            if (uri.Host == gatewayUri.Host)
+                            if (uri.Authority == gatewayUri.Authority)
                             {
                                 strBuffer.Append($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}\r\n");
                             }
@@ -169,9 +169,19 @@ namespace JMS.Applications.HttpMiddlewares
                 strBuffer.Append(requestPathLine);
                 strBuffer.Append("\r\n");
 
+                bool addedAllowOrigin = false;
                 foreach (var pair in headers)
                 {
+                    if (!addedAllowOrigin && pair.Key == "Access-Control-Allow-Origin")
+                    {
+                        addedAllowOrigin = true;
+                    }
+
                     strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
+                }
+                if (!addedAllowOrigin)
+                {
+                    strBuffer.Append($"Access-Control-Allow-Origin: *\r\n");
                 }
 
                 strBuffer.Append("\r\n");
