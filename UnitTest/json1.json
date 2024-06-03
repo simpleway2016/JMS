@@ -27,7 +27,7 @@
             }
           ]
         }
-      },
+      }, 
       {
         "title": "Hellow2",
         "method": "POST",
