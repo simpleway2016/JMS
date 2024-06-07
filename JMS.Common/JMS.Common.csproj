@@ -7,7 +7,7 @@
 		<Authors>Jack.T</Authors>
 		<Company>JMS</Company>
 		<Product>JMS</Product>
-		<Version>3.5.1</Version>
+		<Version>3.6.0</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -20,20 +20,18 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+		<PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
+		<PackageReference Include="Way.Lib" Version="2.2.0" />
+	</ItemGroup>
 
 
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp3.1'">
-		<PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.0.0" />
-		<PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
-		<PackageReference Include="Way.Lib" Version="2.0.10.13" />
-
 	</ItemGroup>
+	
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">
-		<PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.1.1" />
-		<PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
-		<PackageReference Include="Way.Lib" Version="2.0.10.13" />
-
 	</ItemGroup>
 </Project>
