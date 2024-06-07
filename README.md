@@ -1,3 +1,4 @@
-# JMSFramework是.net core 环境下，自带分布式事务管理的开发框架
-文档地址：
-http://jms.jacktan.cn
+## JMSFramework是一个基于.NET的微服务开源框架，它可以快速构建支持分布式事务的微服务。
+
+## 文档地址：
+[http://jms.jacktan.cn](http://jms.jacktan.cn)
