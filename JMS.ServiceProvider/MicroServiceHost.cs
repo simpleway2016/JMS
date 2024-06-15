@@ -31,6 +31,7 @@ namespace JMS
     public class MicroServiceHost : IMicroServiceOption, IDisposable
     {
         bool _disposed;
+        bool _validateScopes;
         JMS.ServerCore.MulitTcpListener _tcpServer;
         public string Id { get; private set; }
         ILogger<MicroServiceHost> _logger;
@@ -330,13 +331,29 @@ namespace JMS
             return this;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="port">服务端口</param>
+        /// <param name="gatewayAddresses">网关地址</param>
+        /// <param name="validateScopes">true to perform check verifying that scoped services never gets resolved from root provider; otherwise false. Defaults to false.</param>
+        /// <returns></returns>
+        public MicroServiceHost Build(int port, NetAddress[] gatewayAddresses,bool validateScopes)
+        {
+            if (gatewayAddresses == null || gatewayAddresses.Length == 0)
+                throw new Exception("Gateway addres is empty");
+            AllGatewayAddresses = gatewayAddresses;
+            this.ServicePort = port;
+            _validateScopes = validateScopes;
+            return this;
+        }
 
         /// <summary>
         /// 运行服务
         /// </summary>
         public void Run()
         {
-            Run(_services.BuildServiceProvider());
+            Run(_services.BuildServiceProvider(_validateScopes));
         }
 
         /// <summary>
