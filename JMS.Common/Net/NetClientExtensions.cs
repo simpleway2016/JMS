@@ -11,7 +11,7 @@ using System.IO.Pipelines;
 using System.Reflection.PortableExecutable;
 using JMS.Common;
 
-namespace JMS.ServerCore
+namespace JMS
 {
     public static class NetClientExtensions
     {

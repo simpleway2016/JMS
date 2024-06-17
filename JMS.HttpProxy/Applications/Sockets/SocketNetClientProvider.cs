@@ -18,17 +18,20 @@ namespace JMS.HttpProxy.Applications.Sockets
 
         public async Task<NetClient> GetClientAsync(string target)
         {
+            var name = target;
             var index = target.IndexOf(":");
             var port = 80;
             if(index > 0)
             {
                 port = int.Parse( target.Substring(index + 1).Trim());
+                name = target.Substring(0, index);
             }
+         
 
             var client = await NetClientPool.CreateClientByKeyAsync(target);
             if(client == null)
             {
-                client = await _connectionProvider.GetConnectionAsync(target);
+                client = await _connectionProvider.GetConnectionAsync(name);
             }
 
             client.Write(port);

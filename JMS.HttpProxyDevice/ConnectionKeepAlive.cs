@@ -1,0 +1,129 @@
+﻿using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace JMS.HttpProxyDevice
+{
+    /// <summary>
+    /// 和服务器保持足够的连接数
+    /// </summary>
+    public class ConnectionKeepAlive
+    {
+        private readonly ILogger<ConnectionKeepAlive> _logger;
+        private readonly ConnectionHandler _connectionHandler;
+        int _waitingConnectionCount = 0;
+
+        public int WaitingConnectionCount => _waitingConnectionCount;
+
+        int _dataConnectionCount = 0;
+
+        public ConnectionKeepAlive(ILogger<ConnectionKeepAlive> logger , ConnectionHandler connectionHandler)
+        {
+            for(int i = 0; i < Program.Config.Current.Device.ConnectionCount; i++)
+            {
+                createConnection();
+            }
+            _logger = logger;
+            _connectionHandler = connectionHandler;
+        }
+
+        async void createConnection()
+        {
+            bool reConnect = true;
+            bool dataConnected = false;
+            Interlocked.Increment(ref _waitingConnectionCount);
+
+            try
+            {
+                using var netClient = new NetClient();
+                await netClient.ConnectAsync(Program.Config.Current.ProxyServer);
+                netClient.ReadTimeout = 0;
+
+                netClient.WriteLine(Program.Config.Current.Device.Name);
+
+                if (Program.Config.Current.Device.Password.Length > 32)
+                    Program.Config.Current.Device.Password = Program.Config.Current.Device.Password.Substring(0, 32);
+                else if (Program.Config.Current.Device.Password.Length < 32)
+                {
+                    Program.Config.Current.Device.Password = Program.Config.Current.Device.Password.PadRight(32, '0');
+                }
+
+                var content = Way.Lib.AES.Encrypt(Program.Config.Current.Device.Name, Program.Config.Current.Device.Password);
+                netClient.WriteLine(content);
+
+                //获取代理的端口
+                var port = await netClient.ReadIntAsync();
+
+                reConnect = false;
+                Interlocked.Decrement(ref _waitingConnectionCount);
+
+                createConnection();//这个连接开始处理数据，新开一个连接等候，这样可以保持等候连接的数量
+
+                dataConnected = true;
+                Interlocked.Increment(ref _dataConnectionCount);
+
+                if (Program.Config.Current.LogDetails)
+                {
+                    _logger.LogInformation($"等候连接数={_waitingConnectionCount}  数据连接数={_dataConnectionCount}");
+                }
+
+                await _connectionHandler.Handle(netClient , port);
+            }
+            catch (SocketException)
+            {
+
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
+            catch (IOException ex)
+            {
+                if (ex.HResult != -2146232800)
+                {
+                    _logger?.LogError(ex, "");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "");
+            }
+            finally
+            {
+                if (reConnect)
+                {
+                    Interlocked.Decrement(ref _waitingConnectionCount);
+                    createConnection();
+                }
+
+                if (dataConnected)
+                {
+                    Interlocked.Decrement(ref _dataConnectionCount);
+                }
+            }
+
+        }
+
+        public async Task RunAsync()
+        {
+            await Task.Delay(3000);
+            while (true)
+            {
+                if(Program.Config.Current.LogDetails)
+                {
+                    _logger.LogInformation($"等候连接数={_waitingConnectionCount}  数据连接数={_dataConnectionCount}");
+                    await Task.Delay(3000);
+                }
+                else
+                {
+                    _logger.LogInformation($"等候连接数={_waitingConnectionCount}  数据连接数={_dataConnectionCount}");
+                    await Task.Delay(60000);
+                }
+            }               
+        }
+    }
+}
