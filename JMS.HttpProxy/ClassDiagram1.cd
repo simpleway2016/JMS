@@ -71,5 +71,28 @@
       <FileName>Applications\Http\HttpRequestHandler.cs</FileName>
     </TypeIdentifier>
   </Class>
+  <Class Name="JMS.HttpProxy.Servers.SocketServer" Collapsed="true">
+    <Position X="5.75" Y="6.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAACAAAAAAAAAACAAAIAAAAAgAAAACAAAAAAI=</HashCode>
+      <FileName>Servers\SocketServer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="JMS.HttpProxy.Applications.Sockets.SocketRequestReception" Collapsed="true">
+    <Position X="8.5" Y="6.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAUAAAEAAAAAAAKAAgAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Applications\Sockets\SocketRequestReception.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="JMS.HttpProxy.Applications.Sockets.SocketNetClientProvider" Collapsed="true">
+    <Position X="11.25" Y="6.25" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAQAAJAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Applications\Sockets\SocketNetClientProvider.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
   <Font Name="Microsoft YaHei UI" Size="9" />
 </ClassDiagram>
