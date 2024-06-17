@@ -32,7 +32,4 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Applications\Http\CommandHandles\" />
-	</ItemGroup>
 </Project>
