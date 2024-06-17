@@ -57,6 +57,14 @@ namespace JMS.HttpProxyDevice
 
                 //获取代理的端口
                 var port = await netClient.ReadIntAsync();
+                if(Program.Config.Current.AllowPorts != null && Program.Config.Current.AllowPorts.Length > 0)
+                {
+                    if(Program.Config.Current.AllowPorts.Contains(port) == false)
+                    {
+                        _logger.LogInformation($"服务器访问了不允许的端口：{port}");
+                        return;
+                    }
+                }
                 if (Program.Config.Current.LogDetails)
                 {
                     _logger.LogInformation($"要求代理{port}端口");

@@ -12,6 +12,7 @@ namespace JMS.HttpProxyDevice.Dtos
         public NetAddress ProxyServer { get; set; }
         public bool LogDetails { get; set; }
         public DeviceConfig Device {  get; set; }
+        public int[] AllowPorts { get; set; }
     }
 
 
