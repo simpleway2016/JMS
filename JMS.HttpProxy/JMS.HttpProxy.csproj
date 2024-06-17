@@ -6,6 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
 	  <Version>3.2.2</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Infrastructures\**" />
+    <EmbeddedResource Remove="Infrastructures\**" />
+    <None Remove="Infrastructures\**" />
+  </ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.5" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.5" />
@@ -20,9 +26,6 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\JMS.Common\JMS.Common.csproj" />
 	  <ProjectReference Include="..\JMS.ServerCore\JMS.ServerCore.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Infrastructures\" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Update="appsettings.json">
