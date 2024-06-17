@@ -28,17 +28,19 @@ namespace JMS.HttpProxy.Applications.Http
     class HttpRequestHandler
     {
         private readonly RequestTimeLimter _requestTimeLimter;
+        private readonly NetClientProviderFactory _netClientProviderFactory;
         private readonly ILogger<HttpRequestHandler> _logger;
-        INetClientProvider _netClientProvider;
         HttpServer _httpServer;
-        public HttpRequestHandler(RequestTimeLimter requestTimeLimter, ILogger<HttpRequestHandler> logger)
+        public HttpRequestHandler(RequestTimeLimter requestTimeLimter,
+            NetClientProviderFactory netClientProviderFactory,
+            ILogger<HttpRequestHandler> logger)
         {
             _requestTimeLimter = requestTimeLimter;
+            _netClientProviderFactory = netClientProviderFactory;
             _logger = logger;
         }
-        public void SetServer(HttpServer httpServer,INetClientProvider netClientProvider)
+        public void SetServer(HttpServer httpServer)
         {
-            _netClientProvider = netClientProvider;
             _httpServer = httpServer;
         }
         public async Task WebSocketProxy(NetClient client, NetClient proxyClient, GatewayCommand cmd)
@@ -158,7 +160,8 @@ namespace JMS.HttpProxy.Applications.Http
 
             var data = Encoding.UTF8.GetBytes(buffer.ToString());
 
-            var proxyClient = await _netClientProvider.GetClientAsync(config.Target);
+            var netClientProvider = _netClientProviderFactory.GetNetClientProvider(config.Target);
+            var proxyClient = await netClientProvider.GetClientAsync(config.Target);
 
             try
             {
@@ -260,7 +263,7 @@ namespace JMS.HttpProxy.Applications.Http
 
                 if (client.KeepAlive)
                 {
-                    _netClientProvider.AddClientToPool(config.Target, proxyClient);
+                    netClientProvider.AddClientToPool(config.Target, proxyClient);
                 }
                 else
                 {

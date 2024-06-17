@@ -23,21 +23,18 @@ namespace JMS.HttpProxy.Applications.Http
         HttpRequestHandler _httpRequestHandler;
         HttpServer _httpServer;
         ILogger<HttpRequestReception> _logger;
-        private readonly HttpNetClientProvider _httpNetClientProvider;
 
         public HttpRequestReception(ILogger<HttpRequestReception> logger,
-            HttpNetClientProvider httpNetClientProvider,
             HttpRequestHandler httpRequestHandler)
         {
             _httpRequestHandler = httpRequestHandler;
             _logger = logger;
-            _httpNetClientProvider = httpNetClientProvider;
         }
 
         public void SetServer(HttpServer httpServer)
         {
             _httpServer = httpServer;
-            _httpRequestHandler.SetServer(_httpServer, _httpNetClientProvider);
+            _httpRequestHandler.SetServer(_httpServer);
         }
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)

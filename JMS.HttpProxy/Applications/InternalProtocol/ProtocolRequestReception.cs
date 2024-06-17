@@ -83,7 +83,11 @@ namespace JMS.HttpProxy.Applications.InternalProtocol
                     return;
                 }
 
-
+                if(name.Contains(":"))
+                {
+                    _logger.LogError($"{name}包含冒号");
+                    return;
+                }
                 _connectionProvider.AddConnection(name, client);
                 client = null;
             }
