@@ -19,6 +19,7 @@ using JMS.ServerCore;
 using Microsoft.Extensions.Configuration;
 using JMS.HttpProxy.Servers;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace JMS.HttpProxy.Applications.Http
 {
@@ -137,11 +138,6 @@ namespace JMS.HttpProxy.Applications.Http
                 client.KeepAlive = true;
             }
 
-
-
-            var targetUri = new Uri(config.Target);
-
-            cmd.Header["Host"] = targetUri.Authority;
 
             StringBuilder buffer = new StringBuilder();
             buffer.Append(requestPathLine);

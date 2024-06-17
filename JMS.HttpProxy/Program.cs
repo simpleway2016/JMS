@@ -20,6 +20,7 @@ using JMS.HttpProxy.Applications.InternalProtocol;
 using JMS.HttpProxy.InternalProtocol;
 using JMS.HttpProxy.Applications.Sockets;
 using JMS.HttpProxy.Applications;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace JMS
 {
@@ -30,7 +31,7 @@ namespace JMS
         internal static ConfigurationValue<AppConfig> Config;
         static void Main(string[] args)
         {
-            if(args.Length > 1&& args[0].EndsWith(".pfx") )
+            if (args.Length > 1&& args[0].EndsWith(".pfx") )
             {
                 var cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(args[0], args[1]);
                 Console.WriteLine(cert.GetCertHashString());

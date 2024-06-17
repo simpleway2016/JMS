@@ -64,6 +64,34 @@ Content-Length: 0
             client.Dispose();
         }
 
+
+        [TestMethod]
+        public void ProxyClientTest2()
+        {
+            var client = new JMS.NetClient();
+            client.Connect(new JMS.NetAddress("124.222.79.197", 8988));
+
+            for (int i = 0; i < 10000; i++)
+            {
+                var content = @"GET / HTTP/1.1
+Host: localhost:5175
+Connection: keep-alive
+User-Agent: JmsInvoker
+Accept: text/html
+Accept-Encoding: deflate, br
+Accept-Language: zh-CN,zh;q=0.9
+Content-Length: 0
+
+";
+                client.Write(Encoding.UTF8.GetBytes(content));
+
+                byte[] data = new byte[40960];
+                 client.ReadData(data, 0, 679);
+                var text = Encoding.UTF8.GetString(data, 0, 679);
+            }
+            client.Dispose();
+        }
+
         [TestMethod]
         public void ProxyClientAsyncTest()
         {
