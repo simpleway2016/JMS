@@ -22,6 +22,7 @@ namespace JMS.HttpProxy.InternalProtocol
 
         public void AddConnection(string name, NetClient client)
         {
+            client.KeepAlive = true;
             if (_connections.TryGetValue(name, out ConcurrentQueue<NetClient> queue) == false)
             {
                 queue = _connections.GetOrAdd(name, s => new ConcurrentQueue<NetClient>());
