@@ -94,30 +94,6 @@ namespace JMS.Applications.HttpMiddlewares
                         continue;
                     else if (pair.Key == "TranFlag")
                         continue;
-                    else if (pair.Key == "Host")
-                    {
-                        strBuffer.Append($"Host: {hostUri.Authority}\r\n");
-                        strBuffer.Append($"Original-Host: {pair.Value}\r\n");
-                    }
-                    else if (pair.Key == "Origin")
-                    {
-                        try
-                        {
-                            var uri = new Uri(pair.Value);
-                            if (uri.Authority == gatewayUri.Authority)
-                            {
-                                strBuffer.Append($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}\r\n");
-                            }
-                            else
-                            {
-                                strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
-                            }
-                        }
-                        catch
-                        {
-                            strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
-                        }
-                    }
                     else
                     {
                         strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
