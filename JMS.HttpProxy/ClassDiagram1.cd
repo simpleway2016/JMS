@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="JMS.HttpProxy.Servers.ProxyServer" Collapsed="true">
+    <Position X="3" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAQACAAAAAAI=</HashCode>
+      <FileName>Servers\ProxyServer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="JMS.HttpProxy.Servers.ProxyServerFactory">
+    <Position X="0.75" Y="0.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAgAAA=</HashCode>
+      <FileName>Servers\ProxyServerFactory.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="JMS.HttpProxy.Servers.HttpServer" Collapsed="true">
+    <Position X="5.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAACAAAAAAAAAACAAAIAAAAAgAAAACAEAAAAI=</HashCode>
+      <FileName>Servers\HttpServer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="JMS.HttpProxy.Servers.InternalProtocolServer" Collapsed="true">
+    <Position X="5.75" Y="2.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAACAAAAAAAAAACAAAIAAAAAgAAAACAAAAAAI=</HashCode>
+      <FileName>Servers\InternalProtocolServer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="JMS.HttpProxy.Applications.InternalProtocol.ProtocolRequestReception" Collapsed="true">
+    <Position X="8.5" Y="2.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAUAAAEAAAAgAAKAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Applications\InternalProtocol\ProtocolRequestReception.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="JMS.HttpProxy.Applications.Http.HttpRequestReception" Collapsed="true">
+    <Position X="7.5" Y="1" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEAAAEAQAAAAAKAAAAAAAAAAAgAAAQAA=</HashCode>
+      <FileName>Applications\Http\HttpRequestReception.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="JMS.HttpProxy.InternalProtocol.InternalConnectionProvider" Collapsed="true">
+    <Position X="11.25" Y="2.25" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAAAAAAAAAAIAEAAAAAAAAAAAAABAA=</HashCode>
+      <FileName>InternalProtocol\InternalConnectionProvider.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="JMS.HttpProxy.Applications.Http.HttpNetClientProvider" Collapsed="true">
+    <Position X="10.25" Y="1" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Applications\Http\HttpNetClientProvider.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Font Name="Microsoft YaHei UI" Size="9" />
+</ClassDiagram>

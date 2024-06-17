@@ -16,10 +16,11 @@ using System.Net;
 using System.Buffers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using JMS.ServerCore;
-using JMS.HttpProxy;
 using Microsoft.Extensions.Configuration;
+using JMS.HttpProxy.Servers;
+using Microsoft.Extensions.Logging;
 
-namespace JMS.Applications.CommandHandles
+namespace JMS.HttpProxy.Applications.Http
 {
     /// <summary>
     /// 处理http请求
@@ -27,13 +28,20 @@ namespace JMS.Applications.CommandHandles
     class HttpRequestHandler
     {
         private readonly RequestTimeLimter _requestTimeLimter;
-
-        public HttpRequestHandler(RequestTimeLimter requestTimeLimter)
+        private readonly ILogger<HttpRequestHandler> _logger;
+        INetClientProvider _netClientProvider;
+        HttpServer _httpServer;
+        public HttpRequestHandler(RequestTimeLimter requestTimeLimter, ILogger<HttpRequestHandler> logger)
         {
             _requestTimeLimter = requestTimeLimter;
+            _logger = logger;
         }
-
-        public async Task WebSocketProxy(NetClient client,NetClient proxyClient, GatewayCommand cmd)
+        public void SetServer(HttpServer httpServer,INetClientProvider netClientProvider)
+        {
+            _netClientProvider = netClientProvider;
+            _httpServer = httpServer;
+        }
+        public async Task WebSocketProxy(NetClient client, NetClient proxyClient, GatewayCommand cmd)
         {
             client.ReadTimeout = 0;
             proxyClient.ReadTimeout = 0;
@@ -42,18 +50,24 @@ namespace JMS.Applications.CommandHandles
             await readSend(proxyClient, client);
         }
 
-        public string GetRemoteIpAddress(string remoteIpAddr,IDictionary<string,string> headers, string[] trustXForwardedFor)
+        public string GetRemoteIpAddress(string remoteIpAddr, IDictionary<string, string> headers, string[] trustXForwardedFor)
         {
             if (trustXForwardedFor != null && trustXForwardedFor.Length > 0 && headers.TryGetValue("X-Forwarded-For", out string x_for))
             {
-                var x_forArr = x_for.Split(',').Select(m => m.Trim()).Where(m => m.Length > 0).ToArray();
-                for (int i = 0; i < x_forArr.Length; i++)
+                if (trustXForwardedFor.Contains(remoteIpAddr))
                 {
-                    var ip = x_forArr[i];
-                    if (trustXForwardedFor.Contains(ip) && i > 0)
-                        return x_forArr[i - 1];
+                    var x_forArr = x_for.Split(',').Select(m => m.Trim()).Where(m => m.Length > 0).ToArray();
+                    for (int i = x_forArr.Length - 1; i >= 0; i--)
+                    {
+                        var ip = x_forArr[i];
+                        if (trustXForwardedFor.Contains(ip) == false)
+                            return ip;
+                    }
                 }
-
+                else
+                {
+                    return remoteIpAddr;
+                }
             }
 
             return remoteIpAddr;
@@ -66,12 +80,22 @@ namespace JMS.Applications.CommandHandles
                 cmd.Header = new Dictionary<string, string>();
             }
 
-            var requestPathLine = await client.PipeReader.ReadHeaders( cmd.Header);
+            var requestPathLine = await client.PipeReader.ReadHeaders(cmd.Header);
+
+            if (HttpProxyProgram.Config.Current.LogDetails)
+            {
+                _logger.LogInformation($"{requestPathLine}\r\n{cmd.Header.ToJsonString(true)}");
+            }
 
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            ip = GetRemoteIpAddress(ip, cmd.Header, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>() );
+            ip = GetRemoteIpAddress(ip, cmd.Header, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>());
             if (_requestTimeLimter.OnRequesting(ip) == false)
             {
+                if (HttpProxyProgram.Config.Current.LogDetails)
+                {
+                    _logger.LogInformation($"{ip}访问次数太多，被拒绝访问.");
+                }
+
                 //输出401
                 client.KeepAlive = false;
                 client.OutputHttpCode(401, "Forbidden");
@@ -81,7 +105,7 @@ namespace JMS.Applications.CommandHandles
             if (cmd.Header.TryGetValue("Host", out string host) == false)
                 return;
 
-            var config = HttpProxyServer.ProxyConfigs.FirstOrDefault(m =>string.Equals( m.Host , host, StringComparison.OrdinalIgnoreCase));
+            var config = _httpServer.Config.Proxies.FirstOrDefault(m => string.Equals(m.Host, host, StringComparison.OrdinalIgnoreCase));
             if (config == null)
                 return;
 
@@ -91,7 +115,7 @@ namespace JMS.Applications.CommandHandles
                 int.TryParse(cmd.Header["Content-Length"], out inputContentLength);
             }
 
-            
+
             if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
             {
                 if (xff.Contains(ip) == false)
@@ -111,7 +135,7 @@ namespace JMS.Applications.CommandHandles
                 client.KeepAlive = true;
             }
 
-            
+
 
             var targetUri = new Uri(config.Target);
 
@@ -127,12 +151,14 @@ namespace JMS.Applications.CommandHandles
             }
             buffer.Append("\r\n");
 
+            if (HttpProxyProgram.Config.Current.LogDetails)
+            {
+                _logger.LogInformation($"发送至目的地：\r\n{buffer}");
+            }
+
             var data = Encoding.UTF8.GetBytes(buffer.ToString());
 
-            var proxyClient = await NetClientPool.CreateClientAsync(null, new NetAddress(targetUri.Host, targetUri.Port) { 
-                UseSsl = string.Equals(targetUri.Scheme, "https", StringComparison.OrdinalIgnoreCase) || string.Equals(targetUri.Scheme, "wss", StringComparison.OrdinalIgnoreCase),
-                CertDomain = targetUri.Host
-            });
+            var proxyClient = await _netClientProvider.GetClientAsync(config.Target);
 
             try
             {
@@ -167,7 +193,7 @@ namespace JMS.Applications.CommandHandles
                         }
                         else
                         {
-                            await client.ReadAndSend( proxyClient, inputContentLength);
+                            await client.ReadAndSend(proxyClient, inputContentLength);
 
                             line = await client.ReadLineAsync(512);
                             proxyClient.WriteLine(line);
@@ -178,6 +204,12 @@ namespace JMS.Applications.CommandHandles
                 //读取服务器发回来的头部
                 cmd.Header.Clear();
                 requestPathLine = await proxyClient.PipeReader.ReadHeaders(cmd.Header);
+
+                if (HttpProxyProgram.Config.Current.LogDetails)
+                {
+                    _logger.LogInformation($"接收回来的头部：\r\n{cmd.Header.ToJsonString(true)}");
+                }
+
                 inputContentLength = 0;
                 if (cmd.Header.ContainsKey("Content-Length"))
                 {
@@ -228,7 +260,7 @@ namespace JMS.Applications.CommandHandles
 
                 if (client.KeepAlive)
                 {
-                    NetClientPool.AddClientToPool(proxyClient);
+                    _netClientProvider.AddClientToPool(config.Target, proxyClient);
                 }
                 else
                 {

@@ -11,24 +11,33 @@ using System.Text;
 using System.Web;
 using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
-using JMS.Applications.CommandHandles;
 using System.Threading.Tasks;
 using System.Net;
 using System.Security.Authentication;
+using JMS.HttpProxy.Servers;
 
-namespace JMS.Applications
+namespace JMS.HttpProxy.Applications.Http
 {
-    class RequestReception : IRequestReception
+    class HttpRequestReception 
     {
-        HttpProxyServer _webApi;
         HttpRequestHandler _httpRequestHandler;
-        ILogger<RequestReception> _logger;
-        public RequestReception(ILogger<RequestReception> logger, HttpProxyServer webApi,
+        HttpServer _httpServer;
+        ILogger<HttpRequestReception> _logger;
+        private readonly HttpNetClientProvider _httpNetClientProvider;
+
+        public HttpRequestReception(ILogger<HttpRequestReception> logger,
+            HttpNetClientProvider httpNetClientProvider,
             HttpRequestHandler httpRequestHandler)
         {
-            this._webApi = webApi;
-            this._httpRequestHandler = httpRequestHandler;
+            _httpRequestHandler = httpRequestHandler;
             _logger = logger;
+            _httpNetClientProvider = httpNetClientProvider;
+        }
+
+        public void SetServer(HttpServer httpServer)
+        {
+            _httpServer = httpServer;
+            _httpRequestHandler.SetServer(_httpServer, _httpNetClientProvider);
         }
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
@@ -47,9 +56,9 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
-                    if (_webApi.ServerCert != null)
+                    if (_httpServer.Certificate != null)
                     {
-                        await client.AsSSLServerAsync(_webApi.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), SslProtocols.None);
+                        await client.AsSSLServerAsync(_httpServer.Certificate, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), SslProtocols.None);
 
                     }
 
@@ -67,7 +76,7 @@ namespace JMS.Applications
                     await Task.Delay(2000);
                 }
             }
-            catch(SocketException)
+            catch (SocketException)
             {
 
             }
@@ -75,19 +84,19 @@ namespace JMS.Applications
             {
 
             }
-            catch (System.IO.IOException ex)
+            catch (IOException ex)
             {
-                if(ex.HResult != -2146232800)
+                if (ex.HResult != -2146232800)
                 {
-                    _logger?.LogError(ex, ex.Message);
+                    _logger?.LogError(ex, "");
                 }
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, ex.Message);
+                _logger?.LogError(ex, "");
             }
 
-           
+
         }
     }
 }

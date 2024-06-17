@@ -129,6 +129,14 @@ namespace JMS
 
             return freeitem;
         }
+
+        public static async Task<NetClient> CreateClientByKeyAsync(string key, Func<NetClient, Task> newClientCallback = null)
+        {
+            var keyObj = (key, 0);
+            var freeitem = SeatCollection.GetFree(keyObj);
+           
+            return freeitem;
+        }
         public static void AddClientToPool(NetClient client)
         {
             if (client == null)
@@ -147,6 +155,25 @@ namespace JMS
             var key = (client.NetAddress.Address, client.NetAddress.Port);
 
             SeatCollection.AddClient(key , client);
+        }
+        public static void AddClientToPoolByKey(NetClient client,string key)
+        {
+            if (client == null)
+                return;
+
+            if (client.HasSocketException)
+            {
+                client.Dispose();
+                return;
+            }
+            if (!client.KeepAlive)
+            {
+                client.Dispose();
+                return;
+            }
+            var keyObj = (key, 0);
+
+            SeatCollection.AddClient(keyObj, client);
         }
 
 

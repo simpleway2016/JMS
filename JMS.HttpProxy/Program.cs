@@ -10,11 +10,15 @@ using System.Net.Security;
 using System.Linq;
 using JMS.Common;
 using System.Diagnostics;
-using JMS.Applications;
 using System.Threading;
 using System.IO;
-using JMS.Applications.CommandHandles;
 using JMS.HttpProxy;
+using JMS.HttpProxy.Dtos;
+using JMS.HttpProxy.Servers;
+using JMS.HttpProxy.Applications.Http;
+using JMS.HttpProxy.Applications.InternalProtocol;
+using JMS.HttpProxy.InternalProtocol;
+using JMS.HttpProxy.Applications.Sockets;
 
 namespace JMS
 {
@@ -22,6 +26,7 @@ namespace JMS
     {
         internal static string AppSettingPath;
         internal static IConfiguration Configuration;
+        internal static ConfigurationValue<AppConfig> Config;
         static void Main(string[] args)
         {
             if(args.Length > 1&& args[0].EndsWith(".pfx") )
@@ -58,15 +63,12 @@ namespace JMS
 
             builder.AddJsonFile(AppSettingPath, optional: true, reloadOnChange: true);
             Configuration = builder.Build();
+            Config = Configuration.GetNewest<AppConfig>();
 
-            var port = Configuration.GetValue<int>("Port");
-            
-            port = cmdArg.TryGetValue<int>("-p", port);
-
-            Run(Configuration,port,out HttpProxyServer webapiInstance);
+            Run(Configuration);
         }
 
-        public static void Run(IConfiguration configuration,int port,out HttpProxyServer webapiInstance)
+        public static void Run(IConfiguration configuration)
         {
             ServiceCollection services = new ServiceCollection();
             services.AddLogging(loggingBuilder =>
@@ -75,25 +77,32 @@ namespace JMS
                 loggingBuilder.AddConsole(); // 将日志输出到控制台
             });
             services.AddSingleton<IConfiguration>(configuration);
-            services.AddSingleton<IRequestReception, RequestReception>();
-            services.AddSingleton<HttpRequestHandler>();
-            services.AddSingleton<HttpProxyServer>();
-            services.AddSingleton<RequestTimeLimter>();
-          
+            services.AddTransient<HttpRequestReception>();
+            services.AddTransient<HttpRequestHandler>();
+            services.AddTransient<ProtocolRequestReception>();
+            services.AddTransient<RequestTimeLimter>();
+            services.AddTransient<BlackList>();
+            services.AddSingleton<ProxyServerFactory>();
+            services.AddSingleton<InternalConnectionProvider>();
+
+            services.AddSingleton<HttpNetClientProvider>();
+            services.AddSingleton<SocketNetClientProvider>();
+
             var serviceProvider = services.BuildServiceProvider();
 
-            var server = serviceProvider.GetService<HttpProxyServer>();
+            var logger = serviceProvider.GetService<ILogger<HttpProxyProgram>>();
+            logger.LogInformation($"版本号：{typeof(HttpProxyProgram).Assembly.GetName().Version}");
+            logger?.LogInformation("配置文件:{0}", HttpProxyProgram.AppSettingPath);
 
-            //SSL
-            var certPath = configuration.GetValue<string>("SSL:Cert");
-            if (!string.IsNullOrEmpty(certPath))
+            var proxyServerFactory = serviceProvider.UseProxyServerFactory();
+            var servers = proxyServerFactory.ProxyServers;
+
+            foreach( var server in servers.Skip(1))
             {
-                server.ServerCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, configuration.GetValue<string>("SSL:Password"));
+                new Thread(server.Run).Start();
             }
 
-            server.ServiceProvider = serviceProvider;
-            webapiInstance = server;
-            server.Run(port);
+            servers.FirstOrDefault()?.Run();
         }
 
     }
