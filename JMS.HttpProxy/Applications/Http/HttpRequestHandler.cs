@@ -263,6 +263,7 @@ namespace JMS.HttpProxy.Applications.Http
 
                 if (client.KeepAlive)
                 {
+                    proxyClient.KeepAlive = true;
                     netClientProvider.AddClientToPool(config.Target, proxyClient);
                 }
                 else

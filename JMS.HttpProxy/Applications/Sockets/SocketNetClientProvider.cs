@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -29,12 +30,12 @@ namespace JMS.HttpProxy.Applications.Sockets
          
 
             var client = await NetClientPool.CreateClientByKeyAsync(target);
+
             if(client == null)
             {
                 client = await _connectionProvider.GetConnectionAsync(name);
+                client.Write(port);
             }
-
-            client.Write(port);
 
             return client;
         }

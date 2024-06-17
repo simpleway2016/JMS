@@ -222,6 +222,7 @@ namespace JMS.Applications.HttpMiddlewares
 
                 if (client.KeepAlive)
                 {
+                    proxyClient.KeepAlive = true;
                     NetClientPool.AddClientToPool(proxyClient);
                 }
                 else

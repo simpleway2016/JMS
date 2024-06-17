@@ -20,5 +20,7 @@ namespace JMS.HttpProxyDevice
 
             await client.ReadAndSendForLoop(proxyClient);
         }
+
+
     }
 }

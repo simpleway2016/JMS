@@ -57,6 +57,10 @@ namespace JMS.HttpProxyDevice
 
                 //获取代理的端口
                 var port = await netClient.ReadIntAsync();
+                if (Program.Config.Current.LogDetails)
+                {
+                    _logger.LogInformation($"要求代理{port}端口");
+                }
 
                 reConnect = false;
                 Interlocked.Decrement(ref _waitingConnectionCount);
@@ -75,11 +79,9 @@ namespace JMS.HttpProxyDevice
             }
             catch (SocketException)
             {
-
             }
             catch (OperationCanceledException)
             {
-
             }
             catch (IOException ex)
             {
