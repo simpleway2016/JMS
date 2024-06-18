@@ -3,6 +3,7 @@ using Org.BouncyCastle.Asn1.IsisMtt.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,6 +37,8 @@ namespace JMS.HttpProxy.Dtos
     {
         public string Cert { get; set; }
         public string Password { get; set; }
+        public SslProtocols SslProtocol { get; set; } = SslProtocols.None;
+
         X509Certificate2 _Certificate;
         public X509Certificate2 Certificate
         {

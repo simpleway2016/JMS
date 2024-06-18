@@ -54,8 +54,8 @@ namespace JMS.HttpProxy.Applications.Http
                 using (var client = new NetClient(socket))
                 {
                     if (_httpServer.Certificate != null)
-                    {
-                        await client.AsSSLServerAsync(_httpServer.Certificate, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), SslProtocols.None);
+                    {                        
+                        await client.AsSSLServerAsync(_httpServer.Certificate, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _httpServer.Config.SSL.SslProtocol);
 
                     }
 
