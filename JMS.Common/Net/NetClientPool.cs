@@ -224,6 +224,7 @@ namespace JMS
                         item.Used = 0;
                         try
                         {
+                            //这个判断一般无用，还得看RELEASESECONDS
                             ret.Socket.Send(new byte[0]);
                         }
                         catch (SocketException)
