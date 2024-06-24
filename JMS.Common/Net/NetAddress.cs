@@ -12,18 +12,18 @@ namespace JMS
         }
         public NetAddress(string addr ,int port)
         {
-            this.Address = addr;
+            this.Address = addr?.Trim();
             this.Port = port;
         }
         public NetAddress(string addr, int port,bool useSsl)
         {
-            this.Address = addr;
+            this.Address = addr?.Trim();
             this.Port = port;
             this.UseSsl = useSsl;
         }
         public NetAddress(string addr, int port, X509Certificate2  certificate)
         {
-            this.Address = addr;
+            this.Address = addr?.Trim();
             this.Port = port;
             this.UseSsl = certificate != null?true:false;
             this.Certificate = certificate;
