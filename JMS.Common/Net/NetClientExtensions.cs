@@ -178,6 +178,44 @@ namespace JMS
             }
         }
 
-       
+
+        public static async Task ReadAndSendForLoop(this Socket readSocket, Socket writeSocket, Action<byte[],int> callback = null)
+        {
+            int ret;
+            int towrite;
+            int offset;
+            var buffer = ArrayPool<byte>.Shared.Rent(4096);
+            var data = new Memory<byte>(buffer);
+            try
+            {
+                while (true)
+                {
+                    ret = await readSocket.ReceiveAsync(data, SocketFlags.None);
+                    if(ret <= 0)
+                    {
+                        break;
+                    }
+                    callback?.Invoke(buffer, ret);
+                    towrite = ret;
+                    offset = 0;
+                    while (towrite > 0)
+                    {
+                        ret = writeSocket.Send(buffer, offset , towrite, SocketFlags.None);
+                        towrite -= ret;
+                        offset += ret;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+                readSocket.Dispose();
+                writeSocket.Dispose();
+            }
+        }
     }
 }

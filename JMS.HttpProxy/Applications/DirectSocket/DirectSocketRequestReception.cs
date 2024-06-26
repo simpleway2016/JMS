@@ -33,8 +33,7 @@ namespace JMS.HttpProxy.Applications.DirectSocket
         {
           
             try
-            {
-                using var client = new NetClient(socket);
+            { 
                 using var proxyClient = new NetClient();
 
                 var arr = _socketServer.Config.Proxies[0].Target.Split(':');
@@ -44,12 +43,13 @@ namespace JMS.HttpProxy.Applications.DirectSocket
 
                 await proxyClient.ConnectAsync(new NetAddress(arr[0] , port));
 
-                client.ReadTimeout = 0;
+                _logger.LogDebug($"连接{((IPEndPoint)proxyClient.Socket.RemoteEndPoint).Address}, {((IPEndPoint)proxyClient.Socket.RemoteEndPoint).AddressFamily}");
+                socket.ReceiveTimeout = 0;
                 proxyClient.ReadTimeout = 0;
 
-                proxyClient.ReadAndSendForLoop(client);
+                proxyClient.Socket.ReadAndSendForLoop(socket);
 
-                await client.ReadAndSendForLoop(proxyClient);
+                await socket.ReadAndSendForLoop(proxyClient.Socket);
             }
             catch (SocketException)
             {
