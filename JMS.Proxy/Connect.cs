@@ -137,40 +137,17 @@ namespace JMS.Proxy
                 await Task.Delay(2000);
                 return;
             }
-
+            _logger.LogDebug($"连接{_header.Address}:{_header.Port}");
             _targetClient = new NetClient();
             await _targetClient.ConnectAsync(new NetAddress(_header.Address, _header.Port));
             _targetClient.ReadTimeout = 0;
             _client.ReadTimeout = 0;
 
-            readWrite(_targetClient, _client);
+            _targetClient.ReadAndSendForLoop(_client);
 
-            await readWrite(_client, _targetClient);
-           
-        }
+            await _client.ReadAndSendForLoop(_targetClient);
 
-        async Task readWrite(NetClient readClient,NetClient writeClient)
-        {
-            try
-            {
-                byte[] buffer = new byte[40960];
-                int len;
-                while (true)
-                {
-                    len = await readClient.InnerStream.ReadAsync(buffer, 0, buffer.Length);
-                    if (len <= 0)
-                        break;
-                    writeClient.InnerStream.Write(buffer, 0, len);
-                }
-            }
-            catch
-            {
-            }
-            finally
-            {
-                readClient.Dispose();
-                writeClient.Dispose();
-            }
+
         }
 
     }
