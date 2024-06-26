@@ -21,6 +21,7 @@ using JMS.HttpProxy.InternalProtocol;
 using JMS.HttpProxy.Applications.Sockets;
 using JMS.HttpProxy.Applications;
 using static Org.BouncyCastle.Math.EC.ECCurve;
+using JMS.HttpProxy.Applications.DirectSocket;
 
 namespace JMS
 {
@@ -83,6 +84,7 @@ namespace JMS
             services.AddTransient<HttpRequestHandler>();
             services.AddTransient<ProtocolRequestReception>();
             services.AddTransient<SocketRequestReception>();
+            services.AddTransient<DirectSocketRequestReception>();
             services.AddTransient<RequestTimeLimter>();
             services.AddTransient<BlackList>();
             services.AddSingleton<ProxyServerFactory>();

@@ -63,8 +63,10 @@ namespace JMS.HttpProxy.Dtos
     {
         None = 0,
         Http = 1,
-        Socket = 2,
+        Socket = 2,       
         InternalProtocol = 3,
+        //直接把数据转发到目标地址
+        DirectSocket = 4
     }
 
 }
