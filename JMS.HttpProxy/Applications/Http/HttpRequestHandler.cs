@@ -85,10 +85,7 @@ namespace JMS.HttpProxy.Applications.Http
 
             var requestPathLine = await client.PipeReader.ReadHeaders(cmd.Header);
 
-            if (HttpProxyProgram.Config.Current.LogDetails)
-            {
-                _logger.LogInformation($"{requestPathLine}\r\n{cmd.Header.ToJsonString(true)}");
-            }
+            
 
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
             ip = GetRemoteIpAddress(ip, cmd.Header, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>());
@@ -143,9 +140,33 @@ namespace JMS.HttpProxy.Applications.Http
             buffer.Append(requestPathLine);
             buffer.Append("\r\n");
 
+            Uri target_uri = null;
+            if(config.ChangeHostHeader && config.Target.StartsWith("http://") || config.Target.StartsWith("https://"))
+            {
+                target_uri = new Uri(config.Target);
+            }
             foreach (var pair in cmd.Header)
             {
-                buffer.Append($"{pair.Key}: {pair.Value}\r\n");
+                if (config.ChangeHostHeader && target_uri != null && pair.Key == "Host")
+                {
+                    buffer.Append($"{pair.Key}: {target_uri.Authority}\r\n");
+                }
+                else if (config.ChangeHostHeader && target_uri != null && pair.Key == "Origin")
+                {
+                    var origin_uri = new Uri(pair.Value);
+                    if (origin_uri.Authority == config.Host)
+                    {
+                        buffer.Append($"{pair.Key}: {origin_uri.Scheme}://{target_uri.Authority}{origin_uri.PathAndQuery}\r\n");
+                    }
+                    else
+                    {
+                        buffer.Append($"{pair.Key}: {pair.Value}\r\n");
+                    }
+                }
+                else
+                {
+                    buffer.Append($"{pair.Key}: {pair.Value}\r\n");
+                }
             }
             buffer.Append("\r\n");
 
@@ -204,9 +225,10 @@ namespace JMS.HttpProxy.Applications.Http
                 cmd.Header.Clear();
                 requestPathLine = await proxyClient.PipeReader.ReadHeaders(cmd.Header);
 
+
                 if (HttpProxyProgram.Config.Current.LogDetails)
                 {
-                    _logger.LogInformation($"接收回来的头部：\r\n{cmd.Header.ToJsonString(true)}");
+                    _logger.LogInformation($"接收回来的头部：\r\n{requestPathLine}\r\n{cmd.Header.ToJsonString(true)}");
                 }
 
                 inputContentLength = 0;
