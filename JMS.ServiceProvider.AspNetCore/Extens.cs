@@ -66,6 +66,14 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection RegisterJmsService(this IServiceCollection services, string webServerUrl, string serviceName,string description, NetAddress[] gateways, bool allowGatewayProxy = false, Action<IMicroServiceOption> configOption = null, Action<SSLConfiguration> sslConfig = null)
         {
+            try
+            {
+                var uri = new Uri(webServerUrl);
+            }
+            catch (Exception)
+            {
+                throw new InvalidOperationException($"{webServerUrl}不是有效的url地址");
+            }
             MicroServiceHost host = null;
             if (Hosts.ContainsKey(services) == false)
             {
