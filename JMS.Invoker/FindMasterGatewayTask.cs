@@ -18,7 +18,6 @@ namespace JMS
         private readonly int _timeout;
         private readonly NetAddress _proxyAddr;
         int _done = 0;
-        NetAddress _masterGateway;
         /// <summary>
         /// 0 waiting  1=success 2=error  3=tobeSuccess
         /// </summary>
@@ -33,8 +32,9 @@ namespace JMS
             _proxyAddr = proxyAddr;
         }
 
-        public async ValueTask<NetAddress> GetMasterAsync()
+        public async Task<NetAddress> GetMasterAsync()
         {            
+            var taskCompletionSource = new TaskCompletionSource<NetAddress>();
             var totalCount = _gatewayAddrs.Length;
 
             foreach (var addr in _gatewayAddrs)
@@ -42,28 +42,16 @@ namespace JMS
                 if (_status == 1)
                     break;
 
-                tryConnect(addr, totalCount);
+                tryConnect(addr, totalCount , taskCompletionSource);
 
             }
 
-            while (_status == 0)
-                await Task.Delay(10);
-
-            if (_status == 2)
-                throw new MissMasterGatewayException("无法找到主网关");
-
-            while (_status == 3)
-                await Task.Delay(10);
-
-            var ret = _masterGateway;
-            _masterGateway = null;
-
-            return ret;
+            return await taskCompletionSource.Task;
         }
 
 
 
-        async void tryConnect(NetAddress addr, int totalCount)
+        async void tryConnect(NetAddress addr, int totalCount, TaskCompletionSource<NetAddress> taskCompletionSource)
         {
             NetClient client = null;
             try
@@ -77,13 +65,13 @@ namespace JMS
                 var ret = await client.ReadServiceObjectAsync<InvokeResult<FindMasterResult>>();
                 NetClientPool.AddClientToPool(client);
 
-                if (ret.Success == true && _masterGateway == null)
+                if (ret.Success == true)
                 {
                     if (Interlocked.CompareExchange(ref _status, 3, 0) == 0)
                     {
                         SupportRemoteConnection = ret.Data != null && ret.Data.SupportRetmoteClientConnect;
-                        _masterGateway = addr;
-
+                   
+                        taskCompletionSource.TrySetResult(addr);
                         _status = 1;
                     }
                 }
@@ -99,7 +87,7 @@ namespace JMS
 
                 if (_lastError != null && ret == totalCount)
                 {
-                    Interlocked.CompareExchange(ref _status, 2, 0);
+                    taskCompletionSource.TrySetException(new MissMasterGatewayException("无法找到主网关"));
                 }
             }
         }
