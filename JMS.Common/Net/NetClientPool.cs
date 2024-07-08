@@ -27,7 +27,7 @@ namespace JMS
         public static event EventHandler<NetClient> CreatedNewClient;
 
         /// <summary>
-        /// 设置连接池大小（默认为50000）
+        /// 设置连接池大小（默认为65535）
         /// </summary>
         /// <param name="size"></param>
         public static void SetConnectionPoolSize(int size)
