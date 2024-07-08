@@ -17,6 +17,7 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using JMS.Token;
 using Way.Lib;
+using System.Collections.Concurrent;
 
 namespace UnitTest
 {
@@ -31,7 +32,51 @@ namespace UnitTest
             tokenClient.Verify(token);
         }
 
-      
+        class NetClientSeatCollection
+        {
+            public event EventHandler Init;
+            int _state = 0;//0=未初始化 1=准备初始化 2=初始化完毕
+
+            public void init()
+            {
+                if (_state == 2)
+                    return;
+                if (Interlocked.CompareExchange(ref _state, 1, 0) == 0)
+                {
+                    Init(this, null);
+                    _state = 2;
+                }
+                else
+                {
+                    while (_state != 2)
+                        Thread.Sleep(10);
+                }
+            }
+
+        }
+
+        [TestMethod]
+        public void test22()
+        {
+            int count = 0;
+            ConcurrentDictionary<(string, int), NetClientSeatCollection> dict = new ConcurrentDictionary<(string, int), NetClientSeatCollection>();
+
+            Parallel.For(0, 100, index => { 
+                for(int i = 0; i < 10; i ++)
+                {
+                    var key = ("abc", i);
+                    var list = dict.GetOrAdd(key, s => new NetClientSeatCollection());
+
+                    list.Init += (s2, e) => {
+                        Interlocked.Increment(ref count);
+                    };
+                    list.init();
+                }
+            });
+
+            Assert.AreEqual(dict.Count, 10);
+            Assert.AreEqual(count, 10);
+        }
 
         [TestMethod]
         public void Test()

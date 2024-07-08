@@ -51,7 +51,7 @@ namespace UnitTest
                 try
                 {
                     var client = new NetClient();
-                    client.Connect(new NetAddress( "127.0.0.1", _gateWayPort));
+                    client.Connect(new NetAddress("127.0.0.1", _gateWayPort));
                     client.Dispose();
 
                     break;
@@ -251,7 +251,7 @@ namespace UnitTest
             Memory<byte> memory2 = new Memory<byte>(new byte[100]);
             await Task.Delay(1000);
             cancelsource.Cancel();
-            var len2 = await socket.ReceiveAsync(memory2, SocketFlags.None); 
+            var len2 = await socket.ReceiveAsync(memory2, SocketFlags.None);
             Debug.WriteLine($"收到" + len2 + "  " + Process.GetCurrentProcess().Threads.Count + "," + ThreadPool.PendingWorkItemCount);
             socket.Dispose();
         }
@@ -259,7 +259,7 @@ namespace UnitTest
         async void handleSocket(Socket socket)
         {
             Memory<byte> memory = new Memory<byte>(new byte[1]);
-           
+
             var cancelsource = new CancellationTokenSource();
             rec2(socket, cancelsource);
             try
@@ -268,7 +268,7 @@ namespace UnitTest
             }
             catch (Exception ex)
             {
- 
+
             }
 
 
@@ -280,9 +280,10 @@ namespace UnitTest
             ThreadPool.SetMinThreads(10000, 500);
             var tcpServer = new TcpListener(9000);
             tcpServer.Start();
-            Task.Run(() => {
-               
-              
+            Task.Run(() =>
+            {
+
+
                 while (true)
                 {
                     var socket = tcpServer.AcceptSocket();
@@ -291,7 +292,8 @@ namespace UnitTest
             });
 
             Thread.Sleep(1000);
-            Parallel.For(0, 100000, index => {
+            Parallel.For(0, 100000, index =>
+            {
                 try
                 {
                     using var client = new NetClient();
@@ -300,9 +302,9 @@ namespace UnitTest
                     client.Write(new byte[] { 0x1, 0x2 });
                     Thread.Sleep(200);
                 }
-                catch(SocketException ex)
+                catch (SocketException ex)
                 {
-                    if(ex.ErrorCode != 10061)
+                    if (ex.ErrorCode != 10061)
                     {
 
                     }
@@ -324,75 +326,53 @@ namespace UnitTest
             ConcurrentDictionary<NetClient, bool> cache = new ConcurrentDictionary<NetClient, bool>();
 
 
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                Thread.Sleep(1000);
+                await Task.Delay(1000);
 
-                List<NetClient> clients = new List<NetClient>();
-                for (int i = 0; i < 1000; i++)
+                while (true)
                 {
-                    var client = NetClientPool.CreateClient(null, new NetAddress("localhost", port), null);
-                    clients.Add(client);
-                }
-                foreach (var client in clients)
-                {
-                    NetClientPool.AddClientToPool(client);
-                }
-
-                var addr = new NetAddress("localhost", port);
-                new Thread(() =>
-                {
-                    while (true)
+                    if(DateTime.Now.Second  == 0)
                     {
-                        Debug.WriteLine($"当前连接数：{connectCount} socket数量{newSocketCount} connecting:{connecting} 错误数量{errcount} {NetClientPool.GetPoolAliveCount(addr)}");
-                        Thread.Sleep(2000);
+                        Debug.WriteLine("暂停13秒");
+                        await Task.Delay(13000);
                     }
-                }).Start();
+                    await Parallel.ForAsync(0, Environment.ProcessorCount, async (num, cancel) =>
+                     {
+                         var client = await NetClientPool.CreateClientAsync(null, new NetAddress("localhost", port));
+                         Interlocked.Increment(ref connectCount);
 
+                         var data = new byte[10];
+                         client.Write(new byte[3] { 0x1, 0x2, 0x3 });
+                         try
+                         {
+                             await client.ReadDataAsync(data, 0, 3);
+                         }
+                         catch (Exception)
+                         {
+                             Interlocked.Increment(ref errcount);
+                             return;
+                         }
 
-                Parallel.For(0, 10, i =>
-                {
-                    var lasttime = DateTime.Now;
-                    while (true)
-                    {
-                        NetClient client;
-                        if ((DateTime.Now - lasttime).TotalSeconds > 20)
-                        {
-                            lasttime = DateTime.Now;
-                            client = new NetClient();
-                            client.Connect(addr);
-                            client.KeepAlive = true;
-                        }
-                        else
-                        {
-                            client = NetClientPool.CreateClient(null, addr, null);
-                        }
-                        Interlocked.Increment(ref connecting);
-                        if (cache.ContainsKey(client))
-                            throw new Exception("error");
-                        if (cache.TryAdd(client, true) == false)
-                            throw new Exception("error");
+                         if (data[0] != 0x1 || data[1] != 0x2 || data[2] != 0x3)
+                         {
+                             Interlocked.Increment(ref errcount);
+                             return;
+                         }
 
-                        Interlocked.Increment(ref connectCount);
-
-                        client.Write(new byte[3] { 0x1, 0x2, 0x3 });
-                        int c = client.InnerStream.Read(new byte[3]);
-                        if (c == 0)
-                            throw new Exception("data err");
-
-                        cache.TryRemove(client, out bool o);
-                        NetClientPool.AddClientToPool(client);
-                        Interlocked.Decrement(ref connecting);
-                        //if(newSocketCount != 1000)
-                        //{
-                        //    throw new Exception("socket 数量不对");
-                        //}
-                        //Thread.Sleep(0);
-
-                    }
-                });
+                         NetClientPool.AddClientToPool(client);
+                     });
+                }
             });
 
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    Thread.Sleep(2000);
+                    Debug.WriteLine($"通讯数:{connectCount} socket连接数：{newSocketCount}  错误数:{errcount}");
+                }
+            }).Start();
 
 
             while (true)
@@ -424,7 +404,6 @@ namespace UnitTest
                     var count = socket.Receive(data);
                     if (count <= 0)
                     {
-                        Interlocked.Increment(ref errcount);
                         socket.Close();
                         socket.Dispose();
                         return;
@@ -437,7 +416,6 @@ namespace UnitTest
                 }
                 catch (Exception ex)
                 {
-                    Interlocked.Increment(ref errcount);
                     socket.Close();
                     socket.Dispose();
                     Debug.WriteLine(ex.Message);
