@@ -1,4 +1,5 @@
 ﻿using JMS;
+using JMS.ServerCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -67,7 +68,10 @@ namespace UnitTest.ServiceHosts
         {
             throw new Exception("有意触发错误");
         }
-
+        public HttpResult BeHttpError()
+        {
+            return Error("有意触发错误");
+        }
         public void SetFather(string father)
         {
             //启动支持分布式事务

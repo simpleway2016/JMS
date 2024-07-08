@@ -20,17 +20,8 @@ namespace JMS
         {
             if (invokeResult.Data == null)
                 return null;
-            else
-            {
-                try
-                {
-                    return Convert.ToInt32(invokeResult.Data);
-                }
-                catch 
-                {
-
-                }
-            }
+            else if (int.TryParse(invokeResult.Data.ToString(), out int o))
+                return o;
 
 
             return null;

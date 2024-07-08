@@ -1085,6 +1085,90 @@ Content-Length: 0
                 throw new Exception("结果不正确");
         }
 
+        [TestMethod]
+        public void RollbackForHttpResultError()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+            StartCrashServiceHost(_CrashServicePort);
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            try
+            {
+                using (var client = new RemoteClient(gateways))
+                {
+                    var serviceClient = client.TryGetMicroService("UserInfoService");
+                    while (serviceClient == null)
+                    {
+                        Thread.Sleep(10);
+                        serviceClient = client.TryGetMicroService("UserInfoService");
+                    }
+
+                    var crashService = client.TryGetMicroService("CrashService");
+                    while (crashService == null)
+                    {
+                        Thread.Sleep(10);
+                        crashService = client.TryGetMicroService("CrashService");
+                    }
+
+                    client.BeginTransaction();
+                    serviceClient.Invoke("SetUserName", "Jack");
+                    serviceClient.Invoke("SetAge", 28);
+
+                    crashService.InvokeAsync("SetText", "Tom");
+
+                    serviceClient.InvokeAsync("SetFather", "Tom");
+                    serviceClient.InvokeAsync("SetMather", "Lucy");
+                    serviceClient.InvokeAsync("BeHttpError");//这个方法会用HttpResult方式返回错误，所以这里会抛出异常
+                    client.CommitTransaction();
+
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                while (ex.InnerException != null)
+                    ex = ex.InnerException;
+                string msg = ex.Message;
+                if (msg != "有意触发错误")
+                    throw ex;
+            }
+
+            bool hasNewClient = false;
+            NetClientPool.CreatedNewClient += (s, e) =>
+            {
+                hasNewClient = true;
+            };
+            //下面测试一下连接池是否正常
+            using (var client = new RemoteClient(gateways))
+            {
+                var crashService = client.TryGetMicroService("CrashService");
+                if (crashService.Invoke<string>("NoTran", "Tom") != "Tom")
+                {
+                    throw new Exception("结果错误");
+                }
+            }
+            if (hasNewClient)
+                throw new Exception("创建了新的连接");
+
+            if (UserInfoDbContext.FinallyUserName != null ||
+                UserInfoDbContext.FinallyAge != 0 ||
+                UserInfoDbContext.FinallyFather != null ||
+                UserInfoDbContext.FinallyMather != null)
+                throw new Exception("结果不正确");
+        }
+
         /// <summary>
         /// 没有事务
         /// </summary>

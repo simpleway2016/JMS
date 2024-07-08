@@ -13,6 +13,7 @@ using System.Security.Claims;
 using System.Collections.Specialized;
 using System.Linq;
 using System.ComponentModel.DataAnnotations;
+using JMS.ServerCore.Http;
 
 public class MicroServiceControllerBase : BaseJmsController, IDisposable
 {
@@ -87,6 +88,26 @@ public class MicroServiceControllerBase : BaseJmsController, IDisposable
     public virtual void Dispose()
     {
 
+    }
+
+    /// <summary>
+    /// 返回执行成功的HttpResult
+    /// </summary>
+    /// <param name="data"></param>
+    /// <returns></returns>
+    protected virtual HttpResult Ok(object data)
+    {
+        return new HttpResult(200, data);
+    }
+
+    /// <summary>
+    /// 返回执行失败的HttpResult，事务也会被自动回滚
+    /// </summary>
+    /// <param name="errorMessage"></param>
+    /// <returns></returns>
+    protected virtual HttpResult Error(string errorMessage)
+    {
+        return new HttpResult(500, errorMessage);
     }
 }
 

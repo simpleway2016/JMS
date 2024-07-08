@@ -245,26 +245,56 @@ namespace JMS.Applications
 
                     if (result is HttpResult httpResult)
                     {
-                        var resultdata = Encoding.UTF8.GetBytes(new InvokeResult
+                        if (httpResult.StatusCode >= 400)
                         {
-                            Success = true,
-                            SupportTransaction = supportTran,
-                            Data = httpResult.Data,
-                            Attributes = $"{{'StatusCode':{httpResult.StatusCode}}}",
+                            //执行失败，回滚事务
+                            if (transactionDelegate != null)
+                            {
+                                try
+                                {
+                                    if (transactionDelegate.StorageEngine == null || tranDelegateList == null || tranDelegateList.Any(x => x.StorageEngine == transactionDelegate.StorageEngine) == false)
+                                    {
+                                        transactionDelegate.RollbackTransaction();
+                                    }
+                                }
+                                catch (Exception rollex)
+                                {
+                                    _logger?.LogError(rollex, rollex.Message);
+                                }
+                                transactionDelegate = null;
+                            }
+                            tranDelegateList.RollbackTransaction();
 
-                        }.ToJsonString());
-                        netclient.WriteServiceData(resultdata);
+                            netclient.WriteServiceData(new InvokeResult
+                            {
+                                Success = false,
+                                Data = httpResult.Data,
+                                Error = httpResult.Data is string? (string)httpResult.Data : null,
+                                Attributes = $"{{'StatusCode':{httpResult.StatusCode}}}",
+
+                            });
+                        }
+                        else
+                        {
+                            netclient.WriteServiceData(new InvokeResult
+                            {
+                                Success = true,
+                                SupportTransaction = supportTran,
+                                Data = httpResult.Data,
+                                Attributes = $"{{'StatusCode':{httpResult.StatusCode}}}",
+
+                            });
+                        }
                     }
                     else
                     {
-                        var resultdata = Encoding.UTF8.GetBytes(new InvokeResult
+                        netclient.WriteServiceData(new InvokeResult
                         {
                             Success = true,
                             SupportTransaction = supportTran,
                             Data = result
 
-                        }.ToJsonString());
-                        netclient.WriteServiceData(resultdata);
+                        });
                     }
 
                     if (!supportTran)

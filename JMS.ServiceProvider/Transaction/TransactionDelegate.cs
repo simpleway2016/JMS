@@ -296,6 +296,7 @@ namespace JMS
                 {
                     item.CommitTransaction();
                 }
+                list.Clear();
             }
         }
 
@@ -307,6 +308,7 @@ namespace JMS
                 {
                     item.RollbackTransaction();
                 }
+                list.Clear();
             }
         }
     }
