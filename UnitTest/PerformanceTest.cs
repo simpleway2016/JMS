@@ -332,35 +332,38 @@ namespace UnitTest
 
                 while (true)
                 {
-                    if(DateTime.Now.Second  == 0)
-                    {
-                        Debug.WriteLine("暂停13秒");
-                        await Task.Delay(13000);
-                    }
+                    //if(DateTime.Now.Second  == 0)
+                    //{
+                    //    Debug.WriteLine("暂停13秒");
+                    //    await Task.Delay(13000);
+                    //}
                     await Parallel.ForAsync(0, Environment.ProcessorCount, async (num, cancel) =>
                      {
-                         var client = await NetClientPool.CreateClientAsync(null, new NetAddress("localhost", port));
-                         Interlocked.Increment(ref connectCount);
-
-                         var data = new byte[10];
-                         client.Write(new byte[3] { 0x1, 0x2, 0x3 });
-                         try
+                         while (true)
                          {
-                             await client.ReadDataAsync(data, 0, 3);
-                         }
-                         catch (Exception)
-                         {
-                             Interlocked.Increment(ref errcount);
-                             return;
-                         }
+                             var client = await NetClientPool.CreateClientAsync(null, new NetAddress("localhost", port));
+                             Interlocked.Increment(ref connectCount);
 
-                         if (data[0] != 0x1 || data[1] != 0x2 || data[2] != 0x3)
-                         {
-                             Interlocked.Increment(ref errcount);
-                             return;
-                         }
+                             var data = new byte[10];
+                             client.Write(new byte[3] { 0x1, 0x2, 0x3 });
+                             try
+                             {
+                                 await client.ReadDataAsync(data, 0, 3);
+                             }
+                             catch (Exception)
+                             {
+                                 Interlocked.Increment(ref errcount);
+                                 return;
+                             }
 
-                         NetClientPool.AddClientToPool(client);
+                             if (data[0] != 0x1 || data[1] != 0x2 || data[2] != 0x3)
+                             {
+                                 Interlocked.Increment(ref errcount);
+                                 return;
+                             }
+
+                             NetClientPool.AddClientToPool(client);
+                         }
                      });
                 }
             });
@@ -379,6 +382,7 @@ namespace UnitTest
             {
                 var socket = tcpListener.AcceptSocket();
                 socket.ReceiveTimeout = -1;
+                socket.NoDelay = true;
                 Interlocked.Increment(ref newSocketCount);
                 handlesocket(socket);
 

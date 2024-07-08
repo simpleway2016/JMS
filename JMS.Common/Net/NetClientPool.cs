@@ -241,7 +241,10 @@ namespace JMS
        
         public NetClient GetFree()
         {
-            init();
+            if (!IsReady)
+            {
+                init();
+            }
 
             for (int i = 0; i < this.Connects.Length; i++)
             {
@@ -273,7 +276,10 @@ namespace JMS
 
         public void AddClient(  NetClient client)
         {
-            init();
+            if (!IsReady)
+            {
+                init();
+            }
 
             for (int i = 0; i < this.Connects.Length; i++)
             {
