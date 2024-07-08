@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Crypto.Engines;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -310,6 +311,81 @@ namespace UnitTest
                     }
                 }
             });
+        }
+
+        [TestMethod]
+        public void pipeTest()
+        {
+            var data = new byte[256];
+            for(int i = 0; i < data.Length; i ++)
+            {
+                data[i] = (byte)i;
+            }
+
+            System.IO.Pipelines.Pipe pipe = new System.IO.Pipelines.Pipe();
+            System.IO.Pipelines.Pipe pipe2 = new System.IO.Pipelines.Pipe();
+            int readcount = 0;
+            int sendcount = 0;
+            int sendcount2 = 0;
+
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    Thread.Sleep(2000);
+                    Debug.WriteLine($"发送：{sendcount} 已读：{readcount}   v2:{sendcount2}");
+                }
+            }).Start();
+
+            new Thread(async () => {
+                var buffer = new byte[256];
+                while (true)
+                {
+                    var ret = await pipe.Reader.ReadAtLeastAsync(256);
+                    if(ret.IsCompleted)
+                    {
+
+                    }
+                    var arr = ret.Buffer.ToArray();
+                    for (int i = 0; i < 256; i ++)
+                    {
+                        if ( arr[i] != i)
+                        {
+                            throw new Exception("数据异常");
+                        }
+                    }
+                    Interlocked.Increment(ref readcount);
+                    
+                    pipe.Reader.AdvanceTo(ret.Buffer.GetPosition(256));
+                }
+            }).Start();
+
+            Parallel.ForAsync(0, 6, async (index,can) =>
+            {
+                while (true)
+                {
+                    if(pipe2 != null)
+                    {
+                        try
+                        {
+                            await pipe2.Writer.WriteAsync(new byte[255 * 256]);
+                            Interlocked.Increment(ref sendcount2);
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            pipe2 = null;
+                        }
+                    }
+                    var ret = await pipe.Writer.WriteAsync(data);
+                    // 内存池子写满后，抛出异常 InvalidOperationException
+                    Interlocked.Increment(ref sendcount);
+                    while (sendcount - readcount > 100)
+                        await Task.Delay(1000);
+                }
+            }).GetAwaiter().GetResult();
+
+            while (true)
+            Thread.Sleep(1000000);
         }
 
         int errcount = 0;
