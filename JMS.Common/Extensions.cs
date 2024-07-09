@@ -47,20 +47,16 @@ namespace JMS
             else
             {
                 var len = (int)buffer.Length;
-               var data =  ArrayPool<byte>.Shared.Rent(len);
-                Memory<byte> memory= new Memory<byte>(data);
-                try
+                using (var data = MemoryPool<byte>.Shared.Rent(len))
                 {
-                    foreach( var block in buffer)
+                    Memory<byte> memory = data.Memory;
+
+                    foreach (var block in buffer)
                     {
                         block.CopyTo(memory);
                         memory = memory.Slice(block.Length);
                     }
-                    return Encoding.UTF8.GetString(data , 0 , len);
-                }
-                finally
-                {
-                    ArrayPool<byte>.Shared.Return(data);
+                    return Encoding.UTF8.GetString(data.Memory.Slice(0 , len).Span);
                 }
             }
         }
