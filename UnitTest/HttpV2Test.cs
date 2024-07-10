@@ -29,13 +29,13 @@ using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2;
 namespace UnitTest
 {
     [TestClass]
-    public class HttpTest
+    public class HttpV2Test
     {
         [TestMethod]
         public void test()
         {
             startServer();
-            runClient();
+            runClient(); 
 
             while (true)
             {
