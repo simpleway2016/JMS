@@ -1,16 +1,12 @@
 ﻿using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
-using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using Way.Lib;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace JMS.Applications.HttpMiddlewares
 {
@@ -44,7 +40,7 @@ namespace JMS.Applications.HttpMiddlewares
             {
                 if (contentLength > 0)
                 {
-                    await client.ReadDataAsync( null,0, contentLength);
+                    await client.ReadDataAsync(null, 0, contentLength);
                 }
                 client.OutputHttpNotFund();
                 return true;
@@ -83,25 +79,11 @@ namespace JMS.Applications.HttpMiddlewares
             });
             try
             {
-                var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-                string strForwared = null;
-
-                if (reqheaders.TryGetValue("X-Forwarded-For", out string forwardedFor))
-                {
-                    reqheaders.Remove("X-Forwarded-For");
-                    strForwared = $"{forwardedFor}, {ip}";
-
-                }
-                else
-                {
-                    strForwared = ip;
-                }
-
                 StringBuilder strBuffer = new StringBuilder();
 
                 Uri gatewayUri = new Uri($"http://{reqheaders["Host"]}");
 
-             
+
                 strBuffer.Append($"{httpMethod} {requestPath} HTTP/1.1\r\n");
 
                 foreach (var pair in reqheaders)
@@ -117,17 +99,16 @@ namespace JMS.Applications.HttpMiddlewares
                         strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
                     }
                 }
+                //不需要考虑X-Forwarded-For ，它在ServerCore库的中间件已经处理
 
-                strBuffer.Append($"X-Forwarded-For: {strForwared}\r\n");
                 strBuffer.Append("\r\n");
-
                 var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
                 //发送头部到服务器
                 proxyClient.Write(data);
                 if (contentLength > 0)
                 {
                     //发送upload数据到服务器
-                    await client.ReadAndSend( proxyClient, contentLength);
+                    await client.ReadAndSend(proxyClient, contentLength);
                 }
                 else if (reqheaders.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
                 {
@@ -144,7 +125,7 @@ namespace JMS.Applications.HttpMiddlewares
                         }
                         else
                         {
-                            await client.ReadAndSend( proxyClient, contentLength);
+                            await client.ReadAndSend(proxyClient, contentLength);
 
                             line = await client.ReadLineAsync(512);
                             proxyClient.WriteLine(line);
@@ -154,7 +135,7 @@ namespace JMS.Applications.HttpMiddlewares
 
                 //读取服务器发回来的头部
                 var headers = new Dictionary<string, string>();
-                var requestPathLine = await proxyClient.PipeReader.ReadHeaders( headers);
+                var requestPathLine = await proxyClient.PipeReader.ReadHeaders(headers);
                 contentLength = 0;
                 if (headers.ContainsKey("Content-Length"))
                 {
@@ -232,25 +213,11 @@ namespace JMS.Applications.HttpMiddlewares
             return true;
         }
 
-        static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client, string requestPath, int inputContentLength, IDictionary<string,string> headers)
+        static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client, string requestPath, int inputContentLength, IDictionary<string, string> headers)
         {
             //获取方法名
             try
             {
-                var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-                string strForwared = null;
-
-                if (headers.TryGetValue("X-Forwarded-For", out string forwardedFor))
-                {
-                    headers.Remove("X-Forwarded-For");
-                    strForwared = $"{forwardedFor}, {ip}";
-
-                }
-                else
-                {
-                    strForwared = ip;
-                }
-
                 var method = requestPath.Substring(serviceName.Length + 2);
                 object[] _parames = null;
                 if (inputContentLength > 0)
@@ -272,7 +239,6 @@ namespace JMS.Applications.HttpMiddlewares
 
                     rc.SetHeader(header.Key, header.Value.ToString());
                 }
-                rc.SetHeader("X-Forwarded-For" , strForwared);
 
                 InvokeResult<object> result = null;
                 InvokeAttributes invokeAttributes = null;
@@ -284,7 +250,7 @@ namespace JMS.Applications.HttpMiddlewares
                 else
                     result = await service.InvokeExAsync<object>(method, _parames);
 
-                if(result.Attributes != null)
+                if (result.Attributes != null)
                 {
                     invokeAttributes = result.Attributes.FromJson<InvokeAttributes>();
                     if (invokeAttributes.StatusCode != null)
@@ -320,7 +286,7 @@ namespace JMS.Applications.HttpMiddlewares
 
                 if (ex is RemoteException rex && rex.StatusCode != null)
                 {
-                    client.OutputHttpCode(rex.StatusCode.Value , "error" , ex.Message);
+                    client.OutputHttpCode(rex.StatusCode.Value, "error", ex.Message);
                 }
                 else
                 {

@@ -4,7 +4,6 @@ using JMS.ServerCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -81,28 +80,13 @@ namespace JMS.Applications.HttpMiddlewares
 
                 strBuffer.Append($"{httpMethod} {requestPath} HTTP/1.1\r\n");
 
-                var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-                string strForwared = null;
-
-                if (headers.TryGetValue("X-Forwarded-For", out string forwardedFor))
-                {
-                    headers.Remove("X-Forwarded-For");
-                    strForwared = $"{forwardedFor}, {ip}";
-
-                }
-                else
-                {
-                    strForwared = ip;
-                }
-
                 foreach (var pair in headers)
                 {
                     strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
+
                 }
 
-                strBuffer.Append($"X-Forwarded-For: {strForwared}\r\n");
                 strBuffer.Append("\r\n");
-
                 var data = Encoding.UTF8.GetBytes(strBuffer.ToString());
                 //发送头部到服务器
                 proxyClient.Write(data);
@@ -110,7 +94,7 @@ namespace JMS.Applications.HttpMiddlewares
                 client.ReadTimeout = 0;
                 proxyClient.ReadTimeout = 0;
 
-                proxyClient.ReadAndSendForLoop( client);
+                proxyClient.ReadAndSendForLoop(client);
 
                 await client.ReadAndSendForLoop(proxyClient);
 
