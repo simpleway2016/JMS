@@ -25,7 +25,7 @@ namespace JMS.WebApiDocument
         public static ServiceRedirectConfig[] Configs;
         public static Func<RemoteClient> ClientProviderFunc;
 
-        
+
         internal static async Task InvokeWebSocket(ClientServiceDetail location, HttpContext context, string method, string[] redirectHeaders)
         {
 
@@ -71,14 +71,8 @@ namespace JMS.WebApiDocument
                 }
                 foreach (var pair in context.Request.Headers)
                 {
-                    if (pair.Key == "Host")
-                    {
-                        strBuffer.Append($"Host: {hostUri.Host}\r\n");
-                    }
-                    else
-                    {
-                        strBuffer.Append($"{pair.Key}: {pair.Value.ToString()}\r\n");
-                    }
+                    strBuffer.Append($"{pair.Key}: {pair.Value.ToString()}\r\n");
+
                 }
 
                 strBuffer.Append($"X-Forwarded-For: {strForwared}\r\n");
@@ -149,37 +143,15 @@ namespace JMS.WebApiDocument
             }
             foreach (var pair in context.Request.Headers)
             {
-                if (pair.Key == "Host" && hostUri != null)
-                {
-                    strBuffer.Append($"Host: {hostUri.Authority}\r\n");
-                    strBuffer.Append($"Original-Host: {pair.Value}\r\n");
-                }
-                else if (pair.Key == "Origin")
-                {
-                    try
-                    {
-                        var uri = new Uri(pair.Value);
-                        if (uri.Authority == gatewayUri.Authority)
-                        {
-                            strBuffer.Append($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}\r\n");
-                        }
-                        else
-                        {
-                            strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
-                        }
-                    }
-                    catch
-                    {
-                        strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
-                    }
-                }
-                else if(pair.Key == "X-Forwarded-For")
-                {
+                if (pair.Key == "TranId")
                     continue;
-                }    
+                else if (pair.Key == "Tran")
+                    continue;
+                else if (pair.Key == "TranFlag")
+                    continue;
                 else
                 {
-                    strBuffer.Append($"{pair.Key}: {pair.Value.ToString()}\r\n");
+                    strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
                 }
             }
 
@@ -209,7 +181,7 @@ namespace JMS.WebApiDocument
 
                 //读取服务器发回来的头部
                 var headers = new Dictionary<string, string>();
-                var requestPathLine = await proxyClient.PipeReader.ReadHeaders( headers);
+                var requestPathLine = await proxyClient.PipeReader.ReadHeaders(headers);
                 inputContentLength = 0;
                 if (headers.ContainsKey("Content-Length"))
                 {
@@ -232,7 +204,7 @@ namespace JMS.WebApiDocument
                     }
                 }
 
-               
+
                 if (inputContentLength > 0)
                 {
                     data = new byte[inputContentLength];
@@ -268,7 +240,7 @@ namespace JMS.WebApiDocument
                 else if (headers.ContainsKey("Connection") == false)
                 {
                     NetClientPool.AddClientToPool(proxyClient);
-                }               
+                }
 
             }
             catch (Exception)
@@ -276,11 +248,11 @@ namespace JMS.WebApiDocument
                 proxyClient.Dispose();
                 throw;
             }
-           
+
 
         }
 
-       
+
         static async Task readAndSend(NetClient readClient, NetClient writeClient)
         {
             try
@@ -312,13 +284,13 @@ namespace JMS.WebApiDocument
         /// <param name="context"></param>
         /// <param name="method"></param>
         /// <returns></returns>
-        internal static async Task<InvokeResult<object>> InvokeServiceMethod(ServiceRedirectConfig config,HttpContext context,string method, string[] redirectHeaders)
+        internal static async Task<InvokeResult<object>> InvokeServiceMethod(ServiceRedirectConfig config, HttpContext context, string method, string[] redirectHeaders)
         {
             using (var client = ClientProviderFunc())
             {
                 var service = await client.GetMicroServiceAsync(config.ServiceName);
-               
-                if(ServiceRedirects.Configs == null && service.ServiceLocation.AllowGatewayProxy == false)
+
+                if (ServiceRedirects.Configs == null && service.ServiceLocation.AllowGatewayProxy == false)
                 {
                     //不允许反向代理
                     config.Handled = true;
@@ -326,14 +298,14 @@ namespace JMS.WebApiDocument
                     await context.Response.WriteAsync("not found");
                     return null;
                 }
-                if( service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
+                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
                 {
                     config.Handled = true;
                     client.Dispose();
-                    await InvokeWebSocket(service.ServiceLocation, context, method, redirectHeaders);                    
+                    await InvokeWebSocket(service.ServiceLocation, context, method, redirectHeaders);
                     return null;
                 }
-                else if(service.ServiceLocation.Type == ServiceType.WebApi)
+                else if (service.ServiceLocation.Type == ServiceType.WebApi)
                 {
                     config.Handled = true;
                     client.Dispose();
@@ -341,7 +313,7 @@ namespace JMS.WebApiDocument
                     return null;
                 }
 
-                
+
 
                 byte[] postContent = null;
                 if (context.Request.ContentLength != null && context.Request.ContentLength > 0)
@@ -362,39 +334,19 @@ namespace JMS.WebApiDocument
                     _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
                 }
 
-                if (redirectHeaders == null)
+                foreach (var header in context.Request.Headers)
                 {
-                    foreach (var header in context.Request.Headers)
-                    {
-                        if (header.Key == "TranId")
-                            continue;
-                        else if (header.Key == "Tran")
-                            continue;
-                        else if (header.Key == "TranFlag")
-                            continue;
+                    if (header.Key == "TranId")
+                        continue;
+                    else if (header.Key == "Tran")
+                        continue;
+                    else if (header.Key == "TranFlag")
+                        continue;
 
-                        client.SetHeader(header.Key, header.Value.ToString());
-                    }
+                    client.SetHeader(header.Key, header.Value.ToString());
                 }
-                else
-                {
-                    foreach (var header in redirectHeaders)
-                    {
-                        if (header == "TranId")
-                            continue;
-                        else if (header == "Tran")
-                            continue;
-                        else if (header == "TranFlag")
-                            continue;
 
-                        if (context.Request.Headers.TryGetValue(header, out StringValues value))
-                        {
-                            client.SetHeader(header, value.ToString());
-                        }
-                    }
-                }
-                
-               
+
                 var ip = context.Connection.RemoteIpAddress.ToString();
                 if (client.TryGetHeader("X-Forwarded-For", out string xff))
                 {
