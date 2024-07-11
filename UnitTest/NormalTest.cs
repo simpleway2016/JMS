@@ -393,6 +393,7 @@ namespace UnitTest
             text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
             if (text != "test")
                 throw new Exception("error");
+            clientWebsocket.CloseAsync( WebSocketCloseStatus.NormalClosure , null ,CancellationToken.None).GetAwaiter().GetResult();
 
 
             System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();

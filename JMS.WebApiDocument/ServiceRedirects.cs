@@ -1,6 +1,7 @@
 ﻿using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.WebApiDocument.Dtos;
+using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -81,13 +83,15 @@ namespace JMS.WebApiDocument
                 //发送头部到服务器
                 proxyClient.Write(data);
 
-                NetClient client = new NetClient(new ConnectionStream(context));
-                //client.ReadTimeout = 0;//这里不能设置ReadTimeout，因为client.Socket is null
+                var connectionTransportFeature = context.Features.Get<IConnectionTransportFeature>();
+                var input = connectionTransportFeature.Transport.Input;
+                var output = connectionTransportFeature.Transport.Output;
+
                 proxyClient.ReadTimeout = 0;
 
-                readAndSend(proxyClient, client);
+                _ = readAndSend(proxyClient, output);
 
-                await readAndSend(client, proxyClient);
+                await readAndSend(input, proxyClient);
             }
         }
 
@@ -215,11 +219,11 @@ namespace JMS.WebApiDocument
                 {
                     while (true)
                     {
-                        var line = await proxyClient.ReadLineAsync(512);
+                        var line = await proxyClient.ReadLineAsync();
                         inputContentLength = Convert.ToInt32(line, 16);
                         if (inputContentLength == 0)
                         {
-                            line = await proxyClient.ReadLineAsync(512);
+                            line = await proxyClient.ReadLineAsync();
                             break;
                         }
                         else
@@ -228,7 +232,7 @@ namespace JMS.WebApiDocument
                             await proxyClient.ReadDataAsync(data, 0, inputContentLength);
                             await context.Response.WriteAsync(Encoding.UTF8.GetString(data));
 
-                            line = await proxyClient.ReadLineAsync(512);
+                            line = await proxyClient.ReadLineAsync();
                         }
                     }
                 }
@@ -253,18 +257,19 @@ namespace JMS.WebApiDocument
         }
 
 
-        static async Task readAndSend(NetClient readClient, NetClient writeClient)
+        static async Task readAndSend(NetClient readClient, PipeWriter  pipeWriter)
         {
+            using var recData = MemoryPool<byte>.Shared.Rent(4096);
             try
             {
-                byte[] recData = new byte[4096];
+                
                 int readed;
                 while (true)
                 {
-                    readed = await readClient.InnerStream.ReadAsync(recData, 0, recData.Length);
+                    readed = await readClient.InnerStream.ReadAsync(recData.Memory);
                     if (readed <= 0)
                         break;
-                    writeClient.InnerStream.Write(recData, 0, readed);
+                    await pipeWriter.WriteAsync(recData.Memory.Slice(0 , readed));
                 }
             }
             catch (Exception)
@@ -274,7 +279,38 @@ namespace JMS.WebApiDocument
             finally
             {
                 readClient.Dispose();
-                writeClient.Dispose();
+            }
+        }
+
+
+        static async Task readAndSend(PipeReader reader, NetClient writer)
+        {
+           
+            try
+            {
+
+                ReadResult ret;
+                while (true)
+                {
+                    ret = await reader.ReadAsync();
+                    if (ret.IsCompleted)
+                        break;
+
+                    foreach( var span in ret.Buffer )
+                    {
+                        await writer.InnerStream.WriteAsync(span);
+                    }
+
+                    reader.AdvanceTo(ret.Buffer.End);
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                writer.Dispose();
             }
         }
         /// <summary>

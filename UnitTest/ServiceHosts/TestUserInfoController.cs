@@ -116,7 +116,7 @@ namespace UnitTest.ServiceHosts
     {
         public override async Task OnConnected(WebSocket webSocket)
         {
-            Task.Run(async () => {
+            _ = Task.Run(async () => {
                 Thread.Sleep(1000);
                 await webSocket.SendString("hello");
 
