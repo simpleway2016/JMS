@@ -34,14 +34,14 @@ namespace UnitTest.ServiceHosts
             if (string.IsNullOrEmpty(this.TransactionId))
                 throw new Exception("TransactionId为空");
         }
-       
+
         public string GetMyName()
         {
             return "Jack";
         }
         public void Nothing()
         {
-            
+
         }
         public string GetMyNameError()
         {
@@ -88,7 +88,7 @@ namespace UnitTest.ServiceHosts
             _userInfoDbContext.Mather = name;
         }
 
-        public void LockName(string name,string a2,string a3,string a4)
+        public void LockName(string name, string a2, string a3, string a4)
         {
             _keyLocker.TryLock(this.TransactionId, name);
             _keyLocker.TryLock(this.TransactionId, a2);
@@ -116,7 +116,18 @@ namespace UnitTest.ServiceHosts
     {
         public override async Task OnConnected(WebSocket webSocket)
         {
-            _ = Task.Run(async () => {
+            if (this.RequestQuery["q"] == "100")
+            {
+                while (true)
+                {
+                    var str = await webSocket.ReadString();
+                    await webSocket.SendString($"{str} {this.RequestQuery["name"]} back");
+
+                }
+            }
+
+            _ = Task.Run(async () =>
+            {
                 Thread.Sleep(1000);
                 await webSocket.SendString("hello");
 
@@ -127,7 +138,7 @@ namespace UnitTest.ServiceHosts
             });
             var ret = await webSocket.ReadString();
             await webSocket.SendString(ret);
-           
+
             await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "abc", System.Threading.CancellationToken.None);
         }
     }
