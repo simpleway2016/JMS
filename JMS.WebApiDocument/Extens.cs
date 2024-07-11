@@ -138,8 +138,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 ConfigurationChangeCallback(configuration);
             }
 
-            ThreadPool.GetMaxThreads(out int w, out int c);
-            ThreadPool.SetMinThreads(w, c);
+            ThreadPool.SetMinThreads(Environment.ProcessorCount*10, Environment.ProcessorCount * 10);
 
             app.Use(async (context, next) =>
             {
