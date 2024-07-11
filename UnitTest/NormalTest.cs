@@ -90,13 +90,12 @@ namespace UnitTest
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
 
-            builder.Services.AddSingleton<IServiceActionFilter, TestServiceActionFilter>();
             var app = builder.Build();
 
             app.UseAuthentication();    //认证
             app.UseAuthorization();     //授权
 
-            app.UseJmsServiceRedirect(configuration, () =>
+            app.UseJmsServiceRedirect(() =>
             {
                 var gateways = new NetAddress[] {
                    new NetAddress{
@@ -514,14 +513,14 @@ namespace UnitTest
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (text != "{\"code\":200,\"data\":\"Jack\"}")
+            if (text != "Jack")
                 throw new Exception("http返回结果错误");
 
             ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyNameError").ConfigureAwait(false).GetAwaiter().GetResult();
-            if (ret.IsSuccessStatusCode == false)
-                throw new Exception("http访问失败");
+            if (ret.IsSuccessStatusCode)
+                throw new Exception("IsSuccessStatusCode不应该是true");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (text != "{\"code\":500,\"msg\":\"ErrMsg\"}")
+            if (text != "ErrMsg")
                 throw new Exception("http返回结果错误");
 
             //测试返回值是null的情况

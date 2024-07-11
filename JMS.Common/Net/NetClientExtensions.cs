@@ -25,7 +25,7 @@ namespace JMS
                 {
                     ret = await readClient.PipeReader.ReadAsync();
                     buffer = ret.Buffer;
-                   
+
 
                     if (buffer.IsSingleSegment)
                     {
@@ -69,7 +69,7 @@ namespace JMS
                 ret = await readClient.PipeReader.ReadAsync();
                 buffer = ret.Buffer;
 
-                if(buffer.Length > totalLength)
+                if (buffer.Length > totalLength)
                 {
                     buffer = buffer.Slice(0, totalLength);
                 }
@@ -99,7 +99,7 @@ namespace JMS
                 }
             }
         }
-              
+
 
         public static async Task<string> ReadHeaders(this PipeReader reader, IDictionary<string, string> headers)
         {
@@ -116,7 +116,7 @@ namespace JMS
             while (true)
             {
                 ret = await reader.ReadAsync();
-               
+
                 buffer = ret.Buffer;
                 if (ret.IsCompleted)
                 {
@@ -132,13 +132,13 @@ namespace JMS
                     if (position != null)
                     {
                         block = buffer.Slice(0, position.Value);
-                        line = block.GetString();                     
+                        line = block.GetString();
 
                         // 往position位置偏移1个字节
                         buffer = buffer.Slice(buffer.GetPosition(1, position.Value));
 
                         if (block.Length == 0 || (block.Length == 1 && block.First.Span[0] == r))
-                        {                            
+                        {
                             // 告诉PipeReader已经处理多少缓冲
                             reader.AdvanceTo(buffer.Start);
                             return requestPathLine;
@@ -170,16 +170,16 @@ namespace JMS
                 }
                 while (position != null);
 
-              
+
 
                 // 告诉PipeReader已经处理多少缓冲
-                reader.AdvanceTo(buffer.Start,buffer.End);
+                reader.AdvanceTo(buffer.Start, buffer.End);
 
             }
         }
 
 
-        public static async Task ReadAndSendForLoop(this Socket readSocket, Socket writeSocket, Action<byte[],int> callback = null)
+        public static async Task ReadAndSendForLoop(this Socket readSocket, Socket writeSocket, Action<byte[], int> callback = null)
         {
             int ret;
             int towrite;
@@ -191,7 +191,7 @@ namespace JMS
                 while (true)
                 {
                     ret = await readSocket.ReceiveAsync(data, SocketFlags.None);
-                    if(ret <= 0)
+                    if (ret <= 0)
                     {
                         break;
                     }
@@ -200,7 +200,7 @@ namespace JMS
                     offset = 0;
                     while (towrite > 0)
                     {
-                        ret = writeSocket.Send(buffer, offset , towrite, SocketFlags.None);
+                        ret = writeSocket.Send(buffer, offset, towrite, SocketFlags.None);
                         towrite -= ret;
                         offset += ret;
                     }
@@ -216,6 +216,133 @@ namespace JMS
                 readSocket.Dispose();
                 writeSocket.Dispose();
             }
+        }
+
+
+        public static async Task ReadAndSend(this NetClient readClient, PipeWriter pipeWriter)
+        {
+            using (var recData = MemoryPool<byte>.Shared.Rent(4096))
+            {
+                try
+                {
+
+                    int readed;
+                    while (true)
+                    {
+                        readed = await readClient.InnerStream.ReadAsync(recData.Memory);
+                        if (readed <= 0)
+                            break;
+                        await pipeWriter.WriteAsync(recData.Memory.Slice(0, readed));
+                    }
+                }
+                catch (Exception)
+                {
+
+                }
+                finally
+                {
+                    readClient.Dispose();
+                }
+            }
+        }
+
+
+        public static async Task ReadAndSend(this PipeReader reader, NetClient writer)
+        {
+
+            try
+            {
+
+                ReadResult ret;
+                while (true)
+                {
+                    ret = await reader.ReadAsync();
+                  
+
+                    foreach (var span in ret.Buffer)
+                    {
+                        await writer.InnerStream.WriteAsync(span);
+                    }
+
+                    reader.AdvanceTo(ret.Buffer.End);
+
+                    if (ret.IsCompleted)
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+            finally
+            {
+                writer.Dispose();
+            }
+        }
+
+        public static async Task ReadAndSend(this PipeReader reader, PipeWriter writer)
+        {
+
+            try
+            {
+
+                ReadResult ret;
+                while (true)
+                {
+                    ret = await reader.ReadAsync();
+                   
+
+                    foreach (var span in ret.Buffer)
+                    {
+                        await writer.WriteAsync(span);
+                    }
+
+                    reader.AdvanceTo(ret.Buffer.End);
+
+                    if (ret.IsCompleted)
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+
+        }
+
+        public static async Task ReadAndSend(this PipeReader reader, PipeWriter writer, long totalLength)
+        {
+
+            while (totalLength > 0)
+            {
+
+                ReadResult ret;
+                while (true)
+                {
+                    ret = await reader.ReadAsync();
+
+
+                    totalLength -= ret.Buffer.Length;
+
+                    foreach (var span in ret.Buffer)
+                    {
+                        await writer.WriteAsync(span);
+                    }
+
+                    reader.AdvanceTo(ret.Buffer.End);
+
+                    if (ret.IsCompleted)
+                    {
+                        if (totalLength > 0)
+                        {
+                            throw new SocketException();
+                        }
+
+                        break;
+                    }
+                }
+            }
+
         }
     }
 }

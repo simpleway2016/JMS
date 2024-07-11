@@ -32,9 +32,9 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class Extens
     {
-        static ILogger<JMS.WebApiDocument.WebApiDocAttribute> Logger;
+       
         /// <summary>
-        /// 
+        /// 启用接口文档 /jmsdoc 页面
         /// </summary>
         /// <param name="app"></param>
         /// <returns></returns>
@@ -83,17 +83,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         try
                         {
-                            var manager = app.ApplicationServices.GetService<ApplicationPartManager>();
-                            List<Type> controllerTypes = new List<Type>();
-                            foreach (var part in manager.ApplicationParts)
-                            {
-                                if (part is AssemblyPart assemblyPart)
-                                {
-                                    controllerTypes.AddRange(assemblyPart.Types.Where(m => m.GetCustomAttribute<WebApiDocAttribute>() != null).ToArray());
-                                }
-                            }
-
-                            return HtmlBuilder.Build(context, controllerTypes);
+                            return HtmlBuilder.OutputIndex(context);
                         }
                         catch (Exception ex)
                         {
@@ -106,37 +96,20 @@ namespace Microsoft.Extensions.DependencyInjection
             return app;
         }
 
+
         /// <summary>
-        /// 启用微服务的反向代理
+        /// 启用JMSFramework WebApi服务
         /// </summary>
         /// <param name="app"></param>
         /// <param name="clientProviderFunc">RemoteClient创建函数</param>
         /// <returns></returns>
         public static IApplicationBuilder UseJmsServiceRedirect(this IApplicationBuilder app, Func<RemoteClient> clientProviderFunc)
         {
-            return UseJmsServiceRedirect(app, null, clientProviderFunc, null);
-        }
-        /// <summary>
-        /// 根据配置文件的JMS.ServiceRedirects节点配置，直接转接访问到指定的微服务
-        /// </summary>
-        /// <param name="app"></param>
-        /// <param name="configuration">配置信息,如果为null，则表示所有允许网关反向代理的微服务</param>
-        /// <param name="clientProviderFunc">RemoteClient创建函数</param>
-        /// <param name="redirectHeaders">需要转发的请求头，默认null，表示转发全部</param>
-        /// <returns></returns>
-        [Obsolete]
-        public static IApplicationBuilder UseJmsServiceRedirect(this IApplicationBuilder app, IConfiguration configuration, Func<RemoteClient> clientProviderFunc, string[] redirectHeaders = null)
-        {
             if (clientProviderFunc == null)
                 throw new Exception("clientProviderFunc is null");
 
-            Logger = app.ApplicationServices.GetService<ILogger<WebApiDocAttribute>>();
 
-            ServiceRedirects.ClientProviderFunc = clientProviderFunc;
-            if (configuration != null)
-            {
-                ConfigurationChangeCallback(configuration);
-            }
+            RequestHandler.ClientProviderFunc = clientProviderFunc;
 
             ThreadPool.SetMinThreads(Environment.ProcessorCount*10, Environment.ProcessorCount * 10);
 
@@ -152,112 +125,28 @@ namespace Microsoft.Extensions.DependencyInjection
                     }
                     var servicename = m.Groups["s"].Value;
                     var method = m.Groups["m"].Value;
-                    var config = ServiceRedirects.Configs?.FirstOrDefault(n => string.Equals(n.ServiceName, servicename, StringComparison.OrdinalIgnoreCase));
-                    if (ServiceRedirects.Configs != null && config == null)
-                    {
-                        context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
-                        await context.Response.WriteAsync(new
-                        {
-                            code = 404,
-                            msg = $"请检查[JMS.ServiceRedirects]节点里是否配置了{servicename}"
-                        }.ToJsonString());
-                        return;
-
-                    }
-                    else if(config == null)
-                    {
-                        config = new ServiceRedirectConfig() { 
-                            ServiceName = servicename,
-                            OutputText = true
-                        };
-                    }
+                   
 
                     try
                     {
-                        InvokeAttributes invokeAttributes = null;
-                        var result = await ServiceRedirects.InvokeServiceMethod(config, context, method, redirectHeaders);
-                        if (config.Handled)
-                            return;
-
-                        if (result.Attributes != null)
-                        {
-                            invokeAttributes = result.Attributes.FromJson<InvokeAttributes>();
-                            if (invokeAttributes.StatusCode != null)
-                            {
-                                context.Response.StatusCode = invokeAttributes.StatusCode.Value;
-                            }
-                        }
-
-                        if (config.OutputText)
-                        {
-                            if (result.Data is string)
-                            {
-                                context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                                await context.Response.WriteAsync((string)result.Data);
-                            }
-                            else if (result.Data != null)
-                            {                              
-                                if (result.Data.GetType().IsValueType)
-                                {
-                                    context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                                    await context.Response.WriteAsync(result.Data.ToString());
-                                }
-                                else
-                                {
-                                    context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
-                                    await context.Response.WriteAsync(result.Data.ToJsonString());
-                                }
-                            }
-
-                        }
-                        else
-                        {
-                            context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
-                            await context.Response.WriteAsync(new
-                            {
-                                code = 200,
-                                data = result.Data
-                            }.ToJsonString());
-                        }
+                        await RequestHandler.InvokeServiceMethod(servicename, context, method);                       
 
                     }
                     catch (Exception ex)
                     {
                         while (ex.InnerException != null)
                             ex = ex.InnerException;
-                        if (config.OutputText)
+
+                        context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
+                        if (ex.Message == "Authentication failed")
                         {
-                            context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                            if (ex.Message == "Authentication failed")
-                            {
-                                context.Response.StatusCode = 401;
-                                await context.Response.WriteAsync(ex.Message);
-                            }
-                            else
-                            {
-                                context.Response.StatusCode = 500;
-                                await context.Response.WriteAsync(ex.Message);
-                            }
+                            context.Response.StatusCode = 401;
+                            await context.Response.WriteAsync(ex.Message);
                         }
                         else
                         {
-                            context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
-                            if (ex.Message == "Authentication failed")
-                            {
-                                await context.Response.WriteAsync(new
-                                {
-                                    code = 401,
-                                    msg = ex.Message
-                                }.ToJsonString());
-                            }
-                            else
-                            {
-                                await context.Response.WriteAsync(new
-                                {
-                                    code = 500,
-                                    msg = ex.Message
-                                }.ToJsonString());
-                            }
+                            context.Response.StatusCode = 500;
+                            await context.Response.WriteAsync(ex.Message);
                         }
                     }
                     return;
@@ -269,52 +158,6 @@ namespace Microsoft.Extensions.DependencyInjection
             return app;
         }
 
-        static IDisposable CallbackRegistration;
-        static void ConfigurationChangeCallback(object p)
-        {
-            CallbackRegistration?.Dispose();
-            CallbackRegistration = null;
-
-            IConfiguration configuration = (IConfiguration)p;
-            try
-            {
-                var configs = configuration.GetSection("JMS.ServiceRedirects").Get<ServiceRedirectConfig[]>();
-                if (configs == null)
-                {
-                    throw new Exception("配置文件中找不到有效的JMS.ServiceRedirects节点");
-                }
-
-                Logger?.LogInformation($"读取配置文件JMS.ServiceRedirects 信息");
-
-                foreach (var config in configs)
-                {
-                    if (config.Buttons != null)
-                    {
-                        foreach (var btn in config.Buttons)
-                        {
-                            if (btn.Url != null)
-                            {
-                                btn.Url = btn.Url.Replace("$ServiceName$", HttpUtility.UrlEncode(config.ServiceName));
-                            }
-                        }
-                    }
-                }
-                ServiceRedirects.Configs = configs;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            finally
-            {
-                Task.Run(() =>
-                {
-                    Thread.Sleep(1000);//延迟注册，否则可能每次都回调两次
-                    CallbackRegistration = configuration.GetReloadToken().RegisterChangeCallback(ConfigurationChangeCallback, configuration);
-                });
-            }
-
-        }
 
     }
 }
