@@ -47,20 +47,16 @@ namespace JMS
             else
             {
                 var len = (int)buffer.Length;
-               var data =  ArrayPool<byte>.Shared.Rent(len);
-                Memory<byte> memory= new Memory<byte>(data);
-                try
+                using (var data = MemoryPool<byte>.Shared.Rent(len))
                 {
-                    foreach( var block in buffer)
+                    Memory<byte> memory = data.Memory;
+
+                    foreach (var block in buffer)
                     {
                         block.CopyTo(memory);
                         memory = memory.Slice(block.Length);
                     }
-                    return Encoding.UTF8.GetString(data , 0 , len);
-                }
-                finally
-                {
-                    ArrayPool<byte>.Shared.Return(data);
+                    return Encoding.UTF8.GetString(data.Memory.Slice(0 , len).Span);
                 }
             }
         }
@@ -69,52 +65,9 @@ namespace JMS
 
 public static class WebSocketExtens
 {
-    public static async Task<string> ReadString(this WebSocket webSocket)
+    public static Task<string> ReadString(this WebSocket webSocket)
     {
-        byte[] data = ArrayPool<byte>.Shared.Rent(4096);
-        List<byte> list = null;
-        try
-        {
-            var buffer = new ArraySegment<byte>(data);
-            int len;
-            while (true)
-            {
-                var ret = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-                if (ret.CloseStatus != null)
-                {
-                    throw new WebSocketException(ret.CloseStatusDescription);
-                }
-                len = ret.Count;
-                if (ret.EndOfMessage)
-                {
-                    if (list != null)
-                    {
-                        list.AddRange(buffer.Slice(0, ret.Count));
-                    }
-                    break;
-                }
-                else if (len > 0)
-                {
-                    if (list == null)
-                        list = new List<byte>();
-                    list.AddRange(buffer.Slice(0, ret.Count));
-                    if (list.Count > 102400)
-                    {
-                        list.Clear();
-                        throw new Exception("websocket data is too big");
-                    }
-                }
-            }
-            if (list != null)
-                return Encoding.UTF8.GetString(list.ToArray());
-            else
-                return Encoding.UTF8.GetString(data, 0, len);
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(data);
-            list?.Clear();
-        }
+        return ReadString(webSocket, CancellationToken.None);
     }
 
     public static async Task<string> ReadString(this WebSocket webSocket, CancellationToken cancellationToken)
@@ -128,7 +81,7 @@ public static class WebSocketExtens
             while (true)
             {
                 var ret = await webSocket.ReceiveAsync(buffer, cancellationToken);
-                if (ret.CloseStatus != null)
+                if (ret.Count <= 0 && ret.CloseStatus != null)
                 {
                     throw new WebSocketException(ret.CloseStatusDescription);
                 }

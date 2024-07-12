@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -55,6 +56,9 @@ namespace JMS
                 _useSsl = value;
             }
         }
+
+
+        public SslProtocols? SslProtocol { get; set; }
 
         /// <summary>
         /// 用指定的pfx证书连接目标地址

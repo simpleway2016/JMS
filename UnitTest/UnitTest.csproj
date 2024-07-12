@@ -10,6 +10,7 @@
 
     <DocumentationFile></DocumentationFile>
 <NoWarn>$(NoWarn);NU1605</NoWarn>
+<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

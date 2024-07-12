@@ -17,7 +17,7 @@ using System.Net.Http;
 
 namespace JMS
 {
-    public class BaseJmsController
+    public class BaseJmsController: IDisposable
     {
         internal static AsyncLocal<LocalObject> RequestingObject = new AsyncLocal<LocalObject>();
 
@@ -150,6 +150,11 @@ namespace JMS
             {
                 return new ModelValidationResult { Success = true};
             }
+        }
+
+        public virtual void Dispose()
+        {
+          
         }
     }
 

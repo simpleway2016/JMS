@@ -14,7 +14,7 @@ namespace JMS
         /// 微服务证书
         /// </summary>
         public X509Certificate2 ServerCertificate { get; set; }
-        public SslProtocols SslProtocols { get; set; } = SslProtocols.None;
+        public SslProtocols SslProtocol { get; set; } = SslProtocols.None;
         /// <summary>
         /// 哪些客户端证书被信任，空表示信任所有证书
         /// </summary>

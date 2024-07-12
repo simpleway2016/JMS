@@ -55,6 +55,9 @@ namespace JMS.Common
             }
         }
 
+        SslApplicationProtocol? _SslApplicationProtocol;
+        public SslApplicationProtocol? SslApplicationProtocol => _SslApplicationProtocol;
+
         private System.IO.Pipelines.PipeReader _PipeReader;
         public System.IO.Pipelines.PipeReader PipeReader => _PipeReader;
 
@@ -325,6 +328,31 @@ namespace JMS.Common
             SslStream sslStream = new SslStream(_innerStream, false ,remoteCertificateValidationCallback);
             await sslStream.AuthenticateAsServerAsync(ssl, true, protocol, false);
 
+            this.InnerStream = sslStream;
+        }
+
+        /// <summary>
+        /// 使用ssl协议作为服务器端，并向客户端声明自己支持的协议，
+        /// 连接成功后，通过SslApplicationProtocol属性获取最终和客户端敲定的协议
+        /// </summary>
+        /// <param name="supportAppProtocols"></param>
+        /// <param name="ssl"></param>
+        /// <param name="remoteCertificateValidationCallback"></param>
+        /// <param name="protocol"></param>
+        public async Task AsSSLServerWithProtocolAsync(SslApplicationProtocol[] supportAppProtocols, X509Certificate2 ssl, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
+        {
+            SslStream sslStream = new SslStream(_innerStream, false, remoteCertificateValidationCallback);
+            await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
+            {
+                ServerCertificate = ssl,
+                ClientCertificateRequired = true,
+                RemoteCertificateValidationCallback = remoteCertificateValidationCallback,
+                CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                EnabledSslProtocols = protocol,
+                ApplicationProtocols = new List<SslApplicationProtocol>(supportAppProtocols)
+            }, CancellationToken.None);
+
+            _SslApplicationProtocol = sslStream.NegotiatedApplicationProtocol;
             this.InnerStream = sslStream;
         }
 

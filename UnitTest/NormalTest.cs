@@ -90,13 +90,12 @@ namespace UnitTest
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
 
-            builder.Services.AddSingleton<IServiceActionFilter, TestServiceActionFilter>();
             var app = builder.Build();
 
             app.UseAuthentication();    //认证
             app.UseAuthorization();     //授权
 
-            app.UseJmsServiceRedirect(configuration, () =>
+            app.UseJmsServiceRedirect(() =>
             {
                 var gateways = new NetAddress[] {
                    new NetAddress{
@@ -378,21 +377,26 @@ namespace UnitTest
                 }
             }
 
+            string text;
             ClientWebSocket clientWebsocket = new ClientWebSocket();
             clientWebsocket.Options.SetRequestHeader("X-Forwarded-For", "::1");
-            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiPort}/JMSRedirect/TestWebSocketService?q=1&name={HttpUtility.UrlEncode("你好")}"), CancellationToken.None).GetAwaiter().GetResult();
-            var text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
-            if (text != "hello")
-                throw new Exception("error");
+            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiPort}/JMSRedirect/TestWebSocketService?q=100&name={HttpUtility.UrlEncode("你好")}"), CancellationToken.None).GetAwaiter().GetResult();
 
-            text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
-            if (text != "你好")
-                throw new Exception("找不到query");
+            StringBuilder moretext = new StringBuilder();
+            for(int i = 0; i < 5000; i ++)
+            {
+                moretext.Append("a");
+            }
 
-            clientWebsocket.SendString("test").ConfigureAwait(true).GetAwaiter().GetResult();
-            text = clientWebsocket.ReadString().ConfigureAwait(true).GetAwaiter().GetResult();
-            if (text != "test")
-                throw new Exception("error");
+            for (int i = 0; i < 10; i++)
+            {
+                clientWebsocket.SendString($"hello{i} {moretext}").GetAwaiter().GetResult();
+                text = clientWebsocket.ReadString().GetAwaiter().GetResult();
+                Assert.AreEqual($"hello{i} {moretext} 你好 back", text);
+            }
+
+            clientWebsocket.CloseAsync( WebSocketCloseStatus.NormalClosure , null ,CancellationToken.None).GetAwaiter().GetResult();
+          
 
 
             System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
@@ -509,14 +513,14 @@ namespace UnitTest
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (text != "{\"code\":200,\"data\":\"Jack\"}")
+            if (text != "Jack")
                 throw new Exception("http返回结果错误");
 
             ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyNameError").ConfigureAwait(false).GetAwaiter().GetResult();
-            if (ret.IsSuccessStatusCode == false)
-                throw new Exception("http访问失败");
+            if (ret.IsSuccessStatusCode)
+                throw new Exception("IsSuccessStatusCode不应该是true");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (text != "{\"code\":500,\"msg\":\"ErrMsg\"}")
+            if (text != "ErrMsg")
                 throw new Exception("http返回结果错误");
 
             //测试返回值是null的情况

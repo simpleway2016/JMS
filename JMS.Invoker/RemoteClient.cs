@@ -62,7 +62,7 @@ namespace JMS
         public NetAddress ProxyAddress { get; }
         NetAddress[] _allGateways;
 
-        Dictionary<string, string> _Header = new Dictionary<string, string>();
+        Dictionary<string, string> _Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public X509Certificate2 ServiceClientCertificate { get; set; }
         MasterGatewayProvider _masterGatewayProvider;
         ILogger<RemoteClient> _logger;

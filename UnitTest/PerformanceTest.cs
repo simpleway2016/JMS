@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 using UnitTest.ServiceHosts;
 using Way.Lib;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UnitTest
 {
@@ -312,10 +313,42 @@ namespace UnitTest
                 }
             });
         }
+        class Chunk<T> : ReadOnlySequenceSegment<T>
+        {
+            public Chunk(ReadOnlyMemory<T> memory)
+            {
+                Memory = memory;
+            }
+            public Chunk<T> Add(ReadOnlyMemory<T> mem)
+            {
+                var segment = new Chunk<T>(mem)
+                {
+                    RunningIndex = RunningIndex + Memory.Length
+                };
+
+                Next = segment;
+                return segment;
+            }
+        }
+
+        string getText()
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            for(int i = 0; i < 256; i ++)
+            {
+                stringBuilder.Append(Guid.NewGuid().ToString("N"));
+            }
+            return stringBuilder.ToString();
+        }
+
 
         [TestMethod]
         public void pipeTest()
         {
+           
+
+
+
             var data = new byte[256];
             for(int i = 0; i < data.Length; i ++)
             {

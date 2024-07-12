@@ -82,33 +82,8 @@ namespace JMS.Applications.HttpMiddlewares
 
                 foreach (var pair in headers)
                 {
-                    if (pair.Key == "Host")
-                    {
-                        strBuffer.Append($"Host: {hostUri.Host}\r\n");
-                    }
-                    else if (pair.Key == "Origin")
-                    {
-                        try
-                        {
-                            var uri = new Uri(pair.Value);
-                            if (uri.Host == gatewayUri.Host)
-                            {
-                                strBuffer.Append($"{pair.Key}: {uri.Scheme}://{hostUri.Authority}{uri.PathAndQuery}\r\n");
-                            }
-                            else
-                            {
-                                strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
-                            }
-                        }
-                        catch
-                        {
-                            strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
-                        }
-                    }
-                    else
-                    {
-                        strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
-                    }
+                    strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
+
                 }
 
                 strBuffer.Append("\r\n");
@@ -119,7 +94,7 @@ namespace JMS.Applications.HttpMiddlewares
                 client.ReadTimeout = 0;
                 proxyClient.ReadTimeout = 0;
 
-                proxyClient.ReadAndSendForLoop( client);
+                proxyClient.ReadAndSendForLoop(client);
 
                 await client.ReadAndSendForLoop(proxyClient);
 
