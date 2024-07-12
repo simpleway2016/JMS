@@ -1,6 +1,7 @@
 ﻿using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,15 @@ namespace JMS.Applications.HttpMiddlewares
     internal class ProxyMiddleware : IHttpMiddleware
     {
         private readonly IWebApiHostEnvironment _webApiEnvironment;
-
-        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment)
+        int _timeout;
+        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment,IConfiguration configuration)
         {
             _webApiEnvironment = webApiEnvironment;
+            var timeout = configuration.GetSection("InvokeTimeout").Get<int?>();
+            if(timeout != null && timeout >= 0)
+            {
+                _timeout = timeout.Value;
+            }
         }
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> reqheaders)
         {
@@ -34,6 +40,7 @@ namespace JMS.Applications.HttpMiddlewares
             }
 
             using var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses);
+            rc.Timeout = _timeout;
             var service = await rc.TryGetMicroServiceAsync(serviceName);
 
             if (service == null || service.ServiceLocation.AllowGatewayProxy == false)
@@ -77,6 +84,8 @@ namespace JMS.Applications.HttpMiddlewares
             {
                 CertDomain = hostUri.Host
             });
+            proxyClient.ReadTimeout = rc.Timeout;
+
             try
             {
                 StringBuilder strBuffer = new StringBuilder();
