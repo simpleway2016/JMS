@@ -528,7 +528,7 @@ namespace UnitTest
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
 
-            ret = client.GetAsync($"http://localhost:{_jmsWebapiPort}/UserInfoService/GetMyNameLongtime").ConfigureAwait(false).GetAwaiter().GetResult();
+            ret = client.GetAsync($"http://localhost:{_jmsWebapiPort}/UserInfoService/Nothing").ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
 
