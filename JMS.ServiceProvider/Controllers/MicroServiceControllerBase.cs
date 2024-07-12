@@ -15,7 +15,7 @@ using System.Linq;
 using System.ComponentModel.DataAnnotations;
 using JMS.ServerCore.Http;
 
-public class MicroServiceControllerBase : BaseJmsController, IDisposable
+public class MicroServiceControllerBase : BaseJmsController
 {
 
 
@@ -85,7 +85,7 @@ public class MicroServiceControllerBase : BaseJmsController, IDisposable
 
     }
 
-    public virtual void Dispose()
+    public override void Dispose()
     {
 
     }

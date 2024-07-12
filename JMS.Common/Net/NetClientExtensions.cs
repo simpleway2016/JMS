@@ -310,39 +310,6 @@ namespace JMS
 
         }
 
-        public static async Task ReadAndSend(this PipeReader reader, PipeWriter writer, long totalLength)
-        {
-
-            while (totalLength > 0)
-            {
-
-                ReadResult ret;
-                while (true)
-                {
-                    ret = await reader.ReadAsync();
-
-
-                    totalLength -= ret.Buffer.Length;
-
-                    foreach (var span in ret.Buffer)
-                    {
-                        await writer.WriteAsync(span);
-                    }
-
-                    reader.AdvanceTo(ret.Buffer.End);
-
-                    if (ret.IsCompleted)
-                    {
-                        if (totalLength > 0)
-                        {
-                            throw new SocketException();
-                        }
-
-                        break;
-                    }
-                }
-            }
-
-        }
+       
     }
 }
