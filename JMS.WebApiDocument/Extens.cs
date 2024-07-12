@@ -138,7 +138,12 @@ namespace Microsoft.Extensions.DependencyInjection
                             ex = ex.InnerException;
 
                         context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                        if (ex.Message == "Authentication failed")
+                        if (ex is OperationCanceledException)
+                        {
+                            context.Response.StatusCode = 408;
+                            await context.Response.WriteAsync("");
+                        }
+                        else if (ex.Message == "Authentication failed")
                         {
                             context.Response.StatusCode = 401;
                             await context.Response.WriteAsync(ex.Message);
