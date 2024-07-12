@@ -131,10 +131,10 @@ namespace JMS
             {
                 var serverCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, this.Configuration.GetValue<string>("SSL:Password"));
                 var acceptCertHash = this.Configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
-                var sslProtocols = this.Configuration.GetSection("SSL:SslProtocols").Get<SslProtocols?>();
-                if (sslProtocols == null)
-                    sslProtocols = SslProtocols.None;
-                Services.AddSingleton<ISslConfiguration>(new DefaultSslConfiguration(serverCert, sslProtocols.Value, acceptCertHash));
+                var sslProtocol = this.Configuration.GetSection("SSL:SslProtocols").Get<SslProtocols?>();
+                if (sslProtocol == null)
+                    sslProtocol = SslProtocols.None;
+                Services.AddSingleton<ISslConfiguration>(new DefaultSslConfiguration(serverCert, sslProtocol.Value, acceptCertHash));
             }
             else
             {

@@ -98,7 +98,7 @@ namespace JMS
                 var sslProtocols = Configuration.GetSection("SSL:SslProtocols").Get<SslProtocols?>();
                 if(sslProtocols != null)
                 {
-                    webApiEnvironment.SslProtocols = sslProtocols.Value;
+                    webApiEnvironment.SslProtocol = sslProtocols.Value;
                 }
             }
 

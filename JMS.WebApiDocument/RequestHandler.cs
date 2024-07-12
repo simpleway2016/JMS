@@ -45,7 +45,7 @@ namespace JMS.WebApiDocument
                     context.Response.StatusCode = 404;
                     await context.Response.WriteAsync("not found");
                 }
-                if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
+                else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
                 {
                     await Proxies.ProxyJmsWebSocket.Run(service.ServiceLocation, context, method);
                 }

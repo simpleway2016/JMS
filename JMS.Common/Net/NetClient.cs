@@ -20,7 +20,6 @@ namespace JMS
 {
     public class NetClient : BaseNetClient
     {
-        public const SslProtocols SSLProtocols = SslProtocols.Tls12;
         /// <summary>
         /// 启动GZip压缩的起点
         /// </summary>

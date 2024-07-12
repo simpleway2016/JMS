@@ -12,19 +12,20 @@ namespace JMS
     {
         string[] AcceptCertHash { get; }
         X509Certificate2 ServerCert { get; }
+        public SslProtocols SslProtocol { get; }
     }
 
     class DefaultSslConfiguration : ISslConfiguration
     {
         public X509Certificate2 ServerCert { get;}
-        public SslProtocols SslProtocols { get; }
+        public SslProtocols SslProtocol { get; }
         public string[] AcceptCertHash { get; }
 
-        public DefaultSslConfiguration(X509Certificate2 serverCert,SslProtocols sslProtocols, string[] acceptCertHash)
+        public DefaultSslConfiguration(X509Certificate2 serverCert,SslProtocols sslProtocol, string[] acceptCertHash)
         {
             ServerCert = serverCert;
             AcceptCertHash = acceptCertHash;
-            SslProtocols = sslProtocols;
+            SslProtocol = sslProtocol;
         }
     }
 }

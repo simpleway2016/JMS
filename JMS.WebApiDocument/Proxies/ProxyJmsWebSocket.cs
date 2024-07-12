@@ -33,7 +33,7 @@ namespace JMS.WebApiDocument.Proxies
             using (NetClient proxyClient = new NetClient())
             {
                 await proxyClient.ConnectAsync(new NetAddress(hostUri.Host, hostUri.Port));
-                if (hostUri.Scheme == "https" || hostUri.Scheme == "wss")
+                if (location.UseSsl)
                 {
                     await proxyClient.AsSSLClientAsync(hostUri.Host, null, System.Security.Authentication.SslProtocols.None, (sender, certificate, chain, sslPolicyErrors) => true);
                 }

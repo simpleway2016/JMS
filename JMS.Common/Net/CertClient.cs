@@ -34,7 +34,7 @@ namespace JMS
                 {
                     X509CertificateCollection certs = new X509CertificateCollection();
                     certs.Add(addr.Certificate);
-                    sslStream.AuthenticateAsClient(addr.CertDomain??"", certs, NetClient.SSLProtocols, false);
+                    sslStream.AuthenticateAsClient(addr.CertDomain??"", certs, addr.SslProtocol ?? System.Security.Authentication.SslProtocols.None, false);
                 }
                 else
                 {
@@ -55,7 +55,7 @@ namespace JMS
                 {
                     X509CertificateCollection certs = new X509CertificateCollection();
                     certs.Add(addr.Certificate);
-                    await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "", certs, NetClient.SSLProtocols, false);
+                    await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "", certs, addr.SslProtocol ?? System.Security.Authentication.SslProtocols.None, false);
                 }
                 else
                 {
