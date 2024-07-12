@@ -42,6 +42,7 @@ namespace JMS.WebApiDocument.Proxies
                     _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
                 }
 
+                //把所有请求头，填充到client
                 foreach (var header in context.Request.Headers)
                 {
                     if (header.Key == "TranId")
@@ -56,6 +57,7 @@ namespace JMS.WebApiDocument.Proxies
 
 
                 var ip = context.Connection.RemoteIpAddress.ToString();
+                //加上ip重新填充 X-Forwarded-For
                 if (client.TryGetHeader("X-Forwarded-For", out string xff))
                 {
                     if (xff.Contains(ip) == false)
