@@ -71,6 +71,11 @@ namespace JMS.WebApiDocument.Proxies
                 CertDomain = hostUri.Host
             });
 
+            using (var client = RequestHandler.ClientProviderFunc())
+            {
+                proxyClient.ReadTimeout = client.Timeout;
+            }
+
             try
             {
                 var data = Encoding.UTF8.GetBytes(strBuffer.ToString());

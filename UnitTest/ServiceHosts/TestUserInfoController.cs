@@ -34,7 +34,11 @@ namespace UnitTest.ServiceHosts
             if (string.IsNullOrEmpty(this.TransactionId))
                 throw new Exception("TransactionId为空");
         }
-
+        public async Task<string> GetMyNameLongtime()
+        {
+            await Task.Delay(60000);
+            return "Jack";
+        }
         public string GetMyName()
         {
             return "Jack";

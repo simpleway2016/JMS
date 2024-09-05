@@ -94,7 +94,7 @@ namespace JMS.Applications.HttpMiddlewares
                 client.ReadTimeout = 0;
                 proxyClient.ReadTimeout = 0;
 
-                proxyClient.ReadAndSendForLoop(client);
+                _ = proxyClient.ReadAndSendForLoop(client);
 
                 await client.ReadAndSendForLoop(proxyClient);
 
