@@ -509,6 +509,14 @@ namespace UnitTest
             }
             netclient.Dispose();
 
+
+            ret = client.GetAsync($"http://localhost:{_jmsWebapiPort}/UserInfoService/GetMyNameV2?find=1&params=[\"Jack\"]&hel=2").ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == false)
+                throw new Exception("http访问失败");
+            text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (text != "Jack")
+                throw new Exception("http返回结果错误");
+
             ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyName").ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");

@@ -39,6 +39,12 @@ namespace UnitTest.ServiceHosts
         {
             return "Jack";
         }
+
+        public string GetMyNameV2(string name)
+        {
+            return name;
+        }
+
         public void Nothing()
         {
 

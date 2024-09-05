@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using Way.Lib;
 
 namespace JMS.Applications.HttpMiddlewares
@@ -55,7 +56,7 @@ namespace JMS.Applications.HttpMiddlewares
             }
             else if (service.ServiceLocation.Type == ServiceType.JmsService)
             {
-                await ProxyJmsService(rc, service, serviceName, client, requestPath, contentLength, reqheaders);
+                await ProxyJmsService(rc, service, serviceName, client, httpMethod, requestPath, contentLength, reqheaders);
                 return true;
             }
 
@@ -213,19 +214,40 @@ namespace JMS.Applications.HttpMiddlewares
             return true;
         }
 
-        static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client, string requestPath, int inputContentLength, IDictionary<string, string> headers)
+        static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client, string httpMethod, string requestPath, int inputContentLength, IDictionary<string, string> headers)
         {
             //获取方法名
             try
             {
                 var method = requestPath.Substring(serviceName.Length + 2);
                 object[] _parames = null;
+                if (httpMethod == "GET")
+                {
+                    var arr = method.Split('?');
+                    method = arr[0];
+                    int index;
+                    if (arr.Length > 1 && (index = arr[1].IndexOf("params=")) >= 0)
+                    {
+                        string queryString = arr[1].Substring(index + 7);
+                        if((index = queryString.IndexOf("&")) > 0)
+                        {
+                            queryString = queryString.Substring(0, index);
+                        }
+                        queryString = HttpUtility.UrlDecode(queryString);
+                        _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(queryString);
+                    }
+                }
+                
                 if (inputContentLength > 0)
                 {
                     var data = new byte[inputContentLength];
                     await client.ReadDataAsync(data, 0, inputContentLength);
                     var json = Encoding.UTF8.GetString(data);
-                    _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
+
+                    if (_parames == null)
+                    {
+                        _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
+                    }
                 }
 
                 foreach (var header in headers)
