@@ -15,6 +15,7 @@ using JMS.Common.Net;
 using Org.BouncyCastle.Bcpg;
 using System.IO;
 using JMS.Common;
+using System.Security.Authentication;
 
 namespace JMS.TokenServer
 {
@@ -24,6 +25,7 @@ namespace JMS.TokenServer
         static string[] key;
         static byte[] data;
         static X509Certificate2 ServerCert;
+        static SslProtocols SslProtocol;
         static string[] AcceptCertHash;
         static ClientManager _ClientManager = new ClientManager();
         static string GetRandomString(int length)
@@ -100,6 +102,11 @@ namespace JMS.TokenServer
             {
                 ServerCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, configuration.GetValue<string>("SSL:Password"));
                 AcceptCertHash = configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
+
+                var sslProtocol = configuration.GetSection("SSL:SslProtocols").Get<SslProtocols?>();
+                if (sslProtocol == null)
+                    sslProtocol = SslProtocols.None;
+                SslProtocol = sslProtocol.Value;
             }
 
             var listener = new JMS.ServerCore.MulitTcpListener(port, Logger);
@@ -131,7 +138,7 @@ namespace JMS.TokenServer
                 client.ReadTimeout = 0;
                 if (ServerCert != null)
                 {
-                    await client.AsSSLServerAsync(ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback),  System.Security.Authentication.SslProtocols.None);
+                    await client.AsSSLServerAsync(ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), SslProtocol);
                 }
                
                 var flag = await client.ReadIntAsync();
