@@ -62,11 +62,11 @@ namespace JMS.Token
                         CertClient client = null;
                         try
                         {
-                            TokenClient.Logger?.LogError("开始连接 token server ...");
+                            TokenClient.Logger?.LogInformation("开始连接 token server ...");
                             client = new CertClient();
                             client.Connect(_netAddress);
 
-                            TokenClient.Logger?.LogError("成功连接 token server");
+                            TokenClient.Logger?.LogInformation("成功连接 token server");
 
                             client.Write(888);
                             len = client.ReadInt();
@@ -113,7 +113,7 @@ namespace JMS.Token
                                 client.ReadData(buffer, 0, buffer.Length);
                                 var token = Encoding.UTF8.GetString(buffer);
                                 _disableTokens.TryAdd(token, expireTime);
-                                TokenClient.Logger?.LogDebug("Token:{0}被作废", token);
+                                TokenClient.Logger?.LogInformation("Token:{0}被作废", token);
                             }
                             else
                             {
