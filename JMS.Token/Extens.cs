@@ -1,6 +1,7 @@
 ﻿using JMS;
 using JMS.Token;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
@@ -43,7 +44,13 @@ namespace Microsoft.Extensions.DependencyInjection
             AuthenticationHandler.Callback = authCallback;
 
             services.AddSingleton<IAuthenticationHandler, AuthenticationHandler>();
-            services.AddSingleton<TokenClient>(p => new TokenClient(serverAddress));
+            services.AddSingleton<TokenClient>(p => {
+                if (TokenClient.Logger == null)
+                    TokenClient.Logger = p.GetService<ILogger<TokenClient>>();
+
+                var client = new TokenClient(serverAddress);
+                return client;
+            });
 
             return services;
         }

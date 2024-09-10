@@ -62,8 +62,12 @@ namespace JMS.Token
                         CertClient client = null;
                         try
                         {
+                            TokenClient.Logger?.LogError("开始连接 token server ...");
                             client = new CertClient();
                             client.Connect(_netAddress);
+
+                            TokenClient.Logger?.LogError("成功连接 token server");
+
                             client.Write(888);
                             len = client.ReadInt();
                             if (len != 4)
