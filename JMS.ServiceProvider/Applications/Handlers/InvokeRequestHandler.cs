@@ -45,8 +45,6 @@ namespace JMS.Applications
         }
 
         public InvokeType MatchType => InvokeType.Invoke;
-        static string LastInvokingMsgString;
-        static DateTime LastInvokingMsgStringTime = DateTime.Now.AddDays(-1);
         public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
             using (IServiceScope serviceScope = _MicroServiceProvider.ServiceProvider.CreateScope())
@@ -78,8 +76,14 @@ namespace JMS.Applications
         {
             List<TransactionDelegate> tranDelegateList = null;
             var originalTimeout = netclient.ReadTimeout;
+            bool logTrace = _logger != null && _logger.IsEnabled(LogLevel.Trace);
             while (true)
             {
+                if (logTrace)
+                {
+                    _logger.LogTrace(cmd.ToJsonString(true));
+                }
+
                 TransactionDelegate transactionDelegate = null;
                 MicroServiceControllerBase controller = null;
                 object[] parameters = null;
@@ -99,6 +103,11 @@ namespace JMS.Applications
                             var auth = _MicroServiceProvider.ServiceProvider.GetService<IAuthenticationHandler>();
                             if (auth != null)
                             {
+                                if (logTrace)
+                                {
+                                    _logger.LogTrace("Authenticating...");
+                                }
+
                                 userContent = auth.Authenticate(cmd.Header);
                                 if (userContent is ClaimsPrincipal principal)
                                 {
@@ -117,15 +126,9 @@ namespace JMS.Applications
                     controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                     controller.TransactionControl = null;
                     controller.NetClient = netclient;
-                    if (_logger != null && _logger.IsEnabled(LogLevel.Trace))
+                    if (logTrace)
                     {
-                        var str = string.Format("invoke service:{0} headers{3} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters.ToJsonString(true),cmd.Header.ToJsonString(true));
-                        if (str != LastInvokingMsgString || (DateTime.Now - LastInvokingMsgStringTime).TotalSeconds > 5)
-                        {
-                            LastInvokingMsgStringTime = DateTime.Now;
-                            LastInvokingMsgString = str;
-                            _logger?.LogTrace(str);
-                        }
+                        _logger.LogTrace("controller ok");
                     }
 
                     var parameterInfos = methodInfo.Parameters;
@@ -158,7 +161,7 @@ namespace JMS.Applications
                             try
                             {
                                 parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, pinfo.ParameterInfo.ParameterType);
-                                
+
                             }
                             catch (Exception ex)
                             {
@@ -269,7 +272,7 @@ namespace JMS.Applications
                             {
                                 Success = false,
                                 Data = httpResult.Data,
-                                Error = httpResult.Data is string? (string)httpResult.Data : null,
+                                Error = httpResult.Data is string ? (string)httpResult.Data : null,
                                 Attributes = $"{{'StatusCode':{httpResult.StatusCode}}}",
 
                             });
