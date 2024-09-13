@@ -29,6 +29,10 @@ namespace JMS.Applications
         MicroServiceHost _MicroServiceProvider;
         ILogger<InvokeRequestHandler> _logger;
         ILogger<TransactionDelegate> _loggerTran;
+
+        static string LastInvokingMsgString;
+        static DateTime LastInvokingMsgStringTime = DateTime.Now.AddDays(-1);
+
         public InvokeRequestHandler(ILogger<InvokeRequestHandler> logger,
              ILogger<TransactionDelegate> loggerTran,
             MicroServiceHost microServiceProvider,
@@ -81,7 +85,13 @@ namespace JMS.Applications
             {
                 if (logTrace)
                 {
-                    _logger.LogTrace(cmd.ToJsonString(true));
+                    var str = string.Format("invoke service:{0} headers{3} method:{1} parameters:{2}", cmd.Service, cmd.Method, cmd.Parameters.ToJsonString(true), cmd.Header.ToJsonString(true));
+                    if (str != LastInvokingMsgString || (DateTime.Now - LastInvokingMsgStringTime).TotalSeconds > 5)
+                    {
+                        LastInvokingMsgStringTime = DateTime.Now;
+                        LastInvokingMsgString = str;
+                        _logger?.LogTrace(str);
+                    }
                 }
 
                 TransactionDelegate transactionDelegate = null;
@@ -126,10 +136,6 @@ namespace JMS.Applications
                     controller = (MicroServiceControllerBase)_controllerFactory.CreateController(serviceScope, controllerTypeInfo);
                     controller.TransactionControl = null;
                     controller.NetClient = netclient;
-                    if (logTrace)
-                    {
-                        _logger.LogTrace("controller ok");
-                    }
 
                     var parameterInfos = methodInfo.Parameters;
                     object result = null;
