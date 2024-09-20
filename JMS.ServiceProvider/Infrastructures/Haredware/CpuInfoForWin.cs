@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -76,16 +77,15 @@ namespace JMS.Infrastructures.Haredware
 
             private double GetCpuUsageAlternative()
             {
-                var cpuTime1 = Process.GetCurrentProcess().TotalProcessorTime;
-                System.Threading.Thread.Sleep(1000); // 等待1秒
-                var cpuTime2 = Process.GetCurrentProcess().TotalProcessorTime;
-
-                var cpuUsedMs = (cpuTime2 - cpuTime1).TotalMilliseconds; // 计算差值
-
-                var totalMs = 1000; // 我们等待了1秒
-                var cpuUsage = (cpuUsedMs / (Environment.ProcessorCount * totalMs)) * 100; // 计算CPU使用率
-
-                return cpuUsage;
+                ProcessStartInfo processStartInfo = new ProcessStartInfo("wmic", "cpu get LoadPercentage");
+                processStartInfo.UseShellExecute = false;
+                processStartInfo.RedirectStandardOutput = true;
+                processStartInfo.RedirectStandardError = true;
+                using (var process = Process.Start(processStartInfo))
+                {
+                    var ret = process.StandardOutput.ReadToEnd().Split('\n').Select(m=>m.Trim()).Where(m=>m.Length > 0).ToArray();
+                    return Convert.ToDouble(ret[1]);
+                }
             }
         }
     }
