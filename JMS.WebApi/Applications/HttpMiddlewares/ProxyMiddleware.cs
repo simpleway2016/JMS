@@ -2,6 +2,7 @@
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,8 @@ namespace JMS.Applications.HttpMiddlewares
     {
         private readonly IWebApiHostEnvironment _webApiEnvironment;
         int _timeout = 30000;
-        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment,IConfiguration configuration)
+        ILogger _logger;
+        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment,IConfiguration configuration,ILoggerFactory loggerFactory)
         {
             _webApiEnvironment = webApiEnvironment;
             var timeout = configuration.GetSection("InvokeTimeout").Get<int?>();
@@ -24,9 +26,18 @@ namespace JMS.Applications.HttpMiddlewares
             {
                 _timeout = timeout.Value;
             }
+
+            _logger = loggerFactory.CreateLogger("Request");
         }
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> reqheaders)
         {
+            bool writeLogger = _logger.IsEnabled(LogLevel.Trace);
+
+            if(writeLogger)
+            {
+                _logger.LogTrace($"Requesting: {requestPath}\r\n{reqheaders.ToJsonString(true)}");
+            }
+
             int indexflag;
             var serviceName = requestPath.Substring(1);
             if ((indexflag = serviceName.IndexOf('/')) > 0)
@@ -54,6 +65,11 @@ namespace JMS.Applications.HttpMiddlewares
                 return true;
             }
 
+            if (writeLogger)
+            {
+                _logger.LogTrace($"service name: {serviceName}  address: {service.ServiceLocation.ServiceAddress}");
+            }
+
             if (service.ServiceLocation.Type == ServiceType.WebApi)
             {
                 //去除servicename去代理访问
@@ -63,7 +79,7 @@ namespace JMS.Applications.HttpMiddlewares
             }
             else if (service.ServiceLocation.Type == ServiceType.JmsService)
             {
-                await ProxyJmsService(rc, service, serviceName, client, httpMethod, requestPath, contentLength, reqheaders);
+                await ProxyJmsService(rc, service, serviceName, client, httpMethod, requestPath, contentLength, reqheaders,writeLogger?_logger:null);
                 return true;
             }
 
@@ -152,6 +168,11 @@ namespace JMS.Applications.HttpMiddlewares
                     int.TryParse(headers["Content-Length"], out contentLength);
                 }
 
+                if (writeLogger)
+                {
+                    _logger.LogTrace($"Response: {requestPath} ContentLength:{contentLength} \r\n{headers.ToJsonString(true)}");
+                }
+
                 strBuffer.Clear();
                 strBuffer.Append(requestPathLine);
                 strBuffer.Append("\r\n");
@@ -223,7 +244,8 @@ namespace JMS.Applications.HttpMiddlewares
             return true;
         }
 
-        static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client, string httpMethod, string requestPath, int inputContentLength, IDictionary<string, string> headers)
+        static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client, 
+            string httpMethod, string requestPath, int inputContentLength, IDictionary<string, string> headers,ILogger? logger)
         {
             //获取方法名
             try
@@ -325,6 +347,7 @@ namespace JMS.Applications.HttpMiddlewares
                 }
                 else
                 {
+                    logger?.LogError(ex, "");
                     client.OutputHttp500(ex.Message);
                 }
             }

@@ -4,6 +4,7 @@ using JMS.ServerCore.Http;
 using JMS.WebApiDocument;
 using JMS.WebApiDocument.Dtos;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,11 +20,12 @@ namespace JMS.Applications.HttpMiddlewares
     {
         private readonly IWebApiHostEnvironment _webApiEnvironment;
         private readonly IConfiguration _configuration;
-
-        public JmsDocMiddleware(IWebApiHostEnvironment webApiEnvironment,IConfiguration configuration)
+        ILogger _logger;
+        public JmsDocMiddleware(IWebApiHostEnvironment webApiEnvironment,IConfiguration configuration,ILoggerFactory loggerFactory)
         {
             _webApiEnvironment = webApiEnvironment;
             _configuration = configuration;
+            _logger = loggerFactory.CreateLogger("JmsDoc");
         }
         async void outputCode(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
@@ -80,6 +82,9 @@ namespace JMS.Applications.HttpMiddlewares
             List<ServiceDetail> doneList = new List<ServiceDetail>();
             List<IMicroService> services = new List<IMicroService>();
 
+
+            bool writeLogger = _logger.IsEnabled(LogLevel.Trace);
+
             using (var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses))
             {
                 ApiDocCodeBuilderInfo[] buttons;
@@ -122,7 +127,17 @@ namespace JMS.Applications.HttpMiddlewares
 
                         if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.JmsService)
                         {
+                            if (writeLogger)
+                            {
+                                _logger.LogTrace($"Getting service info: {service.ServiceLocation.ToJsonString(true)}");
+                            }
                             var jsonContent = await service.GetServiceInfoAsync();
+
+                            if (writeLogger)
+                            {
+                                _logger.LogTrace($"{service.ServiceLocation.Name} ok");
+                            }
+
                             controllerInfo = jsonContent.FromJson<ControllerInfo>();
                             controllerInfo.isPrivate = !service.ServiceLocation.AllowGatewayProxy;
                             if (!string.IsNullOrWhiteSpace(service.ServiceLocation.Description))
@@ -148,7 +163,17 @@ namespace JMS.Applications.HttpMiddlewares
                         }
                         else if (service.ServiceLocation.Type == JMS.Dtos.ServiceType.WebSocket)
                         {
+                            if (writeLogger)
+                            {
+                                _logger.LogTrace($"Getting service info: {service.ServiceLocation.ToJsonString(true)}");
+                            }
                             var jsonContent = await service.GetServiceInfoAsync();
+
+                            if (writeLogger)
+                            {
+                                _logger.LogTrace($"{service.ServiceLocation.Name} ok");
+                            }
+
                             var cInfo = jsonContent.FromJson<ControllerInfo>();
 
                             controllerInfo = new ControllerInfo()
@@ -181,7 +206,10 @@ namespace JMS.Applications.HttpMiddlewares
                     }
                     catch (Exception ex)
                     {
-
+                        if (writeLogger)
+                        {
+                            _logger.LogError(ex, $"{service.ServiceLocation.Name} error");
+                        }
                     }
                 });
             }
