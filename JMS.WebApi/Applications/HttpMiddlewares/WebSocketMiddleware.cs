@@ -1,21 +1,25 @@
 ﻿using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
+using Way.Lib;
 
 namespace JMS.Applications.HttpMiddlewares
 {
     internal class WebSocketMiddleware : IHttpMiddleware
     {
         private readonly IWebApiHostEnvironment _webApiEnvironment;
-
-        public WebSocketMiddleware(IWebApiHostEnvironment webApiEnvironment)
+        ILogger _logger;
+        public WebSocketMiddleware(IWebApiHostEnvironment webApiEnvironment,ILoggerFactory loggerFactory)
         {
             _webApiEnvironment = webApiEnvironment;
+            _logger = loggerFactory.CreateLogger("Request");
         }
         public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
         {
@@ -24,6 +28,13 @@ namespace JMS.Applications.HttpMiddlewares
                && headers.TryGetValue("Upgrade", out string upgrade)
                && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
             {
+                bool writeLogger = _logger.IsEnabled(LogLevel.Trace);
+
+                if (writeLogger)
+                {
+                    _logger.LogTrace($"WebSocket Requesting: {requestPath}\r\n{headers.ToJsonString(true)}");
+                }
+
                 int indexflag;
                 var serviceName = requestPath.Substring(1);
                 if ((indexflag = serviceName.IndexOf('/')) > 0)
@@ -40,8 +51,18 @@ namespace JMS.Applications.HttpMiddlewares
                 var service = await rc.TryGetMicroServiceAsync(serviceName);
                 if (service == null || service.ServiceLocation.AllowGatewayProxy == false)
                 {
+                    if (writeLogger)
+                    {
+                        _logger.LogTrace($"miss service: {serviceName}");
+                    }
+
                     client.OutputHttpNotFund();
                     return true;
+                }
+
+                if (writeLogger)
+                {
+                    _logger.LogTrace($"service name: {serviceName}  address: {service.ServiceLocation.ServiceAddress}");
                 }
 
                 if (service.ServiceLocation.Type == ServiceType.WebApi)

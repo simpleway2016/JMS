@@ -57,6 +57,14 @@ namespace JMS.Applications.HttpMiddlewares
 
             if (service == null || service.ServiceLocation.AllowGatewayProxy == false)
             {
+                if (writeLogger)
+                {
+                    if (service == null)
+                        _logger.LogTrace($"miss service: {serviceName}");
+                    else
+                        _logger.LogTrace($"{serviceName} AllowGatewayProxy=false");
+                }
+
                 if (contentLength > 0)
                 {
                     await client.ReadDataAsync(null, 0, contentLength);
