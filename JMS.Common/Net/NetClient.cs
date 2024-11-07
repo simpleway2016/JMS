@@ -601,5 +601,25 @@ namespace JMS
             }
 
         }
+
+        static byte[] CheckBs = new byte[1];
+        /// <summary>
+        /// 检查健康状态
+        /// </summary>
+        internal async void checkStatus()
+        {
+            try
+            {
+                var count = await this.Socket.ReceiveAsync(CheckBs, SocketFlags.Peek);
+                if (count == 0)
+                {
+                    this.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                this.Dispose();
+            }
+        }
     }
 }

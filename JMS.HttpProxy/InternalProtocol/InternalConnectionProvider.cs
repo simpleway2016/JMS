@@ -40,6 +40,7 @@ namespace JMS.HttpProxy.InternalProtocol
             }
         }
 
+        static byte[] CheckBs = new byte[1];
         /// <summary>
         /// 检查健康状态
         /// </summary>
@@ -49,7 +50,7 @@ namespace JMS.HttpProxy.InternalProtocol
         {
             try
             {
-                var count = await client.Socket.ReceiveAsync(new byte[1], SocketFlags.Peek);
+                var count = await client.Socket.ReceiveAsync(CheckBs, SocketFlags.Peek);
                 if (count == 0)
                 {
                     client.Dispose();

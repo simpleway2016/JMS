@@ -15,7 +15,7 @@ namespace JMS
     public class NetClientPool
     {
         internal static int POOLSIZE = 20;
-        const int RELEASESECONDS = 10;
+        const int RELEASESECONDS = 20;
         internal static int DefaultReadTimeout = 16000;
         static ConcurrentDictionary<(string, int), NetClientSeatCollection> TargetSeatGroups = new ConcurrentDictionary<(string, int), NetClientSeatCollection>();
         static NetClientPool()
@@ -256,17 +256,14 @@ namespace JMS
                         var ret = item.Client;
                         item.Client = null;
                         item.Used = 0;
-                        try
+
+                        if(ret.Socket == null)
                         {
-                            //这个判断一般无用，还得看RELEASESECONDS
-                            ret.Socket.Send(new byte[0]);
-                        }
-                        catch (SocketException)
-                        {
-                            //连接已断开
-                            ret.Dispose();
+                            //此连接已经断开
                             continue;
                         }
+
+                        ret.ReadTimeout = NetClientPool.DefaultReadTimeout;
                         return ret;
                     }
                 }
@@ -291,8 +288,11 @@ namespace JMS
                     {
                         item.OnSeatTime = DateTime.Now;
                         item.Client = client;
-                        client.ReadTimeout = NetClientPool.DefaultReadTimeout;
+                        client.ReadTimeout = 0;
                         item.Used = 2;
+
+                        //连接断开后自动释放socket
+                        client.checkStatus();
                         return;
                     }
                 }
