@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace JMS.HttpProxy.InternalProtocol
 {
@@ -30,9 +31,41 @@ namespace JMS.HttpProxy.InternalProtocol
 
             queue.Enqueue(client);
 
+            //检查状态
+            checkStatus(name ,client);
+
             if (HttpProxyProgram.Config.Current.LogDetails)
             {
                 _logger.LogInformation($"{name}当前可用连接数={queue.Count}");
+            }
+        }
+
+        /// <summary>
+        /// 检查健康状态
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="queue"></param>
+        async void checkStatus(string name, NetClient client)
+        {
+            try
+            {
+                var count = await client.Socket.ReceiveAsync(new byte[1], SocketFlags.Peek);
+                if (count == 0)
+                {
+                    client.Dispose();
+                    if (HttpProxyProgram.Config.Current.LogDetails)
+                    {
+                        _logger.LogInformation($"{name}连接断开");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                client.Dispose();
+                if (HttpProxyProgram.Config.Current.LogDetails)
+                {
+                    _logger.LogInformation($"{name}连接异常断开");
+                }
             }
         }
 
@@ -49,19 +82,8 @@ namespace JMS.HttpProxy.InternalProtocol
                 {
                     if (queue.TryDequeue(out NetClient ret))
                     {
-                        try
+                        if (ret.Socket == null)
                         {
-                            ret.Socket.Send(new byte[0]);
-                        }
-                        catch (SocketException)
-                        {
-                            if (HttpProxyProgram.Config.Current.LogDetails)
-                            {
-                                _logger.LogInformation($"找到一个废弃的NetClient");
-                            }
-                            i--;
-                            //连接已断开
-                            ret.Dispose();
                             continue;
                         }
 
