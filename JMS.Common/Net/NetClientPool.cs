@@ -259,6 +259,9 @@ namespace JMS
 
                         if(ret.Socket == null)
                         {
+#if DEBUG
+                            System.Diagnostics.Debug.WriteLine("有一个连接已经失效");
+#endif
                             //此连接已经断开
                             continue;
                         }
