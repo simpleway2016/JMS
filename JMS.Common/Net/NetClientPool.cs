@@ -65,7 +65,7 @@ namespace JMS
                         {
                             foreach (var item in pair.Value.Connects)
                             {
-                                if (item.Used == 2 && (DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS)
+                                if (item.Used == 2 && ((DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS || item.Client.Socket == null))
                                 {
                                     if (Interlocked.CompareExchange(ref item.Used, 3, 2) == 2)
                                     {
