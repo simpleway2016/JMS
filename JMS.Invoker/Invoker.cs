@@ -68,7 +68,7 @@ namespace JMS
         public void Invoke(string method, params object[] parameters)
         {
             var connect = InvokeConnectFactory.Create(RemoteClient, _serviceName, _serviceLocation, this);
-           
+
             if (RemoteClient.SupportTransaction && RemoteClient.HasTransactionTask())
             {
                 var invokingId = Interlocked.Increment(ref RemoteClient.InvokingId);
@@ -87,12 +87,12 @@ namespace JMS
             return connect.Invoke<T>(method, RemoteClient, parameters);
         }
 
-        async Task<T> CreateInvokeTask<T>(IInvokeConnect connect,int invokingId, string method, object[] parameters)
+        async Task<T> CreateInvokeTask<T>(IInvokeConnect connect, int invokingId, string method, object[] parameters)
         {
-          
+
             if (RemoteClient.SupportTransaction)
             {
-                await RemoteClient.WaitConnectComplete(invokingId , connect);
+                await RemoteClient.WaitConnectComplete(invokingId, connect);
             }
 
             return await connect.InvokeAsync<T>(method, RemoteClient, parameters);
@@ -113,8 +113,8 @@ namespace JMS
         {
             var id = Interlocked.Increment(ref RemoteClient.InvokingId);
             var connect = InvokeConnectFactory.Create(RemoteClient, _serviceName, _serviceLocation, this);
-          
-            var task = CreateInvokeTask<T>(connect, id , method, parameters);
+
+            var task = CreateInvokeTask<T>(connect, id, method, parameters);
             RemoteClient.AddTask(connect, id, task);
             return task;
         }
@@ -134,82 +134,85 @@ namespace JMS
             var connect = InvokeConnectFactory.Create(RemoteClient, _serviceName, _serviceLocation, this);
 
             var task = CreateInvokeTask<object>(connect, id, method, parameters);
-            RemoteClient.AddTask(connect, id,task);
+            RemoteClient.AddTask(connect, id, task);
             return task;
         }
 
         public string GetServiceClassCode(string nameSpace, string className)
         {
-            using (var netclient = new ProxyClient(RemoteClient.ProxyAddress))
+            var netclient = NetClientPool.CreateClient(RemoteClient.ProxyAddress, new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
+            netclient.ReadTimeout = this.RemoteClient.Timeout;
+            netclient.WriteServiceData(new InvokeCommand()
             {
-                netclient.Connect(new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
-                netclient.ReadTimeout = this.RemoteClient.Timeout;
-                netclient.WriteServiceData(new InvokeCommand()
-                {
-                    Type = (int)InvokeType.GenerateInvokeCode,
-                    Service = _serviceName,
-                    Parameters = new string[] { nameSpace, className }
-                });
-                var ret = netclient.ReadServiceObject<InvokeResult<string>>();
-                if (!ret.Success)
-                    throw new RemoteException(null,null, ret.Data);
-                return ret.Data;
-            }
+                Type = (int)InvokeType.GenerateInvokeCode,
+                Service = _serviceName,
+                Parameters = new string[] { nameSpace, className }
+            });
+            var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+
+            NetClientPool.AddClientToPool(netclient);
+
+            if (!ret.Success)
+                throw new RemoteException(null, null, ret.Data);
+            return ret.Data;
         }
 
         public async Task<string> GetServiceClassCodeAsync(string nameSpace, string className)
         {
-            using (var netclient = new ProxyClient(RemoteClient.ProxyAddress))
+            var netclient = await NetClientPool.CreateClientAsync(RemoteClient.ProxyAddress, new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
+
+            netclient.ReadTimeout = this.RemoteClient.Timeout;
+            netclient.WriteServiceData(new InvokeCommand()
             {
-                await netclient.ConnectAsync(new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
-                netclient.ReadTimeout = this.RemoteClient.Timeout;
-                netclient.WriteServiceData(new InvokeCommand()
-                {
-                    Type = (int)InvokeType.GenerateInvokeCode,
-                    Service = _serviceName,
-                    Parameters = new string[] { nameSpace, className }
-                });
-                var ret = await netclient.ReadServiceObjectAsync<InvokeResult<string>>();
-                if (!ret.Success)
-                    throw new RemoteException(null, null, ret.Data);
-                return ret.Data;
-            }
+                Type = (int)InvokeType.GenerateInvokeCode,
+                Service = _serviceName,
+                Parameters = new string[] { nameSpace, className }
+            });
+            var ret = await netclient.ReadServiceObjectAsync<InvokeResult<string>>();
+
+            NetClientPool.AddClientToPool(netclient);
+
+            if (!ret.Success)
+                throw new RemoteException(null, null, ret.Data);
+            return ret.Data;
+
         }
 
         public string GetServiceInfo()
         {
-            using (var netclient = new ProxyClient(RemoteClient.ProxyAddress))
+            var netclient = NetClientPool.CreateClient(RemoteClient.ProxyAddress, new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
+
+            netclient.ReadTimeout = this.RemoteClient.Timeout;
+            netclient.WriteServiceData(new InvokeCommand()
             {
-                netclient.Connect(new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
-                netclient.ReadTimeout = this.RemoteClient.Timeout;
-                netclient.WriteServiceData(new InvokeCommand()
-                {
-                    Type = (int)InvokeType.GenerateServiceInfo,
-                    Service = _serviceName
-                });
-                var ret = netclient.ReadServiceObject<InvokeResult<string>>();
-                if (!ret.Success)
-                    throw new RemoteException(null,ret.GetStatusCode(), ret.Data);
-                return ret.Data;
-            }
+                Type = (int)InvokeType.GenerateServiceInfo,
+                Service = _serviceName
+            });
+            var ret = netclient.ReadServiceObject<InvokeResult<string>>();
+
+            NetClientPool.AddClientToPool(netclient);
+
+            if (!ret.Success)
+                throw new RemoteException(null, ret.GetStatusCode(), ret.Data);
+            return ret.Data;
         }
 
         public async Task<string> GetServiceInfoAsync()
         {
-            using (var netclient = new ProxyClient(RemoteClient.ProxyAddress))
+            var netclient = await NetClientPool.CreateClientAsync(RemoteClient.ProxyAddress, new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
+            netclient.ReadTimeout = this.RemoteClient.Timeout;
+            netclient.WriteServiceData(new InvokeCommand()
             {
-                await netclient.ConnectAsync(new NetAddress(_serviceLocation.ServiceAddress, _serviceLocation.Port, RemoteClient.ServiceClientCertificate));
-                netclient.ReadTimeout = this.RemoteClient.Timeout;
-                netclient.WriteServiceData(new InvokeCommand()
-                {
-                    Type = (int)InvokeType.GenerateServiceInfo,
-                    Service = _serviceName
-                });
-                var ret = await netclient.ReadServiceObjectAsync<InvokeResult<string>>();
-                if (!ret.Success)
-                    throw new RemoteException(null,null, ret.Data);
-                return ret.Data;
-            }
+                Type = (int)InvokeType.GenerateServiceInfo,
+                Service = _serviceName
+            });
+            var ret = await netclient.ReadServiceObjectAsync<InvokeResult<string>>();
+
+            NetClientPool.AddClientToPool(netclient);
+
+            if (!ret.Success)
+                throw new RemoteException(null, null, ret.Data);
+            return ret.Data;
         }
     }
 }
