@@ -95,7 +95,7 @@ Content-Length: 0
         {
             
 
-            await Parallel.ForAsync(1, 3, async (index, can) =>
+            await Parallel.ForAsync(1, 5, async (index, can) =>
             {
                 while (true)
                 {
@@ -132,7 +132,7 @@ Content-Length: 0
                     var text = Encoding.UTF8.GetString(data);
                     Interlocked.Increment(ref info.visitCount);
                     NetClientPool.AddClientToPool(client);
-                    Thread.Sleep(1000);
+                    //Thread.Sleep(1000);
                 }
             });
 

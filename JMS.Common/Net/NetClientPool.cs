@@ -14,33 +14,23 @@ namespace JMS
 {
     public class NetClientPool
     {
-        internal static int POOLSIZE = 20;
-        const int RELEASESECONDS = 20;
+        internal const int RELEASESECONDS = 30;
         internal static int DefaultReadTimeout = 16000;
         static ConcurrentDictionary<(string, int), NetClientSeatCollection> TargetSeatGroups = new ConcurrentDictionary<(string, int), NetClientSeatCollection>();
-        static NetClientPool()
-        {
-            POOLSIZE = Math.Max(20, Environment.ProcessorCount * 10);
-            new Thread(checkTime).Start();
-
-        }
 
         public static event EventHandler<NetClient> CreatedNewClient;
 
-        /// <summary>
-        /// 设置连接池大小（默认CPU线程数x10）
-        /// </summary>
-        /// <param name="size"></param>
+
+        [Obsolete]
         public static void SetConnectionPoolSize(int size)
         {
-            if (size < 0)
-                throw new Exception("参数错误");
-            POOLSIZE = size;
+           
         }
 
+        [Obsolete]
         public static int GetConnectionPoolSize()
         {
-            return POOLSIZE;
+            return 0;
         }
 
         /// <summary>
@@ -53,39 +43,6 @@ namespace JMS
             DefaultReadTimeout = timeout;
         }
 
-        static void checkTime()
-        {
-            while (true)
-            {
-                try
-                {
-                    foreach( var pair in TargetSeatGroups)
-                    {
-                        if (pair.Value.IsReady)
-                        {
-                            foreach (var item in pair.Value.Connects)
-                            {
-                                if (item.Used == 2 && ((DateTime.Now - item.OnSeatTime).TotalSeconds >= RELEASESECONDS || item.Client.Socket == null))
-                                {
-                                    if (Interlocked.CompareExchange(ref item.Used, 3, 2) == 2)
-                                    {
-                                        item.Client.Dispose();
-                                        item.Client = null;
-                                        item.Used = 0;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-                catch
-                {
-
-                }
-                Thread.Sleep(3000);
-            }
-        }
 
         public static NetClient CreateClient(NetAddress proxy, string ip, int port, Action<NetClient> newClientCallback = null)
         {
@@ -194,16 +151,7 @@ namespace JMS
 
             if (TargetSeatGroups.TryGetValue(key, out NetClientSeatCollection seatGroup))
             {
-                int count = 0;
-                for (int i = 0; i < seatGroup.Connects.Length; i++)
-                {
-                    var item = seatGroup.Connects[i];
-                    if (item.Client != null)
-                    {
-                        count++;
-                    }
-                }
-                return count;
+                return seatGroup.Connects.Count;
             }
             return 0;
         }
@@ -213,7 +161,7 @@ namespace JMS
 
     class NetClientSeatCollection
     {
-        public NetClientSeat[] Connects;
+        public ConcurrentQueue<NetClientSeat> Connects;
         public bool IsReady;
         int _state = 0;//0=未初始化 1=准备初始化 2=初始化完毕
 
@@ -223,11 +171,7 @@ namespace JMS
                 return;
             if( Interlocked.CompareExchange(ref _state , 1 , 0) == 0)
             {
-                Connects = new NetClientSeat[NetClientPool.POOLSIZE];
-                for (int i = 0; i < Connects.Length; i++)
-                {
-                    Connects[i] = new NetClientSeat();
-                }
+                Connects = new ConcurrentQueue<NetClientSeat>();
                 _state = 2;
                 IsReady = true;
             }
@@ -246,32 +190,24 @@ namespace JMS
                 init();
             }
 
-            for (int i = 0; i < this.Connects.Length; i++)
+            while (true)
             {
-                var item = this.Connects[i];
-                if (item.Used == 2)
+                if(Connects.TryDequeue(out NetClientSeat seat))
                 {
-                    if (Interlocked.CompareExchange(ref item.Used, 3, 2) == 2)
-                    {
-                        var ret = item.Client;
-                        item.Client = null;
-                        item.Used = 0;
-
-                        if(ret.Socket == null)
-                        {
-#if DEBUG
-                            System.Diagnostics.Debug.WriteLine("有一个连接已经失效");
-#endif
-                            //此连接已经断开
-                            continue;
-                        }
-
-                        ret.ReadTimeout = NetClientPool.DefaultReadTimeout;
-                        return ret;
+                    if (seat.Client.Socket == null)
+                        continue;
+                    else if((DateTime.Now - seat.OnSeatTime).TotalSeconds >= NetClientPool.RELEASESECONDS){
+                        seat.Client.Dispose();
+                        continue;
                     }
+                    return seat.Client;
+                }
+                else
+                {
+                    return null;
                 }
             }
-            return null;
+            
         }
 
         public void AddClient(  NetClient client)
@@ -281,28 +217,9 @@ namespace JMS
                 init();
             }
 
-            for (int i = 0; i < this.Connects.Length; i++)
-            {
-                var item = this.Connects[i];
-               
-                if (item.Used == 0)
-                {
-                    if (Interlocked.CompareExchange(ref item.Used, 1, 0) == 0)
-                    {
-                        item.OnSeatTime = DateTime.Now;
-                        item.Client = client;
-                        client.ReadTimeout = 0;
-                        item.Used = 2;
-
-                        //连接断开后自动释放socket
-                        client.checkStatus();
-                        return;
-                    }
-                }
-            }
-
-            //没有位置，这个释放掉
-            client.Dispose();
+            Connects.Enqueue(new NetClientSeat(client));
+            //连接断开后自动释放socket
+            client.checkStatus();
         }
 
     }
@@ -310,13 +227,11 @@ namespace JMS
     class NetClientSeat
     {
         public NetClient Client;
-        /// <summary>
-        /// 0 空闲位置
-        /// 1 将要放入
-        /// 2 已经放入
-        /// 3 准备取出
-        /// </summary>
-        public int Used;
         public DateTime OnSeatTime;
+        public NetClientSeat(NetClient client)
+        {
+            this.Client = client;
+            OnSeatTime = DateTime.Now;
+        }
     }
 }
