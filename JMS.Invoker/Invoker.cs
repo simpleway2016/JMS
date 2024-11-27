@@ -1,14 +1,12 @@
 ﻿using JMS.Dtos;
 using JMS.GatewayConnection;
 using JMS.InvokeConnects;
-using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS
 {
@@ -35,7 +33,7 @@ namespace JMS
             if (registerServiceLocation != null)
             {
                 _IsFromGateway = false;
-                _serviceLocation = registerServiceLocation.ToJsonString().FromJson<ClientServiceDetail>();
+                _serviceLocation = registerServiceLocation.ChangeType<ClientServiceDetail>();
                 return true;
             }
             //获取服务地址
@@ -50,7 +48,7 @@ namespace JMS
             if (registerServiceLocation != null)
             {
                 _IsFromGateway = false;
-                _serviceLocation = registerServiceLocation.ToJsonString().FromJson<ClientServiceDetail>();
+                _serviceLocation = registerServiceLocation.ChangeType<ClientServiceDetail>();
                 return true;
             }
             //获取服务地址

@@ -7,25 +7,47 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
-using Way.Lib;
+using JMS.Common.Json;
 
 namespace JMS
 {
     public static class Extensions
     {
-        public static string[] GetStringArrayParameters(this object[] source)
+        public static string[] GetStringArrayParameters(this object[] source, IJsonSerializer jsonSerializer)
         {
             if (source == null)
                 return null;
-
+           
             string[] ret = new string[source.Length];
             for(int i = 0; i < source.Length; i ++)
             {
-                ret[i] = source[i].ToJsonString();
+                ret[i] = jsonSerializer.Serialize(source[i]);
             }
             return ret;
         }
 
+        /// <summary>
+        /// 把对象变成另一个类型
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public static T ChangeType<T>(this object source)
+        {
+            if (source == null)
+                return default(T);
+            var json = ApplicationJsonSerializer.JsonSerializer.Serialize(source);
+            return ApplicationJsonSerializer.JsonSerializer.Deserialize<T>(json);
+        }
+
+        public static string ToJsonString(this object source,bool writeIndented = false)
+        {
+            return ApplicationJsonSerializer.JsonSerializer.Serialize(source,writeIndented);
+        }
+        public static T FromJson<T>(this string jsonString)
+        {
+            return ApplicationJsonSerializer.JsonSerializer.Deserialize<T>(jsonString);
+        }
         /// <summary>
         /// 和Get方法类似，此方法返回的对象，会自动随着配置文件内容变更而更新
         /// </summary>

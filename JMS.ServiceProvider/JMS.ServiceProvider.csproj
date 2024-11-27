@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
+		<TargetFrameworks>.net8</TargetFrameworks>
 		<RootNamespace>JMS</RootNamespace>
 		<AssemblyName>JMS.ServiceProvider</AssemblyName>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/simpleway2016/JMS</RepositoryUrl>
-		<Version>5.9.15</Version>
+		<Version>8.0.0</Version>
 		<Authors>Jack.T</Authors>
 		<Company>JMS</Company>
 		<Product>JMS</Product>
@@ -22,18 +22,13 @@
 		<DocumentationFile>bin\JMS.ServiceProvider.xml</DocumentationFile>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp3.1'">
+	<ItemGroup>
 		
-		<PackageReference Include="System.CodeDom" Version="4.7.0" />
-		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="4.7.0" />
+		<PackageReference Include="System.CodeDom" Version="8.0.0" />
+		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
 
 	</ItemGroup>
-	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp2.1'">
-		
-		<PackageReference Include="System.CodeDom" Version="4.7.0" />
-		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="4.7.0" />
 
-	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\AssemblyDocumentReader\JMS.AssemblyDocumentReader.csproj" />

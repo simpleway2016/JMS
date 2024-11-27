@@ -1,4 +1,5 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Json;
+using JMS.Dtos;
 using JMS.InvokeConnects;
 using Microsoft.Extensions.Logging;
 using System;
@@ -9,7 +10,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS.GatewayConnection
 {
@@ -104,7 +104,7 @@ namespace JMS.GatewayConnection
                         if (ret.Type == 1)
                         {
                             //新增
-                            curItem = ret.Data.FromJson<RegisterServiceRunningInfo>();
+                            curItem = ApplicationJsonSerializer.JsonSerializer.Deserialize<RegisterServiceRunningInfo>(ret.Data);
                             lock (_allServices)
                             {
                                 _allServices.Add(curItem);
@@ -136,7 +136,7 @@ namespace JMS.GatewayConnection
                         else if (ret.Type == 3)
                         {
                             //更新
-                            curItem = ret.Data.FromJson<RegisterServiceRunningInfo>();
+                            curItem = ApplicationJsonSerializer.JsonSerializer.Deserialize<RegisterServiceRunningInfo>(ret.Data);
 
                             for (int i = 0; i < _allServices.Count; i++)
                             {
@@ -199,10 +199,10 @@ namespace JMS.GatewayConnection
                 {
                     Type = (int)CommandType.GetServiceProvider,
                     Header = remoteClient.GetCommandHeader(),
-                    Content = new GetServiceProviderRequest
+                    Content = ApplicationJsonSerializer.JsonSerializer.Serialize(new GetServiceProviderRequest
                     {
                         ServiceName = serviceName
-                    }.ToJsonString()
+                    })
                 });
                 var serviceLocation = await netclient.ReadServiceObjectAsync<ClientServiceDetail>();
 
@@ -246,10 +246,10 @@ namespace JMS.GatewayConnection
                 {
                     Type = (int)CommandType.GetServiceProvider,
                     Header = remoteClient.GetCommandHeader(),
-                    Content = new GetServiceProviderRequest
+                    Content = ApplicationJsonSerializer.JsonSerializer.Serialize(new GetServiceProviderRequest
                     {
                         ServiceName = serviceName
-                    }.ToJsonString()
+                    })
                 });
                 var serviceLocation = netclient.ReadServiceObject<ClientServiceDetail>();
 

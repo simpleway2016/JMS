@@ -1,4 +1,5 @@
 ﻿using JMS.Common;
+using JMS.Common.Security;
 using JMS.HttpProxy.InternalProtocol;
 using JMS.HttpProxy.Servers;
 using Microsoft.Extensions.Logging;
@@ -71,7 +72,7 @@ namespace JMS.HttpProxy.Applications.InternalProtocol
                         deviceConfig.Password = deviceConfig.Password.PadRight(32, '0');
                     }
 
-                    if (Way.Lib.AES.Decrypt(value, deviceConfig.Password) != name)
+                    if (AES.Decrypt(value, deviceConfig.Password) != name)
                     {
                         _blackList.MarkError(ip);
                         return;

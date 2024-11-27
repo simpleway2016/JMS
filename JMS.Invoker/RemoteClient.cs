@@ -1,8 +1,8 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Json;
+using JMS.Dtos;
 using JMS.GatewayConnection;
 using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
-using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,7 +14,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS
 {
@@ -144,7 +143,7 @@ namespace JMS
                 client.WriteServiceData(new GatewayCommand()
                 {
                     Type = (int)CommandType.SetApiDocumentButton,
-                    Content = new ApiDocCodeBuilderInfo { Name = buttonName, Code = code }.ToJsonString(),
+                    Content = ApplicationJsonSerializer.JsonSerializer.Serialize( new ApiDocCodeBuilderInfo { Name = buttonName, Code = code }),
                     Header = this.GetCommandHeader(),
                 });
                 ret = await client.ReadServiceObjectAsync<InvokeResult>();
@@ -841,7 +840,7 @@ namespace JMS
                         if (invokeType == InvokeType.CommitTranaction)
                         {
                             if (successed.Length > 0)
-                                _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${successed.ToJsonString()}");
+                                _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${ApplicationJsonSerializer.JsonSerializer.Serialize(successed)}");
                             foreach (var err in errors)
                                 _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
                         }
@@ -850,7 +849,7 @@ namespace JMS
                     {
                         if (invokeType == InvokeType.CommitTranaction)
                         {
-                            Task.Run(() =>
+                            _ = Task.Run(() =>
                             {
                                 reporter.ReportTransactionCompleted(this, this.TransactionId);
                             });
@@ -968,7 +967,7 @@ namespace JMS
                         {
                             var successedList = _Connects.Where(m => errors.Any(e => e.InvokingInfo == m.InvokingInfo) == false).ToArray();
                             if (successedList.Length > 0)
-                                _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${successedList.ToJsonString()}");
+                                _logger?.LogError($"事务:{TransactionId}已经成功{(invokeType == InvokeType.CommitTranaction ? "提交" : "回滚")}，详细请求信息：${ApplicationJsonSerializer.JsonSerializer.Serialize(successedList)}");
                             foreach (var err in errors)
                                 _logger?.LogError(err, $"事务:{TransactionId}发生错误。");
                         }

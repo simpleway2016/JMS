@@ -17,8 +17,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using Way.Lib;
 
 namespace JMS.ServiceProvider.AspNetCore
 {

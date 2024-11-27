@@ -8,8 +8,6 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using JMS.Common.Net;
-using Org.BouncyCastle.Asn1.Ocsp;
-using Org.BouncyCastle.Bcpg;
 
 namespace JMS.Proxy
 {

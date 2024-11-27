@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using JMS.GenerateCode;
-using Way.Lib;
+
 using System.Reflection;
 using System.Linq;
 using System.Threading.Tasks;

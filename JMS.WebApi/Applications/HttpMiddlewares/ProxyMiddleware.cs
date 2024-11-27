@@ -9,7 +9,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using Way.Lib;
 
 namespace JMS.Applications.HttpMiddlewares
 {

@@ -11,9 +11,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Way.Lib;
 using Microsoft.Extensions.Logging;
 using JMS.InvokeConnects;
+using JMS.Common.Json;
 
 namespace JMS.TransactionReporters
 {
@@ -72,7 +72,7 @@ namespace JMS.TransactionReporters
                 TransactionReporterRoute.Logger?.LogInformation($"重新执行事务{tranId}");
                 ConcurrentQueue<ClientServiceDetail> failds = new ConcurrentQueue<ClientServiceDetail>();
 
-                var obj = filecontent.FromJson<FileReportContent>();
+                var obj = ApplicationJsonSerializer.JsonSerializer.Deserialize<FileReportContent>(filecontent);
                 Parallel.ForEach(obj.Services, serviceInfo =>
                 {
                     try
@@ -97,7 +97,7 @@ namespace JMS.TransactionReporters
                     {
                         TransactionReporterRoute.Logger?.LogInformation($"{location.ServiceAddress}:{location.Port}重新执行事务{tranId}失败");
                     }
-                    System.IO.File.WriteAllText(filepath, obj.ToJsonString(), Encoding.UTF8);
+                    System.IO.File.WriteAllText(filepath, ApplicationJsonSerializer.JsonSerializer.Serialize(obj), Encoding.UTF8);
                 }
                 else
                 {
@@ -125,7 +125,7 @@ namespace JMS.TransactionReporters
                 obj.Cert = remoteClient.ServiceClientCertificate.RawData;
             }
 
-            System.IO.File.WriteAllText(filepath, obj.ToJsonString(), Encoding.UTF8);
+            System.IO.File.WriteAllText(filepath, ApplicationJsonSerializer.JsonSerializer.Serialize(obj), Encoding.UTF8);
         }
 
         public void ReportTransactionCompleted(RemoteClient remoteClient, string tranid)

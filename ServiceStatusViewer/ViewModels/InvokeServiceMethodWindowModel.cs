@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using JMS;
 using JMS.GenerateCode;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -11,7 +12,6 @@ using System.Net.Sockets;
 using System.Reactive;
 using System.Text;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace ServiceStatusViewer.ViewModels
 {

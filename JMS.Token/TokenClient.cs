@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JMS.Common.Security;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,8 +11,6 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS.Token
 {
@@ -298,7 +297,7 @@ namespace JMS.Token
         {
             var str = body;
             str += keys[1];
-            str = Way.Lib.AES.Encrypt(str, keys[0]);
+            str = AES.Encrypt(str, keys[0]);
             return GetHash(str);
         }
 

@@ -4,16 +4,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
-using Org.BouncyCastle.Ocsp;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.WebSockets;
-using System.Text;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS.ServiceProvider.AspNetCore
 {

@@ -11,7 +11,6 @@ using System.Security.Authentication;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS.Token.AspNetCore
 {

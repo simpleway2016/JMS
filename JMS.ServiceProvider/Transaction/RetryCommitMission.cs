@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Way.Lib;
 using static JMS.RetryCommit.FaildCommitBuilder;
 using JMS.Infrastructures;
 using System.Net;
@@ -15,6 +14,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Security.Claims;
 using JMS.Controllers;
+using JMS.Common.Json;
 
 namespace JMS.RetryCommit
 {
@@ -267,7 +267,7 @@ namespace JMS.RetryCommit
                                 if (pvalue == null)
                                     continue;
 
-                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, parameterInfos[i].ParameterType);
+                                parameters[i] = ApplicationJsonSerializer.JsonSerializer.Deserialize(pvalue, parameterInfos[i].ParameterType);
 
                             }
 

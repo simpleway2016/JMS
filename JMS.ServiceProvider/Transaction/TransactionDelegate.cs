@@ -11,7 +11,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
-using Way.Lib;
 using static JMS.RetryCommit.FaildCommitBuilder;
 
 namespace JMS

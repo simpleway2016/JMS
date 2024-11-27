@@ -1,4 +1,5 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Json;
+using JMS.Dtos;
 using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
 using System;
@@ -6,7 +7,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS
 {
@@ -68,7 +68,7 @@ namespace JMS
                     Service = InvokingInfo.ServiceName,
                     Method = method,
                     Parameters = parameters.Length == 0 ? null :
-                                    parameters.GetStringArrayParameters()
+                                    parameters.GetStringArrayParameters(ApplicationJsonSerializer.JsonSerializer)
                 };
 
 
@@ -103,7 +103,7 @@ namespace JMS
                 InvokeResult<string> otherObj = null;
                 try
                 {
-                    otherObj = ex.Source.FromJson<InvokeResult<string>>();
+                    otherObj = ApplicationJsonSerializer.JsonSerializer.Deserialize<InvokeResult<string>>(ex.Source);
                 }
                 catch
                 {
@@ -159,7 +159,7 @@ namespace JMS
                     Service = InvokingInfo.ServiceName,
                     Method = method,
                     Parameters = parameters.Length == 0 ? null :
-                                    parameters.GetStringArrayParameters()
+                                    parameters.GetStringArrayParameters(ApplicationJsonSerializer.JsonSerializer)
                 };
 
 
@@ -193,7 +193,7 @@ namespace JMS
                 InvokeResult<string> otherObj = null;
                 try
                 {
-                    otherObj = ex.Source.FromJson<InvokeResult<string>>();
+                    otherObj = ApplicationJsonSerializer.JsonSerializer.Deserialize<InvokeResult<string>>(ex.Source);
                 }
                 catch
                 {

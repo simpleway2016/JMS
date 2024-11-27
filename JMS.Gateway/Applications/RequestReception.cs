@@ -8,7 +8,6 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Web;
-using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using JMS.Applications.CommandHandles;
 using System.Threading.Tasks;

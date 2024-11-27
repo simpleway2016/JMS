@@ -5,6 +5,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Native.Interop;
 using Avalonia.Threading;
+using JMS;
 using JMS.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Pomelo.Data.MySql.Memcached;
@@ -15,10 +16,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace ServiceStatusViewer.ViewModels
 {
@@ -244,14 +245,14 @@ namespace ServiceStatusViewer.ViewModels
 
         async Task loadServiceDataHttp()
         {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(8);
+            httpClient.DefaultRequestHeaders.Add("UserName", MicroServiceClient.UserName);
+            httpClient.DefaultRequestHeaders.Add("Password", MicroServiceClient.Password);
+
             RegisterServiceRunningInfo[] list = null;
-            await Task.Run(() =>
-            {
-                list = HttpClient.GetContent(MicroServiceClient.GatewayAddresses[0].Address + "/?GetAllServiceProviders", new Dictionary<string, string> {
-                { "UserName" , MicroServiceClient.UserName},
-                 { "Password" , MicroServiceClient.Password}
-            }, 8000).FromJson<RegisterServiceRunningInfo[]>();
-            });
+            list = (await httpClient.GetStringAsync(MicroServiceClient.GatewayAddresses[0].Address + "/?GetAllServiceProviders")).FromJson<RegisterServiceRunningInfo[]>();
+           
             foreach (var item in list)
             {
                 if (this.ServiceList.Any(m => m._data.ServiceAddress == item.ServiceAddress && m._data.Port == item.Port) == false)

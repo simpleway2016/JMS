@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace JMS.GenerateCode
@@ -16,7 +17,7 @@ namespace JMS.GenerateCode
 
     public class DataTypeInfo
     {
-        [Newtonsoft.Json.JsonIgnore]
+        [JsonIgnore]
         public Type type { get; set; }
         public string typeName { get; set; }
         public bool isEnum { get; set; }

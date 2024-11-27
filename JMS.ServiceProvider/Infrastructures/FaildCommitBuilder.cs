@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using Way.Lib;
 
 namespace JMS.RetryCommit
 {

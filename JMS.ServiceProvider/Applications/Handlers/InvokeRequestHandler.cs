@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
-using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using JMS.Dtos;
 using System.Linq;
@@ -15,9 +14,9 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Security.Authentication;
 using JMS.Controllers;
-using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations;
 using JMS.ServerCore.Http;
+using JMS.Common.Json;
 
 namespace JMS.Applications
 {
@@ -166,7 +165,7 @@ namespace JMS.Applications
                             var pinfo = parameterInfos[i];
                             try
                             {
-                                parameters[i] = Newtonsoft.Json.JsonConvert.DeserializeObject(pvalue, pinfo.ParameterInfo.ParameterType);
+                                parameters[i] = ApplicationJsonSerializer.JsonSerializer.Deserialize(pvalue, pinfo.ParameterInfo.ParameterType);
 
                             }
                             catch (Exception ex)

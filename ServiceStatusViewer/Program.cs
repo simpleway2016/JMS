@@ -11,7 +11,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceStatusViewer.Infrastructures;
 using ServiceStatusViewer.Views;
-using Way.Lib;
 
 namespace ServiceStatusViewer
 {

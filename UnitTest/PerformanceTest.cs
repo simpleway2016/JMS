@@ -21,7 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 using UnitTest.ServiceHosts;
-using Way.Lib;
+
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UnitTest

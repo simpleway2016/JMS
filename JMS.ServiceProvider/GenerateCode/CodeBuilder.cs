@@ -7,7 +7,6 @@ using System.CodeDom.Compiler;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.IO;
-using Newtonsoft.Json.Schema;
 using System.Xml;
 using JMS.AssemblyDocumentReader;
 using Microsoft.Extensions.DependencyInjection;

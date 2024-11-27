@@ -16,7 +16,7 @@ using JMS.IdentityModel.JWT.Authentication;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using JMS.Token;
-using Way.Lib;
+
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using JMS;

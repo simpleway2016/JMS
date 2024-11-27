@@ -1,4 +1,5 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Json;
+using JMS.Dtos;
 using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
 using System;
@@ -7,7 +8,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS
 {
@@ -111,7 +111,7 @@ Accept-Language: zh-CN,zh;q=0.9
                     _client.WriteServiceData(Encoding.UTF8.GetBytes("invoke"));
                     _client.WriteServiceData(Encoding.UTF8.GetBytes(uri.PathAndQuery));
                 }
-                _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
+                _client.WriteServiceData(Encoding.UTF8.GetBytes(ApplicationJsonSerializer.JsonSerializer.Serialize(parameters.GetStringArrayParameters(ApplicationJsonSerializer.JsonSerializer))));
 
                 var originalSize = _client.MaxCommandSize;
                 _client.MaxCommandSize = int.MaxValue;
@@ -141,7 +141,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 InvokeResult<string> otherObj = null;
                 try
                 {
-                    otherObj = ex.Source.FromJson<InvokeResult<string>>();
+                    otherObj = ApplicationJsonSerializer.JsonSerializer.Deserialize<InvokeResult<string>>(ex.Source);
                 }
                 catch
                 {
@@ -211,7 +211,7 @@ Accept-Language: zh-CN,zh;q=0.9
                     _client.WriteServiceData(Encoding.UTF8.GetBytes(uri.PathAndQuery));
                 }
 
-                _client.WriteServiceData(Encoding.UTF8.GetBytes(parameters.GetStringArrayParameters().ToJsonString()));
+                _client.WriteServiceData(Encoding.UTF8.GetBytes(ApplicationJsonSerializer.JsonSerializer.Serialize(parameters.GetStringArrayParameters(ApplicationJsonSerializer.JsonSerializer))));
 
                 var originalSize = _client.MaxCommandSize;
                 _client.MaxCommandSize = int.MaxValue;
@@ -241,7 +241,7 @@ Accept-Language: zh-CN,zh;q=0.9
                 InvokeResult<string> otherObj = null;
                 try
                 {
-                    otherObj = ex.Source.FromJson<InvokeResult<string>>();
+                    otherObj = ApplicationJsonSerializer.JsonSerializer.Deserialize<InvokeResult<string>>(ex.Source);
                 }
                 catch
                 {

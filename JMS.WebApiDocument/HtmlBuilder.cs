@@ -17,8 +17,6 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
 using System.Xml.Linq;
-using Way.Lib;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace JMS.WebApiDocument

@@ -1,4 +1,5 @@
 ﻿using JMS.Common;
+using JMS.Common.Json;
 using JMS.Dtos;
 using System;
 using System.Buffers;
@@ -14,7 +15,6 @@ using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS
 {
@@ -480,7 +480,7 @@ namespace JMS
             string str = Encoding.UTF8.GetString(datas);
             try
             {
-                return str.FromJson<T>();
+                return ApplicationJsonSerializer.JsonSerializer.Deserialize<T>(str);
             }
             catch (Exception ex)
             {
@@ -497,7 +497,7 @@ namespace JMS
             string str = Encoding.UTF8.GetString(datas);
             try
             {
-                return str.FromJson<T>();
+                return ApplicationJsonSerializer.JsonSerializer.Deserialize<T>(str);
             }
             catch (Exception ex)
             {
@@ -549,7 +549,7 @@ namespace JMS
             }
             else
             {
-                this.WriteServiceData(Encoding.UTF8.GetBytes(value.ToJsonString()));
+                this.WriteServiceData(Encoding.UTF8.GetBytes(ApplicationJsonSerializer.JsonSerializer.Serialize(value)));
             }
 
         }
@@ -597,7 +597,7 @@ namespace JMS
             }
             else
             {
-                return this.WriteServiceDataAsync(Encoding.UTF8.GetBytes(value.ToJsonString()));
+                return this.WriteServiceDataAsync(Encoding.UTF8.GetBytes(ApplicationJsonSerializer.JsonSerializer.Serialize(value)));
             }
 
         }

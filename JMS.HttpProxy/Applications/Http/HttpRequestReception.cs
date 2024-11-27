@@ -9,7 +9,6 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Web;
-using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using System.Net;

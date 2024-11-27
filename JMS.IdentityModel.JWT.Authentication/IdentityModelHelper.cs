@@ -1,20 +1,11 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Authentication;
-using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Way.Lib;
 
 namespace JMS.IdentityModel.JWT.Authentication
 {
@@ -22,8 +13,10 @@ namespace JMS.IdentityModel.JWT.Authentication
     {
         public static RsaSecurityKey GetSecurityKey(string serverUrl)
         {
-            var serverContnt = Way.Lib.HttpClient.GetContent($"{serverUrl}.well-known/openid-configuration", 8000).FromJson<Dictionary<string, object>>();
-            var keyContent = Way.Lib.HttpClient.GetContent(serverContnt["jwks_uri"].ToString(), 8000);
+            using HttpClient client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(8);
+            var serverContnt = client.GetStringAsync($"{serverUrl}.well-known/openid-configuration").GetAwaiter().GetResult().FromJson<Dictionary<string, object>>();
+            var keyContent = client.GetStringAsync(serverContnt["jwks_uri"].ToString()).GetAwaiter().GetResult();
 
 
             JsonWebKeySet exampleJWKS = new JsonWebKeySet(keyContent);

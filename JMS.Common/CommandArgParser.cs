@@ -4,7 +4,7 @@ using System.Text;
 using System.Linq;
 namespace JMS.Common
 {
-    public class CommandArgParser : Way.Lib.Collections.IgnoreCaseDictionary
+    public class CommandArgParser : Collections.IgnoreCaseDictionary
     {
         public CommandArgParser(string[] args)
         {

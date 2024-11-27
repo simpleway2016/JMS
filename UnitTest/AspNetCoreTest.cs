@@ -22,6 +22,7 @@ using System.Net.Sockets;
 using JMS.Common;
 using System.Data;
 using System.Security.Claims;
+using JMS.Dtos;
 
 namespace UnitTest
 {
@@ -467,7 +468,10 @@ Content-Length2: 0
                 JMS.Proxy.Program.Main(new string[] { "8918" });
             });
         }
-
+        enum TestEnum
+        {
+            ABC = 2000
+        }
         [TestMethod]
         public void AsyncHttpTest()
         {

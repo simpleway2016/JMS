@@ -1,4 +1,5 @@
-﻿using JMS.AssemblyDocumentReader;
+﻿using JMS;
+using JMS.AssemblyDocumentReader;
 using JMS.GenerateCode;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -12,7 +13,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-using Way.Lib;
 
 namespace WebApiTest.GenerateCode
 {

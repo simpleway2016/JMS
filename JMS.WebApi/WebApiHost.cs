@@ -13,9 +13,6 @@ using System.Reflection;
 using System.Linq;
 using System.IO;
 using Microsoft.Extensions.Configuration;
-using JMS.Common.Net;
-using Org.BouncyCastle.Bcpg;
-using Way.Lib;
 
 namespace JMS
 {

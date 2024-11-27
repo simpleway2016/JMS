@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Way.Lib;
 using JMS.Infrastructures;
 using static JMS.ServiceProvider.AspNetCore.ApiFaildCommitBuilder;
 using Microsoft.AspNetCore.Mvc.Infrastructure;

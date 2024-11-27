@@ -13,7 +13,6 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
-using Way.Lib;
 
 namespace JMS.IdentityModel.JWT.Authentication
 {

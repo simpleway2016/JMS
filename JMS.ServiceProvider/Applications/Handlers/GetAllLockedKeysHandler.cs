@@ -1,9 +1,4 @@
 ﻿using JMS.Dtos;
-using JMS.Domains;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Way.Lib;
 using System.Threading.Tasks;
 
 namespace JMS.Applications
