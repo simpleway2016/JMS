@@ -77,7 +77,7 @@ namespace JMS.HttpProxy.Applications.Http
         {
             if (cmd.Header == null)
             {
-                cmd.Header = new Dictionary<string, string>();
+                cmd.Header = new Common.Collections.IgnoreCaseDictionary();
             }
 
             var requestPathLine = await client.PipeReader.ReadHeaders(cmd.Header);

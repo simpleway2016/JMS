@@ -13,6 +13,5 @@ namespace JMS.HttpProxy.Servers
         public abstract void Run();
         public ServerConfig Config { get; set; }
         public IServiceProvider ServiceProvider { get; set; }
-       
     }
 }

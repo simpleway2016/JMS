@@ -1,6 +1,5 @@
 ﻿using JMS.HttpProxy.Applications.DirectSocket;
 using JMS.HttpProxy.Applications.Http;
-using JMS.HttpProxy.Attributes;
 using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,12 +13,13 @@ using System.Threading.Tasks;
 
 namespace JMS.HttpProxy.Servers
 {
-    [ProxyType(ProxyType.DirectSocket)]
     public class DirectSocketServer : ProxyServer,IDisposable
     {
         DirectSocketRequestReception _requestReception;
         JMS.ServerCore.MulitTcpListener _tcpServer;
         ILogger<DirectSocketServer> _logger;
+
+
 
         public DirectSocketServer()
         {

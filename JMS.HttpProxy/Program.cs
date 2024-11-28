@@ -21,6 +21,7 @@ using JMS.HttpProxy.InternalProtocol;
 using JMS.HttpProxy.Applications.Sockets;
 using JMS.HttpProxy.Applications;
 using JMS.HttpProxy.Applications.DirectSocket;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace JMS
 {
@@ -29,8 +30,17 @@ namespace JMS
         internal static string AppSettingPath;
         internal static IConfiguration Configuration;
         internal static ConfigurationValue<AppConfig> Config;
+        static void AotInit()
+        {
+            typeof(AppConfig).GetMembers();
+            typeof(ServerConfig).GetMembers();
+            typeof(DeviceConfig).GetMembers();
+            typeof(SslConfig).GetMembers();
+            typeof(ProxyConfig).GetMembers();
+        }
         static void Main(string[] args)
         {
+            AotInit();
             if (args.Length > 1&& args[0].EndsWith(".pfx") )
             {
                 var cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(args[0], args[1]);
@@ -42,7 +52,7 @@ namespace JMS
             ThreadPool.SetMinThreads(Environment.ProcessorCount * 10, Environment.ProcessorCount * 10);
 
             CommandArgParser cmdArg = new CommandArgParser(args);
-            AppSettingPath = cmdArg.TryGetValue<string>("-s");
+            cmdArg.TryGetValue("-s",out AppSettingPath);
 
             if (AppSettingPath == null)
                 AppSettingPath = "appsettings.json";
@@ -66,7 +76,7 @@ namespace JMS
             builder.AddJsonFile(AppSettingPath, optional: true, reloadOnChange: true);
             Configuration = builder.Build();
             Config = Configuration.GetNewest<AppConfig>();
-
+           
             Run(Configuration);
         }
 
@@ -92,6 +102,7 @@ namespace JMS
             services.AddSingleton<HttpNetClientProvider>();
             services.AddSingleton<SocketNetClientProvider>();
             services.AddSingleton<NetClientProviderFactory>();
+
 
             var serviceProvider = services.BuildServiceProvider();
 

@@ -1,5 +1,4 @@
-﻿using JMS.HttpProxy.Attributes;
-using JMS.HttpProxy.Dtos;
+﻿using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
@@ -28,22 +27,31 @@ namespace JMS.HttpProxy.Servers
 
         public static ProxyServerFactory UseProxyServerFactory(this IServiceProvider serviceProvider)
         {
+            if (HttpProxyProgram.Config.Current.Servers == null)
+                throw new Exception("Servers 配置项为空");
             var proxyServerFactory = serviceProvider.GetService<ProxyServerFactory>();
-
-            var types = typeof(ProxyServer).Assembly.GetTypes().Where(m => m.IsSubclassOf(typeof(ProxyServer))).ToArray();
-            Dictionary<ProxyType, Type> proxyServerTypes = new Dictionary<ProxyType, Type>();
-            foreach (var type in types)
-            {
-                var attr = type.GetCustomAttribute<ProxyTypeAttribute>();
-                if (attr == null)
-                    throw new InvalidOperationException($"{type.Name} miss ProxyTypeAttribute");
-                proxyServerTypes[attr.ProxyType] = type;
-            }
+                        
 
             foreach (var serverConfig in HttpProxyProgram.Config.Current.Servers)
             {
-                var type = proxyServerTypes[serverConfig.Type];
-                var server = (ProxyServer)Activator.CreateInstance(type);
+                ProxyServer server =  null;
+                switch(serverConfig.Type)
+                {
+                    case ProxyType.Http:
+                        server = new HttpServer();
+                        break;
+                    case ProxyType.DirectSocket:
+                        server = new DirectSocketServer();
+                        break;
+                    case ProxyType.InternalProtocol:
+                        server = new InternalProtocolServer();
+                        break;
+                    case ProxyType.Socket:
+                        server = new SocketServer();
+                        break;
+                }
+                if (server == null)
+                    throw new Exception($"无法识别的类型：{serverConfig.Type}");
                 server.Config = serverConfig;
                 server.ServiceProvider = serviceProvider;
                 server.Init();
