@@ -2,7 +2,9 @@
 using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,44 +15,49 @@ namespace JMS.HttpProxy.Servers
 {
     public class ProxyServerFactory
     {
-        List<ProxyServer> _proxyServers = new List<ProxyServer>();
-        public IEnumerable<ProxyServer> ProxyServers => _proxyServers;
-       
+        ConcurrentDictionary<int, ProxyServer> _proxyServers = new ConcurrentDictionary<int, ProxyServer>();
+        public ConcurrentDictionary<int, ProxyServer> ProxyServers => _proxyServers;
+        Dictionary<ProxyType, Type> _proxyServerTypes = new Dictionary<ProxyType, Type>();
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<ProxyServerFactory> _logger;
 
-        public void Add(ProxyServer server)
+        public ProxyServerFactory(IServiceProvider serviceProvider, ILogger<ProxyServerFactory> logger)
         {
-            _proxyServers.Add(server);
-        }
-    }
-
-    public static class ProxyServerFactoryExtensions
-    {
-
-        public static ProxyServerFactory UseProxyServerFactory(this IServiceProvider serviceProvider)
-        {
-            var proxyServerFactory = serviceProvider.GetService<ProxyServerFactory>();
-
+            this._serviceProvider = serviceProvider;
+            this._logger = logger;
             var types = typeof(ProxyServer).Assembly.GetTypes().Where(m => m.IsSubclassOf(typeof(ProxyServer))).ToArray();
-            Dictionary<ProxyType, Type> proxyServerTypes = new Dictionary<ProxyType, Type>();
+
             foreach (var type in types)
             {
                 var attr = type.GetCustomAttribute<ProxyTypeAttribute>();
                 if (attr == null)
                     throw new InvalidOperationException($"{type.Name} miss ProxyTypeAttribute");
-                proxyServerTypes[attr.ProxyType] = type;
+                _proxyServerTypes[attr.ProxyType] = type;
             }
 
-            foreach (var serverConfig in HttpProxyProgram.Config.Current.Servers)
+
+        }
+
+        public void Add(ServerConfig serverConfig)
+        {
+            var type = _proxyServerTypes[serverConfig.Type];
+            var server = (ProxyServer)Activator.CreateInstance(type);
+            server.Config = serverConfig;
+            server.ServiceProvider = _serviceProvider;
+            server.Init();
+            new Thread(() => server.Run()).Start();
+
+            _proxyServers[serverConfig.Port] = server;
+        }
+
+        public void Remove(ServerConfig serverConfig)
+        {
+            if (_proxyServers.TryRemove(serverConfig.Port, out ProxyServer server))
             {
-                var type = proxyServerTypes[serverConfig.Type];
-                var server = (ProxyServer)Activator.CreateInstance(type);
-                server.Config = serverConfig;
-                server.ServiceProvider = serviceProvider;
-                server.Init();
-                proxyServerFactory.Add(server);
+                _logger.LogWarning($"Removed port:{server.Config.Port}");
+                server.Dispose();
             }
-
-            return proxyServerFactory;
         }
     }
+
 }

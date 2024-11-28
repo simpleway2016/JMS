@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace JMS.HttpProxy.Servers
 {
     [ProxyType(ProxyType.Http)]
-    public class HttpServer : ProxyServer,IDisposable
+    public class HttpServer : ProxyServer
     {
         HttpRequestReception _requestReception;
         JMS.ServerCore.MulitTcpListener _tcpServer;
@@ -52,10 +52,10 @@ namespace JMS.HttpProxy.Servers
 
         private void _tcpServer_Connected(object sender, System.Net.Sockets.Socket socket)
         {
-            Task.Run(() => _requestReception.Interview(socket));
+            _requestReception.Interview(socket);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (_tcpServer != null)
             {

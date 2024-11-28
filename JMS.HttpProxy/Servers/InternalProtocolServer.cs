@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 namespace JMS.HttpProxy.Servers
 {
     [ProxyType( Dtos.ProxyType.InternalProtocol)]
-    public class InternalProtocolServer : ProxyServer,IDisposable
+    public class InternalProtocolServer : ProxyServer
     {
         JMS.ServerCore.MulitTcpListener _tcpServer;
         ProtocolRequestReception _requestReception;
         ILogger<InternalProtocolServer> _logger;
-        public void Dispose()
+        public override void Dispose()
         {
             if (_tcpServer != null)
             {
@@ -39,7 +39,7 @@ namespace JMS.HttpProxy.Servers
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 
-            _logger?.LogInformation($"Internal protocol prot:{Config.Port}");
+            _logger?.LogInformation($"Listening internal protocol prot:{Config.Port}");
 
             _tcpServer.Run();
         }
@@ -51,7 +51,7 @@ namespace JMS.HttpProxy.Servers
 
         private void _tcpServer_Connected(object sender, System.Net.Sockets.Socket socket)
         {
-            Task.Run(() => _requestReception.Interview(socket));
+            _requestReception.Interview(socket);
         }
 
     }

@@ -30,7 +30,7 @@ namespace JMS
         internal static string AppSettingPath;
         internal static IConfiguration Configuration;
         internal static ConfigurationValue<AppConfig> Config;
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             if (args.Length > 1&& args[0].EndsWith(".pfx") )
             {
@@ -68,10 +68,10 @@ namespace JMS
             Configuration = builder.Build();
             Config = Configuration.GetNewest<AppConfig>();
 
-            Run(Configuration);
+            await Run(Configuration);
         }
 
-        public static void Run(IConfiguration configuration)
+        public static async Task Run(IConfiguration configuration)
         {
             ServiceCollection services = new ServiceCollection();
             services.AddLogging(loggingBuilder =>
@@ -90,6 +90,7 @@ namespace JMS
             services.AddSingleton<ProxyServerFactory>();
             services.AddSingleton<InternalConnectionProvider>();
 
+            services.AddSingleton<ConfigWatch>();
             services.AddSingleton<HttpNetClientProvider>();
             services.AddSingleton<SocketNetClientProvider>();
             services.AddSingleton<NetClientProviderFactory>();
@@ -100,15 +101,7 @@ namespace JMS
             logger.LogInformation($"版本号：{typeof(HttpProxyProgram).Assembly.GetName().Version}");
             logger?.LogInformation("配置文件:{0}", HttpProxyProgram.AppSettingPath);
 
-            var proxyServerFactory = serviceProvider.UseProxyServerFactory();
-            var servers = proxyServerFactory.ProxyServers;
-
-            foreach( var server in servers.Skip(1))
-            {
-                new Thread(server.Run).Start();
-            }
-
-            servers.FirstOrDefault()?.Run();
+            await serviceProvider.GetService<ConfigWatch>().Run();
         }
 
     }
