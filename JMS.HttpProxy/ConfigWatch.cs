@@ -86,6 +86,11 @@ namespace JMS.HttpProxy
             if (groupItemCounts.Any(m => m > 1))
             {
                 _logger.LogError($"配置文件中有端口相同的配置");
+                foreach( var server in _proxyServerFactory.ProxyServers )
+                {
+                    server.Value.Dispose();
+                }
+                Thread.Sleep(2000);
                 System.Diagnostics.Process.GetCurrentProcess().Kill();
                 return;
             }
