@@ -1,5 +1,4 @@
 ﻿using JMS.HttpProxy.Applications.InternalProtocol;
-using JMS.HttpProxy.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -10,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace JMS.HttpProxy.Servers
 {
-    [ProxyType( Dtos.ProxyType.InternalProtocol)]
     public class InternalProtocolServer : ProxyServer
     {
         JMS.ServerCore.MulitTcpListener _tcpServer;

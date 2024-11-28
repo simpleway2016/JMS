@@ -1,15 +1,9 @@
-﻿using JMS.HttpProxy.Attributes;
-using JMS.HttpProxy.Dtos;
+﻿using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JMS.HttpProxy.Servers
 {
@@ -25,15 +19,11 @@ namespace JMS.HttpProxy.Servers
         {
             this._serviceProvider = serviceProvider;
             this._logger = logger;
-            var types = typeof(ProxyServer).Assembly.GetTypes().Where(m => m.IsSubclassOf(typeof(ProxyServer))).ToArray();
 
-            foreach (var type in types)
-            {
-                var attr = type.GetCustomAttribute<ProxyTypeAttribute>();
-                if (attr == null)
-                    throw new InvalidOperationException($"{type.Name} miss ProxyTypeAttribute");
-                _proxyServerTypes[attr.ProxyType] = type;
-            }
+            _proxyServerTypes[ProxyType.DirectSocket] = typeof(DirectSocketServer);
+            _proxyServerTypes[ProxyType.Http] = typeof(HttpServer);
+            _proxyServerTypes[ProxyType.InternalProtocol] = typeof(InternalProtocolServer);
+            _proxyServerTypes[ProxyType.Socket] = typeof(SocketServer);
 
 
         }

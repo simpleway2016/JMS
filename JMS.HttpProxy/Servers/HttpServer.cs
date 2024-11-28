@@ -1,5 +1,4 @@
 ﻿using JMS.HttpProxy.Applications.Http;
-using JMS.HttpProxy.Attributes;
 using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -13,7 +12,6 @@ using System.Threading.Tasks;
 
 namespace JMS.HttpProxy.Servers
 {
-    [ProxyType(ProxyType.Http)]
     public class HttpServer : ProxyServer
     {
         HttpRequestReception _requestReception;
