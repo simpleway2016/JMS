@@ -1,4 +1,5 @@
-﻿using JMS.Common.Json;
+﻿using JMS.Common.Collections;
+using JMS.Common.Json;
 using JMS.Dtos;
 using JMS.TransactionReporters;
 using Microsoft.Extensions.Logging;
@@ -45,7 +46,7 @@ namespace JMS
             return Invoke<T>(method, tran, tran.GetCommandHeader(), parameters);
         }
 
-        public T Invoke<T>(string method, RemoteClient tran, Dictionary<string, string> headers, params object[] parameters)
+        public T Invoke<T>(string method, RemoteClient tran, IgnoreCaseDictionary headers, params object[] parameters)
         {
             if (tran == null)
             {
@@ -299,7 +300,7 @@ namespace JMS
             var command = new InvokeCommand()
             {
                 Type = (int)InvokeType.RetryTranaction,
-                Header = new Dictionary<string, string> {
+                Header = new IgnoreCaseDictionary {
                                     { "TranId" , tranId},
                                     {"TranFlag" , tranFlag }
                                 }

@@ -13,6 +13,7 @@ using JMS.Infrastructures;
 using System.Reflection.PortableExecutable;
 using JMS.ServerCore.Http;
 using JMS.ServerCore;
+using JMS.Common.Collections;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -39,7 +40,7 @@ namespace JMS.Applications.CommandHandles
         {
             if (cmd.Header == null)
             {
-                cmd.Header = new Dictionary<string, string>();
+                cmd.Header = new IgnoreCaseDictionary();
             }
 
             var requestPathLine = await client.PipeReader.ReadHeaders(cmd.Header);

@@ -1,4 +1,5 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Collections;
+using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +29,7 @@ namespace JMS.Applications.HttpMiddlewares
 
             _logger = loggerFactory.CreateLogger("Request");
         }
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> reqheaders)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IgnoreCaseDictionary reqheaders)
         {
             bool writeLogger = _logger.IsEnabled(LogLevel.Trace);
 

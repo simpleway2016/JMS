@@ -13,6 +13,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using JMS.Infrastructures.Hardware;
 using JMS.Controllers;
+using JMS.Common.Collections;
 
 namespace JMS
 {
@@ -300,7 +301,7 @@ namespace JMS
                         client.WriteServiceData(new GatewayCommand
                         {
                             Type = (int)CommandType.UploadLockKeys,
-                            Header = new Dictionary<string, string> {
+                            Header = new IgnoreCaseDictionary {
                                     { "ServiceId",_microServiceHost.Id}
                                 },
                             Content = _keyLocker.GetLockedKeys().ToJsonString()

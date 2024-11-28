@@ -1,4 +1,5 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Collections;
+using JMS.Dtos;
 using JMS.ServerCore.Http;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace JMS.Applications.HttpMiddlewares
             this._commandHandlerRoute = commandHandlerRoute;
 
         }
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IgnoreCaseDictionary headers)
         {
             if (requestPath.StartsWith("/?GetServiceProvider=") || requestPath.StartsWith("/?GetAllServiceProviders") || requestPath.StartsWith("/?FindMaster"))
             {

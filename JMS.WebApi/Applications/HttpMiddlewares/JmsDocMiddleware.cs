@@ -1,4 +1,5 @@
 ﻿using JMS.Common;
+using JMS.Common.Collections;
 using JMS.Dtos;
 using JMS.ServerCore.Http;
 using JMS.WebApiDocument;
@@ -26,7 +27,7 @@ namespace JMS.Applications.HttpMiddlewares
             _configuration = configuration;
             _logger = loggerFactory.CreateLogger("JmsDoc");
         }
-        async void outputCode(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
+        async void outputCode(NetClient client, string httpMethod, string requestPath, IgnoreCaseDictionary headers)
         {
 
             var servicename = requestPath.Replace("/JmsDoc/OutputCode/", "");
@@ -217,7 +218,7 @@ namespace JMS.Applications.HttpMiddlewares
             client.Write(data);
         }
 
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IgnoreCaseDictionary headers)
         {
             if (requestPath.StartsWith("/JmsDoc", StringComparison.OrdinalIgnoreCase))
             {

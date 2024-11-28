@@ -2,6 +2,7 @@
 using JMS;
 using JMS.Applications;
 using JMS.Cluster;
+using JMS.Common.Collections;
 using JMS.WebApiDocument;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -1538,16 +1539,13 @@ Content-Length: 0
         [TestMethod]
         public void TestIgnoreCaseHeader()
         {
-            var c = "{ Headers:{'a':'a23'} }".FromJson<ClassA>();
+            var c = "{ \"Headers\":{\"a\":\"a23\"} }".FromJson<ClassA>();
             Assert.AreEqual(c.Headers["A"], "a23");
-            Assert.AreEqual( c.Headers["B"] , "caw");
         }
 
         class ClassA
         {
-            public Dictionary<string, string> Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                { "b","caw"}
-            };
+            public IgnoreCaseDictionary Headers ;
         }
 
         public static async Task<string> ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)

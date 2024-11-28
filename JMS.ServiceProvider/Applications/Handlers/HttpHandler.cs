@@ -15,6 +15,7 @@ using System.Security.Claims;
 using System.Web;
 using System.Collections.Specialized;
 using JMS.Controllers;
+using JMS.Common.Collections;
 
 namespace JMS.Applications
 {
@@ -77,7 +78,7 @@ namespace JMS.Applications
 
         public async Task Handle(NetClient netclient, InvokeCommand cmd)
         {
-            cmd.Header = new Dictionary<string, string>();
+            cmd.Header = new IgnoreCaseDictionary();
             var urlLine = await netclient.PipeReader.ReadHeaders(cmd.Header);
 
 

@@ -30,7 +30,7 @@ namespace JMS
             this.Services = new JmsServiceCollection();
 
             _cmdArg = new CommandArgParser(_args);
-            _appSettingPath = _cmdArg.TryGetValue<string>("-s");
+            _cmdArg.TryGetValue("-s",out _appSettingPath);
 
             if (_appSettingPath == null)
                 _appSettingPath = "appsettings.json";
@@ -61,8 +61,10 @@ namespace JMS
             this.Services.AddSingleton(Configuration);
 
             var port = Configuration.GetValue<int>("Port");
-
-            port = _cmdArg.TryGetValue<int>("-p", port);
+            if (_cmdArg.TryGetValue("-p", out string strPort))
+            {
+                int.TryParse(strPort, out port);
+            }
 
             var webApiEnvironment = new DefaultWebApiHostEnvironment(_appSettingPath, port);
             this.Services.AddSingleton<IWebApiHostEnvironment>(webApiEnvironment);

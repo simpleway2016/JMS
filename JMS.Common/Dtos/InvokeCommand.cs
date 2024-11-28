@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JMS.Common.Collections;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -35,7 +36,7 @@ namespace JMS.Dtos
     public class InvokeCommand
     {
         public int Type = (int)InvokeType.Invoke;
-        public Dictionary<string, string> Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public IgnoreCaseDictionary Header = new IgnoreCaseDictionary();
         public string Service;
         public string Method;
         public string[] Parameters;

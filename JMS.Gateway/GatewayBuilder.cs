@@ -27,7 +27,7 @@ namespace JMS
     {
         private readonly string[] _args;
 
-        public JmsServiceCollection Services { get;}
+        public JmsServiceCollection Services { get; }
         public IConfiguration Configuration { get; private set; }
 
         CommandArgParser _cmdArg;
@@ -39,7 +39,7 @@ namespace JMS
 
             _cmdArg = new CommandArgParser(_args);
 
-            _appSettingPath = _cmdArg.TryGetValue<string>("-s");
+            _cmdArg.TryGetValue("-s", out _appSettingPath);
 
             if (_appSettingPath == null)
                 _appSettingPath = "appsettings.json";
@@ -69,7 +69,10 @@ namespace JMS
         public Gateway Build()
         {
             var port = this.Configuration.GetValue<int>("Port");
-            port = _cmdArg.TryGetValue<int>("-p", port);
+            if(_cmdArg.TryGetValue("-p",out string strPort))
+            {
+                int.TryParse(strPort, out port);
+            }
 
             DefaultGatewayEnvironment gatewayEnvironment = new DefaultGatewayEnvironment(_appSettingPath, port);
             Services.AddSingleton<IGatewayEnvironment>(gatewayEnvironment);
@@ -152,7 +155,7 @@ namespace JMS
 
             var gateway = serviceProvider.GetService<Gateway>();
 
-          
+
 
             gateway.ServiceProvider = serviceProvider;
             return gateway;

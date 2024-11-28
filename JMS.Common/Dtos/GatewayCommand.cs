@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JMS.Common.Collections;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -43,7 +44,7 @@ namespace JMS.Dtos
     public class GatewayCommand
     {
         public int Type;
-        public Dictionary<string, string> Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public IgnoreCaseDictionary Header = new IgnoreCaseDictionary();
         public string Content;
         public bool IsHttp;
     }
@@ -51,7 +52,7 @@ namespace JMS.Dtos
     public class GetServiceProviderRequest
     {
         public string ServiceName;
-        public Dictionary<string, string> Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public IgnoreCaseDictionary Header = new IgnoreCaseDictionary();
         public string ClientAddress;
         public bool IsGatewayProxy;
     }

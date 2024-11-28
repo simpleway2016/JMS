@@ -1,4 +1,5 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Collections;
+using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
 using System;
@@ -18,7 +19,7 @@ namespace JMS.Applications.HttpMiddlewares
             this._serviceProviderAllocator = serviceProviderAllocator;
 
         }
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> reqheaders)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IgnoreCaseDictionary reqheaders)
         {
             int indexflag;
             var serviceName = requestPath.Substring(1);

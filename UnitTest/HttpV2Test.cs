@@ -25,6 +25,7 @@ using System.Net.Http.Headers;
 using HttpClient = System.Net.Http.HttpClient;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2;
+using JMS.Common.Collections;
 
 namespace UnitTest
 {
@@ -190,7 +191,7 @@ namespace UnitTest
                         if (type == Http2FrameType.Headers)
                         {
 
-                            Dictionary<string, string> headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                            var headers = new IgnoreCaseDictionary();
                             //数据是HPack算法压缩的
                             byte data;
 

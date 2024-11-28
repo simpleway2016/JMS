@@ -1,4 +1,5 @@
-﻿using JMS.ServerCore.Http.Middlewares;
+﻿using JMS.Common.Collections;
+using JMS.ServerCore.Http.Middlewares;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace JMS.ServerCore.Http
     public interface IHttpMiddlewareManager
     {
         IHttpMiddlewareManager AddHttpMiddleware<T>() where T : IHttpMiddleware;
-        Task Handle(NetClient netClient, string httpMethod, string requestPath, Dictionary<string, string> headers);
+        Task Handle(NetClient netClient, string httpMethod, string requestPath, IgnoreCaseDictionary headers);
         void PrepareMiddlewares(IServiceProvider serviceProvider);
     }
 
@@ -42,7 +43,7 @@ namespace JMS.ServerCore.Http
 
         List<IHttpMiddleware> _httpMiddlewares = null;
         List<Type> _middlewareTypes = new List<Type>();
-        public async Task Handle(NetClient netClient, string httpMethod, string requestPath, Dictionary<string, string> headers)
+        public async Task Handle(NetClient netClient, string httpMethod, string requestPath, IgnoreCaseDictionary headers)
         {
             if(_httpMiddlewares == null)
             {

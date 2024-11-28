@@ -16,12 +16,6 @@ namespace JMS.Common.Json
             {
                 return _JsonSerializer;
             }
-            set
-            {
-                if(value == null)
-                    throw new ArgumentNullException("JsonSerializer");
-                _JsonSerializer = value;
-            }
         }
     }
 }

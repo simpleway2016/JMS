@@ -1,4 +1,5 @@
-﻿using JMS.Dtos;
+﻿using JMS.Common.Collections;
+using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,7 @@ namespace JMS.Applications.HttpMiddlewares
             _webApiEnvironment = webApiEnvironment;
             _logger = loggerFactory.CreateLogger("Request");
         }
-        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, Dictionary<string, string> headers)
+        public async Task<bool> Handle(NetClient client, string httpMethod, string requestPath, IgnoreCaseDictionary headers)
         {
             if (headers.TryGetValue("Connection", out string connection)
                && string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)

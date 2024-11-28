@@ -1,4 +1,5 @@
-﻿using JMS.Common.Json;
+﻿using JMS.Common.Collections;
+using JMS.Common.Json;
 using JMS.Dtos;
 using JMS.GatewayConnection;
 using JMS.TransactionReporters;
@@ -61,7 +62,7 @@ namespace JMS
         public NetAddress ProxyAddress { get; }
         NetAddress[] _allGateways;
 
-        Dictionary<string, string> _Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        IgnoreCaseDictionary _Header = new IgnoreCaseDictionary();
         public X509Certificate2 ServiceClientCertificate { get; set; }
         MasterGatewayProvider _masterGatewayProvider;
         ILogger<RemoteClient> _logger;
@@ -363,9 +364,9 @@ namespace JMS
             _Header[key] = value;
         }
 
-        public Dictionary<string, string> GetCommandHeader()
+        public IgnoreCaseDictionary GetCommandHeader()
         {
-            var header = new Dictionary<string, string>();
+            var header = new IgnoreCaseDictionary();
             header["TranId"] = this.TransactionId;
 
             if (_SupportTransaction == false)

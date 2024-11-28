@@ -27,7 +27,7 @@ namespace JMS.Applications.CommandHandles
 
             if (cmd.Header == null)
             {
-                cmd.Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                cmd.Header = new  Common.Collections.IgnoreCaseDictionary();
             }
 
             var requestPathLine = await client.PipeReader.ReadHeaders( cmd.Header);

@@ -6,6 +6,7 @@ using System.Net;
 using JMS.Dtos;
 using System.Threading.Tasks;
 using JMS.Cluster;
+using JMS.Common.Collections;
 
 namespace JMS.Applications.CommandHandles
 {
@@ -49,7 +50,7 @@ namespace JMS.Applications.CommandHandles
         {
             if (cmd.Header == null)
             {
-                cmd.Header = new Dictionary<string, string>();
+                cmd.Header = new IgnoreCaseDictionary();
             }
             var requestBody = cmd.Content.FromJson<GetServiceProviderRequest>();
             requestBody.Header = cmd.Header;
