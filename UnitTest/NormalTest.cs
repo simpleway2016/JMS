@@ -1245,7 +1245,10 @@ Content-Length: 0
             Assert.AreEqual(invokeResult.Data, 2);
 
             var invokeResult2 = @"{""Data"":""2020-01-01"" }".FromJson<InvokeResult<DateTime>>();
-             
+
+            var cmd = @"{""Content"":{""Data"":""2020-01-01"",""ar"":[1,{""Type"":""2""},3] },""Type"":""2"" }".FromJson<GatewayCommand>();
+            Assert.AreEqual(cmd.Content, null);
+            Assert.AreEqual(cmd.Type, 2);
         }
 
         /// <summary>
