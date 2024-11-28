@@ -8,7 +8,7 @@ namespace JMS.Common.Json
 {
     public interface IJsonSerializer
     {
-        JsonSerializerOptions SerializerOptions { get; }
+        //JsonSerializerOptions SerializerOptions { get; }
         string Serialize(object value);
         /// <summary>
         /// 
@@ -26,8 +26,8 @@ namespace JMS.Common.Json
         JsonSerializerOptions _SerializerOptions = new JsonSerializerOptions()
         {
             IncludeFields = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-            
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString
         };
 
         public JsonSerializerOptions SerializerOptions => _SerializerOptions;
@@ -37,7 +37,8 @@ namespace JMS.Common.Json
             _SerializerOptions.Converters.Add(new StringJsonConverter());
             _SerializerOptions.Converters.Add(new TypeJsonConverter());
 
-            _SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
+            //因为SourceGenerationContext不支持InvokeResult<>泛型，所以，不能让SourceGenerationContext来解析类型
+            // _SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
         }
 
         public T Deserialize<T>(string jsonString)

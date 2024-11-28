@@ -13,7 +13,6 @@ namespace JMS.Common.Json
     [JsonSerializable(typeof(GetServiceProviderRequest))]
     [JsonSerializable(typeof(InvokeCommand))]
     [JsonSerializable(typeof(InvokeResult))]
-    [JsonSerializable(typeof(InvokeResult<>))]
     [JsonSerializable(typeof(LockKeyInfo))]
     [JsonSerializable(typeof(RegisterServiceLocation))]
     [JsonSerializable(typeof(RegisterServiceInfo))]

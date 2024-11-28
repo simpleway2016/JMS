@@ -9,7 +9,7 @@ namespace JMS.Common.Json
     {
         static IJsonSerializer _JsonSerializer = new DefaultJsonSerializer();
        /// <summary>
-       /// json序列化工具类，必须支持Field序列化，仅仅支持属性序列化会出现功能性错误
+       /// json序列化工具类
        /// </summary>
         public static IJsonSerializer JsonSerializer
         {

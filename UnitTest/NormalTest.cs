@@ -3,6 +3,7 @@ using JMS;
 using JMS.Applications;
 using JMS.Cluster;
 using JMS.Common.Collections;
+using JMS.Dtos;
 using JMS.WebApiDocument;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -1232,6 +1233,19 @@ Content-Length: 0
                 UserInfoDbContext.FinallyFather != "Tom" ||
                 UserInfoDbContext.FinallyMather != "Lucy")
                 throw new Exception($"结果不正确, {UserInfoDbContext.FinallyUserName} {UserInfoDbContext.FinallyAge} {UserInfoDbContext.FinallyFather} {UserInfoDbContext.FinallyMather}");
+        }
+
+        [TestMethod]
+        public void JsonTest()
+        {
+            var invokeCommand = @"{""Type"":""2""}".FromJson<InvokeCommand>();
+            Assert.AreEqual(invokeCommand.Type, 2);
+
+            var invokeResult = @"{""Data"":""2"" , ""Success"":true}".FromJson<InvokeResult<int>>();
+            Assert.AreEqual(invokeResult.Data, 2);
+
+            var invokeResult2 = @"{""Data"":""2020-01-01"" }".FromJson<InvokeResult<DateTime>>();
+             
         }
 
         /// <summary>
