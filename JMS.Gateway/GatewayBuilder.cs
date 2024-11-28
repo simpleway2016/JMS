@@ -20,6 +20,8 @@ using JMS.ApiDocument;
 using JMS.Cluster;
 using JMS.Authentication;
 using System.Security.Authentication;
+using JMS.Common.Json;
+using JMS.Dtos;
 
 namespace JMS
 {
@@ -89,6 +91,7 @@ namespace JMS
                 System.IO.Directory.CreateDirectory(datafolder);
             }
 
+            ApplicationJsonSerializer.JsonSerializer.SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
 
             Services.AddLogging(loggingBuilder =>
             {

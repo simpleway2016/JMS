@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 
 namespace JMS.Common.Json
 {
-    public class ApplicationJsonSerializer
+    public static class ApplicationJsonSerializer
     {
         static IJsonSerializer _JsonSerializer = new DefaultJsonSerializer();
        /// <summary>
@@ -17,5 +18,7 @@ namespace JMS.Common.Json
                 return _JsonSerializer;
             }
         }
+
+       
     }
 }

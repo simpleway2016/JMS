@@ -8,6 +8,7 @@ namespace JMS.Common.Json
 {
     public interface IJsonSerializer
     {
+        JsonSerializerOptions SerializerOptions { get; }
         string Serialize(object value);
         /// <summary>
         /// 
@@ -22,34 +23,38 @@ namespace JMS.Common.Json
 
     class DefaultJsonSerializer : IJsonSerializer
     {
-        static JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
+        JsonSerializerOptions _SerializerOptions = new JsonSerializerOptions()
         {
             IncludeFields = true,
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
             
         };
 
-        static DefaultJsonSerializer()
+        public JsonSerializerOptions SerializerOptions => _SerializerOptions;
+
+        public DefaultJsonSerializer()
         {
-            SerializerOptions.Converters.Add(new StringJsonConverter());
-            SerializerOptions.Converters.Add(new TypeJsonConverter());
+            _SerializerOptions.Converters.Add(new StringJsonConverter());
+            _SerializerOptions.Converters.Add(new TypeJsonConverter());
+
+            _SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
         }
 
         public T Deserialize<T>(string jsonString)
         {
-            return System.Text.Json.JsonSerializer.Deserialize<T>(jsonString, SerializerOptions);
+            return System.Text.Json.JsonSerializer.Deserialize<T>(jsonString, _SerializerOptions);
         }
 
         public object Deserialize(string jsonString, Type targetType)
         {
-            return System.Text.Json.JsonSerializer.Deserialize(jsonString, targetType, SerializerOptions);
+            return System.Text.Json.JsonSerializer.Deserialize(jsonString, targetType, _SerializerOptions);
         }
 
         public string Serialize(object value)
         {
             if (value == null)
                 return null;
-            return System.Text.Json.JsonSerializer.Serialize(value, SerializerOptions);
+            return System.Text.Json.JsonSerializer.Serialize(value, _SerializerOptions);
         }
 
         public string Serialize(object value, bool writeIndented)
@@ -64,9 +69,17 @@ namespace JMS.Common.Json
                     DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
                     WriteIndented = true
                 };
+                foreach( var convertor in _SerializerOptions.Converters)
+                {
+                    options.Converters.Add(convertor);
+                }
+                foreach (var chain in _SerializerOptions.TypeInfoResolverChain)
+                {
+                    options.TypeInfoResolverChain.Add(chain);
+                }
                 return System.Text.Json.JsonSerializer.Serialize(value, options);
             }
-            return System.Text.Json.JsonSerializer.Serialize(value, SerializerOptions);
+            return System.Text.Json.JsonSerializer.Serialize(value, _SerializerOptions);
         }
     }
 
