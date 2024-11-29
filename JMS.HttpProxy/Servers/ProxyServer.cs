@@ -7,10 +7,13 @@ using System.Threading.Tasks;
 
 namespace JMS.HttpProxy.Servers
 {
-    public abstract class ProxyServer
+    public abstract class ProxyServer: IDisposable
     {
         public abstract void Init();
         public abstract void Run();
+
+        public abstract void Dispose();
+
         public ServerConfig Config { get; set; }
         public IServiceProvider ServiceProvider { get; set; }
     }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -27,6 +27,8 @@
   <ItemGroup>
     <ProjectReference Include="..\AssemblyDocumentReader\JMS.AssemblyDocumentReader.csproj" />
     <ProjectReference Include="..\JMS.Gateway\JMS.Gateway.csproj" />
+    <ProjectReference Include="..\JMS.HttpProxyDevice\JMS.HttpProxyDevice.csproj" />
+    <ProjectReference Include="..\JMS.HttpProxy\JMS.HttpProxy.csproj" />
     <ProjectReference Include="..\JMS.IdentityModel.JWT.Authentication\JMS.IdentityModel.JWT.Authentication.csproj" />
     <ProjectReference Include="..\JMS.Invoker\JMS.Invoker.csproj" />
     <ProjectReference Include="..\JMS.Proxy\JMS.Proxy.csproj" />
@@ -54,6 +56,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="appsettings-webapi.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.httpproxy.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.httpproxydevice.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="serviceConfig.json">

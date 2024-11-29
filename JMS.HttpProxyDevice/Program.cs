@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging;
 
 namespace JMS.HttpProxyDevice
 {
-    internal class Program
+    public class HttpProxyDeviceProgram
     {
         internal static string AppSettingPath;
         internal static IConfiguration Configuration;
         internal static ConfigurationValue<AppConfig> Config;
-        static async Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
             if (args.Length > 1 && args[0].EndsWith(".pfx"))
             {
@@ -66,9 +66,9 @@ namespace JMS.HttpProxyDevice
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var logger = serviceProvider.GetService<ILogger<Program>>();
-            logger.LogInformation($"版本号：{typeof(Program).Assembly.GetName().Version}");
-            logger?.LogInformation("配置文件:{0}", Program.AppSettingPath);
+            var logger = serviceProvider.GetService<ILogger<HttpProxyDeviceProgram>>();
+            logger.LogInformation($"版本号：{typeof(HttpProxyDeviceProgram).Assembly.GetName().Version}");
+            logger?.LogInformation("配置文件:{0}", HttpProxyDeviceProgram.AppSettingPath);
 
             await serviceProvider.GetService<ConnectionKeepAlive>().RunAsync();
         }

@@ -1,6 +1,5 @@
 ﻿using JMS.HttpProxy.Applications.InternalProtocol;
 using JMS.HttpProxy.Applications.Sockets;
-using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -8,15 +7,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Way.Lib;
 
 namespace JMS.HttpProxy.Servers
 {
-    public class SocketServer : ProxyServer,IDisposable
+    public class SocketServer : ProxyServer
     {
         JMS.ServerCore.MulitTcpListener _tcpServer;
         SocketRequestReception _requestReception;
         ILogger<SocketServer> _logger;
-        public void Dispose()
+        public override void Dispose()
         {
             if (_tcpServer != null)
             {
@@ -39,7 +39,7 @@ namespace JMS.HttpProxy.Servers
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 
-            _logger?.LogInformation($"SocketServer:{Config.Port} {this.Config.Proxies.FirstOrDefault().ToJsonString()}");
+            _logger?.LogInformation($"Listening socket server:{Config.Port} {this.Config.Proxies.FirstOrDefault().ToJsonString()}");
 
             _tcpServer.Run();
         }
@@ -51,7 +51,7 @@ namespace JMS.HttpProxy.Servers
 
         private void _tcpServer_Connected(object sender, System.Net.Sockets.Socket socket)
         {
-            Task.Run(() => _requestReception.Interview(socket));
+            _requestReception.Interview(socket);
         }
 
     }

@@ -47,7 +47,7 @@ namespace JMS.HttpProxy.Applications.DirectSocket
                 socket.ReceiveTimeout = 0;
                 proxyClient.ReadTimeout = 0;
 
-                proxyClient.Socket.ReadAndSendForLoop(socket);
+                _ = proxyClient.Socket.ReadAndSendForLoop(socket);
 
                 await socket.ReadAndSendForLoop(proxyClient.Socket);
             }

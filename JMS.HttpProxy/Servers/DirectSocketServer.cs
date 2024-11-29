@@ -13,13 +13,11 @@ using System.Threading.Tasks;
 
 namespace JMS.HttpProxy.Servers
 {
-    public class DirectSocketServer : ProxyServer,IDisposable
+    public class DirectSocketServer : ProxyServer
     {
         DirectSocketRequestReception _requestReception;
         JMS.ServerCore.MulitTcpListener _tcpServer;
         ILogger<DirectSocketServer> _logger;
-
-
 
         public DirectSocketServer()
         {
@@ -52,10 +50,10 @@ namespace JMS.HttpProxy.Servers
 
         private void _tcpServer_Connected(object sender, System.Net.Sockets.Socket socket)
         {
-            Task.Run(() => _requestReception.Interview(socket));
+            _requestReception.Interview(socket);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (_tcpServer != null)
             {

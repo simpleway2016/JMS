@@ -1,64 +1,53 @@
 ﻿using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace JMS.HttpProxy.Servers
 {
     public class ProxyServerFactory
     {
-        List<ProxyServer> _proxyServers = new List<ProxyServer>();
-        public IEnumerable<ProxyServer> ProxyServers => _proxyServers;
-       
+        ConcurrentDictionary<int, ProxyServer> _proxyServers = new ConcurrentDictionary<int, ProxyServer>();
+        public ConcurrentDictionary<int, ProxyServer> ProxyServers => _proxyServers;
+        Dictionary<ProxyType, Type> _proxyServerTypes = new Dictionary<ProxyType, Type>();
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<ProxyServerFactory> _logger;
 
-        public void Add(ProxyServer server)
+        public ProxyServerFactory(IServiceProvider serviceProvider, ILogger<ProxyServerFactory> logger)
         {
-            _proxyServers.Add(server);
+            this._serviceProvider = serviceProvider;
+            this._logger = logger;
+
+            _proxyServerTypes[ProxyType.DirectSocket] = typeof(DirectSocketServer);
+            _proxyServerTypes[ProxyType.Http] = typeof(HttpServer);
+            _proxyServerTypes[ProxyType.InternalProtocol] = typeof(InternalProtocolServer);
+            _proxyServerTypes[ProxyType.Socket] = typeof(SocketServer);
+
+
         }
-    }
 
-    public static class ProxyServerFactoryExtensions
-    {
-
-        public static ProxyServerFactory UseProxyServerFactory(this IServiceProvider serviceProvider)
+        public void Add(ServerConfig serverConfig)
         {
-            if (HttpProxyProgram.Config.Current.Servers == null)
-                throw new Exception("Servers 配置项为空");
-            var proxyServerFactory = serviceProvider.GetService<ProxyServerFactory>();
-                        
+            var type = _proxyServerTypes[serverConfig.Type];
+            var server = (ProxyServer)Activator.CreateInstance(type);
+            server.Config = serverConfig;
+            server.ServiceProvider = _serviceProvider;
+            server.Init();
+            new Thread(() => server.Run()).Start();
 
-            foreach (var serverConfig in HttpProxyProgram.Config.Current.Servers)
+            _proxyServers[serverConfig.Port] = server;
+        }
+
+        public void Remove(ServerConfig serverConfig)
+        {
+            if (_proxyServers.TryRemove(serverConfig.Port, out ProxyServer server))
             {
-                ProxyServer server =  null;
-                switch(serverConfig.Type)
-                {
-                    case ProxyType.Http:
-                        server = new HttpServer();
-                        break;
-                    case ProxyType.DirectSocket:
-                        server = new DirectSocketServer();
-                        break;
-                    case ProxyType.InternalProtocol:
-                        server = new InternalProtocolServer();
-                        break;
-                    case ProxyType.Socket:
-                        server = new SocketServer();
-                        break;
-                }
-                if (server == null)
-                    throw new Exception($"无法识别的类型：{serverConfig.Type}");
-                server.Config = serverConfig;
-                server.ServiceProvider = serviceProvider;
-                server.Init();
-                proxyServerFactory.Add(server);
+                _logger.LogWarning($"Removed port:{server.Config.Port}");
+                server.Dispose();
             }
-
-            return proxyServerFactory;
         }
     }
+
 }

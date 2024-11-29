@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading;
@@ -9,6 +10,7 @@ using JMS.Dtos;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Web;
+using Microsoft.CodeAnalysis;
 using System.Reflection.PortableExecutable;
 using System.Net;
 using System.Buffers;
@@ -17,6 +19,7 @@ using JMS.ServerCore;
 using Microsoft.Extensions.Configuration;
 using JMS.HttpProxy.Servers;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace JMS.HttpProxy.Applications.Http
 {
@@ -41,7 +44,7 @@ namespace JMS.HttpProxy.Applications.Http
         {
             _httpServer = httpServer;
         }
-        public async Task WebSocketProxy(NetClient client, NetClient proxyClient, GatewayCommand cmd)
+        public async Task WebSocketProxy(NetClient client, NetClient proxyClient)
         {
             client.ReadTimeout = 0;
             proxyClient.ReadTimeout = 0;
@@ -73,19 +76,16 @@ namespace JMS.HttpProxy.Applications.Http
             return remoteIpAddr;
         }
 
-        public async Task Handle(NetClient client, GatewayCommand cmd)
+        public async Task Handle(NetClient client)
         {
-            if (cmd.Header == null)
-            {
-                cmd.Header = new Common.Collections.IgnoreCaseDictionary();
-            }
+            var headers = new Dictionary<string, string>();
 
-            var requestPathLine = await client.PipeReader.ReadHeaders(cmd.Header);
+            var requestPathLine = await client.PipeReader.ReadHeaders(headers);
 
             
 
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            ip = GetRemoteIpAddress(ip, cmd.Header, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>());
+            ip = GetRemoteIpAddress(ip, headers, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>());
             if (_requestTimeLimter.OnRequesting(ip) == false)
             {
                 if (HttpProxyProgram.Config.Current.LogDetails)
@@ -99,7 +99,7 @@ namespace JMS.HttpProxy.Applications.Http
                 return;
             }
 
-            if (cmd.Header.TryGetValue("Host", out string host) == false)
+            if (headers.TryGetValue("Host", out string host) == false)
                 return;
 
             var config = _httpServer.Config.Proxies.FirstOrDefault(m => string.Equals(m.Host, host, StringComparison.OrdinalIgnoreCase));
@@ -107,27 +107,27 @@ namespace JMS.HttpProxy.Applications.Http
                 return;
 
             int inputContentLength = 0;
-            if (cmd.Header.ContainsKey("Content-Length"))
+            if (headers.ContainsKey("Content-Length"))
             {
-                int.TryParse(cmd.Header["Content-Length"], out inputContentLength);
+                int.TryParse(headers["Content-Length"], out inputContentLength);
             }
 
 
-            if (cmd.Header.TryGetValue("X-Forwarded-For", out string xff))
+            if (headers.TryGetValue("X-Forwarded-For", out string xff))
             {
                 if (xff.Contains(ip) == false)
                     xff += $", {ip}";
             }
             else
             {
-                cmd.Header["X-Forwarded-For"] = ip;
+                headers["X-Forwarded-For"] = ip;
             }
 
-            if (cmd.Header.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
+            if (headers.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {
                 client.KeepAlive = true;
             }
-            else if (cmd.Header.ContainsKey("Connection") == false)
+            else if (headers.ContainsKey("Connection") == false)
             {
                 client.KeepAlive = true;
             }
@@ -142,7 +142,7 @@ namespace JMS.HttpProxy.Applications.Http
             {
                 target_uri = new Uri(config.Target);
             }
-            foreach (var pair in cmd.Header)
+            foreach (var pair in headers)
             {
                 if (config.ChangeHostHeader && target_uri != null && pair.Key == "Host")
                 {
@@ -182,10 +182,10 @@ namespace JMS.HttpProxy.Applications.Http
                 proxyClient.InnerStream.Write(data, 0, data.Length);
 
                 if (string.Equals(connection, "Upgrade", StringComparison.OrdinalIgnoreCase)
-                   && cmd.Header.TryGetValue("Upgrade", out string upgrade)
+                   && headers.TryGetValue("Upgrade", out string upgrade)
                    && string.Equals(upgrade, "websocket", StringComparison.OrdinalIgnoreCase))
                 {
-                    await WebSocketProxy(client, proxyClient, cmd);
+                    await WebSocketProxy(client, proxyClient);
                     return;
                 }
 
@@ -195,7 +195,7 @@ namespace JMS.HttpProxy.Applications.Http
                     await client.ReadAndSend(proxyClient, inputContentLength);
 
                 }
-                else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
+                else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
                 {
                     while (true)
                     {
@@ -219,26 +219,26 @@ namespace JMS.HttpProxy.Applications.Http
                 }
 
                 //读取服务器发回来的头部
-                cmd.Header.Clear();
-                requestPathLine = await proxyClient.PipeReader.ReadHeaders(cmd.Header);
+                headers.Clear();
+                requestPathLine = await proxyClient.PipeReader.ReadHeaders(headers);
 
 
                 if (HttpProxyProgram.Config.Current.LogDetails)
                 {
-                    _logger.LogInformation($"接收回来的头部：\r\n{requestPathLine}\r\n{cmd.Header.ToJsonString(true)}");
+                    _logger.LogInformation($"接收回来的头部：\r\n{requestPathLine}\r\n{headers.ToJsonString(true)}");
                 }
 
                 inputContentLength = 0;
-                if (cmd.Header.ContainsKey("Content-Length"))
+                if (headers.ContainsKey("Content-Length"))
                 {
-                    int.TryParse(cmd.Header["Content-Length"], out inputContentLength);
+                    int.TryParse(headers["Content-Length"], out inputContentLength);
                 }
 
                 buffer.Clear();
                 buffer.Append(requestPathLine);
                 buffer.Append("\r\n");
 
-                foreach (var pair in cmd.Header)
+                foreach (var pair in headers)
                 {
                     buffer.Append($"{pair.Key}: {pair.Value}\r\n");
                 }
@@ -253,7 +253,7 @@ namespace JMS.HttpProxy.Applications.Http
                 {
                     await proxyClient.ReadAndSend(client, inputContentLength);
                 }
-                else if (cmd.Header.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
+                else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
                 {
                     while (true)
                     {

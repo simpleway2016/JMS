@@ -27,6 +27,8 @@ namespace UnitTest.Controllers
             this._apiTransactionDelegate = apiTransactionDelegate;
         }
 
+     
+
 
         [HttpGet]
         public async Task<IEnumerable<WeatherForecast>> Get()
