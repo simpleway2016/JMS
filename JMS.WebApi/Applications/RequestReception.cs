@@ -40,11 +40,6 @@ namespace JMS.Applications
             return true;
         }
 
-        async Task<GatewayCommand> GetRequestCommand(NetClient client)
-        {
-            return new GatewayCommand { Type = (int)CommandType.HttpRequest };
-        }
-
         public async void Interview(Socket socket)
         {
             try
@@ -70,9 +65,7 @@ namespace JMS.Applications
 
                     while (true)
                     {
-                        var cmd = await GetRequestCommand(client);
-
-                        await _httpRequestHandler.Handle(client, cmd, redirectHttps);
+                        await _httpRequestHandler.Handle(client, redirectHttps);
 
                         if (client.HasSocketException || !client.KeepAlive)
                             break;
