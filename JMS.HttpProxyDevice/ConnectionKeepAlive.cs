@@ -23,7 +23,7 @@ namespace JMS.HttpProxyDevice
 
         public ConnectionKeepAlive(ILogger<ConnectionKeepAlive> logger , ConnectionHandler connectionHandler)
         {
-            for(int i = 0; i < Program.Config.Current.Device.ConnectionCount; i++)
+            for(int i = 0; i < HttpProxyDeviceProgram.Config.Current.Device.ConnectionCount; i++)
             {
                 createConnection();
             }
@@ -40,32 +40,32 @@ namespace JMS.HttpProxyDevice
             try
             {
                 using var netClient = new NetClient();
-                await netClient.ConnectAsync(Program.Config.Current.ProxyServer);
+                await netClient.ConnectAsync(HttpProxyDeviceProgram.Config.Current.ProxyServer);
                 netClient.ReadTimeout = 0;
 
-                netClient.WriteLine(Program.Config.Current.Device.Name);
+                netClient.WriteLine(HttpProxyDeviceProgram.Config.Current.Device.Name);
 
-                if (Program.Config.Current.Device.Password.Length > 32)
-                    Program.Config.Current.Device.Password = Program.Config.Current.Device.Password.Substring(0, 32);
-                else if (Program.Config.Current.Device.Password.Length < 32)
+                if (HttpProxyDeviceProgram.Config.Current.Device.Password.Length > 32)
+                    HttpProxyDeviceProgram.Config.Current.Device.Password = HttpProxyDeviceProgram.Config.Current.Device.Password.Substring(0, 32);
+                else if (HttpProxyDeviceProgram.Config.Current.Device.Password.Length < 32)
                 {
-                    Program.Config.Current.Device.Password = Program.Config.Current.Device.Password.PadRight(32, '0');
+                    HttpProxyDeviceProgram.Config.Current.Device.Password = HttpProxyDeviceProgram.Config.Current.Device.Password.PadRight(32, '0');
                 }
 
-                var content = Way.Lib.AES.Encrypt(Program.Config.Current.Device.Name, Program.Config.Current.Device.Password);
+                var content = Way.Lib.AES.Encrypt(HttpProxyDeviceProgram.Config.Current.Device.Name, HttpProxyDeviceProgram.Config.Current.Device.Password);
                 netClient.WriteLine(content);
 
                 //获取代理的端口
                 var port = await netClient.ReadIntAsync();
-                if(Program.Config.Current.AllowPorts != null && Program.Config.Current.AllowPorts.Length > 0)
+                if(HttpProxyDeviceProgram.Config.Current.AllowPorts != null && HttpProxyDeviceProgram.Config.Current.AllowPorts.Length > 0)
                 {
-                    if(Program.Config.Current.AllowPorts.Contains(port) == false)
+                    if(HttpProxyDeviceProgram.Config.Current.AllowPorts.Contains(port) == false)
                     {
                         _logger.LogInformation($"服务器访问了不允许的端口：{port}");
                         return;
                     }
                 }
-                if (Program.Config.Current.LogDetails)
+                if (HttpProxyDeviceProgram.Config.Current.LogDetails)
                 {
                     _logger.LogInformation($"要求代理{port}端口");
                 }
@@ -78,7 +78,7 @@ namespace JMS.HttpProxyDevice
                 dataConnected = true;
                 Interlocked.Increment(ref _dataConnectionCount);
 
-                if (Program.Config.Current.LogDetails)
+                if (HttpProxyDeviceProgram.Config.Current.LogDetails)
                 {
                     _logger.LogInformation($"等候连接数={_waitingConnectionCount}  数据连接数={_dataConnectionCount}");
                 }
@@ -123,7 +123,7 @@ namespace JMS.HttpProxyDevice
             await Task.Delay(3000);
             while (true)
             {
-                if(Program.Config.Current.LogDetails)
+                if(HttpProxyDeviceProgram.Config.Current.LogDetails)
                 {
                     _logger.LogInformation($"等候连接数={_waitingConnectionCount}  数据连接数={_dataConnectionCount}");
                     await Task.Delay(3000);

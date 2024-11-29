@@ -29,8 +29,8 @@ namespace JMS
     {
         internal static string AppSettingPath;
         internal static IConfiguration Configuration;
-        internal static ConfigurationValue<AppConfig> Config;
-        static async Task Main(string[] args)
+        public static ConfigurationValue<AppConfig> Config;
+        public static async Task Main(string[] args)
         {
             if (args.Length > 1&& args[0].EndsWith(".pfx") )
             {
