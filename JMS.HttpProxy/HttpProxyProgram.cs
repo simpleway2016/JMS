@@ -20,7 +20,6 @@ using JMS.HttpProxy.Applications.InternalProtocol;
 using JMS.HttpProxy.InternalProtocol;
 using JMS.HttpProxy.Applications.Sockets;
 using JMS.HttpProxy.Applications;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using JMS.HttpProxy.Applications.DirectSocket;
 
 namespace JMS
@@ -43,7 +42,7 @@ namespace JMS
             ThreadPool.SetMinThreads(Environment.ProcessorCount * 10, Environment.ProcessorCount * 10);
 
             CommandArgParser cmdArg = new CommandArgParser(args);
-            AppSettingPath = cmdArg.TryGetValue<string>("-s");
+            cmdArg.TryGetValue("-s",out AppSettingPath);
 
             if (AppSettingPath == null)
                 AppSettingPath = "appsettings.json";

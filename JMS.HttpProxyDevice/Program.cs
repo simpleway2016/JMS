@@ -24,7 +24,7 @@ namespace JMS.HttpProxyDevice
             ThreadPool.SetMinThreads(Environment.ProcessorCount * 10, Environment.ProcessorCount * 10);
 
             CommandArgParser cmdArg = new CommandArgParser(args);
-            AppSettingPath = cmdArg.TryGetValue<string>("-s");
+            cmdArg.TryGetValue("-s",out AppSettingPath);
 
             if (AppSettingPath == null)
                 AppSettingPath = "appsettings.json";

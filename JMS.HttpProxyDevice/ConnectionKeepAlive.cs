@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JMS.Common.Security;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace JMS.HttpProxyDevice
                     HttpProxyDeviceProgram.Config.Current.Device.Password = HttpProxyDeviceProgram.Config.Current.Device.Password.PadRight(32, '0');
                 }
 
-                var content = Way.Lib.AES.Encrypt(HttpProxyDeviceProgram.Config.Current.Device.Name, HttpProxyDeviceProgram.Config.Current.Device.Password);
+                var content = AES.Encrypt(HttpProxyDeviceProgram.Config.Current.Device.Name, HttpProxyDeviceProgram.Config.Current.Device.Password);
                 netClient.WriteLine(content);
 
                 //获取代理的端口
