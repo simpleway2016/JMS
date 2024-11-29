@@ -543,6 +543,14 @@ namespace UnitTest
             ret = client.GetAsync($"http://localhost:{_gateWayPort}/UserInfoService/Nothing").ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
+
+
+            //测试超过文件大小 
+            var jcontent = new StringContent(Encoding.UTF8.GetString(new byte[102401]), Encoding.UTF8, "application/json");
+
+            ret = client.PostAsync($"http://localhost:{_jmsWebapiPort}/UserInfoService/GetMyNameV2", jcontent).ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode == true || (int)ret.StatusCode != 413)
+                throw new Exception("不应该通过");
         }
 
         [TestMethod]
