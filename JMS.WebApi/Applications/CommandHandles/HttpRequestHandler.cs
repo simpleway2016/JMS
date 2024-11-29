@@ -1,20 +1,5 @@
 ﻿
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Way.Lib;
-using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
-using System.Threading;
-using JMS.Dtos;
-using System.Threading.Tasks;
-using System.Net.Sockets;
-using System.Web;
-using Microsoft.CodeAnalysis;
-using System.Reflection.PortableExecutable;
 using JMS.ServerCore.Http;
-using System.IO.Pipelines;
-using System.Buffers;
 using JMS.ServerCore;
 using System.Net;
 using Microsoft.Extensions.Configuration;
@@ -37,7 +22,7 @@ namespace JMS.Applications.CommandHandles
 
         public async Task Handle(NetClient client, bool redirectHttps)
         {
-            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var headers = new Common.Collections.IgnoreCaseDictionary();
 
             var requestPathLine = await client.PipeReader.ReadHeaders( headers);
 
