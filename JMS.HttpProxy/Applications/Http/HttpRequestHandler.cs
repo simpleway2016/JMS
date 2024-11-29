@@ -49,32 +49,10 @@ namespace JMS.HttpProxy.Applications.Http
             client.ReadTimeout = 0;
             proxyClient.ReadTimeout = 0;
 
-            readSend(client, proxyClient);
+            _ = readSend(client, proxyClient);
             await readSend(proxyClient, client);
         }
 
-        public string GetRemoteIpAddress(string remoteIpAddr, IDictionary<string, string> headers, string[] trustXForwardedFor)
-        {
-            if (trustXForwardedFor != null && trustXForwardedFor.Length > 0 && headers.TryGetValue("X-Forwarded-For", out string x_for))
-            {
-                if (trustXForwardedFor.Contains(remoteIpAddr))
-                {
-                    var x_forArr = x_for.Split(',').Select(m => m.Trim()).Where(m => m.Length > 0).ToArray();
-                    for (int i = x_forArr.Length - 1; i >= 0; i--)
-                    {
-                        var ip = x_forArr[i];
-                        if (trustXForwardedFor.Contains(ip) == false)
-                            return ip;
-                    }
-                }
-                else
-                {
-                    return remoteIpAddr;
-                }
-            }
-
-            return remoteIpAddr;
-        }
 
         public async Task Handle(NetClient client)
         {
@@ -82,10 +60,10 @@ namespace JMS.HttpProxy.Applications.Http
 
             var requestPathLine = await client.PipeReader.ReadHeaders(headers);
 
-            
+            headers.TryGetValue("X-Forwarded-For", out string x_for);
 
             var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            ip = GetRemoteIpAddress(ip, headers, HttpProxyProgram.Configuration.GetSection("ProxyIps").Get<string[]>());
+            ip = RequestTimeLimter.GetRemoteIpAddress(HttpProxyProgram.Config.Current.ProxyIps , ip , x_for);
             if (_requestTimeLimter.OnRequesting(ip) == false)
             {
                 if (HttpProxyProgram.Config.Current.LogDetails)

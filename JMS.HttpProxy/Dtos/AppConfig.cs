@@ -13,6 +13,7 @@ namespace JMS.HttpProxy.Dtos
 
     public class AppConfig
     {
+        public string[] ProxyIps { get; set; }
         public bool LogDetails { get; set; }
         public DeviceConfig[] Devices { get; set; }
         public ServerConfig[] Servers { get; set; }
@@ -27,7 +28,6 @@ namespace JMS.HttpProxy.Dtos
     public class ServerConfig
     {
         public ProxyType Type { get; set; }
-        public string[] ProxyIps { get; set; }
         public SslConfig SSL { get; set; }
         public int Port { get; set; }
         public ProxyConfig[] Proxies { get; set; }

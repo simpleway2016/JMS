@@ -16,6 +16,8 @@ using JMS.ServerCore.Http;
 using System.IO.Pipelines;
 using System.Buffers;
 using JMS.ServerCore;
+using System.Net;
+using Microsoft.Extensions.Configuration;
 namespace JMS.Applications.CommandHandles
 {
     /// <summary>
@@ -24,32 +26,47 @@ namespace JMS.Applications.CommandHandles
     class HttpRequestHandler
     {
         IHttpMiddlewareManager _httpMiddlewareManager;
-        public HttpRequestHandler(IHttpMiddlewareManager httpMiddlewareManager)
+        private readonly RequestTimeLimter _requestTimeLimter;
+        Common.ConfigurationValue<string[]> _proxyIps;
+        public HttpRequestHandler(IHttpMiddlewareManager httpMiddlewareManager, RequestTimeLimter requestTimeLimter,IConfiguration configuration)
         {
             this._httpMiddlewareManager = httpMiddlewareManager;
-
+            this._requestTimeLimter = requestTimeLimter;
+            _proxyIps = configuration.GetSection("ProxyIps").GetNewest<string[]>();
         }
 
-        public async Task Handle(NetClient client, GatewayCommand cmd,bool redirectHttps)
+        public async Task Handle(NetClient client, bool redirectHttps)
         {
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            if (cmd.Header == null)
+            var requestPathLine = await client.PipeReader.ReadHeaders( headers);
+
+            if (_requestTimeLimter.LimitSetting.Current != null && _requestTimeLimter.LimitSetting.Current.Limit > 0)
             {
-                cmd.Header = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                headers.TryGetValue("X-Forwarded-For", out string x_for);
+
+                var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
+                ip = RequestTimeLimter.GetRemoteIpAddress(_proxyIps.Current, ip, x_for);
+                if (_requestTimeLimter.OnRequesting(ip) == false)
+                {
+                    //输出401
+                    client.KeepAlive = false;
+                    client.OutputHttpCode(401, "Forbidden...");
+                    return;
+                }
             }
 
-            var requestPathLine = await client.PipeReader.ReadHeaders( cmd.Header);
             var requestPathLineArr = requestPathLine.Split(' ');
             var method = requestPathLineArr[0];
             var requestPath = requestPathLineArr[1];
 
             if (redirectHttps)
             {
-                client.OutputHttpRedirect301($"https://{cmd.Header["Host"]}{requestPath}");
+                client.OutputHttpRedirect301($"https://{headers["Host"]}{requestPath}");
                 return;
             }
 
-            if (cmd.Header.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
+            if (headers.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {
                 client.KeepAlive = true;
             }
@@ -58,7 +75,7 @@ namespace JMS.Applications.CommandHandles
                 client.KeepAlive = true;
             }
 
-            await _httpMiddlewareManager.Handle(client, method, requestPath, cmd.Header);
+            await _httpMiddlewareManager.Handle(client, method, requestPath, headers);
         }
 
       

@@ -76,6 +76,7 @@ namespace JMS
           
             Services.AddSingleton<IRequestReception, RequestReception>();
             Services.AddSingleton<HttpRequestHandler>();
+            Services.AddSingleton<RequestTimeLimter>();
             Services.AddSingleton<WebApiHost>();
             Services.UseHttp()
                 .AddHttpMiddleware<WebSocketMiddleware>()
