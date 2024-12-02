@@ -160,6 +160,17 @@ namespace JMS
             }
         }
 
+        public void OutputHttpCodeAndClose(int code, string desc, string message)
+        {
+            var content = message == null ? null : Encoding.UTF8.GetBytes(message);
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 {code} {desc}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {(content == null ? 0 : content.Length)}\r\nConnection: close\r\n\r\n");
+            this.Write(data);
+            if (content != null)
+            {
+                this.Write(content);
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>

@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -551,7 +552,9 @@ namespace UnitTest
             ret = client.PostAsync($"http://localhost:{_jmsWebapiPort}/UserInfoService/GetMyNameV2", jcontent).ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == true || (int)ret.StatusCode != 413)
                 throw new Exception("不应该通过");
+
         }
+
 
         [TestMethod]
         public void Commit()

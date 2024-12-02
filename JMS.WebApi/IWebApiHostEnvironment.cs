@@ -12,6 +12,7 @@ namespace JMS
     {
         string AppSettingPath { get; }
         int Port { get; set; }
+        int MaxRequestLength { get; set; }
         NetAddress[] GatewayAddresses { get; set; }
         X509Certificate2 ServerCert { get;  set; }
         SslProtocols SslProtocol { get; set; }
@@ -22,6 +23,7 @@ namespace JMS
     {
         public string AppSettingPath { get; }
         public int Port { get; set; }
+        public int MaxRequestLength { get; set; }
         public NetAddress[] GatewayAddresses { get; set; }
         public X509Certificate2 ServerCert { get; set; }
         public SslProtocols SslProtocol { get; set; } = SslProtocols.None;

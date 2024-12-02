@@ -88,6 +88,7 @@ namespace JMS
             serviceProvider.GetService<IHttpMiddlewareManager>().PrepareMiddlewares(serviceProvider);
 
             webApiEnvironment.GatewayAddresses = Configuration.GetSection("Gateways").Get<NetAddress[]>();
+            webApiEnvironment.MaxRequestLength = Configuration.GetSection("MaxRequestLength").Get<int?>()??5;
             var server = serviceProvider.GetService<WebApiHost>();
 
             //SSL

@@ -51,6 +51,14 @@ namespace JMS.Applications.HttpMiddlewares
             if (reqheaders.ContainsKey("Content-Length"))
             {
                 int.TryParse(reqheaders["Content-Length"], out contentLength);
+
+                if (contentLength / (1024 * 1024) > _webApiEnvironment.MaxRequestLength)
+                {
+                    //超过限制
+                    client.KeepAlive = false;
+                    client.OutputHttpCodeAndClose(413, "Too Large", "Payload Too Large.");
+                    return true;
+                }
             }
 
             using var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses);
@@ -69,16 +77,6 @@ namespace JMS.Applications.HttpMiddlewares
 
                 if (contentLength > 0)
                 {
-                    var limit = _configuration.GetSection("MaxRequestLength").Get<int?>();
-                    if (limit == null)
-                        limit = 5;
-                    if (contentLength/(1024*1024) > limit )
-                    {
-                        //超过限制
-                        client.KeepAlive = false;
-                        client.OutputHttpCode(413, "Payload Too Large");
-                        return true;
-                    }
                     await client.ReadDataAsync(null, 0, contentLength);
                 }
                 client.OutputHttpNotFund();
@@ -153,17 +151,6 @@ namespace JMS.Applications.HttpMiddlewares
                 proxyClient.Write(data);
                 if (contentLength > 0)
                 {
-                    var limit = _configuration.GetSection("MaxRequestLength").Get<int?>();
-                    if (limit == null)
-                        limit = 5;
-                    if (contentLength / (1024 * 1024) > limit)
-                    {
-                        //超过限制
-                        client.KeepAlive = false;
-                        client.OutputHttpCode(413, "Too Large", "JMS.WebApi==>Payload Too Large.");
-                        return true;
-                    }
-
                     //发送upload数据到服务器
                     await client.ReadAndSend(proxyClient, contentLength);
                 }
@@ -182,11 +169,11 @@ namespace JMS.Applications.HttpMiddlewares
                         }
                         else
                         {
-                            if(contentLength > 10240)
+                            if (contentLength > 10240)
                             {
                                 //超过限制
                                 client.KeepAlive = false;
-                                client.OutputHttpCode(413, "Too Big", "JMS.WebApi==>Chunked Too Big.");
+                                client.OutputHttpCodeAndClose(413, "Too Big", "JMS.WebApi==>Chunked Too Big.");
                                 return true;
                             }
                             await client.ReadAndSend(proxyClient, contentLength);
@@ -313,7 +300,7 @@ namespace JMS.Applications.HttpMiddlewares
                     {
                         //超过限制
                         client.KeepAlive = false;
-                        client.OutputHttpCode(413, "Too Large", "JMS.WebApi==>Command Too Large.");
+                        client.OutputHttpCodeAndClose(413, "Too Large", "JMS.WebApi==>Command Too Large.");
                         return;
                     }
 
