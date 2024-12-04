@@ -36,7 +36,7 @@ namespace JMS.Applications.HttpMiddlewares
             var buttonName = requestPath.Substring(requestPath.IndexOf("?button=") + 8);
             buttonName = HttpUtility.UrlDecode(buttonName);
 
-            using (var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses))
+            using (var rc = new RemoteClient(_webApiEnvironment.Config.Current.Gateways))
             {
                 var service = rc.TryGetMicroService(servicename);
                 if (service == null)
@@ -85,7 +85,7 @@ namespace JMS.Applications.HttpMiddlewares
 
             bool writeLogger = _logger.IsEnabled(LogLevel.Trace);
 
-            using (var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses))
+            using (var rc = new RemoteClient(_webApiEnvironment.Config.Current.Gateways))
             {
                 ApiDocCodeBuilderInfo[] buttons;
                 try

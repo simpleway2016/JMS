@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using JMS.ServerCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Authentication;
+using static Org.BouncyCastle.Math.EC.ECCurve;
+using JMS.WebApi;
 
 namespace JMS
 {
@@ -20,10 +22,12 @@ namespace JMS
     {
         private readonly string[] _args;
         public JmsServiceCollection Services { get; }
-        public IConfiguration Configuration { get; private set; }
-
+        IConfiguration _configuration;
         CommandArgParser _cmdArg;
         string _appSettingPath;
+
+        public ConfigurationValue<WebApiConfig> Config;
+
         WebApiHostBuilder(string[] args)
         {
             _args = args;
@@ -52,28 +56,28 @@ namespace JMS
             }
 
             builder.AddJsonFile(_appSettingPath, optional: true, reloadOnChange: true);
-            Configuration = builder.Build();
-            Services.AddSingleton(Configuration);
+            _configuration = builder.Build();
+            
         }
 
         public WebApiHost Build()
         {
-            this.Services.AddSingleton(Configuration);
-
-            var port = Configuration.GetValue<int>("Port");
+            Config = _configuration.GetNewest<WebApiConfig>();
+            var port = Config.Current.Port;
 
             port = _cmdArg.TryGetValue<int>("-p", port);
 
-            var webApiEnvironment = new DefaultWebApiHostEnvironment(_appSettingPath, port);
+            var webApiEnvironment = new DefaultWebApiHostEnvironment(_appSettingPath, port , Config);
             this.Services.AddSingleton<IWebApiHostEnvironment>(webApiEnvironment);
 
 
             Services.AddLogging(loggingBuilder =>
             {
-                loggingBuilder.AddConfiguration(Configuration.GetSection("Logging"));
+                loggingBuilder.AddConfiguration(_configuration.GetSection("Logging"));
                 loggingBuilder.AddConsole(); // 将日志输出到控制台
             });
-          
+
+            Services.AddSingleton(_configuration);
             Services.AddSingleton<IRequestReception, RequestReception>();
             Services.AddSingleton<HttpRequestHandler>();
             Services.AddSingleton<RequestTimeLimter>();
@@ -87,22 +91,7 @@ namespace JMS
 
             serviceProvider.GetService<IHttpMiddlewareManager>().PrepareMiddlewares(serviceProvider);
 
-            webApiEnvironment.GatewayAddresses = Configuration.GetSection("Gateways").Get<NetAddress[]>();
-            webApiEnvironment.MaxRequestLength = Configuration.GetSection("MaxRequestLength").Get<int?>()??5;
             var server = serviceProvider.GetService<WebApiHost>();
-
-            //SSL
-            var certPath = Configuration.GetValue<string>("SSL:Cert");
-            if (!string.IsNullOrEmpty(certPath))
-            {
-                webApiEnvironment.ServerCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, Configuration.GetValue<string>("SSL:Password"));
-                webApiEnvironment.AcceptCertHash = Configuration.GetSection("SSL:AcceptCertHash").Get<string[]>();
-                var sslProtocols = Configuration.GetSection("SSL:SslProtocols").Get<SslProtocols?>();
-                if(sslProtocols != null)
-                {
-                    webApiEnvironment.SslProtocol = sslProtocols.Value;
-                }
-            }
 
             server.ServiceProvider = serviceProvider;
 

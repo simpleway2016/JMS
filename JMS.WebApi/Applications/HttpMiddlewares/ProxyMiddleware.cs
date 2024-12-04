@@ -52,7 +52,7 @@ namespace JMS.Applications.HttpMiddlewares
             {
                 int.TryParse(reqheaders["Content-Length"], out contentLength);
 
-                if (contentLength / (1024 * 1024) > _webApiEnvironment.MaxRequestLength)
+                if (contentLength / (1024 * 1024) > _webApiEnvironment.Config.Current.MaxRequestLength)
                 {
                     //超过限制
                     client.KeepAlive = false;
@@ -61,7 +61,7 @@ namespace JMS.Applications.HttpMiddlewares
                 }
             }
 
-            using var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses);
+            using var rc = new RemoteClient(_webApiEnvironment.Config.Current.Gateways);
             rc.Timeout = _timeout;
             var service = await rc.TryGetMicroServiceAsync(serviceName);
 
