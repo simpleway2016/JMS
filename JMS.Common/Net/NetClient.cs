@@ -137,7 +137,11 @@ namespace JMS
             var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 {code} {desc}\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nConnection: keep-alive\r\n\r\n");
             this.Write(data);
         }
-
+        public void OutputNotModified()
+        {
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 304 Not Modified\r\nConnection: keep-alive\r\n\r\n");
+            this.Write(data);
+        }
         public void OutputHttp500(string message)
         {
             var content = message == null ? null : Encoding.UTF8.GetBytes(message);

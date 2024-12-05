@@ -56,7 +56,7 @@ namespace JMS.HttpProxy.Applications.Http
 
         public async Task Handle(NetClient client)
         {
-            var headers = new Dictionary<string, string>();
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var requestPathLine = await client.PipeReader.ReadHeaders(headers);
 
