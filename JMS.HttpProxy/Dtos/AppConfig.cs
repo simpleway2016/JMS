@@ -64,6 +64,10 @@ namespace JMS.HttpProxy.Dtos
         public string Host { get; set; }
         public string Target { get; set; }
         /// <summary>
+        /// 静态文件目录
+        /// </summary>
+        public string RootPath { get; set; }
+        /// <summary>
         /// 是否自动修改请求的Host头
         /// </summary>
         public bool ChangeHostHeader { get; set; }

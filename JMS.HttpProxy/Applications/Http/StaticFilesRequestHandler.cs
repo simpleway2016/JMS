@@ -25,66 +25,25 @@ using JMS.Common;
 using JMS.Common.IO;
 using Org.BouncyCastle.Utilities.Zlib;
 using System.IO.Compression;
+using JMS.HttpProxy.Dtos;
 
-namespace JMS.HttpProxy.Applications.StaticFiles
+namespace JMS.HttpProxy.Applications.Http
 {
     /// <summary>
     /// 处理StaticFiles请求
     /// </summary>
     class StaticFilesRequestHandler
     {
-        private readonly RequestTimeLimter _requestTimeLimter;
-        private readonly NetClientProviderFactory _netClientProviderFactory;
         private readonly ILogger<StaticFilesRequestHandler> _logger;
-        StaticFilesServer _Server;
        
-        public StaticFilesRequestHandler(RequestTimeLimter requestTimeLimter,
-            NetClientProviderFactory netClientProviderFactory,
-            ILogger<StaticFilesRequestHandler> logger)
+        public StaticFilesRequestHandler(ILogger<StaticFilesRequestHandler> logger)
         {
-            _requestTimeLimter = requestTimeLimter;
-            _netClientProviderFactory = netClientProviderFactory;
             _logger = logger;
-
-           
         }
-        public void SetServer(StaticFilesServer server)
-        {
-            _Server = server;
-        }
+      
 
-
-        public async Task Handle(NetClient client)
-        {
-            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            var requestPathLine = await client.PipeReader.ReadHeaders(headers);
-
-            headers.TryGetValue("X-Forwarded-For", out string x_for);
-
-            var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            ip = RequestTimeLimter.GetRemoteIpAddress(HttpProxyProgram.Config.Current.ProxyIps, ip, x_for);
-            if (_requestTimeLimter.OnRequesting(ip) == false)
-            {
-                if (HttpProxyProgram.Config.Current.LogDetails)
-                {
-                    _logger.LogInformation($"{ip}访问次数太多，被拒绝访问.");
-                }
-
-                //输出401
-                client.KeepAlive = false;
-                client.OutputHttpCode(401, "Forbidden");
-                return;
-            }
-
-            if (headers.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
-            {
-                client.KeepAlive = true;
-            }
-            else if (headers.ContainsKey("Connection") == false)
-            {
-                client.KeepAlive = true;
-            }
+        public async Task Handle(NetClient client, Dictionary<string, string> headers,string requestPathLine,ProxyConfig proxyConfig)
+        {            
 
             var requestPathLineArr = requestPathLine.Split(' ');
             var httpMethod = requestPathLineArr[0];
@@ -100,11 +59,11 @@ namespace JMS.HttpProxy.Applications.StaticFiles
             string filepath;
             if ((flag = requestPath.IndexOf("?")) > 0)
             {
-                filepath = Path.Combine(_Server.Config.RootPath, requestPath.Substring(1, flag - 1));
+                filepath = Path.Combine(proxyConfig.RootPath, requestPath.Substring(1, flag - 1));
             }
             else
             {
-                filepath = Path.Combine(_Server.Config.RootPath, requestPath.Substring(1));
+                filepath = Path.Combine(proxyConfig.RootPath, requestPath.Substring(1));
             }
 
             if (File.Exists(filepath) == false)

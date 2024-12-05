@@ -22,7 +22,6 @@ using JMS.HttpProxy.Applications.Sockets;
 using JMS.HttpProxy.Applications;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 using JMS.HttpProxy.Applications.DirectSocket;
-using JMS.HttpProxy.Applications.StaticFiles;
 
 namespace JMS
 {
@@ -86,7 +85,6 @@ namespace JMS
             services.AddTransient<ProtocolRequestReception>();
             services.AddTransient<SocketRequestReception>();
             services.AddTransient<DirectSocketRequestReception>();
-            services.AddTransient<StaticFilesRequestReception>();
             services.AddTransient<StaticFilesRequestHandler>();
             services.AddTransient<JMS.ServerCore.RequestTimeLimter>();
             services.AddTransient<BlackList>();
