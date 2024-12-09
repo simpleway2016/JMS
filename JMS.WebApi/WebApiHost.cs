@@ -1,20 +1,9 @@
 ﻿using JMS.Applications;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using System.Security.Cryptography.X509Certificates;
-using System.Reflection;
-using System.Linq;
-using System.IO;
 using Microsoft.Extensions.Configuration;
-using JMS.Common.Net;
-using Org.BouncyCastle.Bcpg;
 using Way.Lib;
 
 namespace JMS

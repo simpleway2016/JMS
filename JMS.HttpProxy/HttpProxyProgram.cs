@@ -20,7 +20,6 @@ using JMS.HttpProxy.Applications.InternalProtocol;
 using JMS.HttpProxy.InternalProtocol;
 using JMS.HttpProxy.Applications.Sockets;
 using JMS.HttpProxy.Applications;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using JMS.HttpProxy.Applications.DirectSocket;
 
 namespace JMS
