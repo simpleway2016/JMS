@@ -26,7 +26,7 @@ namespace JMS
             _Logger.LogInformation($"版本号：{this.GetType().Assembly.GetName().Version}");
 
             _Logger?.LogInformation("配置文件:{0}", _webApiEnvironment.AppSettingPath);
-            _Logger?.LogInformation($"网关地址：{_webApiEnvironment.Config.Current.Gateways.ToJsonString()}");
+            _Logger?.LogInformation($"网关地址：{string.Join(" , " , _webApiEnvironment.Config.Current.Gateways.Select(m => $"{m.Address}:{m.Port}"))}");
         }
 
         string _id;
