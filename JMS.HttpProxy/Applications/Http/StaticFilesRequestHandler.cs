@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Way.Lib;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading;
@@ -10,7 +9,6 @@ using JMS.Dtos;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Web;
-using Microsoft.CodeAnalysis;
 using System.Reflection.PortableExecutable;
 using System.Net;
 using System.Buffers;
@@ -19,11 +17,9 @@ using JMS.ServerCore;
 using Microsoft.Extensions.Configuration;
 using JMS.HttpProxy.Servers;
 using Microsoft.Extensions.Logging;
-using Org.BouncyCastle.Asn1.X509;
 using System.Net.Http;
 using JMS.Common;
 using JMS.Common.IO;
-using Org.BouncyCastle.Utilities.Zlib;
 using System.IO.Compression;
 using JMS.HttpProxy.Dtos;
 

@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using JMS.ServerCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Authentication;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using JMS.WebApi;
 
 namespace JMS
@@ -65,7 +64,6 @@ namespace JMS
             Config = _configuration.GetNewest<WebApiConfig>();
             var port = Config.Current.Port;
 
-            var port = Configuration.GetValue<int>("Port");
             if (_cmdArg.TryGetValue("-p", out string strPort))
             {
                 int.TryParse(strPort, out port);
