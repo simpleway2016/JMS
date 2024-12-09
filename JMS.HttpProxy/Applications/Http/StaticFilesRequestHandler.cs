@@ -2,21 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
-using System.Threading;
-using JMS.Dtos;
-using System.Threading.Tasks;
-using System.Net.Sockets;
-using System.Web;
-using System.Reflection.PortableExecutable;
-using System.Net;
 using System.Buffers;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using JMS.ServerCore;
-using Microsoft.Extensions.Configuration;
-using JMS.HttpProxy.Servers;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.X509;
 using System.Net.Http;
 using JMS.Common;
 using JMS.Common.IO;
@@ -112,7 +100,7 @@ namespace JMS.HttpProxy.Applications.Http
                         statusCode = 206;
                         var rangeInfo = RangeStr.Replace("bytes=", "").Split('-');
                         range = Convert.ToInt32(rangeInfo[0]);
-                        if (rangeInfo[1].IsNullOrEmpty())
+                        if ( string.IsNullOrEmpty( rangeInfo[1]))
                         {
                             rangeEnd = (int)fs.Length - 1;
                         }
