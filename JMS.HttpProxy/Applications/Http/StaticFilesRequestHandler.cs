@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Buffers;
 using Microsoft.Extensions.Logging;
-using Org.BouncyCastle.Asn1.X509;
 using System.Net.Http;
 using JMS.Common;
 using JMS.Common.IO;
