@@ -33,7 +33,8 @@ namespace JMS.Applications
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (_webApiEnvironment.AcceptCertHash != null && _webApiEnvironment.AcceptCertHash.Length >0 && _webApiEnvironment.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
+            var acceptCertHash = _webApiEnvironment.Config.Current.SSL.AcceptCertHash;
+            if (acceptCertHash != null && acceptCertHash.Length >0 && acceptCertHash.Contains(certificate?.GetCertHashString()) == false)
             {
                 return false;
             }

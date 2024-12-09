@@ -12,6 +12,7 @@ namespace JMS.HttpProxy.Dtos
         public bool LogDetails { get; set; }
         public DeviceConfig[] Devices { get; set; }
         public ServerConfig[] Servers { get; set; }
+        public Dictionary<string,string> ContentTypes { get; set; }
     }
 
     public class DeviceConfig
@@ -25,6 +26,10 @@ namespace JMS.HttpProxy.Dtos
         public ProxyType Type { get; set; }
         public SslConfig SSL { get; set; }
         public int Port { get; set; }
+        /// <summary>
+        /// 静态文件所在目录
+        /// </summary>
+        public string RootPath { get; set; }
         public ProxyConfig[] Proxies { get; set; }
     }
 
@@ -32,6 +37,7 @@ namespace JMS.HttpProxy.Dtos
     {
         public string Cert { get; set; }
         public string Password { get; set; }
+       
         public SslProtocols SslProtocol { get; set; } = SslProtocols.None;
 
         X509Certificate2 _Certificate;
@@ -53,6 +59,10 @@ namespace JMS.HttpProxy.Dtos
         public string Host { get; set; }
         public string Target { get; set; }
         /// <summary>
+        /// 静态文件目录
+        /// </summary>
+        public string RootPath { get; set; }
+        /// <summary>
         /// 是否自动修改请求的Host头
         /// </summary>
         public bool ChangeHostHeader { get; set; }
@@ -67,7 +77,11 @@ namespace JMS.HttpProxy.Dtos
         Socket = 2,       
         InternalProtocol = 3,
         //直接把数据转发到目标地址
-        DirectSocket = 4
+        DirectSocket = 4,
+        /// <summary>
+        /// 静态文件
+        /// </summary>
+        StaticFiles = 5
     }
 
 }

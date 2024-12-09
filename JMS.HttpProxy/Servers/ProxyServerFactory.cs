@@ -25,7 +25,6 @@ namespace JMS.HttpProxy.Servers
             _proxyServerTypes[ProxyType.InternalProtocol] = typeof(InternalProtocolServer);
             _proxyServerTypes[ProxyType.Socket] = typeof(SocketServer);
 
-
         }
 
         public void Add(ServerConfig serverConfig)

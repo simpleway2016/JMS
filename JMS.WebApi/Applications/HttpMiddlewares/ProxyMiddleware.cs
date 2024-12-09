@@ -16,11 +16,13 @@ namespace JMS.Applications.HttpMiddlewares
     internal class ProxyMiddleware : IHttpMiddleware
     {
         private readonly IWebApiHostEnvironment _webApiEnvironment;
+        private readonly IConfiguration _configuration;
         int _timeout = 30000;
         ILogger _logger;
         public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment,IConfiguration configuration,ILoggerFactory loggerFactory)
         {
             _webApiEnvironment = webApiEnvironment;
+            this._configuration = configuration;
             var timeout = configuration.GetSection("InvokeTimeout").Get<int?>();
             if(timeout != null && timeout >= 0)
             {
@@ -49,9 +51,17 @@ namespace JMS.Applications.HttpMiddlewares
             if (reqheaders.ContainsKey("Content-Length"))
             {
                 int.TryParse(reqheaders["Content-Length"], out contentLength);
+
+                if (contentLength / (1024 * 1024) > _webApiEnvironment.Config.Current.MaxRequestLength)
+                {
+                    //超过限制
+                    client.KeepAlive = false;
+                    client.OutputHttpCodeAndClose(413, "Too Large", "Payload Too Large.");
+                    return true;
+                }
             }
 
-            using var rc = new RemoteClient(_webApiEnvironment.GatewayAddresses);
+            using var rc = new RemoteClient(_webApiEnvironment.Config.Current.Gateways);
             rc.Timeout = _timeout;
             var service = await rc.TryGetMicroServiceAsync(serviceName);
 
@@ -159,6 +169,13 @@ namespace JMS.Applications.HttpMiddlewares
                         }
                         else
                         {
+                            if (contentLength > 10240)
+                            {
+                                //超过限制
+                                client.KeepAlive = false;
+                                client.OutputHttpCodeAndClose(413, "Too Big", "JMS.WebApi==>Chunked Too Big.");
+                                return true;
+                            }
                             await client.ReadAndSend(proxyClient, contentLength);
 
                             line = await client.ReadLineAsync(512);
@@ -279,6 +296,14 @@ namespace JMS.Applications.HttpMiddlewares
                 
                 if (inputContentLength > 0)
                 {
+                    if (inputContentLength > client.MaxCommandSize)
+                    {
+                        //超过限制
+                        client.KeepAlive = false;
+                        client.OutputHttpCodeAndClose(413, "Too Large", "JMS.WebApi==>Command Too Large.");
+                        return;
+                    }
+
                     var data = new byte[inputContentLength];
                     await client.ReadDataAsync(data, 0, inputContentLength);
                     var json = Encoding.UTF8.GetString(data);

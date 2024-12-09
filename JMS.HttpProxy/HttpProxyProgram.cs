@@ -84,6 +84,7 @@ namespace JMS
             services.AddTransient<ProtocolRequestReception>();
             services.AddTransient<SocketRequestReception>();
             services.AddTransient<DirectSocketRequestReception>();
+            services.AddTransient<StaticFilesRequestHandler>();
             services.AddTransient<JMS.ServerCore.RequestTimeLimter>();
             services.AddTransient<BlackList>();
             services.AddSingleton<ProxyServerFactory>();

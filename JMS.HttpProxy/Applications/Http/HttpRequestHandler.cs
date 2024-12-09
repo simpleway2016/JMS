@@ -26,14 +26,17 @@ namespace JMS.HttpProxy.Applications.Http
     class HttpRequestHandler
     {
         private readonly RequestTimeLimter _requestTimeLimter;
+        private readonly StaticFilesRequestHandler _staticFilesRequestHandler;
         private readonly NetClientProviderFactory _netClientProviderFactory;
         private readonly ILogger<HttpRequestHandler> _logger;
         HttpServer _httpServer;
         public HttpRequestHandler(RequestTimeLimter requestTimeLimter,
+            StaticFilesRequestHandler staticFilesRequestHandler,
             NetClientProviderFactory netClientProviderFactory,
             ILogger<HttpRequestHandler> logger)
         {
             _requestTimeLimter = requestTimeLimter;
+            this._staticFilesRequestHandler = staticFilesRequestHandler;
             _netClientProviderFactory = netClientProviderFactory;
             _logger = logger;
         }
@@ -53,7 +56,7 @@ namespace JMS.HttpProxy.Applications.Http
 
         public async Task Handle(NetClient client)
         {
-            var headers = new Dictionary<string, string>();
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var requestPathLine = await client.PipeReader.ReadHeaders(headers);
 
@@ -81,6 +84,21 @@ namespace JMS.HttpProxy.Applications.Http
             if (config == null)
                 return;
 
+            if (headers.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
+            {
+                client.KeepAlive = true;
+            }
+            else if (headers.ContainsKey("Connection") == false)
+            {
+                client.KeepAlive = true;
+            }
+
+            if(!string.IsNullOrEmpty(config.RootPath))
+            {
+                await _staticFilesRequestHandler.Handle(client, headers, requestPathLine, config);
+                return;
+            }
+
             int inputContentLength = 0;
             if (headers.ContainsKey("Content-Length"))
             {
@@ -98,14 +116,7 @@ namespace JMS.HttpProxy.Applications.Http
                 headers["X-Forwarded-For"] = ip;
             }
 
-            if (headers.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
-            {
-                client.KeepAlive = true;
-            }
-            else if (headers.ContainsKey("Connection") == false)
-            {
-                client.KeepAlive = true;
-            }
+            
 
 
             StringBuilder buffer = new StringBuilder();

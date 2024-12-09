@@ -1,5 +1,14 @@
 cd /d "%~dp0..\"
-set version=3.6.2
+
+:: 设置 XML 文件路径和要查找的节点名称
+set "XML_FILE=JMS.WebApi\JMS.WebApi.csproj"
+set "NODE_NAME=Version"
+
+:: 使用 PowerShell 读取 XML 节点内容
+for /f "delims=" %%a in ('powershell -Command "([xml](Get-Content '%XML_FILE%')).SelectSingleNode('//%NODE_NAME%').'#text'"') do (
+    set "version=%%a"
+)
+
 dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Linux\WebApi --self-contained true --runtime linux-x64
 "C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.linux.zip %~dp0Linux\WebApi
 
