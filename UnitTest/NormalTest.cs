@@ -48,7 +48,7 @@ namespace UnitTest
         public int _UserInfoServicePort = 9801;
         public int _CrashServicePort = 9802;
         public int _UserInfoServicePort_forcluster = 9803;
-        public int _webApiPort = 9901;
+        public int _webApiDocumentPort = 9901;
         public int _webApiServicePort = 9902;
         public bool _userInfoServiceReady = false;
 
@@ -83,13 +83,13 @@ namespace UnitTest
             return app;
         }
 
-        public WebApplication StartWebApi(int gateWayPort)
+        public WebApplication StartWebApiDocument(int gateWayPort)
         {
             var conbuilder = new ConfigurationBuilder();
             conbuilder.AddJsonFile("./serviceConfig.json", optional: true, reloadOnChange: true);
             var configuration = conbuilder.Build();
 
-            var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:" + _webApiPort });
+            var builder = WebApplication.CreateBuilder(new string[] { "--urls", "http://*:" + _webApiDocumentPort });
             builder.Services.AddControllers();
             var gateways = new JMS.NetAddress[] { new JMS.NetAddress("127.0.0.1", gateWayPort) };
 
@@ -350,9 +350,10 @@ namespace UnitTest
             //等待网关就绪
             WaitGatewayReady(_gateWayPort);
 
-            var app = StartWebApi(_gateWayPort);
+            var app = StartWebApiDocument(_gateWayPort);
             app.RunAsync();
 
+            //启动asp.net类型的微服务
             var app2 = StartWebApiService(_gateWayPort);
             app2.RunAsync();
 
@@ -383,7 +384,7 @@ namespace UnitTest
             string text;
             ClientWebSocket clientWebsocket = new ClientWebSocket();
             clientWebsocket.Options.SetRequestHeader("X-Forwarded-For", "::1");
-            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiPort}/JMSRedirect/TestWebSocketService?q=100&name={HttpUtility.UrlEncode("你好")}"), CancellationToken.None).GetAwaiter().GetResult();
+            clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiDocumentPort}/JMSRedirect/TestWebSocketService?q=100&name={HttpUtility.UrlEncode("你好")}"), CancellationToken.None).GetAwaiter().GetResult();
 
             StringBuilder moretext = new StringBuilder();
             for(int i = 0; i < 5000; i ++)
@@ -411,7 +412,7 @@ namespace UnitTest
                 param.Add(new KeyValuePair<string, string>("age", "1"));
 
                 //通过webapi反向代理访问webapi微服务
-                ret = client.PostAsync($"http://localhost:{_webApiPort}/JMSRedirect/TestWebService/WeatherForecast", new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
+                ret = client.PostAsync($"http://localhost:{_webApiDocumentPort}/JMSRedirect/TestWebService/WeatherForecast", new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
                 if (ret.IsSuccessStatusCode == false)
                     throw new Exception("http访问失败");
                 text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
@@ -428,7 +429,7 @@ namespace UnitTest
                 byteArrayContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/png");
                 requestContent.Add(byteArrayContent, "avatar", "Unbenannt.PNG");
 
-                ret = client.PutAsync($"http://localhost:{_webApiPort}/JMSRedirect/TestWebService/WeatherForecast", requestContent).ConfigureAwait(false).GetAwaiter().GetResult();
+                ret = client.PutAsync($"http://localhost:{_webApiDocumentPort}/JMSRedirect/TestWebService/WeatherForecast", requestContent).ConfigureAwait(false).GetAwaiter().GetResult();
                 if (ret.IsSuccessStatusCode == false)
                     throw new Exception("http访问失败");
                 text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
@@ -436,7 +437,7 @@ namespace UnitTest
 
             //用同一个连接，通过webapi反向代理访问webapi微服务
             JMS.NetClient netclient = new NetClient();
-            netclient.Connect(new NetAddress("localhost", _webApiPort));
+            netclient.Connect(new NetAddress("localhost", _webApiDocumentPort));
             for (int i = 0; i < 10; i++)
             {
                 netclient.WriteLine("GET /JMSRedirect/TestWebService/WeatherForecast HTTP/1.1");
@@ -520,14 +521,14 @@ namespace UnitTest
             if (text != "Jack")
                 throw new Exception("http返回结果错误");
 
-            ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyName").ConfigureAwait(false).GetAwaiter().GetResult();
+            ret = client.GetAsync($"http://localhost:{_webApiDocumentPort}/JMSRedirect/UserInfoService/GetMyName").ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             if (text != "Jack")
                 throw new Exception("http返回结果错误");
 
-            ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/GetMyNameError").ConfigureAwait(false).GetAwaiter().GetResult();
+            ret = client.GetAsync($"http://localhost:{_webApiDocumentPort}/JMSRedirect/UserInfoService/GetMyNameError").ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode)
                 throw new Exception("IsSuccessStatusCode不应该是true");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
@@ -535,7 +536,7 @@ namespace UnitTest
                 throw new Exception("http返回结果错误");
 
             //测试返回值是null的情况
-            ret = client.GetAsync($"http://localhost:{_webApiPort}/JMSRedirect/UserInfoService/Nothing").ConfigureAwait(false).GetAwaiter().GetResult();
+            ret = client.GetAsync($"http://localhost:{_webApiDocumentPort}/JMSRedirect/UserInfoService/Nothing").ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
 
@@ -557,6 +558,161 @@ namespace UnitTest
 
         }
 
+        [TestMethod]
+        public void Sse()
+        {
+            StartGateway();
+            StartJmsWebApi();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var app = StartWebApiDocument(_gateWayPort);
+            app.RunAsync();
+
+            //启动asp.net类型的微服务
+            var app2 = StartWebApiService(_gateWayPort);
+            app2.RunAsync();
+
+
+            if(true)
+            {
+                //测试jms webapi
+                string url = $"http://127.0.0.1:{_jmsWebapiPort}/TestWebService/MyWeatherForecast/SseExample"; // SSE endpoint URL
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    request.Headers.Add("Accept", "text/event-stream");
+
+                    using (HttpResponseMessage response = client.Send(request, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        using (var responseStream = response.Content.ReadAsStream())
+                        using (var reader = new System.IO.StreamReader(responseStream))
+                        {
+                            for (int i = 0; i < 10; i++)
+                            {
+                                string line = reader.ReadLine();
+                                reader.ReadLine();
+
+                                Assert.AreEqual(line, $"data: {i}");
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (true)
+            {
+                //测试jms webapidocument
+                string url = $"http://127.0.0.1:{_webApiDocumentPort}/JMSRedirect/TestWebService/MyWeatherForecast/SseExample"; // SSE endpoint URL
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    request.Headers.Add("Accept", "text/event-stream");
+
+                    using (HttpResponseMessage response = client.Send(request, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        using (var responseStream = response.Content.ReadAsStream())
+                        using (var reader = new System.IO.StreamReader(responseStream))
+                        {
+                            for (int i = 0; i < 10; i++)
+                            {
+                                string line = reader.ReadLine();
+                                reader.ReadLine();
+
+                                Assert.AreEqual(line, $"data: {i}");
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Chunked()
+        {
+            StartGateway();
+            StartJmsWebApi();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var app = StartWebApiDocument(_gateWayPort);
+            app.RunAsync();
+
+            //启动asp.net类型的微服务
+            var app2 = StartWebApiService(_gateWayPort);
+            app2.RunAsync();
+
+
+            if (true)
+            {
+                //测试jms webapi
+                string url = $"http://127.0.0.1:{_jmsWebapiPort}/TestWebService/MyWeatherForecast/ChunkedExample";  
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+                    using (HttpResponseMessage response = client.Send(request, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        using (var responseStream = response.Content.ReadAsStream())
+                        using (var reader = new System.IO.StreamReader(responseStream))
+                        {
+                            for (int i = 0; i < 10; i++)
+                            {
+                                string line = reader.ReadLine();
+                                reader.ReadLine();
+
+                                Assert.AreEqual(line, $"data: {i}");
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (true)
+            {
+                //测试jms webapidocument
+                string url = $"http://127.0.0.1:{_webApiDocumentPort}/JMSRedirect/TestWebService/MyWeatherForecast/ChunkedExample";
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+                    using (HttpResponseMessage response = client.Send(request, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        using (var responseStream = response.Content.ReadAsStream())
+                        using (var reader = new System.IO.StreamReader(responseStream))
+                        {
+                            for (int i = 0; i < 10; i++)
+                            {
+                                string line = reader.ReadLine();
+                                reader.ReadLine();
+
+                                Assert.AreEqual(line, $"data: {i}");
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         [TestMethod]
         public void Commit()

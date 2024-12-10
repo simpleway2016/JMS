@@ -8,6 +8,8 @@ set "NODE_NAME=Version"
 for /f "delims=" %%a in ('powershell -Command "([xml](Get-Content '%XML_FILE%')).SelectSingleNode('//%NODE_NAME%').'#text'"') do (
     set "version=%%a"
 )
+dotnet publish JMS.Gateway\JMS.Gateway.csproj -c release -o Publish\arm\Gateway --self-contained true --runtime linux-arm64
+"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0Gateway%version%.linux-arm.zip %~dp0arm\Gateway
 
 dotnet publish JMS.Gateway\JMS.Gateway.csproj -c release -o Publish\Linux\Gateway --self-contained true --runtime linux-x64
 "C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0Gateway%version%.linux.zip %~dp0Linux\Gateway

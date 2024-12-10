@@ -1,5 +1,6 @@
 using JMS.ServiceProvider.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
@@ -27,7 +28,38 @@ namespace UnitTest.Controllers
             this._apiTransactionDelegate = apiTransactionDelegate;
         }
 
-       
+        [HttpGet]
+        public async Task<IActionResult> SseExample()
+        {
+            Response.Headers.Add("Content-Type", "text/event-stream");
+            Response.Headers.Add("Cache-Control", "no-cache");
+            Response.Headers.Add("Connection", "keep-alive");
+
+            for (int i = 0; i < 10; i++)
+            {
+                var content = $"data: {i}\n\n";
+
+                await Response.WriteAsync(content);
+                await Response.Body.FlushAsync();
+            }
+
+            return new EmptyResult();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ChunkedExample()
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                var content = $"data: {i}\n\n";
+
+                await Response.WriteAsync(content);
+                await Response.Body.FlushAsync();
+            }
+
+            return new EmptyResult();
+        }
+
 
         [HttpGet]
         public async Task<IEnumerable<WeatherForecast>> Get()

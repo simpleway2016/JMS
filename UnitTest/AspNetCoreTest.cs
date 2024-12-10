@@ -321,7 +321,7 @@ Content-Length2: 0
             var normalTest = new NormalTest();
             normalTest.StartGateway();
             normalTest.StartJmsWebApi();
-            normalTest.StartWebApi(normalTest._gateWayPort)?.RunAsync();
+            normalTest.StartWebApiDocument(normalTest._gateWayPort)?.RunAsync();
 
             var app = StartWebApi(normalTest._gateWayPort);
             app?.RunAsync();
@@ -364,7 +364,7 @@ Content-Length2: 0
 
 
             //通过webapi反向代理访问webapi
-            ret = client.PostAsync($"http://localhost:{normalTest._webApiPort}/JMSRedirect/TestWebService/WeatherForecast", new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
+            ret = client.PostAsync($"http://localhost:{normalTest._webApiDocumentPort}/JMSRedirect/TestWebService/WeatherForecast", new FormUrlEncodedContent(param)).ConfigureAwait(false).GetAwaiter().GetResult();
             if (ret.IsSuccessStatusCode == false)
                 throw new Exception("http访问失败");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();

@@ -239,6 +239,11 @@ namespace JMS.HttpProxy.Applications.Http
                 {
                     await proxyClient.ReadAndSend(client, inputContentLength);
                 }
+                else if(headers.TryGetValue("Content-Type",out string resContentType) && resContentType == "text/event-stream")
+                {
+                    client.KeepAlive = false;
+                    await proxyClient.PipeReader.ReadAndSend(client);
+                }
                 else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
                 {
                     while (true)

@@ -9,6 +9,9 @@ for /f "delims=" %%a in ('powershell -Command "([xml](Get-Content '%XML_FILE%'))
     set "version=%%a"
 )
 
+dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\arm\WebApi --self-contained true --runtime linux-arm64
+"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.linux-arm.zip %~dp0arm\WebApi
+
 dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Linux\WebApi --self-contained true --runtime linux-x64
 "C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.linux.zip %~dp0Linux\WebApi
 
