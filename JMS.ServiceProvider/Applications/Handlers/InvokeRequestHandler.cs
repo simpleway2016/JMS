@@ -212,7 +212,7 @@ namespace JMS.Applications
                     controller.OnBeforeAction(cmd.Method, parameters);
 
                     result = methodInfo.Method.Invoke(controller, parameters);
-                    if (result is Task || result is ValueTask)
+                    if ( methodInfo.CanAwait && result != null)
                     {
                         if (methodInfo.Method.ReturnType.IsGenericType)
                         {

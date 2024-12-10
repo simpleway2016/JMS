@@ -557,7 +557,6 @@ Content-Length2: 0
                         Thread.Sleep(100);
                         service = remoteClient.TryGetMicroService("TestWebService");
                     }
-
                     var ret = service.Invoke<WeatherForecast[]>("/MyWeatherForecast/Get");
                     if (ret.Length != 5)
                         throw new Exception("返回结果错误");

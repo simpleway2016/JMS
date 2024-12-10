@@ -34,10 +34,15 @@ namespace UnitTest.ServiceHosts
             if (string.IsNullOrEmpty(this.TransactionId))
                 throw new Exception("TransactionId为空");
         }
-        public async Task<string> GetMyNameLongtime()
+        public async ValueTask<string> GetValueTaskName()
         {
-            await Task.Delay(60000);
-            return "Jack";
+            await Task.Delay(10);
+            return "ValueTask";
+        }
+        public async Task<string> GetTaskName()
+        {
+            await Task.Delay(10);
+            return "Task";
         }
         public string GetMyName()
         {
@@ -58,7 +63,7 @@ namespace UnitTest.ServiceHosts
             throw new Exception("ErrMsg");
             return "Jack";
         }
-        public async Task SetUserName(string name)
+        public async ValueTask SetUserName(string name)
         {
             //启动支持分布式事务
             _userInfoDbContext.BeginTransaction();

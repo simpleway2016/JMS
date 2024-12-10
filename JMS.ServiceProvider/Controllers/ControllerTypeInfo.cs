@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JMS.Controllers
 {
@@ -27,6 +29,7 @@ namespace JMS.Controllers
         public bool AllowAnonymous;
         public List<AuthorizeAttribute> AuthorizeAttributes = new List<AuthorizeAttribute>();
         public TypeParameterInfo[] Parameters;
+        public bool CanAwait;
         public TypeMethodInfo(MethodInfo method, Type controllerType)
         {
             Method = method;
@@ -35,6 +38,22 @@ namespace JMS.Controllers
             AuthorizeAttributes.AddRange(controllerType.GetCustomAttributes<AuthorizeAttribute>());
 
             Parameters = method.GetParameters().Select(m => new TypeParameterInfo(m)).ToArray();
+
+            // 检查是否有 GetAwaiter 方法
+            CanAwait = CheckIsCanAwait(method.ReturnType);
+        }
+
+        public static bool CheckIsCanAwait(Type type)
+        {
+            // 查找 GetAwaiter 方法
+            var getAwaiterMethod = type.GetMethod("GetAwaiter", BindingFlags.Public | BindingFlags.Instance);
+            if (getAwaiterMethod == null) return false;
+
+            // 获取 GetAwaiter 方法的返回类型
+            var awaiterType = getAwaiterMethod.ReturnType;
+
+            // 检查返回类型是否实现了 INotifyCompletion 接口
+            return typeof(INotifyCompletion).IsAssignableFrom(awaiterType);
         }
     }
 

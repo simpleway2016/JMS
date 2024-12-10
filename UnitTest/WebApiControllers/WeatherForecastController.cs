@@ -31,16 +31,18 @@ namespace UnitTest.Controllers
 
 
         [HttpGet]
-        public async Task<IEnumerable<WeatherForecast>> Get()
+        public async ValueTask<IEnumerable<WeatherForecast>> Get()
         {
             await Task.Delay(1);
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            var ret = Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
                 TemperatureC = Random.Shared.Next(-20, 55),
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+
+            return ret;
         }
 
         [HttpPost]
