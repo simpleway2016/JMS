@@ -62,7 +62,7 @@ namespace UnitTest.Controllers
 
 
         [HttpGet]
-        public async Task<IEnumerable<WeatherForecast>> Get()
+        public async ValueTask<IEnumerable<WeatherForecast>> Get()
         {
             await Task.Delay(1);
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast

@@ -1130,6 +1130,38 @@ namespace UnitTest
                 throw new Exception("结果不正确");
         }
 
+        [TestMethod]
+        public void ValueTaskAndTask()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
+                }
+
+                Assert.AreEqual(serviceClient.Invoke<string>("GetValueTaskName"), "ValueTask");
+                Assert.AreEqual(serviceClient.Invoke<string>("GetTaskName"), "Task");
+            }
+
+        }
+
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;

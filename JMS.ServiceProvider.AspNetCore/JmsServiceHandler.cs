@@ -33,6 +33,7 @@ namespace JMS.ServiceProvider.AspNetCore
 {
     internal class JmsServiceHandler
     {
+        static ConcurrentDictionary<MethodInfo, bool> CanAwaits = new ConcurrentDictionary<MethodInfo, bool>();
         static ConcurrentDictionary<ControllerActionDescriptor, Microsoft.AspNetCore.Authorization.AuthorizeAttribute[]> AuthorizeAttributeCaches = new ConcurrentDictionary<ControllerActionDescriptor, Microsoft.AspNetCore.Authorization.AuthorizeAttribute[]>();
         static bool checkRoles(Microsoft.AspNetCore.Authorization.AuthorizeAttribute[] authorizeAttributes , ClaimsPrincipal claimsPrincipal)
         {
@@ -187,6 +188,14 @@ namespace JMS.ServiceProvider.AspNetCore
                                     {
                                         await (dynamic)result;
                                         result = null;
+                                    }
+                                }
+                                else if(result != null)
+                                {
+                                    var canAwait = CanAwaits.GetOrAdd(desc.MethodInfo, m => Controllers.TypeMethodInfo.CheckIsCanAwait(desc.MethodInfo.ReturnType));
+                                    if (canAwait)
+                                    {
+                                        result = await (dynamic)result;
                                     }
                                 }
 
