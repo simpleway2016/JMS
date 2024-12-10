@@ -636,6 +636,83 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void Chunked()
+        {
+            StartGateway();
+            StartJmsWebApi();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var app = StartWebApiDocument(_gateWayPort);
+            app.RunAsync();
+
+            //启动asp.net类型的微服务
+            var app2 = StartWebApiService(_gateWayPort);
+            app2.RunAsync();
+
+
+            if (true)
+            {
+                //测试jms webapi
+                string url = $"http://127.0.0.1:{_jmsWebapiPort}/TestWebService/MyWeatherForecast/ChunkedExample";  
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+                    using (HttpResponseMessage response = client.Send(request, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        using (var responseStream = response.Content.ReadAsStream())
+                        using (var reader = new System.IO.StreamReader(responseStream))
+                        {
+                            for (int i = 0; i < 10; i++)
+                            {
+                                string line = reader.ReadLine();
+                                reader.ReadLine();
+
+                                Assert.AreEqual(line, $"data: {i}");
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (true)
+            {
+                //测试jms webapidocument
+                string url = $"http://127.0.0.1:{_webApiDocumentPort}/JMSRedirect/TestWebService/MyWeatherForecast/ChunkedExample";
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+                    using (HttpResponseMessage response = client.Send(request, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        using (var responseStream = response.Content.ReadAsStream())
+                        using (var reader = new System.IO.StreamReader(responseStream))
+                        {
+                            for (int i = 0; i < 10; i++)
+                            {
+                                string line = reader.ReadLine();
+                                reader.ReadLine();
+
+                                Assert.AreEqual(line, $"data: {i}");
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        [TestMethod]
         public void Commit()
         {
             UserInfoDbContext.Reset();

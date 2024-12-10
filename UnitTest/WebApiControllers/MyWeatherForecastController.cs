@@ -46,6 +46,20 @@ namespace UnitTest.Controllers
             return new EmptyResult();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ChunkedExample()
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                var content = $"data: {i}\n\n";
+
+                await Response.WriteAsync(content);
+                await Response.Body.FlushAsync();
+            }
+
+            return new EmptyResult();
+        }
+
 
         [HttpGet]
         public async Task<IEnumerable<WeatherForecast>> Get()
