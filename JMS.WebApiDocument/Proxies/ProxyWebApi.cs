@@ -1,9 +1,11 @@
 ﻿using JMS.Dtos;
+using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -105,9 +107,7 @@ namespace JMS.WebApiDocument.Proxies
 
                 foreach (var pair in headers)
                 {
-                    if (pair.Key == "TranId" || pair.Key == "Tran" || pair.Key == "TranFlag")
-                        continue;
-                    else if (pair.Key == "Host" || pair.Key == "Transfer-Encoding" || pair.Key == "Content-Length")
+                    if (pair.Key == "Host" || pair.Key == "Transfer-Encoding" || pair.Key == "Content-Length")
                     {
                         continue;
                     }
@@ -123,6 +123,39 @@ namespace JMS.WebApiDocument.Proxies
                     data = new byte[inputContentLength];
                     await proxyClient.ReadDataAsync(data, 0, inputContentLength);
                     await context.Response.WriteAsync(Encoding.UTF8.GetString(data));
+                }
+                else if (headers.TryGetValue("Content-Type", out string resContentType) && resContentType == "text/event-stream")
+                {
+                    headers["Connection"] = "close";
+
+                    strBuffer.Append(requestPathLine);
+                    strBuffer.Append("\r\n");
+
+                    bool addedAllowOrigin = false;
+                    foreach (var pair in headers)
+                    {
+                        if (!addedAllowOrigin && pair.Key == "Access-Control-Allow-Origin")
+                        {
+                            addedAllowOrigin = true;
+                        }
+
+                        strBuffer.Append($"{pair.Key}: {pair.Value}\r\n");
+                    }
+                    if (!addedAllowOrigin)
+                    {
+                        strBuffer.Append($"Access-Control-Allow-Origin: *\r\n");
+                    }
+
+                    strBuffer.Append("\r\n");
+
+                    var connectionTransportFeature = context.Features.Get<IConnectionTransportFeature>();
+                    var output = connectionTransportFeature.Transport.Output;
+                    data = Encoding.UTF8.GetBytes(strBuffer.ToString());
+                    strBuffer.Clear();
+                    //发送头部给浏览器
+                    await output.WriteAsync(data);
+
+                    await proxyClient.ReadAndSend(output);
                 }
                 else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
                 {
@@ -154,6 +187,10 @@ namespace JMS.WebApiDocument.Proxies
                 {
                     NetClientPool.AddClientToPool(proxyClient);
                 }
+                else
+                {
+                    proxyClient.Dispose();
+                }
 
             }
             catch (Exception)
@@ -164,5 +201,6 @@ namespace JMS.WebApiDocument.Proxies
 
 
         }
+
     }
 }
