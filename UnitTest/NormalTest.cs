@@ -4,6 +4,7 @@ using JMS.Applications;
 using JMS.Cluster;
 using JMS.Common.Collections;
 using JMS.Dtos;
+using JMS.ServerCore;
 using JMS.WebApiDocument;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
