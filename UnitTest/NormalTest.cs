@@ -2,6 +2,7 @@
 using JMS;
 using JMS.Applications;
 using JMS.Cluster;
+using JMS.ServerCore;
 using JMS.WebApiDocument;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -133,7 +134,7 @@ namespace UnitTest
             webapiEnvironment.Port = _jmsWebapiPort;
             Task.Run(() =>
             {
-            
+
                 webapi.Run();
             });
             return webapi;
@@ -159,7 +160,7 @@ namespace UnitTest
             gatewayEnvironment.Port = _clusterGateWayPort1;
             Task.Run(() =>
             {
-               
+
                 gateway.Run();
             });
             return gateway;
@@ -173,7 +174,7 @@ namespace UnitTest
             gatewayEnvironment.Port = _clusterGateWayPort2;
             Task.Run(() =>
             {
-             
+
                 gateway.Run();
             });
             return gateway;
@@ -385,7 +386,7 @@ namespace UnitTest
             clientWebsocket.ConnectAsync(new Uri($"ws://localhost:{_webApiDocumentPort}/JMSRedirect/TestWebSocketService?q=100&name={HttpUtility.UrlEncode("你好")}"), CancellationToken.None).GetAwaiter().GetResult();
 
             StringBuilder moretext = new StringBuilder();
-            for(int i = 0; i < 5000; i ++)
+            for (int i = 0; i < 5000; i++)
             {
                 moretext.Append("a");
             }
@@ -397,8 +398,8 @@ namespace UnitTest
                 Assert.AreEqual($"hello{i} {moretext} 你好 back", text);
             }
 
-            clientWebsocket.CloseAsync( WebSocketCloseStatus.NormalClosure , null ,CancellationToken.None).GetAwaiter().GetResult();
-          
+            clientWebsocket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None).GetAwaiter().GetResult();
+
 
 
             System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
@@ -574,7 +575,7 @@ namespace UnitTest
             app2.RunAsync();
 
 
-            if(true)
+            if (true)
             {
                 //测试jms webapi
                 string url = $"http://127.0.0.1:{_jmsWebapiPort}/TestWebService/MyWeatherForecast/SseExample"; // SSE endpoint URL
@@ -656,7 +657,7 @@ namespace UnitTest
             if (true)
             {
                 //测试jms webapi
-                string url = $"http://127.0.0.1:{_jmsWebapiPort}/TestWebService/MyWeatherForecast/ChunkedExample";  
+                string url = $"http://127.0.0.1:{_jmsWebapiPort}/TestWebService/MyWeatherForecast/ChunkedExample";
 
                 using (var client = new System.Net.Http.HttpClient())
                 {
@@ -1733,13 +1734,38 @@ Content-Length: 0
             }
         }
 
+        [TestMethod]
+        public void GetRemoteIp()
+        {
+            string remoteIp = "127.0.0.1";
+            string[] trustIps = new[] { "192.168.0.1" };
+            string xForwardedfor = "166.0.0.1, 127.0.0.1, 192.168.0.1";
+
+            var ip = RequestTimeLimter.GetRemoteIpAddress(trustIps, remoteIp, xForwardedfor);
+            Assert.AreEqual(ip, "166.0.0.1");
+
+            remoteIp = "166.0.0.2";
+            trustIps = new[] { "192.168.0.1" };
+            xForwardedfor = "166.0.0.1, 127.0.0.1, 192.168.0.1";
+
+            ip = RequestTimeLimter.GetRemoteIpAddress(trustIps, remoteIp, xForwardedfor);
+            Assert.AreEqual(ip, "166.0.0.2");
+
+            remoteIp = "127.0.0.1";
+            trustIps = new[] { "192.168.0.1" };
+            xForwardedfor = "127.0.0.1, 166.0.0.1, 192.168.0.1";
+
+            ip = RequestTimeLimter.GetRemoteIpAddress(trustIps, remoteIp, xForwardedfor);
+            Assert.AreEqual(ip, "166.0.0.1");
+        }
+
 
         [TestMethod]
         public void TestIgnoreCaseHeader()
         {
             var c = "{ Headers:{'a':'a23'} }".FromJson<ClassA>();
             Assert.AreEqual(c.Headers["A"], "a23");
-            Assert.AreEqual( c.Headers["B"] , "caw");
+            Assert.AreEqual(c.Headers["B"], "caw");
         }
 
         class ClassA

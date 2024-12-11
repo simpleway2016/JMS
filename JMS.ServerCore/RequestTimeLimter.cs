@@ -74,6 +74,7 @@ namespace JMS.ServerCore
             return true;
         }
 
+        static string[] LoopbackIps = new[] { "127.0.0.1", "::1" }; 
         /// <summary>
         /// 获取真实ip
         /// </summary>
@@ -83,20 +84,24 @@ namespace JMS.ServerCore
         /// <returns></returns>
         public static string GetRemoteIpAddress(string[] trustXForwardedFor, string remoteIpAddr, string xForwardedfor)
         {
-            if (trustXForwardedFor != null && trustXForwardedFor.Length > 0 && xForwardedfor != null)
+            if (xForwardedfor != null)
             {
-                if (trustXForwardedFor.Contains(remoteIpAddr))
+                bool isloopback = LoopbackIps.Contains(remoteIpAddr);
+              
+                if (isloopback || trustXForwardedFor?.Contains(remoteIpAddr) == true)
                 {
                     var x_forArr = xForwardedfor.Split(',').Select(m => m.Trim()).Where(m => m.Length > 0).ToArray();
                     for (int i = x_forArr.Length - 1; i >= 0; i--)
                     {
                         var ip = x_forArr[i];
-                        if (trustXForwardedFor.Contains(ip) == false)
+                        if (!LoopbackIps.Contains(ip) && trustXForwardedFor.Contains(ip) == false)
                             return ip;
                     }
                 }
                 else
                 {
+                   
+
                     return remoteIpAddr;
                 }
             }
