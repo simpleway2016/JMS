@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using JMS.ServerCore;
+using Microsoft.Extensions.Configuration;
 using Org.BouncyCastle.Asn1.IsisMtt.Ocsp;
 using System;
 using System.Collections.Generic;
@@ -42,7 +43,9 @@ namespace JMS.HttpProxy.Dtos
     {
         public string Cert { get; set; }
         public string Password { get; set; }
-       
+        public string PrivateKeyPath { get; set; }
+
+
         public SslProtocols SslProtocol { get; set; } = SslProtocols.None;
 
         X509Certificate2 _Certificate;
@@ -54,7 +57,14 @@ namespace JMS.HttpProxy.Dtos
                 {
                     return null;
                 }
-                return _Certificate ??= new System.Security.Cryptography.X509Certificates.X509Certificate2(Cert, Password);
+                if (!string.IsNullOrEmpty(PrivateKeyPath))
+                {
+                    return _Certificate ??= CertificateHelper.LoadCertificate(Cert, PrivateKeyPath);
+                }
+                else
+                {
+                    return _Certificate ??= X509CertificateLoader.LoadPkcs12FromFile(Cert, Password);
+                }
             }
         }
     }

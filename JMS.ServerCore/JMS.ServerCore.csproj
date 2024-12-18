@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFrameworks>netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
+	  <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;net9.0</TargetFrameworks>
 	  <RepositoryUrl>https://github.com/simpleway2016/JMS</RepositoryUrl>
 	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	  <Authors>Jack.T</Authors>
@@ -10,6 +10,10 @@
 	  <Version>3.7.8</Version>
 	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
+	<ItemGroup Condition="'$(TargetFramework)'=='net9.0'">
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
+	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)'=='netcoreapp3.1'">
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.5" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
