@@ -98,16 +98,30 @@ namespace JMS.HttpProxy.Applications.Http
                         #region Range
                         statusCode = 206;
                         var rangeInfo = RangeStr.Replace("bytes=", "").Split('-');
-                        range = Convert.ToInt32(rangeInfo[0]);
-                        if ( string.IsNullOrEmpty( rangeInfo[1]))
+                        if (string.IsNullOrWhiteSpace(rangeInfo[0]))
                         {
+                            if (rangeInfo.Length == 1 || string.IsNullOrWhiteSpace(rangeInfo[1]))
+                            {
+                                client.KeepAlive = false;
+                                return;
+                            }
+                            //Convert.ToInt32(rangeInfo[1])表示读取最后多少个字节
                             rangeEnd = (int)fs.Length - 1;
+                            range = rangeEnd - Convert.ToInt32(rangeInfo[1]) + 1;
+                            
                         }
                         else
                         {
-                            rangeEnd = Convert.ToInt32(rangeInfo[1]);
+                            range = Convert.ToInt32(rangeInfo[0]);
+                            if (string.IsNullOrWhiteSpace(rangeInfo[1]))
+                            {
+                                rangeEnd = (int)fs.Length - 1;
+                            }
+                            else
+                            {
+                                rangeEnd = Convert.ToInt32(rangeInfo[1]);
+                            }
                         }
-
                         outputHeaders["Accept-Ranges"] = "bytes";
                         outputHeaders["Content-Range"] = $"bytes {range}-{rangeEnd}/{fs.Length}";
                         outputHeaders["Content-Length"] = (rangeEnd - range + 1).ToString();
