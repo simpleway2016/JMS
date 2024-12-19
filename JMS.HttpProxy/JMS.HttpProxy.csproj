@@ -22,6 +22,7 @@
 		<ProjectReference Include="..\JMS.Common\JMS.Common.csproj" />
 		<ProjectReference Include="..\JMS.ServerCore\JMS.ServerCore.csproj" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

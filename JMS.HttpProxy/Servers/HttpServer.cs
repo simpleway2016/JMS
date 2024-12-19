@@ -20,6 +20,7 @@ namespace JMS.HttpProxy.Servers
         JMS.ServerCore.MulitTcpListener _tcpServer;
         ILogger<HttpServer> _logger;
 
+
         X509Certificate2 _Certificate;
         public X509Certificate2 Certificate
         {
@@ -45,13 +46,31 @@ namespace JMS.HttpProxy.Servers
             {
                 if (_Config.ToJsonString() != value.ToJsonString())
                 {
+                    var domain = _Config?.SSL?.Acme?.Domain;
+                    var old = _Config;
                     _Config = value;
-                    if (_isAcme)
+                    if (old != null)
                     {
                         var sslCertGenerator = this.ServiceProvider.GetService<SslCertGenerator>();
-                        sslCertGenerator.RemoveRequest(this);
-                        sslCertGenerator.AddRequest(this);
+                        if (_isAcme)
+                        {                         
+                            sslCertGenerator.RemoveRequest(this, domain);
+                            _isAcme = false;
+                        }
+
+                        if (!string.IsNullOrEmpty(Config?.SSL?.Acme?.Domain))
+                        {
+                            _isAcme = true;
+                            sslCertGenerator.AddRequest(this);
+                        }
+
+                        if (!_isAcme)
+                        {
+                            this.Certificate = value?.SSL?.Certificate;
+                        }
                     }
+
+                    
                 }
             }
         }
@@ -75,7 +94,7 @@ namespace JMS.HttpProxy.Servers
             _tcpServer.OnError += _tcpServer_OnError;
             if (Config.SSL != null)
             {
-                if (Config.SSL.Acme != null)
+                if (!string.IsNullOrEmpty(Config?.SSL?.Acme?.Domain))
                 {
                     _isAcme = true;
                     var sslCertGenerator = this.ServiceProvider.GetService<SslCertGenerator>();
@@ -83,7 +102,7 @@ namespace JMS.HttpProxy.Servers
                 }
                 else
                 {
-                    this.Certificate = Config.SSL.Certificate;
+                    this.Certificate = Config?.SSL?.Certificate;
                 }
             }
 
@@ -113,8 +132,9 @@ namespace JMS.HttpProxy.Servers
             if (_isAcme)
             {
                 _isAcme = false;
+                var domain = _Config?.SSL?.Acme?.Domain;
                 var sslCertGenerator = this.ServiceProvider.GetService<SslCertGenerator>();
-                sslCertGenerator.RemoveRequest(this);
+                sslCertGenerator.RemoveRequest(this, domain);
             }
         }
     }

@@ -54,20 +54,20 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             var generator = _Generators.GetOrAdd(httpServer.Config.SSL.Acme.Domain, domain => new DomainSslCertGenerator(this , httpServer.Config.SSL.Acme,_logger));
             generator.Run();
         }
-        public void RemoveRequest(HttpServer httpServer)
+        public void RemoveRequest(HttpServer httpServer,string domain)
         {
             if (_httpServers.TryRemove(httpServer, out _))
             {
                 try
                 {
-                    if (_httpServers.Any(m => m.Key.Config.SSL.Acme.Domain == httpServer.Config.SSL.Acme.Domain) == false)
+                    if (_httpServers.Any(m => m.Key.Config.SSL?.Acme?.Domain == domain) == false)
                     {
-                        if (_Generators.TryRemove(httpServer.Config.SSL.Acme.Domain, out DomainSslCertGenerator domainSslCertGenerator))
+                        if (_Generators.TryRemove(domain, out DomainSslCertGenerator domainSslCertGenerator))
                         {
                             domainSslCertGenerator.Dispose();
                             try
                             {
-                                _logger.LogInformation($"移除Acme域名：{httpServer.Config.SSL.Acme.Domain}");
+                                _logger.LogInformation($"移除Acme域名：{domain}");
                             }
                             catch
                             {
@@ -118,8 +118,15 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
 
             var services = new ServiceCollection();
             services.AddCertificateGenerator();
-            services.AddAlibabaCloudRecordWriter(_acmeConfig.AccessKeyId, _acmeConfig.AccessKeySecret);
-
+            if (_acmeConfig.DomainProvider == DomainProvider.AlibabaCloud)
+            {
+                services.AddAlibabaCloudRecordWriter(_acmeConfig.AccessKeyId, _acmeConfig.AccessKeySecret);
+            }
+            else
+            {
+                _logger.LogInformation($"DomainProvider无效：{_acmeConfig.DomainProvider}");
+                return;
+            }
             using var serviceProvider = services.BuildServiceProvider();
 
             _logger.LogInformation($"开始载入或自动生成ssl证书，域名：{_acmeConfig.Domain}");
@@ -159,7 +166,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                         }
                     }
 
-                    await certificateGenerator.GeneratePfxAsync("jacktan.cn", new CsrInformation
+                    await certificateGenerator.GeneratePfxAsync(_acmeConfig.Domain, new CsrInformation
                     {
                         CountryName = "CA",
                         State = "Ontario",
@@ -173,6 +180,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
 
                     _logger.LogInformation($"域名：{_acmeConfig.Domain} 成功生成证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
                     _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, pwd);
+                    isFirstLoad = false;
                 }
                 catch (Exception ex)
                 {
