@@ -21,6 +21,7 @@ using JMS.HttpProxy.InternalProtocol;
 using JMS.HttpProxy.Applications.Sockets;
 using JMS.HttpProxy.Applications;
 using JMS.HttpProxy.Applications.DirectSocket;
+using JMS.HttpProxy.AutoGenerateSslCert;
 
 namespace JMS
 {
@@ -89,7 +90,7 @@ namespace JMS
             services.AddTransient<BlackList>();
             services.AddSingleton<ProxyServerFactory>();
             services.AddSingleton<InternalConnectionProvider>();
-
+            services.AddSingleton<SslCertGenerator>();
             services.AddSingleton<ConfigWatch>();
             services.AddSingleton<HttpNetClientProvider>();
             services.AddSingleton<SocketNetClientProvider>();

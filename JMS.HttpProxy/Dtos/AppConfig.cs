@@ -18,7 +18,7 @@ namespace JMS.HttpProxy.Dtos
         public bool LogDetails { get; set; }
         public DeviceConfig[] Devices { get; set; }
         public ServerConfig[] Servers { get; set; }
-        public Dictionary<string,string> ContentTypes { get; set; }
+        public Dictionary<string, string> ContentTypes { get; set; }
     }
 
     public class DeviceConfig
@@ -39,12 +39,26 @@ namespace JMS.HttpProxy.Dtos
         public ProxyConfig[] Proxies { get; set; }
     }
 
+    public enum DomainProvider
+    {
+        AlibabaCloud = 1
+    }
+
+    public class AcmeConfig
+    {
+        public string Domain { get; set; }
+        public DomainProvider DomainProvider { get; set; }
+        public string AccessKeyId { get; set; }
+        public string AccessKeySecret { get; set; }
+    }
+
     public class SslConfig
     {
         public string Cert { get; set; }
         public string Password { get; set; }
         public string PrivateKeyPath { get; set; }
 
+        public AcmeConfig Acme { get; set; }
 
         public SslProtocols SslProtocol { get; set; } = SslProtocols.None;
 
@@ -66,6 +80,7 @@ namespace JMS.HttpProxy.Dtos
                     return _Certificate ??= X509CertificateLoader.LoadPkcs12FromFile(Cert, Password);
                 }
             }
+
         }
     }
 
@@ -83,13 +98,13 @@ namespace JMS.HttpProxy.Dtos
         public bool ChangeHostHeader { get; set; }
     }
 
-   
+
 
     public enum ProxyType
     {
         None = 0,
         Http = 1,
-        Socket = 2,       
+        Socket = 2,
         InternalProtocol = 3,
         //直接把数据转发到目标地址
         DirectSocket = 4,
