@@ -4,11 +4,12 @@
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<Version>3.2.2</Version>
-		<JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+		<Version>3.3.0</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Jack.Acme" Version="1.0.0" />
+		<PackageReference Include="Jack.Acme.AlibabaCloud" Version="1.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
@@ -21,6 +22,7 @@
 		<ProjectReference Include="..\JMS.Common\JMS.Common.csproj" />
 		<ProjectReference Include="..\JMS.ServerCore\JMS.ServerCore.csproj" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

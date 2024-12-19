@@ -1,4 +1,5 @@
 ﻿using JMS.HttpProxy.Applications.Http;
+using JMS.HttpProxy.AutoGenerateSslCert;
 using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Way.Lib;
 
 namespace JMS.HttpProxy.Servers
 {
@@ -17,7 +19,62 @@ namespace JMS.HttpProxy.Servers
         HttpRequestReception _requestReception;
         JMS.ServerCore.MulitTcpListener _tcpServer;
         ILogger<HttpServer> _logger;
-        public X509Certificate2 Certificate{ get; private set; }
+
+
+        X509Certificate2 _Certificate;
+        public X509Certificate2 Certificate
+        {
+            get => _Certificate;
+
+            set
+            {
+                if (_Certificate != value)
+                {
+                    var old = _Certificate;
+                    _Certificate = value;
+                    old?.Dispose();
+                }
+            }
+        }
+        bool _isAcme;
+
+        ServerConfig _Config;
+        public override ServerConfig Config
+        {
+            get => _Config;
+            set
+            {
+                if (_Config.ToJsonString() != value.ToJsonString())
+                {
+                    var domain = _Config?.SSL?.Acme?.Domain;
+                    var old = _Config;
+                    _Config = value;
+                    if (old != null)
+                    {
+                        var sslCertGenerator = this.ServiceProvider.GetService<SslCertGenerator>();
+                        if (_isAcme)
+                        {                         
+                            sslCertGenerator.RemoveRequest(this, domain);
+                            _isAcme = false;
+                        }
+
+                        if (!string.IsNullOrEmpty(Config?.SSL?.Acme?.Domain))
+                        {
+                            _isAcme = true;
+                            sslCertGenerator.AddRequest(this);
+                        }
+
+                        if (!_isAcme)
+                        {
+                            this.Certificate = value?.SSL?.Certificate;
+                        }
+                    }
+
+                    
+                }
+            }
+        }
+
         public HttpServer()
         {
 
@@ -28,7 +85,7 @@ namespace JMS.HttpProxy.Servers
             _logger = this.ServiceProvider.GetService<ILogger<HttpServer>>();
             _requestReception = ServiceProvider.GetService<HttpRequestReception>();
             _requestReception.SetServer(this);
-            _tcpServer = new ServerCore.MulitTcpListener(this.Config.Port , null);
+            _tcpServer = new ServerCore.MulitTcpListener(this.Config.Port, null);
         }
 
         public override void Run()
@@ -36,10 +93,21 @@ namespace JMS.HttpProxy.Servers
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
             if (Config.SSL != null)
-                this.Certificate = Config.SSL.Certificate;
+            {
+                if (!string.IsNullOrEmpty(Config?.SSL?.Acme?.Domain))
+                {
+                    _isAcme = true;
+                    var sslCertGenerator = this.ServiceProvider.GetService<SslCertGenerator>();
+                    sslCertGenerator.AddRequest(this);
+                }
+                else
+                {
+                    this.Certificate = Config?.SSL?.Certificate;
+                }
+            }
 
             _logger?.LogInformation($"Listening {(this.Certificate != null ? "https" : "http")}://*:{Config.Port}");
-           
+
             _tcpServer.Run();
         }
 
@@ -59,6 +127,14 @@ namespace JMS.HttpProxy.Servers
             {
                 _tcpServer.Stop();
                 _tcpServer = null;
+            }
+
+            if (_isAcme)
+            {
+                _isAcme = false;
+                var domain = _Config?.SSL?.Acme?.Domain;
+                var sslCertGenerator = this.ServiceProvider.GetService<SslCertGenerator>();
+                sslCertGenerator.RemoveRequest(this, domain);
             }
         }
     }

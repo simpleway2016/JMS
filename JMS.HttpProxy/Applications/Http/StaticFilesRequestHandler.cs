@@ -55,7 +55,7 @@ namespace JMS.HttpProxy.Applications.Http
                 return;
             }
 
-            var lastWriteTime = new FileInfo(filepath).LastWriteTime.ToString("R");
+            var lastWriteTime = new FileInfo(filepath).LastWriteTimeUtc.ToString("R");
             headers.TryGetValue("If-Modified-Since", out string since);
             if (lastWriteTime == since)
             {
@@ -83,7 +83,7 @@ namespace JMS.HttpProxy.Applications.Http
                 {
                     Dictionary<string, string> outputHeaders = new Dictionary<string, string>();
                     outputHeaders["Server"] = "JMS";
-                    outputHeaders["Date"] = DateTime.Now.ToString("R");
+                    outputHeaders["Date"] = DateTime.UtcNow.ToString("R");
                     outputHeaders["Last-Modified"] = lastModifyTime;
                     outputHeaders["Access-Control-Allow-Origin"] = "*";
                     outputHeaders["Content-Type"] = GetContentType(Path.GetExtension(filePath));

@@ -50,7 +50,7 @@ namespace JMS.HttpProxy.Applications.Http
                 {
                     if (_httpServer.Certificate != null)
                     {                        
-                        await client.AsSSLServerAsync(_httpServer.Certificate, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _httpServer.Config.SSL.SslProtocol);
+                        await client.AsSSLServerAsync(_httpServer.Certificate, false,new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _httpServer.Config.SSL.SslProtocol);
 
                     }
 

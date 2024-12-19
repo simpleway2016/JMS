@@ -14,7 +14,7 @@ namespace JMS.HttpProxy.Servers
 
         public abstract void Dispose();
 
-        public ServerConfig Config { get; set; }
+        public virtual ServerConfig Config { get; set; }
         public IServiceProvider ServiceProvider { get; set; }
     }
 }

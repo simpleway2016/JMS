@@ -85,7 +85,7 @@ namespace JMS.Applications
                 {
                     if (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
                     {
-                        await netclient.AsSSLServerAsync(_SSLConfiguration.ServerCertificate, CheckCert, _SSLConfiguration.SslProtocol);
+                        await netclient.AsSSLServerAsync(_SSLConfiguration.ServerCertificate,false, CheckCert, _SSLConfiguration.SslProtocol);
                     }
 
                     while (true)

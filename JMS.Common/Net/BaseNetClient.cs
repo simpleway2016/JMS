@@ -310,10 +310,10 @@ namespace JMS.Common
         /// </summary>
         /// <param name="ssl"></param>
         /// <param name="protocol"></param>
-        public void AsSSLServer(X509Certificate2 ssl , RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
+        public void AsSSLServer(X509Certificate2 ssl, bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
             SslStream sslStream = new SslStream(_innerStream, false, remoteCertificateValidationCallback);
-            sslStream.AuthenticateAsServer(ssl, true, protocol, false);
+            sslStream.AuthenticateAsServer(ssl, clientCertificateRequired, protocol, false);
 
             this.InnerStream = sslStream;
         }
@@ -322,10 +322,10 @@ namespace JMS.Common
         /// </summary>
         /// <param name="ssl"></param>
         /// <param name="protocol"></param>
-        public async Task AsSSLServerAsync(X509Certificate2 ssl, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
+        public async Task AsSSLServerAsync(X509Certificate2 ssl, bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
             SslStream sslStream = new SslStream(_innerStream, false ,remoteCertificateValidationCallback);
-            await sslStream.AuthenticateAsServerAsync(ssl, true, protocol, false);
+            await sslStream.AuthenticateAsServerAsync(ssl, clientCertificateRequired, protocol, false);
 
             this.InnerStream = sslStream;
         }
@@ -338,13 +338,13 @@ namespace JMS.Common
         /// <param name="ssl"></param>
         /// <param name="remoteCertificateValidationCallback"></param>
         /// <param name="protocol"></param>
-        public async Task AsSSLServerWithProtocolAsync(SslApplicationProtocol[] supportAppProtocols, X509Certificate2 ssl, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
+        public async Task AsSSLServerWithProtocolAsync(SslApplicationProtocol[] supportAppProtocols, X509Certificate2 ssl,bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
             SslStream sslStream = new SslStream(_innerStream, false, remoteCertificateValidationCallback);
             await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
             {
                 ServerCertificate = ssl,
-                ClientCertificateRequired = true,
+                ClientCertificateRequired = clientCertificateRequired,
                 RemoteCertificateValidationCallback = remoteCertificateValidationCallback,
                 CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
                 EnabledSslProtocols = protocol,

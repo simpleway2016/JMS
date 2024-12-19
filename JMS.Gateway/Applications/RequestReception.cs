@@ -67,7 +67,7 @@ namespace JMS.Applications
                 {
                     if (_sslConfiguration.ServerCert != null)
                     {
-                        await client.AsSSLServerAsync(_sslConfiguration.ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _sslConfiguration.SslProtocol);
+                        await client.AsSSLServerAsync(_sslConfiguration.ServerCert, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _sslConfiguration.SslProtocol);
 
                     }
 
