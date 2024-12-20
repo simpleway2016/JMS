@@ -67,6 +67,14 @@ namespace JMS.HttpProxy.Applications.Http
                     await Task.Delay(2000);
                 }
             }
+            catch (System.Security.Authentication.AuthenticationException ex)
+            {
+                //ssl握手失败
+                if (HttpProxyProgram.Config.Current.LogDetails)
+                {
+                    _logger?.LogError(ex, "");
+                }
+            }
             catch (SocketException)
             {
 
