@@ -103,6 +103,7 @@ namespace JMS.HttpProxy.Applications.Http
                             if (rangeInfo.Length == 1 || string.IsNullOrWhiteSpace(rangeInfo[1]))
                             {
                                 client.KeepAlive = false;
+                                client.OutputHttpCode(416, "Range Not Satisfiable");
                                 return;
                             }
                             //Convert.ToInt32(rangeInfo[1])表示读取最后多少个字节
