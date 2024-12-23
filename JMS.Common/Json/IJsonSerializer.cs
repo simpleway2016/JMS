@@ -23,23 +23,27 @@ namespace JMS.Common.Json
 
     class DefaultJsonSerializer : IJsonSerializer
     {
-        JsonSerializerOptions _SerializerOptions = new JsonSerializerOptions()
-        {
-            IncludeFields = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-            NumberHandling = JsonNumberHandling.AllowReadingFromString
-        };
+        JsonSerializerOptions _SerializerOptions ;
 
         public JsonSerializerOptions SerializerOptions => _SerializerOptions;
 
         public DefaultJsonSerializer()
         {
+            _SerializerOptions = newOptions();
             _SerializerOptions.Converters.Add(new StringJsonConverter());
             _SerializerOptions.Converters.Add(new TypeJsonConverter());
 
             //因为SourceGenerationContext不支持InvokeResult<>泛型，所以，不能让SourceGenerationContext来解析类型
             // _SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
         }
+
+        JsonSerializerOptions newOptions() => new JsonSerializerOptions()
+        {
+            IncludeFields = true,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString,
+            PropertyNameCaseInsensitive = true,//不区分大小写,为了兼容之前Newtonsoft.Json的代码
+        };
 
         public T Deserialize<T>(string jsonString)
         {
@@ -64,13 +68,10 @@ namespace JMS.Common.Json
                 return null;
             if (writeIndented)
             {
-                JsonSerializerOptions options = new JsonSerializerOptions()
-                {
-                    IncludeFields = true,
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-                    WriteIndented = true
-                };
-                foreach( var convertor in _SerializerOptions.Converters)
+                JsonSerializerOptions options = newOptions();
+                options.WriteIndented = writeIndented;
+
+                foreach ( var convertor in _SerializerOptions.Converters)
                 {
                     options.Converters.Add(convertor);
                 }

@@ -1438,10 +1438,18 @@ Content-Length: 0
         [TestMethod]
         public void JsonTest()
         {
+            InvokeCommand cmdObj = new InvokeCommand() { 
+                Method = "aa",
+            };
+
+            var json = cmdObj.ToJsonString();
+            Assert.AreEqual(json, "{\"Type\":0,\"Header\":{},\"Method\":\"aa\"}");
+
+
             var invokeCommand = @"{""Type"":""2""}".FromJson<InvokeCommand>();
             Assert.AreEqual(invokeCommand.Type, 2);
 
-            var invokeResult = @"{""Data"":""2"" , ""Success"":true}".FromJson<InvokeResult<int>>();
+            var invokeResult = @"{""data"":""2"" , ""Success"":true}".FromJson<InvokeResult<int>>();
             Assert.AreEqual(invokeResult.Data, 2);
 
             var invokeResult2 = @"{""Data"":""2020-01-01"" }".FromJson<InvokeResult<DateTime>>();
