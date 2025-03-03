@@ -129,7 +129,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             }
             using var serviceProvider = services.BuildServiceProvider();
 
-            _logger.LogInformation($"开始载入或自动生成ssl证书，域名：{_acmeConfig.Domain}");
+            _logger.LogInformation($"开始载入或自动生成ssl证书，域名：{_acmeConfig.Domain} 提前{_acmeConfig.PreDays}天续期");
             X509Certificate2 cert;
             var certificateGenerator = serviceProvider.GetRequiredService<ICertificateGenerator>();
             bool isFirstLoad = true;
