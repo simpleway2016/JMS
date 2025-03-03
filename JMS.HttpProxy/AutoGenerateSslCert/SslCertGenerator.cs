@@ -141,7 +141,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                     {                       
                         if (DateTime.TryParse(File.ReadAllText(path_expire, Encoding.UTF8), out DateTime expireTime))
                         {
-                            if (expireTime.ToUniversalTime() > DateTime.UtcNow.AddDays(5))
+                            if (expireTime.ToUniversalTime() > DateTime.UtcNow.AddDays(_acmeConfig.PreDays))
                             {
                                 if (isFirstLoad)
                                 {
