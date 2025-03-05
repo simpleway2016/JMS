@@ -166,6 +166,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                         }
                     }
 
+                    _logger.LogInformation($"开始尝试生成域名：{_acmeConfig.Domain}的正式...");
                     await certificateGenerator.GeneratePfxAsync(_acmeConfig.Domain, new CsrInformation
                     {
                         CountryName = "CA",
