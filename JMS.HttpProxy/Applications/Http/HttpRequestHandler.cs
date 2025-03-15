@@ -111,7 +111,7 @@ namespace JMS.HttpProxy.Applications.Http
 
             if (headers.TryGetValue("X-Forwarded-For", out string xff))
             {
-                headers["X-Forwarded-For"] = $"{xff}, {ip}";
+                headers["X-Forwarded-For"] = $"{xff}, {remote_ip}";
             }
             else
             {
