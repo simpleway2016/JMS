@@ -68,7 +68,7 @@ namespace JMS.HttpProxy.Applications.Http
         const int FileBufSize = 20480;
         async Task outputFile(NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers)
         {
-            var bs = ArrayPool<byte>.Shared.Rent(FileBufSize);
+            byte[] bs = null;
             try
             {
                 int statusCode = 200;
@@ -79,6 +79,7 @@ namespace JMS.HttpProxy.Applications.Http
                 }
                 using (var fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite))
                 {
+                    bs = ArrayPool<byte>.Shared.Rent((int)Math.Min(fs.Length, FileBufSize));
                     Dictionary<string, string> outputHeaders = new Dictionary<string, string>();
                     outputHeaders["Server"] = "JMS";
                     outputHeaders["Date"] = DateTime.UtcNow.ToString("R");
@@ -229,7 +230,11 @@ namespace JMS.HttpProxy.Applications.Http
             }
             finally
             {
-                ArrayPool<byte>.Shared.Return(bs);
+                if(bs != null)
+                {
+                    ArrayPool<byte>.Shared.Return(bs);
+                }
+               
             }
 
         }
