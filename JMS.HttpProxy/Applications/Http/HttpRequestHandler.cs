@@ -65,8 +65,8 @@ namespace JMS.HttpProxy.Applications.Http
 
             headers.TryGetValue("X-Forwarded-For", out string x_for);
 
-            var ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            ip = RequestTimeLimter.GetRemoteIpAddress(HttpProxyProgram.Config.Current.ProxyIps , ip , x_for);
+            var remote_ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
+            var ip = RequestTimeLimter.GetRemoteIpAddress(HttpProxyProgram.Config.Current.ProxyIps , remote_ip, x_for);
             if (_requestTimeLimter.OnRequesting(ip) == false)
             {
                 if (HttpProxyProgram.Config.Current.LogDetails)
@@ -111,12 +111,11 @@ namespace JMS.HttpProxy.Applications.Http
 
             if (headers.TryGetValue("X-Forwarded-For", out string xff))
             {
-                if (xff.Contains(ip) == false)
-                    xff += $", {ip}";
+                headers["X-Forwarded-For"] = $"{xff}, {ip}";
             }
             else
             {
-                headers["X-Forwarded-For"] = ip;
+                headers["X-Forwarded-For"] = remote_ip;
             }
 
             
