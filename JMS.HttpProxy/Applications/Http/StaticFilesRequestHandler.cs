@@ -177,7 +177,7 @@ namespace JMS.HttpProxy.Applications.Http
                         var totalRead = fs.Length;
                         if (acceptGzip)
                         {
-                            var stream = new WriteCallbackStream();
+                            using var stream = new WriteCallbackStream();
                             stream.Callback = (data, offset, count) =>
                             {
                                 client.InnerStream.Write(Encoding.UTF8.GetBytes($"{count.ToString("x")}\r\n"));
