@@ -49,6 +49,13 @@ namespace JMS.HttpProxy.Applications.Http
 
             if (File.Exists(filepath) == false)
             {
+                if(requestPath == "/__GC_Collect_WaitForPendingFinalizers")
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    client.OutputHttp200("释放完毕");
+                    return;
+                }
                 client.OutputHttpNotFund();
                 return;
             }
