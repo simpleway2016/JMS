@@ -19,6 +19,15 @@ namespace JMS.Common.Net
 
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            _input?.Dispose();
+            _input = null;
+            _output?.Dispose();
+            _output = null;
+            base.Dispose(disposing);
+        }
+
         public override bool CanRead => true;
 
         public override bool CanSeek => false;

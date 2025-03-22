@@ -30,15 +30,23 @@ namespace JMS
             if (addr.UseSsl)
             {
                 SslStream sslStream = new SslStream(this.InnerStream, false, CertClient.RemoteCertificateValidationCallback ?? NOCHECK, null);
-                if (addr.Certificate != null)
+                try
                 {
-                    X509CertificateCollection certs = new X509CertificateCollection();
-                    certs.Add(addr.Certificate);
-                    sslStream.AuthenticateAsClient(addr.CertDomain??"", certs, addr.SslProtocol ?? System.Security.Authentication.SslProtocols.None, false);
+                    if (addr.Certificate != null)
+                    {
+                        X509CertificateCollection certs = new X509CertificateCollection();
+                        certs.Add(addr.Certificate);
+                        sslStream.AuthenticateAsClient(addr.CertDomain ?? "", certs, addr.SslProtocol ?? System.Security.Authentication.SslProtocols.None, false);
+                    }
+                    else
+                    {
+                        sslStream.AuthenticateAsClient(addr.CertDomain ?? "");
+                    }
                 }
-                else
+                catch (Exception)
                 {
-                    sslStream.AuthenticateAsClient(addr.CertDomain ?? "");
+                    sslStream.Dispose();
+                    throw;
                 }
                 this.InnerStream = sslStream;
             }
@@ -51,15 +59,23 @@ namespace JMS
             if (addr.UseSsl)
             {
                 SslStream sslStream = new SslStream(this.InnerStream, false, CertClient.RemoteCertificateValidationCallback ?? NOCHECK, null);
-                if (addr.Certificate != null)
+                try
                 {
-                    X509CertificateCollection certs = new X509CertificateCollection();
-                    certs.Add(addr.Certificate);
-                    await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "", certs, addr.SslProtocol ?? System.Security.Authentication.SslProtocols.None, false);
+                    if (addr.Certificate != null)
+                    {
+                        X509CertificateCollection certs = new X509CertificateCollection();
+                        certs.Add(addr.Certificate);
+                        await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "", certs, addr.SslProtocol ?? System.Security.Authentication.SslProtocols.None, false);
+                    }
+                    else
+                    {
+                        await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "");
+                    }
                 }
-                else
+                catch (Exception)
                 {
-                    await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "");
+                    sslStream.Dispose();
+                    throw;
                 }
                 this.InnerStream = sslStream;
             }
