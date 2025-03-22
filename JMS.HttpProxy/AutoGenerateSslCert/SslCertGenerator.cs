@@ -129,7 +129,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             }
             using var serviceProvider = services.BuildServiceProvider();
 
-            _logger.LogInformation($"开始载入或自动生成ssl证书，域名：{_acmeConfig.Domain}");
+            _logger.LogInformation($"开始载入或自动生成ssl证书，域名：{_acmeConfig.Domain} 提前{_acmeConfig.PreDays}天续期");
             X509Certificate2 cert;
             var certificateGenerator = serviceProvider.GetRequiredService<ICertificateGenerator>();
             bool isFirstLoad = true;
@@ -141,7 +141,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                     {                       
                         if (DateTime.TryParse(File.ReadAllText(path_expire, Encoding.UTF8), out DateTime expireTime))
                         {
-                            if (expireTime.ToUniversalTime() > DateTime.UtcNow.AddDays(5))
+                            if (expireTime.ToUniversalTime() > DateTime.UtcNow.AddDays(_acmeConfig.PreDays))
                             {
                                 if (isFirstLoad)
                                 {
@@ -166,6 +166,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                         }
                     }
 
+                    _logger.LogInformation($"开始尝试生成域名：{_acmeConfig.Domain}的正式...");
                     await certificateGenerator.GeneratePfxAsync(_acmeConfig.Domain, new CsrInformation
                     {
                         CountryName = "CA",

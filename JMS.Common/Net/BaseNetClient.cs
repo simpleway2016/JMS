@@ -212,21 +212,29 @@ namespace JMS.Common
         /// <param name="certificateValidationCallback"></param>
         public void AsSSLClient(string targetHost, RemoteCertificateValidationCallback certificateValidationCallback = null)
         {
-            SslStream client;
+            SslStream stream;
             if (certificateValidationCallback != null || ServicePointManager.ServerCertificateValidationCallback != null)
             {
                 if (certificateValidationCallback == null)
                     certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
 
-                client = new SslStream(_innerStream, false, certificateValidationCallback);
+                stream = new SslStream(_innerStream, false, certificateValidationCallback);
             }
             else
             {
-                client = new SslStream(_innerStream);
+                stream = new SslStream(_innerStream);
             }
-            client.AuthenticateAsClient(targetHost);
+            try
+            {
+                stream.AuthenticateAsClient(targetHost);
+            }
+            catch (Exception)
+            {
+                stream.Dispose();
+                throw;
+            }
 
-            this.InnerStream = client;
+            this.InnerStream = stream;
         }
 
         /// <summary>
@@ -236,21 +244,29 @@ namespace JMS.Common
         /// <param name="certificateValidationCallback"></param>
         public async Task AsSSLClientAsync(string targetHost, RemoteCertificateValidationCallback certificateValidationCallback = null)
         {
-            SslStream client;
+            SslStream stream;
             if (certificateValidationCallback != null || ServicePointManager.ServerCertificateValidationCallback != null)
             {
                 if (certificateValidationCallback == null)
                     certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
 
-                client = new SslStream(_innerStream, false, certificateValidationCallback);
+                stream = new SslStream(_innerStream, false, certificateValidationCallback);
             }
             else
             {
-                client = new SslStream(_innerStream);
+                stream = new SslStream(_innerStream);
             }
-            await client.AuthenticateAsClientAsync(targetHost);
+            try
+            {
+                await stream.AuthenticateAsClientAsync(targetHost);
+            }
+            catch (Exception)
+            {
+                stream.Dispose();
+                throw;
+            }
 
-            this.InnerStream = client;
+            this.InnerStream = stream;
         }
 
         /// <summary>
@@ -262,21 +278,29 @@ namespace JMS.Common
         /// <param name="certificateValidationCallback"></param>
         public void AsSSLClient(string targetHost, X509CertificateCollection clientCertificates, SslProtocols enabledSslProtocols, RemoteCertificateValidationCallback certificateValidationCallback = null)
         {
-            SslStream client;
+            SslStream stream;
             if (certificateValidationCallback != null || ServicePointManager.ServerCertificateValidationCallback != null)
             {
                 if (certificateValidationCallback == null)
                     certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
 
-                client = new SslStream(_innerStream, false, certificateValidationCallback);
+                stream = new SslStream(_innerStream, false, certificateValidationCallback);
             }
             else
             {
-                client = new SslStream(_innerStream);
+                stream = new SslStream(_innerStream);
             }
-            client.AuthenticateAsClient(targetHost, clientCertificates,enabledSslProtocols,false);
+            try
+            {
+                stream.AuthenticateAsClient(targetHost, clientCertificates, enabledSslProtocols, false);
+            }
+            catch (Exception)
+            {
+                stream.Dispose();
+                throw;
+            }
 
-            this.InnerStream = client;
+            this.InnerStream = stream;
         }
 
         /// <summary>
@@ -288,21 +312,29 @@ namespace JMS.Common
         /// <param name="certificateValidationCallback"></param>
         public async Task AsSSLClientAsync(string targetHost, X509CertificateCollection clientCertificates, SslProtocols enabledSslProtocols, RemoteCertificateValidationCallback certificateValidationCallback = null)
         {
-            SslStream client;
+            SslStream stream;
             if (certificateValidationCallback != null || ServicePointManager.ServerCertificateValidationCallback != null)
             {
                 if (certificateValidationCallback == null)
                     certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
 
-                client = new SslStream(_innerStream, false, certificateValidationCallback);
+                stream = new SslStream(_innerStream, false, certificateValidationCallback);
             }
             else
             {
-                client = new SslStream(_innerStream);
+                stream = new SslStream(_innerStream);
             }
-            await client.AuthenticateAsClientAsync(targetHost, clientCertificates, enabledSslProtocols, false);
+            try
+            {
+                await stream.AuthenticateAsClientAsync(targetHost, clientCertificates, enabledSslProtocols, false);
+            }
+            catch (Exception)
+            {
+                stream.Dispose();
+                throw;
+            }
 
-            this.InnerStream = client;
+            this.InnerStream = stream;
         }
 
         /// <summary>
@@ -313,7 +345,15 @@ namespace JMS.Common
         public void AsSSLServer(X509Certificate2 ssl, bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
             SslStream sslStream = new SslStream(_innerStream, false, remoteCertificateValidationCallback);
-            sslStream.AuthenticateAsServer(ssl, clientCertificateRequired, protocol, false);
+            try
+            {
+                sslStream.AuthenticateAsServer(ssl, clientCertificateRequired, protocol, false);
+            }
+            catch (Exception)
+            {
+                sslStream.Dispose();
+                throw;
+            }
 
             this.InnerStream = sslStream;
         }
@@ -325,7 +365,15 @@ namespace JMS.Common
         public async Task AsSSLServerAsync(X509Certificate2 ssl, bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
             SslStream sslStream = new SslStream(_innerStream, false ,remoteCertificateValidationCallback);
-            await sslStream.AuthenticateAsServerAsync(ssl, clientCertificateRequired, protocol, false);
+            try
+            {
+                await sslStream.AuthenticateAsServerAsync(ssl, clientCertificateRequired, protocol, false);
+            }
+            catch (Exception)
+            {
+                sslStream.Dispose();
+                throw;
+            }
 
             this.InnerStream = sslStream;
         }
@@ -341,17 +389,25 @@ namespace JMS.Common
         public async Task AsSSLServerWithProtocolAsync(SslApplicationProtocol[] supportAppProtocols, X509Certificate2 ssl,bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
         {
             SslStream sslStream = new SslStream(_innerStream, false, remoteCertificateValidationCallback);
-            await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
+            try
             {
-                ServerCertificate = ssl,
-                ClientCertificateRequired = clientCertificateRequired,
-                RemoteCertificateValidationCallback = remoteCertificateValidationCallback,
-                CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
-                EnabledSslProtocols = protocol,
-                ApplicationProtocols = new List<SslApplicationProtocol>(supportAppProtocols)
-            }, CancellationToken.None);
+                await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
+                {
+                    ServerCertificate = ssl,
+                    ClientCertificateRequired = clientCertificateRequired,
+                    RemoteCertificateValidationCallback = remoteCertificateValidationCallback,
+                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                    EnabledSslProtocols = protocol,
+                    ApplicationProtocols = new List<SslApplicationProtocol>(supportAppProtocols)
+                }, CancellationToken.None);
 
-            _SslApplicationProtocol = sslStream.NegotiatedApplicationProtocol;
+                _SslApplicationProtocol = sslStream.NegotiatedApplicationProtocol;
+            }
+            catch (Exception)
+            {
+                sslStream.Dispose();
+                throw;
+            }
             this.InnerStream = sslStream;
         }
 

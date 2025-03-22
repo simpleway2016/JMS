@@ -625,10 +625,14 @@ namespace JMS
         {
             try
             {
-                var count = await this.Socket.ReceiveAsync(CheckBs, SocketFlags.Peek);
-                if (count == 0)
+                //设置超时
+                using (var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(NetClientPool.RELEASESECONDS)))
                 {
-                    this.Dispose();
+                    var count = await this.Socket.ReceiveAsync(CheckBs, SocketFlags.Peek, cancellation.Token);
+                    if (count == 0)
+                    {
+                        this.Dispose();
+                    }
                 }
             }
             catch (Exception ex)

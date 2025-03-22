@@ -49,6 +49,7 @@ namespace JMS.HttpProxy.Dtos
         public DomainProvider DomainProvider { get; set; }
         public string AccessKeyId { get; set; }
         public string AccessKeySecret { get; set; }
+        public int PreDays { get; set; } = 5;
     }
 
     public class SslConfig

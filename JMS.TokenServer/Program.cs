@@ -136,7 +136,7 @@ namespace JMS.TokenServer
                 client.ReadTimeout = 0;
                 if (ServerCert != null)
                 {
-                    await client.AsSSLServerAsync(ServerCert, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), SslProtocol);
+                    await client.AsSSLServerAsync(ServerCert, false,new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), SslProtocol);
                 }
                
                 var flag = await client.ReadIntAsync();
