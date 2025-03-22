@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 using System.Web;
 using UnitTest.ServiceHosts;
 using Way.Lib;
+using Way.Lib.Collections;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UnitTest
@@ -1763,16 +1764,14 @@ Content-Length: 0
         [TestMethod]
         public void TestIgnoreCaseHeader()
         {
-            var c = "{ Headers:{'a':'a23'} }".FromJson<ClassA>();
+            var c = "{ \"Headers\":{\"a\":\"a23\",\"b\":\"caw\"} }".FromJson<ClassA>();
             Assert.AreEqual(c.Headers["A"], "a23");
             Assert.AreEqual(c.Headers["B"], "caw");
         }
 
         class ClassA
         {
-            public Dictionary<string, string> Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                { "b","caw"}
-            };
+            public IgnoreCaseDictionary Headers;
         }
 
         public static async Task<string> ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
