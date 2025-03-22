@@ -1789,7 +1789,7 @@ Content-Length: 0
         [TestMethod]
         public void TestIgnoreCaseHeader()
         {
-            var c = "{ \"Headers\":{\"a\":\"a23\"} }".FromJson<ClassA>();
+            var c = "{ \"Headers\":{\"a\":\"a23\",\"b\":\"caw\"} }".FromJson<ClassA>();
             Assert.AreEqual(c.Headers["A"], "a23");
             Assert.AreEqual( c.Headers["B"] , "caw");
         }
