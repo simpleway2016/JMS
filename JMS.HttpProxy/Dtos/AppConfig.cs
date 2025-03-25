@@ -94,6 +94,10 @@ namespace JMS.HttpProxy.Dtos
         /// </summary>
         public string RootPath { get; set; }
         /// <summary>
+        /// 默认页面
+        /// </summary>
+        public string DefaultPage { get; set; }
+        /// <summary>
         /// 是否自动修改请求的Host头
         /// </summary>
         public bool ChangeHostHeader { get; set; }
