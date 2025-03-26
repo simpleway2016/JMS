@@ -24,7 +24,7 @@ namespace JMS.HttpProxy
                     try
                     {
                         using var p = Process.GetCurrentProcess();
-                        _memory = p.WorkingSet64;
+                        _memory = p.WorkingSet64/(1024*1024);
                     }
                     catch  
                     {
