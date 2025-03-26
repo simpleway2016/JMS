@@ -69,6 +69,7 @@ namespace JMS.HttpProxy.Applications.Http
             }
             catch (System.Security.Authentication.AuthenticationException ex)
             {
+                WriteLogger.Write("ssl err");
                 //ssl握手失败
                 if (HttpProxyProgram.Config.Current.LogDetails)
                 {
