@@ -14,7 +14,9 @@ namespace JMS.HttpProxy
         static long _memory;
         static WriteLogger()
         {
-            _fs = new FileStream("aaa.csv" , FileMode.Create , FileAccess.Write , FileShare.Read);
+            if (File.Exists("aaa.csv"))
+                File.Delete("aaa.csv");
+            _fs = new FileStream("aaa.csv" , FileMode.CreateNew , FileAccess.Write , FileShare.Read);
             new Thread(() =>
             {
                 while (true)
