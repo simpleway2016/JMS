@@ -62,7 +62,9 @@ namespace JMS.HttpProxy.Applications.Http
             var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var requestPathLine = await client.PipeReader.ReadHeaders(headers);
-            WriteLogger.Write(requestPathLine);
+
+            headers.TryGetValue("Host", out string host);
+            WriteLogger.Write($"{requestPathLine},{host}");
             headers.TryGetValue("X-Forwarded-For", out string x_for);
 
             var remote_ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
@@ -80,7 +82,7 @@ namespace JMS.HttpProxy.Applications.Http
                 return;
             }
 
-            if (headers.TryGetValue("Host", out string host) == false)
+            if (host == null)
                 return;
 
             var config = _httpServer.Config.Proxies.FirstOrDefault(m => string.Equals(m.Host, host, StringComparison.OrdinalIgnoreCase));
