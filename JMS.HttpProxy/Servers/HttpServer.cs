@@ -4,6 +4,7 @@ using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -105,10 +106,44 @@ namespace JMS.HttpProxy.Servers
                     this.Certificate = Config?.SSL?.Certificate;
                 }
             }
-
+            if (this.Config.RootPath != null)
+            {
+                _logger?.LogInformation($"开始读文件");
+                readDir(this.Config.RootPath);
+            }
             _logger?.LogInformation($"Listening {(this.Certificate != null ? "https" : "http")}://*:{Config.Port}");
 
+           
             _tcpServer.Run();
+        }
+
+        void readDir(string folder)
+        {
+            var dir = Directory.GetDirectories(folder);
+            foreach (var sub in dir)
+            {
+                readDir(sub);
+            }
+
+            var files = Directory.GetFiles(folder);
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(10240);
+            foreach (var file in files)
+            {
+                _logger?.LogInformation(file);
+                for (int i = 0; i < 5; i++)
+                {
+                    using (var fs = new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        while (true)
+                        {
+                            int readed = fs.Read(buffer, 0, buffer.Length);
+                            if (readed == 0)
+                                break;
+                        }
+                    }
+                }
+            }
+            ArrayPool<byte>.Shared.Return(buffer);
         }
 
         private void _tcpServer_OnError(object sender, Exception err)
