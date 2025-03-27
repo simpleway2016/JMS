@@ -42,9 +42,10 @@ namespace JMS.HttpProxy.Applications.Http
             return true;
         }
 
-
+        public static int ConnectionCount = 0;
         public async void Interview(Socket socket)
         {
+            Interlocked.Increment(ref ConnectionCount);
             try
             {
                 using (var client = new NetClient(socket))
@@ -95,7 +96,10 @@ namespace JMS.HttpProxy.Applications.Http
             {
                 _logger?.LogError(ex, "");
             }
-
+            finally
+            {
+                Interlocked.Decrement(ref ConnectionCount);
+            }
 
         }
     }

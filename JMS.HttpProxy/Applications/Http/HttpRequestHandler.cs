@@ -64,7 +64,7 @@ namespace JMS.HttpProxy.Applications.Http
             var requestPathLine = await client.PipeReader.ReadHeaders(headers);
 
             headers.TryGetValue("Host", out string host);
-            WriteLogger.Write($"{requestPathLine},{host}");
+            WriteLogger.Write($"{requestPathLine},{host},连接数={HttpRequestReception.ConnectionCount}");
             headers.TryGetValue("X-Forwarded-For", out string x_for);
 
             var remote_ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
