@@ -124,7 +124,7 @@ namespace JMS.HttpProxy.Servers
            
             _tcpServer.Run();
         }
-
+        const int FileBufSize = 20480;
         void readDir(string folder)
         {
             var dir = Directory.GetDirectories(folder);
@@ -134,7 +134,7 @@ namespace JMS.HttpProxy.Servers
             }
 
             var files = Directory.GetFiles(folder);
-            byte[] buffer = ArrayPool<byte>.Shared.Rent(10240);
+           
             foreach (var file in files)
             {
                 _logger?.LogInformation(file);
@@ -142,16 +142,18 @@ namespace JMS.HttpProxy.Servers
                 {
                     using (var fs = new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite))
                     {
+                        var buffer = ArrayPool<byte>.Shared.Rent((int)Math.Min(fs.Length, FileBufSize));
                         while (true)
                         {
                             int readed = fs.Read(buffer, 0, buffer.Length);
                             if (readed == 0)
                                 break;
                         }
+                        ArrayPool<byte>.Shared.Return(buffer);
                     }
                 }
             }
-            ArrayPool<byte>.Shared.Return(buffer);
+           
         }
 
         private void _tcpServer_OnError(object sender, Exception err)
