@@ -281,9 +281,13 @@ namespace JMS.HttpProxy.Applications.Http
                     proxyClient.Dispose();
                 }
             }
-            catch
+            catch(Exception ex)
             {
-                proxyClient.Dispose();
+                if (HttpProxyProgram.Config.Current.LogDetails)
+                {
+                    _logger.LogError(ex, null);
+                }
+                    proxyClient.Dispose();
             }
         }
 
