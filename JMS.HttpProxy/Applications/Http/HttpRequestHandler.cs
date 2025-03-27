@@ -166,7 +166,10 @@ namespace JMS.HttpProxy.Applications.Http
 
             var netClientProvider = _netClientProviderFactory.GetNetClientProvider(config.Target);
             var proxyClient = await netClientProvider.GetClientAsync(config.Target);
-
+            if (HttpProxyProgram.Config.Current.LogDetails)
+            {
+                _logger.LogInformation($"连接上{config.Target}");
+            }
             try
             {
                 proxyClient.InnerStream.Write(data, 0, data.Length);
