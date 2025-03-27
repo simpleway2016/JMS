@@ -132,6 +132,7 @@ namespace JMS.HttpProxy.Applications.Http
             }
             foreach (var pair in headers)
             {
+                //如果ChangeHostHeader为true，则修改Host头部和Origin头部
                 if (config.ChangeHostHeader && target_uri != null && pair.Key == "Host")
                 {
                     buffer.Append($"{pair.Key}: {target_uri.Authority}\r\n");
