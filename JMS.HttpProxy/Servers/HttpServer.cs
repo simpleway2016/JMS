@@ -138,8 +138,7 @@ namespace JMS.HttpProxy.Servers
             foreach (var file in files)
             {
                 _logger?.LogInformation(file);
-                for (int i = 0; i < 5; i++)
-                {
+                Parallel.For(0, 5, i => {
                     using (var fs = new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite))
                     {
                         while (true)
@@ -149,7 +148,7 @@ namespace JMS.HttpProxy.Servers
                                 break;
                         }
                     }
-                }
+                });
             }
             ArrayPool<byte>.Shared.Return(buffer);
         }
