@@ -67,6 +67,17 @@ namespace JMS.HttpProxy
             _datas.Enqueue(new infoitem { content = content, mem = _memory });
         }
     }
+    class ReadFileInfo
+    {
+        public string Path;
+        public bool IsNotModified;
+        public bool IsAcceptGzip;
+        public bool IsRange;
+        public override string ToString()
+        {
+            return $"{Path},IsNotModified={IsNotModified},IsGzip={IsAcceptGzip},IsRange={IsRange}";
+        }
+    }
     class infoitem
     {
         public string content;

@@ -25,8 +25,8 @@ namespace JMS.HttpProxy.Applications.Http
       
 
         public async Task Handle(NetClient client, Dictionary<string, string> headers,string requestPathLine,ProxyConfig proxyConfig)
-        {            
-
+        {
+           
             var requestPathLineArr = requestPathLine.Split(' ');
             var httpMethod = requestPathLineArr[0];
             var requestPath = requestPathLineArr[1];
@@ -57,21 +57,24 @@ namespace JMS.HttpProxy.Applications.Http
                 client.OutputHttpNotFund();
                 return;
             }
-
+            ReadFileInfo readFileInfo = new ReadFileInfo();
+            readFileInfo.Path = requestPath;
             var lastWriteTime = new FileInfo(filepath).LastWriteTimeUtc.ToString("R");
             headers.TryGetValue("If-Modified-Since", out string since);
             if (lastWriteTime == since)
             {
+                readFileInfo.IsNotModified = true;
                 client.OutputNotModified();
             }
             else
             {
-                await outputFile(client, filepath, lastWriteTime, headers);
+                await outputFile(readFileInfo , client, filepath, lastWriteTime, headers);
             }
+            WriteLogger.Write(readFileInfo.ToString());
         }
 
         const int FileBufSize = 20480;
-        async Task outputFile(NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers)
+        async Task outputFile(ReadFileInfo readFileInfo, NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers)
         {
             byte[] bs = null;
             try
@@ -80,6 +83,7 @@ namespace JMS.HttpProxy.Applications.Http
                 bool acceptGzip = false;
                 if (headers.TryGetValue("Accept-Encoding", out string acceptEncoding) && acceptEncoding.Contains("gzip"))
                 {
+                    readFileInfo.IsAcceptGzip = true;
                     acceptGzip = true;
                 }
                 using (var fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite))
@@ -130,7 +134,7 @@ namespace JMS.HttpProxy.Applications.Http
                         outputHeaders["Accept-Ranges"] = "bytes";
                         outputHeaders["Content-Range"] = $"bytes {range}-{rangeEnd}/{fs.Length}";
                         outputHeaders["Content-Length"] = (rangeEnd - range + 1).ToString();
-
+                        readFileInfo.IsRange = true;
                         client.WriteLine($"HTTP/1.1 {statusCode} OK");
                         foreach (var pair in outputHeaders)
                         {
