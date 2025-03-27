@@ -4,7 +4,6 @@ using JMS.HttpProxy.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -106,54 +105,10 @@ namespace JMS.HttpProxy.Servers
                     this.Certificate = Config?.SSL?.Certificate;
                 }
             }
-            try
-            {
-                if (this.Config.Proxies.Any(m => m.RootPath != null))
-                {
-                    _logger?.LogInformation($"开始读文件");
-                    readDir(this.Config.Proxies.Where(m => m.RootPath != null).Select(m => m.RootPath).First());
-                }
-            }
-            catch (Exception ex)
-            {
 
-                _logger?.LogError(ex, null);
-            }
             _logger?.LogInformation($"Listening {(this.Certificate != null ? "https" : "http")}://*:{Config.Port}");
 
-           
             _tcpServer.Run();
-        }
-        const int FileBufSize = 20480;
-        async Task readDir(string folder)
-        {
-            var dir = Directory.GetDirectories(folder);
-            foreach (var sub in dir)
-            {
-                await readDir(sub);
-            }
-
-            var files = Directory.GetFiles(folder);
-           
-            foreach (var file in files)
-            {
-                _logger?.LogInformation(file);
-                for (int i = 0; i < 5; i++)
-                {
-                    using (var fs = new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite))
-                    {
-                        var buffer = ArrayPool<byte>.Shared.Rent((int)Math.Min(fs.Length, FileBufSize));
-                        while (true)
-                        {
-                            int readed = await fs.ReadAsync(buffer, 0, buffer.Length);
-                            if (readed == 0)
-                                break;
-                        }
-                        ArrayPool<byte>.Shared.Return(buffer);
-                    }
-                }
-            }
-           
         }
 
         private void _tcpServer_OnError(object sender, Exception err)
