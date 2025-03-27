@@ -125,12 +125,12 @@ namespace JMS.HttpProxy.Servers
             _tcpServer.Run();
         }
         const int FileBufSize = 20480;
-        void readDir(string folder)
+        async Task readDir(string folder)
         {
             var dir = Directory.GetDirectories(folder);
             foreach (var sub in dir)
             {
-                readDir(sub);
+                await readDir(sub);
             }
 
             var files = Directory.GetFiles(folder);
@@ -145,7 +145,7 @@ namespace JMS.HttpProxy.Servers
                         var buffer = ArrayPool<byte>.Shared.Rent((int)Math.Min(fs.Length, FileBufSize));
                         while (true)
                         {
-                            int readed = fs.Read(buffer, 0, buffer.Length);
+                            int readed = await fs.ReadAsync(buffer, 0, buffer.Length);
                             if (readed == 0)
                                 break;
                         }
