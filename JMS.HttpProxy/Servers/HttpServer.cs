@@ -106,10 +106,10 @@ namespace JMS.HttpProxy.Servers
                     this.Certificate = Config?.SSL?.Certificate;
                 }
             }
-            if (this.Config.RootPath != null)
+            if (this.Config.Proxies.Any(m=>m.RootPath != null))
             {
                 _logger?.LogInformation($"开始读文件");
-                readDir(this.Config.RootPath);
+                readDir(this.Config.Proxies.Where(m => m.RootPath != null).Select(m=>m.RootPath).First());
             }
             _logger?.LogInformation($"Listening {(this.Certificate != null ? "https" : "http")}://*:{Config.Port}");
 
