@@ -20,6 +20,15 @@ namespace JMS
 
         public static event EventHandler<NetClient> CreatedNewClient;
 
+        public static int GetPoolCount()
+        {
+            int count = 0; 
+            foreach( var pair in TargetSeatGroups )
+            {
+                count += pair.Value.Connects.Count;
+            }
+            return count;
+        }
 
         [Obsolete]
         public static void SetConnectionPoolSize(int size)
