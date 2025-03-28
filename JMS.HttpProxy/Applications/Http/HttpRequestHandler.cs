@@ -20,6 +20,7 @@ using Microsoft.Extensions.Configuration;
 using JMS.HttpProxy.Servers;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Asn1.X509;
+using System.Net.Security;
 
 namespace JMS.HttpProxy.Applications.Http
 {
@@ -64,7 +65,7 @@ namespace JMS.HttpProxy.Applications.Http
             var requestPathLine = await client.PipeReader.ReadHeaders(headers);
 
             headers.TryGetValue("Host", out string host);
-            WriteLogger.Write($"{requestPathLine},{host},连接数={HttpRequestReception.ConnectionCount}");
+            WriteLogger.Write($"{requestPathLine},{host},Ssl={(client.InnerStream is SslStream)}");
             headers.TryGetValue("X-Forwarded-For", out string x_for);
 
             var remote_ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
