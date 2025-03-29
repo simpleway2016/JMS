@@ -9,6 +9,7 @@ using JMS.Common;
 using JMS.Common.IO;
 using System.IO.Compression;
 using JMS.HttpProxy.Dtos;
+using Way.Lib;
 
 namespace JMS.HttpProxy.Applications.Http
 {
@@ -39,25 +40,22 @@ namespace JMS.HttpProxy.Applications.Http
             }
 
             int flag;
-            string filepath;
             if ((flag = requestPath.IndexOf("?")) > 0)
             {
-                filepath = Path.Combine(proxyConfig.RootPath, requestPath.Substring(1, flag - 1));
+                requestPath = requestPath.Substring(0, flag);
             }
-            else
+            if(requestPath == "/")
             {
-                filepath = Path.Combine(proxyConfig.RootPath, requestPath.Substring(1));
+                if (string.IsNullOrEmpty(proxyConfig.DefaultPage))
+                    proxyConfig.DefaultPage = "index.html";
+
+                requestPath = $"/{proxyConfig.DefaultPage}";
             }
+
+            string filepath = Path.Combine(proxyConfig.RootPath, requestPath.Substring(1));
 
             if (File.Exists(filepath) == false)
             {
-                if(requestPath == "/__GC_Collect_WaitForPendingFinalizers")
-                {
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    client.OutputHttp200("释放完毕");
-                    return;
-                }
                 client.OutputHttpNotFund();
                 return;
             }

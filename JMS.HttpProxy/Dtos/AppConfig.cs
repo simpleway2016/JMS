@@ -31,10 +31,6 @@ namespace JMS.HttpProxy.Dtos
         public ProxyType Type { get; set; }
         public SslConfig SSL { get; set; }
         public int Port { get; set; }
-        /// <summary>
-        /// 静态文件所在目录
-        /// </summary>
-        public string RootPath { get; set; }
         public ProxyConfig[] Proxies { get; set; }
     }
 
@@ -92,6 +88,10 @@ namespace JMS.HttpProxy.Dtos
         /// 静态文件目录
         /// </summary>
         public string RootPath { get; set; }
+        /// <summary>
+        /// 默认页面
+        /// </summary>
+        public string DefaultPage { get; set; }
         /// <summary>
         /// 是否自动修改请求的Host头
         /// </summary>

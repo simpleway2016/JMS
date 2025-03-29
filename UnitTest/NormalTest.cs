@@ -32,7 +32,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using UnitTest.ServiceHosts;
-
+using Way.Lib;
+using Way.Lib.Collections;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UnitTest
@@ -1796,7 +1797,7 @@ Content-Length: 0
 
         class ClassA
         {
-            public IgnoreCaseDictionary Headers ;
+            public IgnoreCaseDictionary Headers;
         }
 
         public static async Task<string> ReadHeaders(string preRequestString, NetClient client, IDictionary<string, string> headers)
