@@ -105,7 +105,9 @@ namespace JMS.HttpProxy.Dtos
     {
         None = 0,
         Http = 1,
-        Socket = 2,
+        //把数据转发到InternalProtocol客户端
+        InternalProtocolSocket = 2,
+        //接受HttpProxyDevice的注册
         InternalProtocol = 3,
         //直接把数据转发到目标地址
         DirectSocket = 4,

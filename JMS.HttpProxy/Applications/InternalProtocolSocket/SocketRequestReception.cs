@@ -12,11 +12,11 @@ using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JMS.HttpProxy.Applications.Sockets
+namespace JMS.HttpProxy.Applications.InternalProtocolSocket
 {
     public class SocketRequestReception
     {
-        SocketServer _socketServer;
+        InternalProtocolSocketServer _socketServer;
         private readonly ILogger<SocketRequestReception> _logger;
         private readonly BlackList _blackList;
         private readonly SocketNetClientProvider _socketNetClientProvider;
@@ -33,7 +33,7 @@ namespace JMS.HttpProxy.Applications.Sockets
             _blackList.SetKeepMinutes(120);//设置黑名单时间为120分钟
         }
 
-        public void SetServer(SocketServer server)
+        public void SetServer(InternalProtocolSocketServer server)
         {
             _socketServer = server;
         }

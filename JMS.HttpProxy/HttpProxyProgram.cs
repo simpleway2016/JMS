@@ -18,7 +18,7 @@ using JMS.HttpProxy.Servers;
 using JMS.HttpProxy.Applications.Http;
 using JMS.HttpProxy.Applications.InternalProtocol;
 using JMS.HttpProxy.InternalProtocol;
-using JMS.HttpProxy.Applications.Sockets;
+using JMS.HttpProxy.Applications.InternalProtocolSocket;
 using JMS.HttpProxy.Applications;
 using JMS.HttpProxy.Applications.DirectSocket;
 using JMS.HttpProxy.AutoGenerateSslCert;
