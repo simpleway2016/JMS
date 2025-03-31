@@ -33,6 +33,7 @@ namespace JMS.HttpProxy.Applications.Http
 
             if (httpMethod == "OPTIONS")
             {
+                headers.Clear();
                 client.OutputHttp204(headers);
                 return;
             }
@@ -54,6 +55,7 @@ namespace JMS.HttpProxy.Applications.Http
 
             if (File.Exists(filepath) == false)
             {
+                headers.Clear();
                 client.OutputHttpNotFund();
                 return;
             }
@@ -68,6 +70,7 @@ namespace JMS.HttpProxy.Applications.Http
             {
                 await outputFile(client, filepath, lastWriteTime, headers);
             }
+            headers.Clear();
         }
 
         const int FileBufSize = 20480;
@@ -106,6 +109,7 @@ namespace JMS.HttpProxy.Applications.Http
                         {
                             if (rangeInfo.Length == 1 || string.IsNullOrWhiteSpace(rangeInfo[1]))
                             {
+                                outputHeaders.Clear();
                                 client.KeepAlive = false;
                                 client.OutputHttpCode(416, "Range Not Satisfiable");
                                 return;
@@ -137,6 +141,7 @@ namespace JMS.HttpProxy.Applications.Http
                             client.WriteLine($"{pair.Key}: {pair.Value}");
                         }
                         client.WriteLine($"\r\n");
+                        outputHeaders.Clear();
 
                         fs.Position = range;
                         int totalRead = rangeEnd - range + 1;
@@ -175,6 +180,8 @@ namespace JMS.HttpProxy.Applications.Http
                         {
                             client.WriteLine($"{pair.Key}: {pair.Value}");
                         }
+                        outputHeaders.Clear();
+
                         client.InnerStream.WriteByte(13);
                         client.InnerStream.WriteByte(10);
 

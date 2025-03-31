@@ -74,6 +74,7 @@ namespace JMS.HttpProxy.Applications.Http
                     _logger.LogInformation($"{ip}访问次数太多，被拒绝访问.");
                 }
 
+                headers.Clear();
                 //输出401
                 client.KeepAlive = false;
                 client.OutputHttpCode(401, "Forbidden");
@@ -81,11 +82,18 @@ namespace JMS.HttpProxy.Applications.Http
             }
 
             if (headers.TryGetValue("Host", out string host) == false)
+            {
+                headers.Clear();
                 return;
+            }
+               
 
             var config = _httpServer.Config.Proxies.FirstOrDefault(m => string.Equals(m.Host, host, StringComparison.OrdinalIgnoreCase));
             if (config == null)
+            {
+                headers.Clear();
                 return;
+            }
 
             if (headers.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {
@@ -235,6 +243,7 @@ namespace JMS.HttpProxy.Applications.Http
                 buffer.Append("\r\n");
 
                 data = Encoding.UTF8.GetBytes(buffer.ToString());
+                buffer.Clear();
                 //发送头部给浏览器
                 client.Write(data);
 
@@ -269,6 +278,7 @@ namespace JMS.HttpProxy.Applications.Http
                         }
                     }
                 }
+                headers.Clear();
 
                 if (client.KeepAlive)
                 {
