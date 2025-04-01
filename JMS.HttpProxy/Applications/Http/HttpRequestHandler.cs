@@ -170,6 +170,7 @@ namespace JMS.HttpProxy.Applications.Http
             }
 
             var data = Encoding.UTF8.GetBytes(buffer.ToString());
+            buffer.Clear();
 
             var netClientProvider = _netClientProviderFactory.GetNetClientProvider(config.Target);
             var proxyClient = await netClientProvider.GetClientAsync(config.Target);
@@ -231,7 +232,7 @@ namespace JMS.HttpProxy.Applications.Http
                     int.TryParse(headers["Content-Length"], out inputContentLength);
                 }
 
-                buffer.Clear();
+                
                 buffer.Append(requestPathLine);
                 buffer.Append("\r\n");
 
