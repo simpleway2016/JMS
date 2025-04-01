@@ -34,7 +34,7 @@ namespace JMS.HttpProxy.Servers
             server.Config = serverConfig;
             server.ServiceProvider = _serviceProvider;
             server.Init();
-            new Thread(() => server.Run()).Start();
+            _ = server.RunAsync();
 
             _proxyServers[serverConfig.Port] = server;
         }

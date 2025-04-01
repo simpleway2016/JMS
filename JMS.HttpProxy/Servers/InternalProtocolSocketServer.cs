@@ -34,14 +34,14 @@ namespace JMS.HttpProxy.Servers
             _logger = this.ServiceProvider.GetService<ILogger<InternalProtocolSocketServer>>();
         }
 
-        public override void Run()
+        public override async Task RunAsync()
         {
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 
             _logger?.LogInformation($"Listening socket server:{Config.Port} {this.Config.Proxies.FirstOrDefault().ToJsonString()}");
 
-            _tcpServer.Run();
+            await _tcpServer.RunAsync();
         }
 
         private void _tcpServer_OnError(object sender, Exception err)

@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace JMS.ServerCore
 {
@@ -35,7 +36,7 @@ namespace JMS.ServerCore
             _tcpListenerV6 = null;
         }
 
-        public void Run()
+        public async Task RunAsync()
         {
             if (_stopped == false)
                 return;
@@ -46,12 +47,12 @@ namespace JMS.ServerCore
 
             _logger?.LogInformation($"Service is starting");
 
-            new Thread(() => { runListener(_tcpListenerV6); }).Start();
+            _ = runListenerAsync(_tcpListenerV6);
 
-            this.runListener(_tcpListener);
+            await this.runListenerAsync(_tcpListener);
         }
 
-        void runListener(TcpListener listener)
+        async Task runListenerAsync(TcpListener listener)
         {
             try
             {
@@ -74,7 +75,7 @@ namespace JMS.ServerCore
                 }
                 while (true)
                 {
-                    var socket = listener.AcceptSocket();
+                    var socket = await listener.AcceptSocketAsync();
                     if (this.Connected != null)
                     {
                         this.Connected(this, socket);
