@@ -112,7 +112,6 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
 
         async void generate()
         {
-            var pwd = "123456";
             var path = $"${_acmeConfig.Domain}.pfx";
             var path_expire = $"${_acmeConfig.Domain}.pfx2";
 
@@ -147,7 +146,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                                 {
                                     try
                                     {
-                                        cert = X509CertificateLoader.LoadPkcs12FromFile(path, pwd);
+                                        cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
                                     }
                                     catch (Exception ex)
                                     {
@@ -157,7 +156,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                                     }
                                     //有效期大于5天
                                     _logger.LogInformation($"域名：{_acmeConfig.Domain} 使用已有证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
-                                    _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert,path,pwd);
+                                    _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert,path, _acmeConfig.Password);
                                     isFirstLoad = false;
                                 }
                                 await Task.Delay(60000);
@@ -174,13 +173,13 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                         Locality = "Toronto",
                         Organization = "Certes",
                         OrganizationUnit = "Dev",
-                    }, path, pwd);
+                    }, path, _acmeConfig.Password);
                    
-                    cert = X509CertificateLoader.LoadPkcs12FromFile(path, pwd);
+                    cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
                     File.WriteAllText(path_expire, cert.NotAfter.ToUniversalTime().ToString("R"), Encoding.UTF8);
 
                     _logger.LogInformation($"域名：{_acmeConfig.Domain} 成功生成证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
-                    _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, pwd);
+                    _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, _acmeConfig.Password);
                     isFirstLoad = false;
                 }
                 catch (Exception ex)

@@ -43,6 +43,7 @@ namespace JMS.HttpProxy.Dtos
     public class AcmeConfig
     {
         public string Domain { get; set; }
+        public string Password { get; set; } = "123456";
         public DomainProvider DomainProvider { get; set; }
         public string AccessKeyId { get; set; }
         public string AccessKeySecret { get; set; }
