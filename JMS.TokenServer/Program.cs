@@ -44,7 +44,7 @@ namespace JMS.TokenServer
             return s;
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             ThreadPool.SetMinThreads(Environment.ProcessorCount * 10, Environment.ProcessorCount * 10);
 
@@ -113,7 +113,7 @@ namespace JMS.TokenServer
             listener.Connected += Listener_Connected;
             Logger?.LogInformation($"配置文件：{appSettingPath}");
             Logger?.LogInformation($"Token server started,port：{port}");
-            listener.Run();
+            await listener.RunAsync();
         }
 
         private static void Listener_Connected(object sender, Socket socket)

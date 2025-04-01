@@ -65,7 +65,7 @@ namespace JMS
             }
         }
 
-        public void Run()
+        public async Task RunAsync()
         {
            
             _requestReception = ServiceProvider.GetService<IRequestReception>();
@@ -84,7 +84,7 @@ namespace JMS
             //启动GatewayRefereeClient，申请成为主网关
             ServiceProvider.GetService<ClusterGatewayConnector>().BeMaster();
 
-            _tcpServer.Run();
+            await _tcpServer.RunAsync();
         }
 
         private void _tcpServer_OnError(object sender, Exception e)

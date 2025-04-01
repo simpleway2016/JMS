@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
 
 namespace JMS
 {
@@ -53,7 +54,7 @@ namespace JMS
             }
         }
 
-        public void Run()
+        public async Task RunAsync()
         {
             _requestReception = ServiceProvider.GetService<IRequestReception>();
             _tcpServer = new JMS.ServerCore.MulitTcpListener(_webApiEnvironment.Port, null);
@@ -66,7 +67,7 @@ namespace JMS
                 _Logger?.LogInformation("Use ssl,certificate hash:{0}", _webApiEnvironment.ServerCert.GetCertHashString());
             }
 
-            _tcpServer.Run();
+            await _tcpServer.RunAsync();
         }
 
         private void _tcpServer_OnError(object sender, Exception e)
