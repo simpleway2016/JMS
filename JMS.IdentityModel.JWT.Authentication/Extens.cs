@@ -33,7 +33,7 @@ namespace Microsoft.Extensions.DependencyInjection
             if (AuthenticationHandler.ServerUrl == null)
             {
                 AuthenticationHandler.ServerUrl = identityServerUrl;
-                new Thread(AuthenticationHandler.GetPublicKey).Start();
+                AuthenticationHandler.GetPublicKeyAsync();
             }
             else
             {
@@ -66,7 +66,7 @@ namespace Microsoft.Extensions.DependencyInjection
             if (AuthenticationHandler.ServerUrl == null)
             {
                 AuthenticationHandler.ServerUrl = identityServerUrl;
-                new Thread(AuthenticationHandler.GetPublicKey).Start();
+                AuthenticationHandler.GetPublicKeyAsync();
             }
             else
             {

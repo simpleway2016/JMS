@@ -381,12 +381,41 @@ namespace JMS
         {
             return this.InnerStream.ReadByte() == 1;
         }
+
+        public async Task<bool> ReadBooleanAsync()
+        {
+            var data = ArrayPool<byte>.Shared.Rent(1);
+            try
+            {
+                await this.ReadDataAsync(data, 0, 1);
+                return data[0] == 1;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(data);
+            }
+        }
+
         public long ReadLong()
         {
             var data = ArrayPool<byte>.Shared.Rent(8);
             try
             {
                 this.ReadData(data, 0, 8);
+                return BitConverter.ToInt64(data);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(data);
+            }
+        }
+
+        public async Task<long> ReadLongAsync()
+        {
+            var data = ArrayPool<byte>.Shared.Rent(8);
+            try
+            {
+                await this.ReadDataAsync(data, 0, 8);
                 return BitConverter.ToInt64(data);
             }
             finally

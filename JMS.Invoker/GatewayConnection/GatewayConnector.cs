@@ -32,7 +32,7 @@ namespace JMS.GatewayConnection
             this._gatewayAddress = gatewayAddress;
             if (supportRemoteConnection)
             {
-                keepConnect();
+                keepConnectAsync();
             }
         }
 
@@ -55,7 +55,7 @@ namespace JMS.GatewayConnection
             }
         }
 
-        async void keepConnect()
+        async void keepConnectAsync()
         {
             try
             {
@@ -175,7 +175,7 @@ namespace JMS.GatewayConnection
                         _allServices.Clear();
                     }
                     await Task.Delay(2000);
-                    new Thread( keepConnect).Start();
+                    keepConnectAsync();
                 }
             }
         }

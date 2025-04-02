@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Way.Lib;
 
 namespace JMS.IdentityModel.JWT.Authentication
@@ -47,7 +48,7 @@ namespace JMS.IdentityModel.JWT.Authentication
 
         }
 
-        internal static void GetPublicKey()
+        internal static async void GetPublicKeyAsync()
         {
             while(true)
             {
@@ -58,12 +59,12 @@ namespace JMS.IdentityModel.JWT.Authentication
                   
                     rsaSecurityKey = IdentityModelHelper.GetSecurityKey(ServerUrl);
 
-                    Thread.Sleep(RefreshPublicKeySeconds*1000);
+                    await Task.Delay(RefreshPublicKeySeconds*1000);
                 }
                 catch (Exception ex)
                 {
                     _logger?.LogError(ex, "");
-                    Thread.Sleep(1000);
+                    await Task.Delay(1000);
                     continue;
                 }
             }

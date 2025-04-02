@@ -9,6 +9,7 @@ using Org.BouncyCastle.Crypto.Engines;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace JMS
 {
@@ -82,10 +83,12 @@ namespace JMS
         public void StartListen()
         {
             if(_dict.Keys.Count > 0)
-                new Thread(connect).Start();
+            {
+                connectAsync();
+            }               
         }
 
-        void connect()
+        async void connectAsync()
         {
             while (true)
             {
@@ -93,7 +96,7 @@ namespace JMS
                 {
                     using (var client = new ProxyClient(_proxy))
                     {
-                        client.Connect(_gatewayAddress);
+                        await client.ConnectAsync(_gatewayAddress);
                         client.WriteServiceData(new GatewayCommand { 
                             Type = (int)CommandType.ListenFileChange,
                             Content = _dict.Keys.ToJsonString()
@@ -102,20 +105,20 @@ namespace JMS
                         client.ReadTimeout = 60000;
                         while (true)
                         {
-                            var ret = client.ReadServiceObject<InvokeResult<string>>();
+                            var ret = await client.ReadServiceObjectAsync<InvokeResult<string>>();
                             if(ret.Data != null)
                             {
                                 string filepath = ret.Data;
                                 _logger?.LogInformation("文件映射系统收到新的文件:{0}",filepath);
-                                int len = client.ReadInt();
+                                int len = await client.ReadIntAsync();
                                 var data = new byte[len];
-                                client.ReadData(data,0,len);
+                                await client.ReadDataAsync(data,0,len);
 
                                 try
                                 {
                                     var item = _dict[filepath];
                                     string localpath = item.LocalPath;
-                                    File.WriteAllBytes(localpath, data);
+                                    await File.WriteAllBytesAsync(localpath, data);
                                     if (item.Callback != null)
                                         item.Callback(filepath, localpath);
                                 }
@@ -134,7 +137,7 @@ namespace JMS
                 {
                     _logger?.LogError(ex, "文件监听异常");
                 }
-                Thread.Sleep(1000);
+                await  Task.Delay(1000);
             }
         }
     }
