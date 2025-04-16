@@ -28,10 +28,10 @@ namespace JMS.ServerCore
         {
             while (true)
             {
-                await Task.Delay(60000);
+                await Task.Delay(1000);
                 foreach (var pair in _ipRecords)
                 {
-                    if ((DateTime.Now - pair.Value.StartTime).TotalMinutes > 1)
+                    if ((DateTime.Now - pair.Value.StartTime).TotalSeconds >= 2)
                     {
                         _ipRecords.TryRemove(pair.Key, out _);
                     }
