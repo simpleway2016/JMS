@@ -98,6 +98,7 @@ namespace JMS.HttpProxy.Dtos
         /// 是否自动修改请求的Host头
         /// </summary>
         public bool ChangeHostHeader { get; set; }
+        public string AccessControlAllowOrigin { get; set; }
     }
 
 

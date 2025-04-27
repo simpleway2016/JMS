@@ -68,13 +68,13 @@ namespace JMS.HttpProxy.Applications.Http
             }
             else
             {
-                await outputFile(client, filepath, lastWriteTime, headers);
+                await outputFile(client, filepath, lastWriteTime, headers,proxyConfig);
             }
             headers.Clear();
         }
 
         const int FileBufSize = 20480;
-        async Task outputFile(NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers)
+        async Task outputFile(NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers, ProxyConfig proxyConfig)
         {
             byte[] bs = null;
             try
@@ -92,7 +92,7 @@ namespace JMS.HttpProxy.Applications.Http
                     outputHeaders["Server"] = "JMS";
                     outputHeaders["Date"] = DateTime.UtcNow.ToString("R");
                     outputHeaders["Last-Modified"] = lastModifyTime;
-                    outputHeaders["Access-Control-Allow-Origin"] = "*";
+                    outputHeaders["Access-Control-Allow-Origin"] = proxyConfig.AccessControlAllowOrigin??"*";
                     outputHeaders["Content-Type"] = GetContentType(Path.GetExtension(filePath));
                     if (client.KeepAlive)
                     {
