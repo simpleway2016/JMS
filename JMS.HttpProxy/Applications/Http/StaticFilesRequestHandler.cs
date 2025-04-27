@@ -100,7 +100,7 @@ namespace JMS.HttpProxy.Applications.Http
                     }
 
                     int range = -1, rangeEnd = 0;
-                    if (headers.TryGetValue("Range", out string RangeStr))
+                    if (false && headers.TryGetValue("Range", out string RangeStr))
                     {
                         #region Range
                         statusCode = 206;
