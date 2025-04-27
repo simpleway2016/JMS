@@ -129,6 +129,8 @@ namespace JMS.HttpProxy.Applications.Http
                             else
                             {
                                 rangeEnd = Convert.ToInt32(rangeInfo[1]);
+                                if(rangeEnd >= fs.Length)
+                                    rangeEnd = (int)fs.Length - 1;
                             }
                         }
                         outputHeaders["Accept-Ranges"] = "bytes";
