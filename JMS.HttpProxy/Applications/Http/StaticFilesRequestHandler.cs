@@ -100,7 +100,7 @@ namespace JMS.HttpProxy.Applications.Http
                     }
 
                     int range = -1, rangeEnd = 0;
-                    if (false && headers.TryGetValue("Range", out string RangeStr))
+                    if (headers.TryGetValue("Range", out string RangeStr))
                     {
                         #region Range
                         statusCode = 206;
@@ -142,8 +142,10 @@ namespace JMS.HttpProxy.Applications.Http
                         {
                             client.WriteLine($"{pair.Key}: {pair.Value}");
                         }
-                        client.WriteLine($"\r\n");
                         outputHeaders.Clear();
+
+                        client.InnerStream.WriteByte(13);
+                        client.InnerStream.WriteByte(10);
 
                         fs.Seek(range , SeekOrigin.Begin);
                         int totalRead = rangeEnd - range + 1;
