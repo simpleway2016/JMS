@@ -145,7 +145,7 @@ namespace JMS.HttpProxy.Applications.Http
                         client.WriteLine($"\r\n");
                         outputHeaders.Clear();
 
-                        fs.Position = range;
+                        fs.Seek(range , SeekOrigin.Begin);
                         int totalRead = rangeEnd - range + 1;
                         while (totalRead > 0)
                         {
