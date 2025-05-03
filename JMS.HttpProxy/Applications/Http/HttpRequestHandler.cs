@@ -84,7 +84,7 @@ namespace JMS.HttpProxy.Applications.Http
                 return;
             }
 
-            if (headers.TryGetValue("Host", out string host) == false)
+            if (headers.TryGetValue("Host", out host) == false)
             {
                 headers.Clear();
                 return;

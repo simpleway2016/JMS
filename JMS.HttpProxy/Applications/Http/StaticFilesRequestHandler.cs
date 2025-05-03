@@ -70,14 +70,14 @@ namespace JMS.HttpProxy.Applications.Http
             }
             else
             {
-                await outputFile(readFileInfo , client, filepath, lastWriteTime, headers);
+                await outputFile(readFileInfo , client, filepath, lastWriteTime, headers,proxyConfig);
             }
             WriteLogger.Write(readFileInfo.ToString());
             headers.Clear();
         }
 
         const int FileBufSize = 20480;
-        async Task outputFile(ReadFileInfo readFileInfo, NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers)
+        async Task outputFile(ReadFileInfo readFileInfo, NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers,ProxyConfig proxyConfig)
         {
             byte[] bs = null;
             try
