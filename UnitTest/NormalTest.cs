@@ -116,15 +116,11 @@ namespace UnitTest
 
         public void StartGateway()
         {
-            Task.Run(() =>
-            {
-
-                var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway.json" });
-                var gateway = gatewayBuilder.Build();
-                var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
-                gatewayEnvironment.Port = _gateWayPort;
-                gateway.Run();
-            });
+            var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway.json" });
+            var gateway = gatewayBuilder.Build();
+            var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
+            gatewayEnvironment.Port = _gateWayPort;
+            _ = gateway.RunAsync();
         }
 
         public WebApiHost StartJmsWebApi()
@@ -133,24 +129,17 @@ namespace UnitTest
             var webapi = webapiBuilder.Build();
             var webapiEnvironment = webapi.ServiceProvider.GetService<IWebApiHostEnvironment>();
             webapiEnvironment.Port = _jmsWebapiPort;
-            Task.Run(() =>
-            {
-
-                webapi.Run();
-            });
+           _ = webapi.RunAsync();
             return webapi;
         }
 
         public void StartGatewayWithCert()
         {
-            Task.Run(() =>
-            {
-                var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway-cert.json" });
-                var gateway = gatewayBuilder.Build();
-                var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
-                gatewayEnvironment.Port = _gateWayPortCert;
-                gateway.Run();
-            });
+            var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway-cert.json" });
+            var gateway = gatewayBuilder.Build();
+            var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
+            gatewayEnvironment.Port = _gateWayPortCert;
+            _=gateway.RunAsync();
         }
 
         public Gateway StartGateway_Cluster1()
@@ -159,11 +148,7 @@ namespace UnitTest
             var gateway = gatewayBuilder.Build();
             var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
             gatewayEnvironment.Port = _clusterGateWayPort1;
-            Task.Run(() =>
-            {
-
-                gateway.Run();
-            });
+            _=gateway.RunAsync();
             return gateway;
         }
 
@@ -173,11 +158,7 @@ namespace UnitTest
             var gateway = gatewayBuilder.Build();
             var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
             gatewayEnvironment.Port = _clusterGateWayPort2;
-            Task.Run(() =>
-            {
-
-                gateway.Run();
-            });
+            _ = gateway.RunAsync();
             return gateway;
         }
 

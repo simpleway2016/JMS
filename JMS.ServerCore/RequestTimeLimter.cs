@@ -18,20 +18,20 @@ namespace JMS.ServerCore
         public RequestTimeLimter(IConfiguration configuration)
         {
             _limitSetting = configuration.GetSection("RequestTime").GetNewest<LimitSetting>();
-            new Thread(clearNotUseIp).Start();
+            _ = clearNotUseIp();
         }
 
         /// <summary>
         /// 定期清理不用的ip
         /// </summary>
-        void clearNotUseIp()
+        async Task clearNotUseIp()
         {
             while (true)
             {
-                Thread.Sleep(60000);
+                await Task.Delay(1000);
                 foreach (var pair in _ipRecords)
                 {
-                    if ((DateTime.Now - pair.Value.StartTime).TotalMinutes > 1)
+                    if ((DateTime.Now - pair.Value.StartTime).TotalSeconds >= 2)
                     {
                         _ipRecords.TryRemove(pair.Key, out _);
                     }

@@ -32,14 +32,14 @@ namespace JMS.HttpProxy.Servers
             _logger = this.ServiceProvider.GetService<ILogger<InternalProtocolServer>>();
         }
 
-        public override void Run()
+        public override async Task RunAsync()
         {
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 
             _logger?.LogInformation($"Listening internal protocol prot:{Config.Port}");
 
-            _tcpServer.Run();
+            await _tcpServer.RunAsync();
         }
 
         private void _tcpServer_OnError(object sender, Exception err)

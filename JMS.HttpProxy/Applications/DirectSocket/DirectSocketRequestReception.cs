@@ -43,7 +43,7 @@ namespace JMS.HttpProxy.Applications.DirectSocket
 
                 await proxyClient.ConnectAsync(new NetAddress(arr[0] , port));
 
-                _logger.LogDebug($"连接{((IPEndPoint)proxyClient.Socket.RemoteEndPoint).Address}, {((IPEndPoint)proxyClient.Socket.RemoteEndPoint).AddressFamily}");
+                //_logger.LogDebug($"连接{((IPEndPoint)proxyClient.Socket.RemoteEndPoint).Address}, {((IPEndPoint)proxyClient.Socket.RemoteEndPoint).AddressFamily}");
                 socket.ReceiveTimeout = 0;
                 proxyClient.ReadTimeout = 0;
 

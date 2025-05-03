@@ -31,7 +31,7 @@ namespace JMS.TransactionReporters
                 if (Directory.Exists(SaveFolder) == false)
                     Directory.CreateDirectory(SaveFolder);
 
-                new Thread(retryExecTrancations).Start();
+                retryExecTrancationsAsync();
             }
             catch (System.PlatformNotSupportedException)
             {
@@ -42,7 +42,7 @@ namespace JMS.TransactionReporters
         /// <summary>
         /// 重新执行事务
         /// </summary>
-        void retryExecTrancations()
+        async void retryExecTrancationsAsync()
         {
             while (true)
             {
@@ -61,7 +61,7 @@ namespace JMS.TransactionReporters
                 {
 
                 }
-                Thread.Sleep(10000);
+                await Task.Delay(10000);
             }
         }
 

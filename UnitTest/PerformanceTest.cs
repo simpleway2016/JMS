@@ -35,14 +35,11 @@ namespace UnitTest
         bool _userInfoServiceReady = false;
         public void StartGateway()
         {
-            Task.Run(() =>
-            {
-                var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway.json" });
-                var gateway = gatewayBuilder.Build();
-                var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
-                gatewayEnvironment.Port = _gateWayPort;
-                gateway.Run();
-            });
+            var gatewayBuilder = GatewayBuilder.Create(new string[] { "-s:appsettings-gateway.json" });
+            var gateway = gatewayBuilder.Build();
+            var gatewayEnvironment = gateway.ServiceProvider.GetService<IGatewayEnvironment>();
+            gatewayEnvironment.Port = _gateWayPort;
+           _ = gateway.RunAsync();
         }
 
         void WaitGatewayReady()

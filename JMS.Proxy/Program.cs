@@ -10,7 +10,7 @@ namespace JMS.Proxy
     public class Program
     {
         static Socks5Server _socks5Server;
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             ThreadPool.SetMinThreads(Environment.ProcessorCount * 10, Environment.ProcessorCount * 10);
 
@@ -53,7 +53,7 @@ namespace JMS.Proxy
 
             _socks5Server = serviceProvider.GetService<Socks5Server>();
             ConfigurationChangeCallback(configuration);
-            _socks5Server.Run(port);
+            await _socks5Server.RunAsync(port);
         }
 
         static IDisposable CallbackRegistration;

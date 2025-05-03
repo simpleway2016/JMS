@@ -10,7 +10,7 @@ namespace JMS.HttpProxy.Servers
     public abstract class ProxyServer: IDisposable
     {
         public abstract void Init();
-        public abstract void Run();
+        public abstract Task RunAsync();
 
         public abstract void Dispose();
 

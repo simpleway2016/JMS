@@ -1,5 +1,5 @@
 ﻿using JMS.HttpProxy.Applications.Http;
-using JMS.HttpProxy.Applications.Sockets;
+using JMS.HttpProxy.Applications.InternalProtocolSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;

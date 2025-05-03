@@ -15,10 +15,10 @@ namespace JMS.Applications
         public TransactionStatusManager()
         {
             _dataContext = new Jack.Storage.MemoryList.StorageContext<TransactionStatusDataItem>("TransactionStatus", "Tran");
-            new Thread(checkForDelete).Start();
+            checkForDeleteAsync();
         }
 
-        void checkForDelete()
+        async void checkForDeleteAsync()
         {
             while (true)
             {
@@ -30,7 +30,7 @@ namespace JMS.Applications
                         _dataContext.Remove(item);
                     }
                 }
-                Thread.Sleep(600000);
+                await Task.Delay(600000);
             }
         }
 

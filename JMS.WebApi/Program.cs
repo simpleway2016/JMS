@@ -17,12 +17,13 @@ using JMS.Applications.CommandHandles;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
 using JMS.Applications.HttpMiddlewares;
+using System.Threading.Tasks;
 
 namespace JMS
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             if(args.Length > 1&& args[0].EndsWith(".pfx") )
             {
@@ -34,7 +35,7 @@ namespace JMS
             System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
             ThreadPool.SetMinThreads(Environment.ProcessorCount * 10, Environment.ProcessorCount * 10);
 
-            WebApiHostBuilder.Create(args).Build().Run();
+            await WebApiHostBuilder.Create(args).Build().RunAsync();
         }
 
     }

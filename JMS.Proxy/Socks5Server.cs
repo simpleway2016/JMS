@@ -24,13 +24,13 @@ namespace JMS.Proxy
             this.ServiceProvider = serviceProvider;
             _logger = logger;
         }
-        public void Run(int port)
+        public async Task RunAsync(int port)
         {
             _requestHandler = ServiceProvider.GetService<RequestHandler>();
             var _tcpListener = new JMS.ServerCore.MulitTcpListener(port,null);
             _tcpListener.Connected += _tcpListener_Connected;
              _logger?.LogInformation("Proxy started, port:{0}", port);
-            _tcpListener.Run();
+            await _tcpListener.RunAsync();
 
         }
 

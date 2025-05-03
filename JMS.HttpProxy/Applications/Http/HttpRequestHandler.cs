@@ -77,18 +77,26 @@ namespace JMS.HttpProxy.Applications.Http
                     _logger.LogInformation($"{ip}访问次数太多，被拒绝访问.");
                 }
 
+                headers.Clear();
                 //输出401
                 client.KeepAlive = false;
                 client.OutputHttpCode(401, "Forbidden");
                 return;
             }
 
-            if (host == null)
+            if (headers.TryGetValue("Host", out string host) == false)
+            {
+                headers.Clear();
                 return;
+            }
+               
 
             var config = _httpServer.Config.Proxies.FirstOrDefault(m => string.Equals(m.Host, host, StringComparison.OrdinalIgnoreCase));
             if (config == null)
+            {
+                headers.Clear();
                 return;
+            }
 
             if (headers.TryGetValue("Connection", out string connection) && string.Equals(connection, "keep-alive", StringComparison.OrdinalIgnoreCase))
             {
@@ -135,6 +143,7 @@ namespace JMS.HttpProxy.Applications.Http
             }
             foreach (var pair in headers)
             {
+                //如果ChangeHostHeader为true，则修改Host头部和Origin头部
                 if (config.ChangeHostHeader && target_uri != null && pair.Key == "Host")
                 {
                     buffer.Append($"{pair.Key}: {target_uri.Authority}\r\n");
@@ -164,6 +173,7 @@ namespace JMS.HttpProxy.Applications.Http
             }
 
             var data = Encoding.UTF8.GetBytes(buffer.ToString());
+            buffer.Clear();
 
             var netClientProvider = _netClientProviderFactory.GetNetClientProvider(config.Target);
             var proxyClient = await netClientProvider.GetClientAsync(config.Target);
@@ -228,7 +238,7 @@ namespace JMS.HttpProxy.Applications.Http
                     int.TryParse(headers["Content-Length"], out inputContentLength);
                 }
 
-                buffer.Clear();
+                
                 buffer.Append(requestPathLine);
                 buffer.Append("\r\n");
 
@@ -240,6 +250,7 @@ namespace JMS.HttpProxy.Applications.Http
                 buffer.Append("\r\n");
 
                 data = Encoding.UTF8.GetBytes(buffer.ToString());
+                buffer.Clear();
                 //发送头部给浏览器
                 client.Write(data);
 
@@ -274,6 +285,7 @@ namespace JMS.HttpProxy.Applications.Http
                         }
                     }
                 }
+                headers.Clear();
 
                 if (client.KeepAlive)
                 {
