@@ -50,14 +50,20 @@ namespace JMS.HttpProxy.Applications.Http
             {
                 using (var client = new NetClient(socket))
                 {
+                    var isSsl = false;
                     if (_httpServer.Certificate != null)
-                    {                        
+                    {
+                        isSsl = true;
                         await client.AsSSLServerAsync(_httpServer.Certificate, false,new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _httpServer.Config.SSL.SslProtocol);
 
                     }
 
                     while (true)
                     {
+                        if (isSsl)
+                        {
+                            _ = await client.BaseStream.ReadAsync(Memory<byte>.Empty);
+                        }
                         await _httpRequestHandler.Handle(client);
 
                         if (client.HasSocketException || !client.KeepAlive)
