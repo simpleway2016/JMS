@@ -32,7 +32,9 @@ namespace JMS.Common.Json
             _SerializerOptions = newOptions();
             _SerializerOptions.Converters.Add(new StringJsonConverter());
             _SerializerOptions.Converters.Add(new TypeJsonConverter());
-
+            _SerializerOptions.Converters.Add(new LongJsonConverter());
+            _SerializerOptions.Converters.Add(new UlongJsonConverter());
+            _SerializerOptions.Converters.Add(new DoubleJsonConverter());
             //因为SourceGenerationContext不支持InvokeResult<>泛型，所以，不能让SourceGenerationContext来解析类型
             // _SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
         }
@@ -82,6 +84,121 @@ namespace JMS.Common.Json
                 return System.Text.Json.JsonSerializer.Serialize(value, options);
             }
             return System.Text.Json.JsonSerializer.Serialize(value, _SerializerOptions);
+        }
+    }
+
+    class DoubleJsonConverter : JsonConverter<double>
+    {
+
+
+
+        public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.String:
+                    return long.Parse(reader.GetString());
+                case JsonTokenType.Number:
+                    return reader.GetDouble();
+                case JsonTokenType.True:
+                    return 1;
+
+                case JsonTokenType.False:
+                    return 0;
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options)
+        {
+            // 写入字符串值
+            if (value <= 90071992547409)
+            {
+                writer.WriteNumberValue(value);
+            }
+            else
+            {
+                //js会有精度丢失，所以，转为字符串
+                writer.WriteStringValue(value.ToString());
+            }
+
+        }
+    }
+    class LongJsonConverter : JsonConverter<long>
+    {
+
+
+     
+        public override long Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.String:
+                    return long.Parse( reader.GetString());
+                case JsonTokenType.Number:
+                    return reader.GetInt64();
+                case JsonTokenType.True:
+                    return 1;
+
+                case JsonTokenType.False:
+                    return 0;
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, long value, JsonSerializerOptions options)
+        {           
+            // 写入字符串值
+            if(value <= 9007199254740991L)
+            {
+                writer.WriteNumberValue(value);
+            }
+            else
+            {
+                //js会有精度丢失，所以，转为字符串
+                writer.WriteStringValue(value.ToString());
+            }
+               
+        }
+    }
+    class UlongJsonConverter : JsonConverter<ulong>
+    {
+
+
+
+        public override ulong Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.String:
+                    return ulong.Parse(reader.GetString());
+                case JsonTokenType.Number:
+                    return reader.GetUInt64();
+                case JsonTokenType.True:
+                    return 1;
+
+                case JsonTokenType.False:
+                    return 0;
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, ulong value, JsonSerializerOptions options)
+        {
+            // 写入字符串值
+            if (value <= 9007199254740991L)
+            {
+                writer.WriteNumberValue(value);
+            }
+            else
+            {
+                //js会有精度丢失，所以，转为字符串
+                writer.WriteStringValue(value.ToString());
+            }
+
         }
     }
 

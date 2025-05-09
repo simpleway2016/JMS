@@ -94,7 +94,7 @@ namespace JMS.Applications
                     {
                         if (isSsl)
                         {
-                            _ = await netclient.BaseStream.ReadAsync(Memory<byte>.Empty, CancellationToken.None);
+                            _ = await netclient.BaseStream.ReadAsync(Memory<byte>.Empty);
                         }
 
                         var cmd = await GetRequestCommand(netclient);

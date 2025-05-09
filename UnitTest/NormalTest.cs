@@ -32,8 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using UnitTest.ServiceHosts;
-using Way.Lib;
-using Way.Lib.Collections;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UnitTest
@@ -1417,9 +1415,22 @@ Content-Length: 0
                 throw new Exception($"结果不正确, {UserInfoDbContext.FinallyUserName} {UserInfoDbContext.FinallyAge} {UserInfoDbContext.FinallyFather} {UserInfoDbContext.FinallyMather}");
         }
 
+        public class JsonTestClass
+        {
+            public long? Id { get; set; }
+        }
+
         [TestMethod]
         public void JsonTest()
         {
+            var j1 = new JsonTestClass() { Id = 3}.ToJsonString();
+            var obj = j1.FromJson<JsonTestClass>();
+            Assert.AreEqual(obj.Id, 3);
+
+            j1 = new JsonTestClass() { Id = 1380138783730569216 }.ToJsonString();
+            obj = j1.FromJson<JsonTestClass>();
+            Assert.AreEqual(obj.Id, 1380138783730569216);
+
             InvokeCommand cmdObj = new InvokeCommand() { 
                 Method = "aa",
             };

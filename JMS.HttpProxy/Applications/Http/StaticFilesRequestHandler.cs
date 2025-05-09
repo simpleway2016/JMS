@@ -9,7 +9,6 @@ using JMS.Common;
 using JMS.Common.IO;
 using System.IO.Compression;
 using JMS.HttpProxy.Dtos;
-using Way.Lib;
 
 namespace JMS.HttpProxy.Applications.Http
 {
