@@ -29,6 +29,8 @@ namespace JMS.Common
         NetAddress _netaddr;
         public virtual NetAddress NetAddress => _netaddr;
 
+        public Stream BaseStream => _innerStream;
+
         private Stream _innerStream;
         private Stream _pipeStream;
         public Stream InnerStream

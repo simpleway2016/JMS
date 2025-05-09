@@ -1,5 +1,5 @@
 ﻿using JMS.HttpProxy.Applications.InternalProtocol;
-using JMS.HttpProxy.Applications.Sockets;
+using JMS.HttpProxy.Applications.InternalProtocolSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace JMS.HttpProxy.Servers
 {
-    public class SocketServer : ProxyServer
+    public class InternalProtocolSocketServer : ProxyServer
     {
         JMS.ServerCore.MulitTcpListener _tcpServer;
         SocketRequestReception _requestReception;
-        ILogger<SocketServer> _logger;
+        ILogger<InternalProtocolSocketServer> _logger;
         public override void Dispose()
         {
             if (_tcpServer != null)
@@ -30,17 +30,17 @@ namespace JMS.HttpProxy.Servers
             _requestReception = this.ServiceProvider.GetService<SocketRequestReception>();
             _requestReception.SetServer(this);
 
-            _logger = this.ServiceProvider.GetService<ILogger<SocketServer>>();
+            _logger = this.ServiceProvider.GetService<ILogger<InternalProtocolSocketServer>>();
         }
 
-        public override void Run()
+        public override async Task RunAsync()
         {
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
 
             _logger?.LogInformation($"Listening socket server:{Config.Port} {this.Config.Proxies.FirstOrDefault().ToJsonString()}");
 
-            _tcpServer.Run();
+            await _tcpServer.RunAsync();
         }
 
         private void _tcpServer_OnError(object sender, Exception err)

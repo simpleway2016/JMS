@@ -48,15 +48,29 @@ namespace JMS.HttpProxy.Applications.Http
             {
                 using (var client = new NetClient(socket))
                 {
+                    var isSsl = false;
                     if (_httpServer.Certificate != null)
-                    {                        
+                    {
+                        isSsl = true;
                         await client.AsSSLServerAsync(_httpServer.Certificate, false,new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _httpServer.Config.SSL.SslProtocol);
 
                     }
 
                     while (true)
                     {
-                        await _httpRequestHandler.Handle(client);
+                        if (isSsl)
+                        {
+                            _ = await client.BaseStream.ReadAsync(Memory<byte>.Empty , CancellationToken.None);
+                        }
+                        else
+                        {
+                            using (var cancellation = new CancellationTokenSource(client.ReadTimeout))
+                            {
+                                await client.Socket.ReceiveAsync(Memory<byte>.Empty, SocketFlags.None, cancellation.Token);
+                            }
+                        }
+
+                            await _httpRequestHandler.Handle(client);
 
                         if (client.HasSocketException || !client.KeepAlive)
                             break;

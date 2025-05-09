@@ -42,6 +42,7 @@ namespace JMS.HttpProxy.Dtos
     public class AcmeConfig
     {
         public string Domain { get; set; }
+        public string Password { get; set; } = "123456";
         public DomainProvider DomainProvider { get; set; }
         public string AccessKeyId { get; set; }
         public string AccessKeySecret { get; set; }
@@ -96,6 +97,7 @@ namespace JMS.HttpProxy.Dtos
         /// 是否自动修改请求的Host头
         /// </summary>
         public bool ChangeHostHeader { get; set; }
+        public string AccessControlAllowOrigin { get; set; }
     }
 
 
@@ -104,7 +106,9 @@ namespace JMS.HttpProxy.Dtos
     {
         None = 0,
         Http = 1,
-        Socket = 2,
+        //把数据转发到InternalProtocol客户端
+        InternalProtocolSocket = 2,
+        //接受HttpProxyDevice的注册
         InternalProtocol = 3,
         //直接把数据转发到目标地址
         DirectSocket = 4,

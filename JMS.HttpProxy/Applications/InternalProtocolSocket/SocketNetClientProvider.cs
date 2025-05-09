@@ -6,7 +6,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JMS.HttpProxy.Applications.Sockets
+namespace JMS.HttpProxy.Applications.InternalProtocolSocket
 {
     public class SocketNetClientProvider : INetClientProvider
     {

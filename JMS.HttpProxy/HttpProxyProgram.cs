@@ -18,7 +18,7 @@ using JMS.HttpProxy.Servers;
 using JMS.HttpProxy.Applications.Http;
 using JMS.HttpProxy.Applications.InternalProtocol;
 using JMS.HttpProxy.InternalProtocol;
-using JMS.HttpProxy.Applications.Sockets;
+using JMS.HttpProxy.Applications.InternalProtocolSocket;
 using JMS.HttpProxy.Applications;
 using JMS.HttpProxy.Applications.DirectSocket;
 using JMS.HttpProxy.AutoGenerateSslCert;
@@ -40,7 +40,6 @@ namespace JMS
             }
             //固定当前工作目录
             System.IO.Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-            ThreadPool.SetMinThreads(Environment.ProcessorCount * 10, Environment.ProcessorCount * 10);
 
             CommandArgParser cmdArg = new CommandArgParser(args);
             cmdArg.TryGetValue("-s",out AppSettingPath);

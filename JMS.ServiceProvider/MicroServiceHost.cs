@@ -390,7 +390,7 @@ namespace JMS
             if (_tcpServer != null)
             {
                 _tcpServer.OnError += _tcpServer_OnError;
-                _tcpServer.Run();
+                _tcpServer.RunAsync().GetAwaiter().GetResult();
             }
         }
 

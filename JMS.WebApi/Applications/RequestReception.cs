@@ -34,7 +34,7 @@ namespace JMS.Applications
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             var acceptCertHash = _webApiEnvironment.Config.Current.SSL.AcceptCertHash;
-            if (acceptCertHash != null && acceptCertHash.Length >0 && acceptCertHash.Contains(certificate?.GetCertHashString()) == false)
+            if (acceptCertHash != null && acceptCertHash.Length > 0 && acceptCertHash.Contains(certificate?.GetCertHashString()) == false)
             {
                 return false;
             }
@@ -47,6 +47,7 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
+                    var isSsl = false;
                     bool redirectHttps = false;
                     if (_webApiEnvironment.ServerCert != null)
                     {
@@ -60,12 +61,25 @@ namespace JMS.Applications
                         }
                         else
                         {
+                            isSsl = true;
                             await client.AsSSLServerAsync(_webApiEnvironment.ServerCert, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _webApiEnvironment.SslProtocol);
                         }
                     }
 
                     while (true)
                     {
+                        if (isSsl)
+                        {
+                            _ = await client.BaseStream.ReadAsync(Memory<byte>.Empty, CancellationToken.None);
+                        }
+                        else
+                        {
+                            using (var cancellation = new CancellationTokenSource(client.ReadTimeout))
+                            {
+                                await client.Socket.ReceiveAsync(Memory<byte>.Empty, SocketFlags.None, cancellation.Token);
+                            }
+                        }
+
                         await _httpRequestHandler.Handle(client, redirectHttps);
 
                         if (client.HasSocketException || !client.KeepAlive)
@@ -76,7 +90,7 @@ namespace JMS.Applications
                     await Task.Delay(2000);
                 }
             }
-            catch(SocketException)
+            catch (SocketException)
             {
 
             }
@@ -94,7 +108,7 @@ namespace JMS.Applications
             }
             catch (System.IO.IOException ex)
             {
-                if(ex.HResult != -2146232800)
+                if (ex.HResult != -2146232800)
                 {
                     _logger?.LogError(ex, ex.Message);
                 }
@@ -104,7 +118,7 @@ namespace JMS.Applications
                 _logger?.LogError(ex, ex.Message);
             }
 
-           
+
         }
     }
 }

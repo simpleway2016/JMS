@@ -14,20 +14,23 @@ namespace JMS.TokenServer
         ConcurrentDictionary<ClientReception, bool> _clients = new ConcurrentDictionary<ClientReception, bool>();
         public ClientManager()
         {
-            new Thread(()=> { 
-                while(true)
+            deleteTokenAsync();
+        }
+
+        async void deleteTokenAsync()
+        {
+            while (true)
+            {
+                await Task.Delay(100000);
+                var utctime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                foreach (var pair in _disabledTokens)
                 {
-                    Thread.Sleep(100000);
-                    var utctime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    foreach (var pair in _disabledTokens)
+                    if (pair.Value != 0 && pair.Value <= utctime)
                     {
-                        if (pair.Value != 0 && pair.Value <= utctime)
-                        {
-                            _disabledTokens.TryRemove(pair.Key, out long o);
-                        }
+                        _disabledTokens.TryRemove(pair.Key, out long o);
                     }
                 }
-            }).Start();
+            }
         }
 
         public ClientReception AddClient(NetClient netStream)

@@ -35,6 +35,7 @@ namespace JMS.HttpProxy.Applications.Http
 
             if (httpMethod == "OPTIONS")
             {
+                headers.Clear();
                 client.OutputHttp204(headers);
                 return;
             }
@@ -56,6 +57,7 @@ namespace JMS.HttpProxy.Applications.Http
 
             if (File.Exists(filepath) == false)
             {
+                headers.Clear();
                 client.OutputHttpNotFund();
                 return;
             }
@@ -68,12 +70,13 @@ namespace JMS.HttpProxy.Applications.Http
             }
             else
             {
-                await outputFile(client, filepath, lastWriteTime, headers);
+                await outputFile(client, filepath, lastWriteTime, headers,proxyConfig);
             }
+            headers.Clear();
         }
 
         const int FileBufSize = 20480;
-        async Task outputFile(NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers)
+        async Task outputFile(NetClient client, string filePath, string lastModifyTime, Dictionary<string, string> headers, ProxyConfig proxyConfig)
         {
             byte[] bs = null;
             try
@@ -91,7 +94,7 @@ namespace JMS.HttpProxy.Applications.Http
                     outputHeaders["Server"] = "JMS";
                     outputHeaders["Date"] = DateTime.UtcNow.ToString("R");
                     outputHeaders["Last-Modified"] = lastModifyTime;
-                    outputHeaders["Access-Control-Allow-Origin"] = "*";
+                    outputHeaders["Access-Control-Allow-Origin"] = proxyConfig.AccessControlAllowOrigin??"*";
                     outputHeaders["Content-Type"] = GetContentType(Path.GetExtension(filePath));
                     if (client.KeepAlive)
                     {
@@ -108,6 +111,7 @@ namespace JMS.HttpProxy.Applications.Http
                         {
                             if (rangeInfo.Length == 1 || string.IsNullOrWhiteSpace(rangeInfo[1]))
                             {
+                                outputHeaders.Clear();
                                 client.KeepAlive = false;
                                 client.OutputHttpCode(416, "Range Not Satisfiable");
                                 return;
@@ -127,6 +131,8 @@ namespace JMS.HttpProxy.Applications.Http
                             else
                             {
                                 rangeEnd = Convert.ToInt32(rangeInfo[1]);
+                                if(rangeEnd >= fs.Length)
+                                    rangeEnd = (int)fs.Length - 1;
                             }
                         }
                         outputHeaders["Accept-Ranges"] = "bytes";
@@ -138,9 +144,12 @@ namespace JMS.HttpProxy.Applications.Http
                         {
                             client.WriteLine($"{pair.Key}: {pair.Value}");
                         }
-                        client.WriteLine($"\r\n");
+                        outputHeaders.Clear();
 
-                        fs.Position = range;
+                        client.InnerStream.WriteByte(13);
+                        client.InnerStream.WriteByte(10);
+
+                        fs.Seek(range , SeekOrigin.Begin);
                         int totalRead = rangeEnd - range + 1;
                         while (totalRead > 0)
                         {
@@ -177,6 +186,8 @@ namespace JMS.HttpProxy.Applications.Http
                         {
                             client.WriteLine($"{pair.Key}: {pair.Value}");
                         }
+                        outputHeaders.Clear();
+
                         client.InnerStream.WriteByte(13);
                         client.InnerStream.WriteByte(10);
 

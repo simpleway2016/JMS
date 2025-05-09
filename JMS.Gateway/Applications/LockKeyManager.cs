@@ -47,7 +47,7 @@ namespace JMS.Applications
             _registerServiceManager.ServiceConnect += _registerServiceManager_ServiceConnect;
             _registerServiceManager.ServiceDisconnect += _registerServiceManager_ServiceDisconnect;
 
-            new Thread(checkTimeout).Start();
+            checkTimeoutAsync();
         }
 
         public KeyObject[] GetAllKeys()
@@ -153,7 +153,7 @@ namespace JMS.Applications
         /// <summary>
         /// 检查已经断线的微服务
         /// </summary>
-        private void checkTimeout()
+        private async void checkTimeoutAsync()
         {
             while (!_gateway.Disposed)
             {
@@ -185,7 +185,7 @@ namespace JMS.Applications
                 }
                 finally
                 {
-                    Thread.Sleep(2000);
+                    await Task.Delay(2000);
                 }
             }
         }

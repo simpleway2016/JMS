@@ -87,7 +87,7 @@ namespace JMS.HttpProxy.Servers
             _tcpServer = new ServerCore.MulitTcpListener(this.Config.Port, null);
         }
 
-        public override void Run()
+        public override async Task RunAsync()
         {
             _tcpServer.Connected += _tcpServer_Connected;
             _tcpServer.OnError += _tcpServer_OnError;
@@ -107,7 +107,7 @@ namespace JMS.HttpProxy.Servers
 
             _logger?.LogInformation($"Listening {(this.Certificate != null ? "https" : "http")}://*:{Config.Port}");
 
-            _tcpServer.Run();
+            await _tcpServer.RunAsync();
         }
 
         private void _tcpServer_OnError(object sender, Exception err)

@@ -23,7 +23,7 @@ namespace JMS.HttpProxy.Servers
             _proxyServerTypes[ProxyType.DirectSocket] = typeof(DirectSocketServer);
             _proxyServerTypes[ProxyType.Http] = typeof(HttpServer);
             _proxyServerTypes[ProxyType.InternalProtocol] = typeof(InternalProtocolServer);
-            _proxyServerTypes[ProxyType.Socket] = typeof(SocketServer);
+            _proxyServerTypes[ProxyType.InternalProtocolSocket] = typeof(InternalProtocolSocketServer);
 
         }
 
@@ -34,7 +34,7 @@ namespace JMS.HttpProxy.Servers
             server.Config = serverConfig;
             server.ServiceProvider = _serviceProvider;
             server.Init();
-            new Thread(() => server.Run()).Start();
+            _ = server.RunAsync();
 
             _proxyServers[serverConfig.Port] = server;
         }

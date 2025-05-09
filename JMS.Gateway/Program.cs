@@ -19,12 +19,13 @@ using JMS.ServerCore.Http;
 using JMS.Applications.HttpMiddlewares;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using JMS.ApiDocument;
+using System.Threading.Tasks;
 
 namespace JMS
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             if(args.Length > 1&& args[0].EndsWith(".pfx") )
             {
@@ -40,7 +41,7 @@ namespace JMS
 
            var gateway = gatewayBuilder.Build();
 
-            gateway.Run();
+            await gateway.RunAsync();
         }
 
     }
