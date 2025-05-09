@@ -657,6 +657,7 @@ namespace JMS
                 //设置超时
                 using (var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(NetClientPool.RELEASESECONDS)))
                 {
+                    //不要读取Memory<byte>.Empty，因为会返回0，无法判断是否网络断开
                     var count = await this.Socket.ReceiveAsync(CheckBs, SocketFlags.Peek, cancellation.Token);
                     if (count == 0)
                     {

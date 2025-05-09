@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Net;
 using JMS.Common;
 using System.Security.Authentication;
+using System.Threading;
 
 namespace JMS.Applications
 {
@@ -34,7 +35,7 @@ namespace JMS.Applications
 
         bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (_sslConfiguration.AcceptCertHash != null && _sslConfiguration.AcceptCertHash.Length >0 && _sslConfiguration.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
+            if (_sslConfiguration.AcceptCertHash != null && _sslConfiguration.AcceptCertHash.Length > 0 && _sslConfiguration.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
             {
                 return false;
             }
@@ -47,17 +48,17 @@ namespace JMS.Applications
             if (ret.IsCompleted && ret.Buffer.Length < 4)
                 throw new SocketException();
 
-            var text = Encoding.UTF8.GetString(ret.Buffer.Slice(0,4));
+            var text = Encoding.UTF8.GetString(ret.Buffer.Slice(0, 4));
             client.PipeReader.AdvanceTo(ret.Buffer.Start);//好像在做无用功，但是没有这句，有可能往下再读数据会卡住
 
-            if ( text == "GET " || text == "POST" || text == "PUT " || text == "OPTI")
+            if (text == "GET " || text == "POST" || text == "PUT " || text == "OPTI")
             {
-                return new GatewayCommand { Type = (int)CommandType.HttpRequest};
+                return new GatewayCommand { Type = (int)CommandType.HttpRequest };
             }
             else
             {
-               return await client.ReadServiceObjectAsync<GatewayCommand>();
-            }    
+                return await client.ReadServiceObjectAsync<GatewayCommand>();
+            }
         }
 
         public async void Interview(Socket socket)
@@ -66,14 +67,28 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
+                    var isSsl = false;
                     if (_sslConfiguration.ServerCert != null)
                     {
+                        isSsl = true;
                         await client.AsSSLServerAsync(_sslConfiguration.ServerCert, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _sslConfiguration.SslProtocol);
 
                     }
 
                     while (true)
                     {
+                        if (isSsl)
+                        {
+                            _ = await client.BaseStream.ReadAsync(Memory<byte>.Empty, CancellationToken.None);
+                        }
+                        else
+                        {
+                            using (var cancellation = new CancellationTokenSource(client.ReadTimeout))
+                            {
+                                await client.Socket.ReceiveAsync(Memory<byte>.Empty, SocketFlags.None, cancellation.Token);
+                            }
+                        }
+
                         var cmd = await GetRequestCommand(client);
                         if (cmd == null)
                         {
@@ -92,7 +107,7 @@ namespace JMS.Applications
                     await Task.Delay(2000);
                 }
             }
-            catch(SocketException)
+            catch (SocketException)
             {
 
             }
@@ -110,7 +125,7 @@ namespace JMS.Applications
             }
             catch (System.IO.IOException ex)
             {
-                if(ex.HResult != -2146232800)
+                if (ex.HResult != -2146232800)
                 {
                     _logger?.LogError(ex, ex.Message);
                 }
@@ -120,7 +135,7 @@ namespace JMS.Applications
                 _logger?.LogError(ex, ex.Message);
             }
 
-           
+
         }
     }
 }
