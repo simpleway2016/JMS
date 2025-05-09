@@ -72,13 +72,6 @@ namespace JMS.Applications
                         {
                             _ = await client.BaseStream.ReadAsync(Memory<byte>.Empty, CancellationToken.None);
                         }
-                        else
-                        {
-                            using (var cancellation = new CancellationTokenSource(client.ReadTimeout))
-                            {
-                                await client.Socket.ReceiveAsync(Memory<byte>.Empty, SocketFlags.None, cancellation.Token);
-                            }
-                        }
 
                         await _httpRequestHandler.Handle(client, redirectHttps);
 
