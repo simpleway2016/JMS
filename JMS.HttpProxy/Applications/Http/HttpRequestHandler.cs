@@ -251,6 +251,7 @@ namespace JMS.HttpProxy.Applications.Http
                 }
                 else if(headers.TryGetValue("Content-Type",out string resContentType) && resContentType == "text/event-stream")
                 {
+                    proxyClient.ReadTimeout = 0;
                     client.KeepAlive = false;
                     await proxyClient.PipeReader.ReadAndSend(client);
                 }
