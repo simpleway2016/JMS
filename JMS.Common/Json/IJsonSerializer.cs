@@ -8,7 +8,7 @@ namespace JMS.Common.Json
 {
     public interface IJsonSerializer
     {
-        //JsonSerializerOptions SerializerOptions { get; }
+        JsonSerializerOptions SerializerOptions { get; }
         string Serialize(object value);
         /// <summary>
         /// 
