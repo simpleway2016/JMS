@@ -17,6 +17,10 @@ namespace JMS.Common.Json
             {
                 return _JsonSerializer;
             }
+            set
+            {
+                _JsonSerializer = value;
+            }
         }
 
        
