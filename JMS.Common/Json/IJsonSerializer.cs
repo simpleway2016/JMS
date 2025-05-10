@@ -29,7 +29,13 @@ namespace JMS.Common.Json
 
         public DefaultJsonSerializer()
         {
-            _SerializerOptions = newOptions();
+            _SerializerOptions = new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                NumberHandling = JsonNumberHandling.AllowReadingFromString,
+                PropertyNameCaseInsensitive = true,//不区分大小写,为了兼容之前Newtonsoft.Json的代码
+            };
             _SerializerOptions.Converters.Add(new StringJsonConverter());
             _SerializerOptions.Converters.Add(new TypeJsonConverter());
             _SerializerOptions.Converters.Add(new LongJsonConverter());
@@ -39,13 +45,6 @@ namespace JMS.Common.Json
             // _SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
         }
 
-        JsonSerializerOptions newOptions() => new JsonSerializerOptions()
-        {
-            IncludeFields = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-            NumberHandling = JsonNumberHandling.AllowReadingFromString,
-            PropertyNameCaseInsensitive = true,//不区分大小写,为了兼容之前Newtonsoft.Json的代码
-        };
 
         public T Deserialize<T>(string jsonString)
         {
@@ -70,17 +69,9 @@ namespace JMS.Common.Json
                 return null;
             if (writeIndented)
             {
-                JsonSerializerOptions options = newOptions();
+                JsonSerializerOptions options = new JsonSerializerOptions(_SerializerOptions);
                 options.WriteIndented = writeIndented;
 
-                foreach ( var convertor in _SerializerOptions.Converters)
-                {
-                    options.Converters.Add(convertor);
-                }
-                foreach (var chain in _SerializerOptions.TypeInfoResolverChain)
-                {
-                    options.TypeInfoResolverChain.Add(chain);
-                }
                 return System.Text.Json.JsonSerializer.Serialize(value, options);
             }
             return System.Text.Json.JsonSerializer.Serialize(value, _SerializerOptions);

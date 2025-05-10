@@ -1427,7 +1427,7 @@ Content-Length: 0
             var obj = j1.FromJson<JsonTestClass>();
             Assert.AreEqual(obj.Id, 3);
 
-            j1 = new JsonTestClass() { Id = 1380138783730569216 }.ToJsonString();
+            j1 = new JsonTestClass() { Id = 1380138783730569216 }.ToJsonString(true);
             obj = j1.FromJson<JsonTestClass>();
             Assert.AreEqual(obj.Id, 1380138783730569216);
 
