@@ -22,7 +22,7 @@ namespace JMS.HttpProxy.Servers
 
 
         X509Certificate2 _Certificate;
-        public X509Certificate2 Certificate
+        public override X509Certificate2 Certificate
         {
             get => _Certificate;
 

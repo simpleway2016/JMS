@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,12 +29,22 @@ namespace JMS.HttpProxy.Applications.DirectSocket
         {
             _socketServer = server;
         }
-
+        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
+        }
         public async void Interview(Socket socket)
         {
           
             try
-            { 
+            {
+                using var client = new NetClient(socket);
+                if (_socketServer.Certificate != null)
+                {
+                    await client.AsSSLServerAsync(_socketServer.Certificate, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _socketServer.Config.SSL.SslProtocol);
+
+                }
+
                 using var proxyClient = new NetClient();
 
                 var arr = _socketServer.Config.Proxies[0].Target.Split(':');
@@ -44,12 +55,12 @@ namespace JMS.HttpProxy.Applications.DirectSocket
                 await proxyClient.ConnectAsync(new NetAddress(arr[0] , port));
 
                 //_logger.LogDebug($"连接{((IPEndPoint)proxyClient.Socket.RemoteEndPoint).Address}, {((IPEndPoint)proxyClient.Socket.RemoteEndPoint).AddressFamily}");
-                socket.ReceiveTimeout = 0;
+                client.ReadTimeout = 0;
                 proxyClient.ReadTimeout = 0;
 
-                _ = proxyClient.Socket.ReadAndSendForLoop(socket);
+                _ = proxyClient.ReadAndSendForLoop(client);
 
-                await socket.ReadAndSendForLoop(proxyClient.Socket);
+                await client.ReadAndSendForLoop(proxyClient);
             }
             catch (SocketException)
             {

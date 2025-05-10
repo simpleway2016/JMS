@@ -17,7 +17,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
     internal class SslCertGenerator
     {
         private readonly ILogger<SslCertGenerator> _logger;
-        ConcurrentDictionary<HttpServer, bool> _httpServers = new ConcurrentDictionary<HttpServer, bool>();
+        ConcurrentDictionary<ProxyServer, bool> _httpServers = new ConcurrentDictionary<ProxyServer, bool>();
         ConcurrentDictionary<string, DomainSslCertGenerator> _Generators = new ConcurrentDictionary<string, DomainSslCertGenerator>();
         public SslCertGenerator(ILogger<SslCertGenerator> logger)
         {
@@ -47,14 +47,14 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             }
         }
 
-        public void AddRequest(HttpServer httpServer)
+        public void AddRequest(ProxyServer httpServer)
         {
             _httpServers[httpServer] = true;
 
             var generator = _Generators.GetOrAdd(httpServer.Config.SSL.Acme.Domain, domain => new DomainSslCertGenerator(this , httpServer.Config.SSL.Acme,_logger));
             generator.Run();
         }
-        public void RemoveRequest(HttpServer httpServer,string domain)
+        public void RemoveRequest(ProxyServer httpServer,string domain)
         {
             if (_httpServers.TryRemove(httpServer, out _))
             {
