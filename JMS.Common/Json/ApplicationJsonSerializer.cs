@@ -7,15 +7,15 @@ namespace JMS.Common.Json
 {
     public static class ApplicationJsonSerializer
     {
-        static IJsonSerializer _JsonSerializer = new DefaultJsonSerializer();
-       /// <summary>
-       /// json序列化工具类
-       /// </summary>
+        static IJsonSerializer _JsonSerializer;
+        /// <summary>
+        /// json序列化工具类
+        /// </summary>
         public static IJsonSerializer JsonSerializer
         {
             get
             {
-                return _JsonSerializer;
+                return _JsonSerializer ??= new DefaultJsonSerializer();
             }
             set
             {
@@ -23,6 +23,6 @@ namespace JMS.Common.Json
             }
         }
 
-       
+
     }
 }
