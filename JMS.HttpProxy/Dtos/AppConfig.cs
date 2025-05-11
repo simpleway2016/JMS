@@ -60,6 +60,7 @@ namespace JMS.HttpProxy.Dtos
         public SslProtocols SslProtocol { get; set; } = SslProtocols.None;
 
         X509Certificate2 _Certificate;
+        [System.Text.Json.Serialization.JsonIgnore]
         public X509Certificate2 Certificate
         {
             get
