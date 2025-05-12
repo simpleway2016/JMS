@@ -44,21 +44,14 @@ namespace JMS.HttpProxy.Applications.Http
             {
                 using (var client = new NetClient(socket))
                 {
-                    var isSsl = false;
                     if (_httpServer.SslServerAuthenticationOptions != null)
                     {
-                        isSsl = true;
                         await client.AsSSLServerAsync(_httpServer.SslServerAuthenticationOptions);
 
                     }
 
                     while (true)
                     {
-                        if (isSsl)
-                        {
-                            _ = await client.BaseStream.ReadAsync(Memory<byte>.Empty, CancellationToken.None);
-                        }
-
                         await _httpRequestHandler.Handle(client);
 
                         if (client.HasSocketException || !client.KeepAlive)
