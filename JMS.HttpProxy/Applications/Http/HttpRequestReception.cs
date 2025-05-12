@@ -36,11 +36,7 @@ namespace JMS.HttpProxy.Applications.Http
             _httpRequestHandler.SetServer(_httpServer);
         }
 
-        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
-        }
-
+      
 
         public async void Interview(Socket socket)
         {
@@ -49,10 +45,10 @@ namespace JMS.HttpProxy.Applications.Http
                 using (var client = new NetClient(socket))
                 {
                     var isSsl = false;
-                    if (_httpServer.Certificate != null)
+                    if (_httpServer.SslServerAuthenticationOptions != null)
                     {
                         isSsl = true;
-                        await client.AsSSLServerAsync(_httpServer.Certificate, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _httpServer.Config.SSL.SslProtocol);
+                        await client.AsSSLServerAsync(_httpServer.SslServerAuthenticationOptions);
 
                     }
 

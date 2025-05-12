@@ -17,6 +17,7 @@ using System.Reflection.PortableExecutable;
 using System.Buffers;
 using System.Text;
 using JMS.Common.Net;
+using System.Runtime.Intrinsics.X86;
 
 namespace JMS.Common
 {
@@ -359,6 +360,28 @@ namespace JMS.Common
 
             this.InnerStream = sslStream;
         }
+
+        /// <summary>
+        /// 使用ssl协议作为服务器端
+        /// </summary>
+        /// <param name="sslServerAuthenticationOptions"></param>
+        /// <returns></returns>
+        public async Task AsSSLServerAsync(SslServerAuthenticationOptions sslServerAuthenticationOptions)
+        {
+            SslStream sslStream = new SslStream(_innerStream, false);
+            try
+            {
+                await sslStream.AuthenticateAsServerAsync(sslServerAuthenticationOptions);
+            }
+            catch (Exception)
+            {
+                sslStream.Dispose();
+                throw;
+            }
+
+            this.InnerStream = sslStream;
+        }
+
         /// <summary>
         /// 使用ssl协议作为服务器端
         /// </summary>

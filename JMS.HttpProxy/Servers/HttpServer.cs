@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -21,7 +22,7 @@ namespace JMS.HttpProxy.Servers
 
 
         X509Certificate2 _Certificate;
-        public X509Certificate2 Certificate
+        internal X509Certificate2 Certificate
         {
             get => _Certificate;
 
@@ -32,9 +33,41 @@ namespace JMS.HttpProxy.Servers
                     var old = _Certificate;
                     _Certificate = value;
                     old?.Dispose();
+
+                    if(this.SslServerAuthenticationOptions != null)
+                    {
+                        foreach( var cert in this.SslServerAuthenticationOptions.ServerCertificateContext.IntermediateCertificates)
+                        {
+                            cert.Dispose();
+                        }
+                    }
+
+                    if (_Certificate != null)
+                    {
+                        this.SslServerAuthenticationOptions = new SslServerAuthenticationOptions()
+                        {
+                            ServerCertificateContext = SslStreamCertificateContext.Create(_Certificate, null),
+                            RemoteCertificateValidationCallback = RemoteCertificateValidationCallback,
+                            ClientCertificateRequired = false,
+                            EnabledSslProtocols = Config.SSL.SslProtocol
+                        };
+                    }
+                    else
+                    {
+                        this.SslServerAuthenticationOptions = null;
+                    }
+                    
                 }
             }
         }
+
+        static bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
+        }
+
+
+        public SslServerAuthenticationOptions SslServerAuthenticationOptions { get; private set; }
         bool _isAcme;
 
         ServerConfig _Config;
