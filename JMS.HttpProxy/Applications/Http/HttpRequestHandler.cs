@@ -81,6 +81,7 @@ namespace JMS.HttpProxy.Applications.Http
             if (headers.TryGetValue("Host", out string host) == false)
             {
                 headers.Clear();
+                client.OutputHttpCode(500,"miss Host");
                 return;
             }
                
@@ -89,6 +90,7 @@ namespace JMS.HttpProxy.Applications.Http
             if (config == null)
             {
                 headers.Clear();
+                client.OutputHttpNotFund();
                 return;
             }
 
