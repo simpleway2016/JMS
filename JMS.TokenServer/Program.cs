@@ -23,6 +23,7 @@ namespace JMS.TokenServer
         static string[] key;
         static byte[] data;
         static X509Certificate2 ServerCert;
+        static SslServerAuthenticationOptions SslServerAuthenticationOptions;
         static SslProtocols SslProtocol;
         static string[] AcceptCertHash;
         static ClientManager _ClientManager = new ClientManager();
@@ -49,7 +50,7 @@ namespace JMS.TokenServer
             var builder = new ConfigurationBuilder();
 
             CommandArgParser cmdArg = new CommandArgParser(args);
-            var appSettingPath = cmdArg.TryGetValue<string>("-s");
+            cmdArg.TryGetValue("-s",out string appSettingPath);
 
             if (appSettingPath == null)
                 appSettingPath = "appsettings.json";
@@ -105,6 +106,14 @@ namespace JMS.TokenServer
                 if (sslProtocol == null)
                     sslProtocol = SslProtocols.None;
                 SslProtocol = sslProtocol.Value;
+
+                SslServerAuthenticationOptions = new SslServerAuthenticationOptions()
+                {
+                    ServerCertificateContext = SslStreamCertificateContext.Create(ServerCert, null),
+                    RemoteCertificateValidationCallback = RemoteCertificateValidationCallback,
+                    ClientCertificateRequired = false,
+                    EnabledSslProtocols = SslProtocol
+                };
             }
 
             var listener = new JMS.ServerCore.MulitTcpListener(port, Logger);
@@ -136,7 +145,7 @@ namespace JMS.TokenServer
                 client.ReadTimeout = 0;
                 if (ServerCert != null)
                 {
-                    await client.AsSSLServerAsync(ServerCert, false,new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), SslProtocol);
+                    await client.AsSSLServerAsync(SslServerAuthenticationOptions);
                 }
                
                 var flag = await client.ReadIntAsync();

@@ -83,20 +83,13 @@ namespace JMS.Applications
             {
                 using (var netclient = new NetClient(socket))
                 {
-                    var isSsl = false;
-                    if (_SSLConfiguration != null && _SSLConfiguration.ServerCertificate != null)
+                    if (_SSLConfiguration != null && _SSLConfiguration.SslServerAuthenticationOptions != null)
                     {
-                        isSsl = true;
-                        await netclient.AsSSLServerAsync(_SSLConfiguration.ServerCertificate,false, CheckCert, _SSLConfiguration.SslProtocol);
+                        await netclient.AsSSLServerAsync(_SSLConfiguration.SslServerAuthenticationOptions);
                     }
 
                     while (true)
                     {
-                        if (isSsl)
-                        {
-                            _ = await netclient.BaseStream.ReadAsync(Memory<byte>.Empty);
-                        }
-
                         var cmd = await GetRequestCommand(netclient);
                         if (cmd == null)
                         {

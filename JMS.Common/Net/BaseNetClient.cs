@@ -343,14 +343,12 @@ namespace JMS.Common
         /// <summary>
         /// 使用ssl协议作为服务器端
         /// </summary>
-        /// <param name="ssl"></param>
-        /// <param name="protocol"></param>
-        public void AsSSLServer(X509Certificate2 ssl, bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
+        public void AsSSLServer(SslServerAuthenticationOptions sslServerAuthenticationOptions)
         {
-            SslStream sslStream = new SslStream(_innerStream, false, remoteCertificateValidationCallback);
+            SslStream sslStream = new SslStream(_innerStream, false);
             try
             {
-                sslStream.AuthenticateAsServer(ssl, clientCertificateRequired, protocol, false);
+                sslStream.AuthenticateAsServer(sslServerAuthenticationOptions);
             }
             catch (Exception)
             {
@@ -382,60 +380,7 @@ namespace JMS.Common
             this.InnerStream = sslStream;
         }
 
-        /// <summary>
-        /// 使用ssl协议作为服务器端
-        /// </summary>
-        /// <param name="ssl"></param>
-        /// <param name="protocol"></param>
-        public async Task AsSSLServerAsync(X509Certificate2 ssl, bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
-        {
-            SslStream sslStream = new SslStream(_innerStream, false ,remoteCertificateValidationCallback);
-            try
-            {
-                await sslStream.AuthenticateAsServerAsync(ssl, clientCertificateRequired, protocol, false);
-            }
-            catch (Exception)
-            {
-                sslStream.Dispose();
-                throw;
-            }
-
-            this.InnerStream = sslStream;
-        }
-
-        /// <summary>
-        /// 使用ssl协议作为服务器端，并向客户端声明自己支持的协议，
-        /// 连接成功后，通过SslApplicationProtocol属性获取最终和客户端敲定的协议
-        /// </summary>
-        /// <param name="supportAppProtocols"></param>
-        /// <param name="ssl"></param>
-        /// <param name="remoteCertificateValidationCallback"></param>
-        /// <param name="protocol"></param>
-        public async Task AsSSLServerWithProtocolAsync(SslApplicationProtocol[] supportAppProtocols, X509Certificate2 ssl,bool clientCertificateRequired, RemoteCertificateValidationCallback remoteCertificateValidationCallback, SslProtocols protocol = SslProtocols.Tls)
-        {
-            SslStream sslStream = new SslStream(_innerStream, false, remoteCertificateValidationCallback);
-            try
-            {
-                await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
-                {
-                    ServerCertificate = ssl,
-                    ClientCertificateRequired = clientCertificateRequired,
-                    RemoteCertificateValidationCallback = remoteCertificateValidationCallback,
-                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
-                    EnabledSslProtocols = protocol,
-                    ApplicationProtocols = new List<SslApplicationProtocol>(supportAppProtocols)
-                }, CancellationToken.None);
-
-                _SslApplicationProtocol = sslStream.NegotiatedApplicationProtocol;
-            }
-            catch (Exception)
-            {
-                sslStream.Dispose();
-                throw;
-            }
-            this.InnerStream = sslStream;
-        }
-
+      
         public virtual void Connect(NetAddress addr)
         {
             EndPoint endPoint;

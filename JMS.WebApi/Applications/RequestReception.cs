@@ -31,15 +31,7 @@ namespace JMS.Applications
             _webApiEnvironment = webApiEnvironment;
         }
 
-        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            var acceptCertHash = _webApiEnvironment.Config.Current.SSL.AcceptCertHash;
-            if (acceptCertHash != null && acceptCertHash.Length > 0 && acceptCertHash.Contains(certificate?.GetCertHashString()) == false)
-            {
-                return false;
-            }
-            return true;
-        }
+        
 
         public async void Interview(Socket socket)
         {
@@ -47,7 +39,6 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
-                    var isSsl = false;
                     bool redirectHttps = false;
                     if (_webApiEnvironment.ServerCert != null)
                     {
@@ -61,18 +52,12 @@ namespace JMS.Applications
                         }
                         else
                         {
-                            isSsl = true;
-                            await client.AsSSLServerAsync(_webApiEnvironment.ServerCert, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _webApiEnvironment.SslProtocol);
+                            await client.AsSSLServerAsync(_webApiEnvironment.SslServerAuthenticationOptions);
                         }
                     }
 
                     while (true)
                     {
-                        if (isSsl)
-                        {
-                            _ = await client.BaseStream.ReadAsync(Memory<byte>.Empty, CancellationToken.None);
-                        }
-
                         await _httpRequestHandler.Handle(client, redirectHttps);
 
                         if (client.HasSocketException || !client.KeepAlive)

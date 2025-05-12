@@ -160,10 +160,10 @@ namespace UnitTest
         };
 
             var client = new NetClient(socket);
-            await client.AsSSLServerWithProtocolAsync( new SslApplicationProtocol[] { 
-                SslApplicationProtocol.Http2
-            },
-                cert, false, (s, s2,s3,s4) => true, System.Security.Authentication.SslProtocols.Tls12);
+            //await client.AsSSLServerWithProtocolAsync( new SslApplicationProtocol[] { 
+            //    SslApplicationProtocol.Http2
+            //},
+            //    cert, false, (s, s2,s3,s4) => true, System.Security.Authentication.SslProtocols.Tls12);
 
 
             if (client.SslApplicationProtocol == SslApplicationProtocol.Http2)

@@ -32,14 +32,7 @@ namespace JMS.Applications
             _manager = manager;
         }
 
-        bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            if (_sslConfiguration.AcceptCertHash != null && _sslConfiguration.AcceptCertHash.Length > 0 && _sslConfiguration.AcceptCertHash.Contains(certificate?.GetCertHashString()) == false)
-            {
-                return false;
-            }
-            return true;
-        }
+       
 
         async Task<GatewayCommand> GetRequestCommand(NetClient client)
         {
@@ -66,21 +59,13 @@ namespace JMS.Applications
             {
                 using (var client = new NetClient(socket))
                 {
-                    var isSsl = false;
-                    if (_sslConfiguration.ServerCert != null)
+                    if (_sslConfiguration.SslServerAuthenticationOptions != null)
                     {
-                        isSsl = true;
-                        await client.AsSSLServerAsync(_sslConfiguration.ServerCert, false, new RemoteCertificateValidationCallback(RemoteCertificateValidationCallback), _sslConfiguration.SslProtocol);
-
+                        await client.AsSSLServerAsync(_sslConfiguration.SslServerAuthenticationOptions);
                     }
 
                     while (true)
                     {
-                        if (isSsl)
-                        {
-                            _ = await client.BaseStream.ReadAsync(Memory<byte>.Empty, CancellationToken.None);
-                        }
-
                         var cmd = await GetRequestCommand(client);
                         if (cmd == null)
                         {
