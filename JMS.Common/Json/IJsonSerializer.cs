@@ -31,6 +31,7 @@ namespace JMS.Common.Json
         {
             _SerializerOptions = new JsonSerializerOptions()
             {
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
                 IncludeFields = true,
                 DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
                 NumberHandling = JsonNumberHandling.AllowReadingFromString,
