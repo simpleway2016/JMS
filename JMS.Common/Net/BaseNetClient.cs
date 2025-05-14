@@ -91,7 +91,7 @@ namespace JMS.Common
 
         int _closedFlag = 0;
 
-
+        public bool Disposed => _closedFlag != 0;
 
         public int ReadTimeout {
             get

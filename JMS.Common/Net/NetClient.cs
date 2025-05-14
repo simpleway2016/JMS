@@ -275,7 +275,7 @@ namespace JMS
             bool exited = false;
             Task.Run(() =>
             {
-                while (!exited)
+                while (!exited && !Disposed)
                 {
                     Thread.Sleep(10000);
                     try
