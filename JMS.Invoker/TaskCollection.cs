@@ -70,7 +70,8 @@ namespace JMS
             {
                 try
                 {
-                    _tasks[i].Task.Wait();
+                    if(!_tasks[i].Task.IsCanceled && !_tasks[i].Task.IsCompleted)
+                        _tasks[i].Task.Wait();
                 }
                 catch (Exception ex)
                 {
@@ -98,6 +99,7 @@ namespace JMS
             {
                 try
                 {
+                    if(!_tasks[i].Task.IsCanceled && !_tasks[i].Task.IsCompleted)
                     await _tasks[i].Task;
                 }
                 catch (Exception ex)

@@ -671,18 +671,18 @@ namespace JMS
            
         }
 
-        void waitTasks()
+        void waitTasks(bool throwError = true)
         {
             var errs = _transactionTasks.Wait();
-            if (errs != null && errs.Count > 0)
+            if (throwError && errs != null && errs.Count > 0)
                 throw errs[0];
 
         }
 
-        async Task waitTasksAsync()
+        async Task waitTasksAsync(bool throwError = true)
         {
             var errs = await _transactionTasks.WaitAsync();
-            if (errs != null && errs.Count > 0)
+            if (throwError && errs != null && errs.Count > 0)
                 throw errs[0];
 
         }
@@ -744,9 +744,9 @@ namespace JMS
             }
         }
 
-        async Task<List<TransactionException>> endRequestAsync(InvokeType invokeType)
+        async Task<List<TransactionException>> endRequestAsync(InvokeType invokeType, bool throwError = true)
         {
-            await waitTasksAsync();
+            await waitTasksAsync(throwError);
 
             if (_Connects.Count > 0)
             {
@@ -869,9 +869,9 @@ namespace JMS
 
         }
 
-        List<TransactionException> endRequest(InvokeType invokeType)
+        List<TransactionException> endRequest(InvokeType invokeType, bool throwError = true)
         {
-            waitTasks();
+            waitTasks(throwError);
 
             if (_Connects.Count > 0)
             {
@@ -1003,7 +1003,7 @@ namespace JMS
         {
             if (_SupportTransaction)
             {
-                var errors = endRequest(InvokeType.RollbackTranaction);
+                var errors = endRequest(InvokeType.RollbackTranaction , false);
                 if (errors != null && errors.Count > 0)
                     throw new TransactionArrayException(errors, "rollback transaction error");
 
@@ -1023,7 +1023,7 @@ namespace JMS
         {
             if (_SupportTransaction)
             {
-                var errors = await endRequestAsync(InvokeType.RollbackTranaction);
+                var errors = await endRequestAsync(InvokeType.RollbackTranaction, false);
                 if (errors != null && errors.Count > 0)
                     throw new TransactionArrayException(errors, "rollback transaction error");
 
@@ -1037,7 +1037,21 @@ namespace JMS
             _microServices.Clear();
             if (_SupportTransaction)
             {
-                RollbackTransaction();
+                try
+                {
+                    RollbackTransaction();
+                }
+                catch
+                {
+
+                }
+            }
+
+            if(_Connects.Count > 0)
+            {
+                foreach (var con in _Connects)
+                    con?.Dispose();
+                _Connects.Clear();
             }
 
         }
