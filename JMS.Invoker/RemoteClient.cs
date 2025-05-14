@@ -1043,16 +1043,14 @@ namespace JMS
                 }
                 catch
                 {
-
+                    if (_Connects.Count > 0)
+                    {
+                        foreach (var con in _Connects)
+                            con?.Dispose();
+                        _Connects.Clear();
+                    }
                 }
-            }
-
-            if(_Connects.Count > 0)
-            {
-                foreach (var con in _Connects)
-                    con?.Dispose();
-                _Connects.Clear();
-            }
+            }           
 
         }
     }
