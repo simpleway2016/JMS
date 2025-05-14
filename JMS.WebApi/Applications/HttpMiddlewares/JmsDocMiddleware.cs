@@ -196,10 +196,16 @@ namespace JMS.Applications.HttpMiddlewares
 
                         if(controllerInfo != null)
                         {
-                            lock (doneList)
+                            var outputContent = Convert.ToBase64String(GZipHelper.Compress(Encoding.UTF8.GetBytes(controllerInfo.ToJsonString())));
+                            var data = System.Text.Encoding.UTF8.GetBytes($"data: {outputContent}\n\n");
+                           
+                            if (writeLogger)
                             {
-                                var outputContent = Convert.ToBase64String(GZipHelper.Compress( Encoding.UTF8.GetBytes(controllerInfo.ToJsonString())));
-                                var data = System.Text.Encoding.UTF8.GetBytes($"data: {outputContent}\n\n");
+                                _logger.LogTrace($"{DateTime.Now.ToString("yyyy-MMMM-dd HH:mm:ss")} ==> output {service.ServiceLocation.Name}");
+                            }
+
+                            lock (doneList)
+                            {                              
                                 client.Write(data);
                             }
                         }
