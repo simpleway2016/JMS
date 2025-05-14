@@ -199,14 +199,16 @@ namespace JMS.Applications.HttpMiddlewares
                             var outputContent = Convert.ToBase64String(GZipHelper.Compress(Encoding.UTF8.GetBytes(controllerInfo.ToJsonString())));
                             var data = System.Text.Encoding.UTF8.GetBytes($"data: {outputContent}\n\n");
                            
-                            if (writeLogger)
-                            {
-                                _logger.LogTrace($"{DateTime.Now.ToString("yyyy-MMMM-dd HH:mm:ss")} ==> output {service.ServiceLocation.Name}");
-                            }
+                           
 
                             lock (doneList)
                             {                              
                                 client.Write(data);
+
+                                if (writeLogger)
+                                {
+                                    _logger.LogTrace($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} ==> output {service.ServiceLocation.Name}");
+                                }
                             }
                         }
                     }
