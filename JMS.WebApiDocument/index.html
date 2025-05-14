@@ -663,6 +663,8 @@
             var obj = JSON.parse(decodedText);
             obj.isHide = false;
 
+            console.info("收到:" + obj.name + " " + (new Date()).toLocaleTimeString());
+
             if (model.controllers.some(m => m.name == obj.name))
                 return;
 
