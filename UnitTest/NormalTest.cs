@@ -696,6 +696,41 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void GetServiceInfo()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
+                }
+               var info =  serviceClient.GetServiceInfo();
+
+
+            }
+
+         
+        }
+
+
+
+        [TestMethod]
         public void Commit()
         {
             UserInfoDbContext.Reset();
