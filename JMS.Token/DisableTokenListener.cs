@@ -35,11 +35,15 @@ namespace JMS.Token
         public static DisableTokenListener Listen(NetAddress serverAddr)
         {
             var key = (serverAddr.Address, serverAddr.Port);
-            return AllListeners.GetOrAdd(key, (k) => {
+            var listener = AllListeners.GetOrAdd(key, (k) => {
                 var obj = new DisableTokenListener(serverAddr);
-                obj.StartAsync();
+               
                 return obj;
             });
+
+            listener.StartAsync();
+
+            return listener;
         }
 
         public void AddDisableToken(string token,long expireTime)
@@ -47,11 +51,17 @@ namespace JMS.Token
             _disableTokens.TryAdd(token, expireTime);
         }
 
+        bool _started;
         async void StartAsync()
         {
+            if (_started)
+                return;
+
             if (string.IsNullOrEmpty(_netAddress.Address))
                 return;
 
+
+            _started = true;
             bool printedErr = false;
             while (true)
             {
