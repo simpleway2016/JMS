@@ -273,14 +273,15 @@ namespace JMS
         public void KeepHeartBeating(Func<object> cmdAction)
         {
             bool exited = false;
-            Task.Run(() =>
+            Task.Run(async () =>
             {
+                await Task.Delay(10000);
                 while (!exited && !Disposed)
-                {
-                    Thread.Sleep(10000);
+                {                  
                     try
                     {
                         this.WriteServiceData(cmdAction());
+                        await Task.Delay(10000);
                     }
                     catch (Exception ex)
                     {
