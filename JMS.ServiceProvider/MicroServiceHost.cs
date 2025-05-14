@@ -364,7 +364,7 @@ namespace JMS
             _GatewayConnector = ServiceProvider.GetService<IGatewayConnector>();
 
             _RequestReception = ServiceProvider.GetService<IRequestReception>();
-            _scheduleTaskManager.StartTasks();
+           
 
             var sslConfig = ServiceProvider.GetService<SSLConfiguration>();
 
@@ -425,6 +425,8 @@ namespace JMS
                 //重启服务器，为防止上次可能崩溃，网关还留有分布式锁，所以这里应该清空一下
                 ServiceProvider.GetService<IKeyLocker>().UnLockAllKeys();
             }
+
+            _scheduleTaskManager.StartTasks();
 
             if (ServiceProviderBuilded != null)
             {
