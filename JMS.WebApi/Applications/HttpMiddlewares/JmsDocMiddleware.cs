@@ -76,7 +76,7 @@ namespace JMS.Applications.HttpMiddlewares
         {
             client.KeepAlive = false;
 
-            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-cache\r\nContent-Type: text/event-stream\r\nConnection: keep-alive\r\n\r\n");
+            var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-cache\r\nX-Accel-buffering: no\r\nContent-Type: text/event-stream\r\nConnection: keep-alive\r\n\r\n");
             client.Write(data);
 
             List<ServiceDetail> doneList = new List<ServiceDetail>();
