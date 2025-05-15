@@ -651,7 +651,6 @@
             return;
         }
         try {
-            console.info("收到信息 " + (new Date()).toLocaleTimeString());
             // 使用atob()函数解码Base64字符串
             var decodedData = atob(event.data);
 
@@ -663,8 +662,6 @@
 
             var obj = JSON.parse(decodedText);
             obj.isHide = false;
-
-            console.info("收到:" + obj.name + " " + (new Date()).toLocaleTimeString());
 
             if (model.controllers.some(m => m.name == obj.name))
                 return;
@@ -680,7 +677,6 @@
                 }
             }
             model.controllers.splice(index, 0, obj);
-            console.info("处理完毕 " + (new Date()).toLocaleTimeString());
         } catch (e) {
             console.error(e);
         }
