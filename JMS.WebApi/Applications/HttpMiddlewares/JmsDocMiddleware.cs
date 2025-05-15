@@ -75,7 +75,7 @@ namespace JMS.Applications.HttpMiddlewares
         public async Task OutputSseData(NetClient client)
         {
             client.KeepAlive = false;
-
+            //X-Accel-buffering: no 头禁止nginx加速缓存，这样sse数据才能快速到达浏览器
             var data = System.Text.Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-cache\r\nX-Accel-buffering: no\r\nContent-Type: text/event-stream\r\nConnection: keep-alive\r\n\r\n");
             client.Write(data);
 
