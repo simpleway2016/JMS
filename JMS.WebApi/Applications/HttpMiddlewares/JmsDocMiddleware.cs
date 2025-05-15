@@ -204,11 +204,6 @@ namespace JMS.Applications.HttpMiddlewares
                             lock (doneList)
                             {                              
                                 client.Write(data);
-
-                                if (writeLogger)
-                                {
-                                    _logger.LogTrace($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} ==> output {service.ServiceLocation.Name}");
-                                }
                             }
                         }
                     }
