@@ -298,6 +298,7 @@ namespace JMS.Applications.HttpMiddlewares
                         }
                         queryString = HttpUtility.UrlDecode(queryString);
 
+                        //只有trace开启，logger才不是null
                         logger?.LogTrace($"访问{serviceName}.{method}  参数：{queryString}");
                         _parames = queryString.FromJson<object[]>();
                     }
@@ -317,6 +318,7 @@ namespace JMS.Applications.HttpMiddlewares
                     await client.ReadDataAsync(data, 0, inputContentLength);
                     var json = Encoding.UTF8.GetString(data);
 
+                    //只有trace开启，logger才不是null
                     logger?.LogTrace($"访问{serviceName}.{method}  参数：{json}");
                     if (_parames == null)
                     {
