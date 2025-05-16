@@ -2,6 +2,7 @@
 using JMS.Dtos;
 using JMS.ServerCore;
 using JMS.ServerCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -278,6 +279,7 @@ namespace JMS.Applications.HttpMiddlewares
         static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client, 
             string httpMethod, string requestPath, int inputContentLength, IDictionary<string, string> headers,ILogger? logger)
         {
+            bool writeLogger = logger.IsEnabled(LogLevel.Trace);
             //获取方法名
             try
             {
@@ -296,6 +298,10 @@ namespace JMS.Applications.HttpMiddlewares
                             queryString = queryString.Substring(0, index);
                         }
                         queryString = HttpUtility.UrlDecode(queryString);
+                        if (writeLogger)
+                        {
+                            logger.LogTrace($"访问{serviceName}.{method}  参数：{queryString}");
+                        }
                         _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(queryString);
                     }
                 }
@@ -313,7 +319,10 @@ namespace JMS.Applications.HttpMiddlewares
                     var data = new byte[inputContentLength];
                     await client.ReadDataAsync(data, 0, inputContentLength);
                     var json = Encoding.UTF8.GetString(data);
-
+                    if (writeLogger)
+                    {
+                        logger.LogTrace($"访问{serviceName}.{method}  参数：{json}");
+                    }
                     if (_parames == null)
                     {
                         _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
