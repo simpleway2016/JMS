@@ -49,11 +49,16 @@ namespace JMS.Common.Json
 
         public T Deserialize<T>(string jsonString)
         {
+            if(string.IsNullOrEmpty(jsonString))
+                return default(T);
             return System.Text.Json.JsonSerializer.Deserialize<T>(jsonString, _SerializerOptions);
         }
 
         public object Deserialize(string jsonString, Type targetType)
         {
+            if (string.IsNullOrEmpty(jsonString))
+                return null;
+
             return System.Text.Json.JsonSerializer.Deserialize(jsonString, targetType, _SerializerOptions);
         }
 
