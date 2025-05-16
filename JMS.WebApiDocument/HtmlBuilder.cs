@@ -76,6 +76,7 @@ namespace JMS.WebApiDocument
             var response = context.Response;
             response.Headers["Content-Type"] = "text/event-stream";
             response.Headers["Cache-Control"] = "no-cache";
+            response.Headers["X-Accel-buffering"] = "no";
             response.Headers["Connection"] = "keep-alive";
 
             int lockflag = 0;
