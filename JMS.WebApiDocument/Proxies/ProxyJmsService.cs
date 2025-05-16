@@ -33,12 +33,12 @@ namespace JMS.WebApiDocument.Proxies
                 if (postContent != null)
                 {
                     var json = Encoding.UTF8.GetString(postContent);
-                    _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
+                    _parames = json.FromJson<object[]>();
                 }
                 else if (context.Request.Query.ContainsKey("params"))
                 {
                     var json = context.Request.Query["params"].ToString();
-                    _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
+                    _parames = json.FromJson<object[]>();
                 }
 
                 //把所有请求头，填充到client

@@ -227,7 +227,7 @@ namespace JMS.Applications.HttpMiddlewares
                     var data = new byte[inputContentLength];
                     await client.ReadDataAsync(data, 0, inputContentLength);
                     var json = Encoding.UTF8.GetString(data);
-                    _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
+                    _parames = json.FromJson<object[]>();
                 }
 
                 using (var proxyRemoteClient = new RemoteClient(new[] { new NetAddress("127.0.0.1", ((IPEndPoint)client.Socket.LocalEndPoint).Port) }))

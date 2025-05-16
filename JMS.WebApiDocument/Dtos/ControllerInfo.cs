@@ -64,7 +64,7 @@ namespace JMS.WebApiDocument.Dtos
 
     public class DataTypeInfo
     {
-        [Newtonsoft.Json.JsonIgnore]
+        [System.Text.Json.Serialization.JsonIgnore]
         public Type type { get; set; }
         public string typeName { get; set; }
         public bool isEnum { get; set; }
