@@ -302,7 +302,7 @@ namespace JMS.Applications.HttpMiddlewares
                         {
                             logger.LogTrace($"访问{serviceName}.{method}  参数：{queryString}");
                         }
-                        _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(queryString);
+                        _parames = queryString.FromJson<object[]>();
                     }
                 }
                 
@@ -325,7 +325,7 @@ namespace JMS.Applications.HttpMiddlewares
                     }
                     if (_parames == null)
                     {
-                        _parames = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(json);
+                        _parames = json.FromJson<object[]>();
                     }
                 }
 
