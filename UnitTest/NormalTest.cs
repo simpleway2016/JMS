@@ -1315,6 +1315,59 @@ Content-Length: 0
         }
 
         [TestMethod]
+        public void AutoRollbackForDispose()
+        {
+            UserInfoDbContext.Reset();
+            StartGateway();
+            StartUserInfoServiceHost();
+            StartCrashServiceHost(_CrashServicePort);
+
+            //等待网关就绪
+            WaitGatewayReady(_gateWayPort);
+
+            var gateways = new NetAddress[] {
+                   new NetAddress{
+                        Address = "localhost",
+                        Port = _gateWayPort
+                   }
+                };
+
+            using (var client = new RemoteClient(gateways))
+            {
+                var serviceClient = client.TryGetMicroService("UserInfoService");
+                while (serviceClient == null)
+                {
+                    Thread.Sleep(10);
+                    serviceClient = client.TryGetMicroService("UserInfoService");
+                }
+
+                var crashService = client.TryGetMicroService("CrashService");
+                while (crashService == null)
+                {
+                    Thread.Sleep(10);
+                    crashService = client.TryGetMicroService("CrashService");
+                }
+
+                client.BeginTransaction();
+                serviceClient.Invoke("SetUserName", "Jack");
+                serviceClient.Invoke("SetAge", 28);
+
+                crashService.InvokeAsync("SetText", "Tom");
+
+                serviceClient.InvokeAsync("SetFather", "Tom");
+                serviceClient.InvokeAsync("SetMather", "Lucy");
+                serviceClient.InvokeAsync("BeError");//这个方法调用会有异常
+            }
+
+
+            if (UserInfoDbContext.FinallyUserName != null ||
+                UserInfoDbContext.FinallyAge != 0 ||
+                UserInfoDbContext.FinallyFather != null ||
+                UserInfoDbContext.FinallyMather != null)
+                throw new Exception("结果不正确");
+        }
+
+        [TestMethod]
         public void RollbackForHttpResultError()
         {
             UserInfoDbContext.Reset();
