@@ -21,11 +21,11 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
         ConcurrentDictionary<string, DomainSslCertGenerator> _Generators = new ConcurrentDictionary<string, DomainSslCertGenerator>();
         public SslCertGenerator(ILogger<SslCertGenerator> logger)
         {
-            this._logger = logger; 
-           
+            this._logger = logger;
+
         }
 
-        public void OnCertBuilded(string domain,X509Certificate2 cert, string path,string password)
+        public void OnCertBuilded(string domain, X509Certificate2 cert, string path, string password)
         {
             try
             {
@@ -51,10 +51,10 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
         {
             _httpServers[httpServer] = true;
 
-            var generator = _Generators.GetOrAdd(httpServer.Config.SSL.Acme.Domain, domain => new DomainSslCertGenerator(this , httpServer.Config.SSL.Acme,_logger));
+            var generator = _Generators.GetOrAdd(httpServer.Config.SSL.Acme.Domain, domain => new DomainSslCertGenerator(this, httpServer.Config.SSL.Acme, _logger));
             generator.Run();
         }
-        public void RemoveRequest(HttpServer httpServer,string domain)
+        public void RemoveRequest(HttpServer httpServer, string domain)
         {
             if (_httpServers.TryRemove(httpServer, out _))
             {
@@ -82,16 +82,16 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             }
         }
 
-      
+
     }
 
-    class DomainSslCertGenerator:IDisposable
+    class DomainSslCertGenerator : IDisposable
     {
         private readonly SslCertGenerator _sslCertGenerator;
         private readonly AcmeConfig _acmeConfig;
         ILogger _logger;
         bool _isStop;
-        public DomainSslCertGenerator(SslCertGenerator sslCertGenerator,AcmeConfig acmeConfig, ILogger logger)
+        public DomainSslCertGenerator(SslCertGenerator sslCertGenerator, AcmeConfig acmeConfig, ILogger logger)
         {
             this._sslCertGenerator = sslCertGenerator;
             this._acmeConfig = acmeConfig;
@@ -108,12 +108,9 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             generate();
         }
 
-     
-
         async void generate()
         {
             var path = $"${_acmeConfig.Domain}.pfx";
-            var path_expire = $"${_acmeConfig.Domain}.pfx2";
 
             var services = new ServiceCollection();
             services.AddCertificateGenerator();
@@ -129,39 +126,36 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             using var serviceProvider = services.BuildServiceProvider();
 
             _logger.LogInformation($"开始载入或自动生成ssl证书，域名：{_acmeConfig.Domain} 提前{_acmeConfig.PreDays}天续期");
-            X509Certificate2 cert;
+            X509Certificate2 cert = null;
             var certificateGenerator = serviceProvider.GetRequiredService<ICertificateGenerator>();
-            bool isFirstLoad = true;
+            if (File.Exists(path))
+            {
+                try
+                {
+                    cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
+                    if (cert.NotAfter.ToUniversalTime() > DateTime.UtcNow.AddDays(_acmeConfig.PreDays))
+                    {
+                        _logger.LogInformation($"域名：{_acmeConfig.Domain} 使用已有证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
+                        _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, _acmeConfig.Password);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "");
+                    File.Delete(path);
+                }
+            }
+
             while (!_isStop)
             {
                 try
                 {
-                    if (File.Exists(path) && File.Exists(path_expire))
-                    {                       
-                        if (DateTime.TryParse(File.ReadAllText(path_expire, Encoding.UTF8), out DateTime expireTime))
+                    if (cert != null)
+                    {
+                        if (cert.NotAfter.ToUniversalTime() > DateTime.UtcNow.AddDays(_acmeConfig.PreDays))
                         {
-                            if (expireTime.ToUniversalTime() > DateTime.UtcNow.AddDays(_acmeConfig.PreDays))
-                            {
-                                if (isFirstLoad)
-                                {
-                                    try
-                                    {
-                                        cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogError(ex, "");
-                                        File.Delete(path);
-                                        continue;
-                                    }
-                                    //有效期大于5天
-                                    _logger.LogInformation($"域名：{_acmeConfig.Domain} 使用已有证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
-                                    _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert,path, _acmeConfig.Password);
-                                    isFirstLoad = false;
-                                }
-                                await Task.Delay(60000);
-                                continue;
-                            }
+                            await Task.Delay(60000);
+                            continue;
                         }
                     }
 
@@ -174,13 +168,11 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                         Organization = "Certes",
                         OrganizationUnit = "Dev",
                     }, path, _acmeConfig.Password);
-                   
+
                     cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
-                    File.WriteAllText(path_expire, cert.NotAfter.ToUniversalTime().ToString("R"), Encoding.UTF8);
 
                     _logger.LogInformation($"域名：{_acmeConfig.Domain} 成功生成证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
                     _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, _acmeConfig.Password);
-                    isFirstLoad = false;
                 }
                 catch (Exception ex)
                 {
