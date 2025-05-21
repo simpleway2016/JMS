@@ -105,13 +105,6 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             generate();
         }
 
-
-        async void disposeCert(X509Certificate2 cert)
-        {
-            await Task.Delay(3000);
-            cert?.Dispose();
-        }
-
         async void generate()
         {
             var path = $"${_acmeConfig.Domain}.pfx";
@@ -173,7 +166,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                         OrganizationUnit = "Dev",
                     }, path, _acmeConfig.Password);
 
-                    disposeCert(cert);
+                    cert?.Dispose();
                     cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
 
                     _logger.LogInformation($"域名：{_acmeConfig.Domain} 成功生成证书{path}，有效期到：{cert.NotAfter.ToString("yyyy-MM-dd HH:mm")}");
