@@ -25,17 +25,14 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
 
         }
 
-        public void OnCertBuilded(string domain, X509Certificate2 cert, string path, string password)
+        public void OnCertBuilded(string domain,string path, string password)
         {
             try
             {
                 var matchServers = _httpServers.Where(m => m.Key.Config.SSL.Acme.Domain == domain).Select(m => m.Key).ToArray();
                 foreach (var matchServer in matchServers)
                 {
-                    if (matchServer.Certificate == null || cert.NotAfter.ToUniversalTime() > matchServer.Certificate.NotAfter.ToUniversalTime())
-                    {
-                        matchServer.Certificate = X509CertificateLoader.LoadPkcs12FromFile(path, password);
-                    }
+                    matchServer.Certificate = X509CertificateLoader.LoadPkcs12FromFile(path, password);
                 }
             }
             catch (Exception ex)
@@ -133,7 +130,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                     if (cert.NotAfter.ToUniversalTime() > DateTime.UtcNow.AddDays(_acmeConfig.PreDays))
                     {
                         _logger.LogInformation($"域名：{_acmeConfig.Domain} 使用已有证书{path}，有效期到：{cert.NotAfter.ToString("yyyy-MM-dd HH:mm")}");
-                        _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, _acmeConfig.Password);
+                        _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, path, _acmeConfig.Password);
                     }
                 }
                 catch (Exception ex)
@@ -170,7 +167,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                     cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
 
                     _logger.LogInformation($"域名：{_acmeConfig.Domain} 成功生成证书{path}，有效期到：{cert.NotAfter.ToString("yyyy-MM-dd HH:mm")}");
-                    _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, _acmeConfig.Password);
+                    _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, path, _acmeConfig.Password);
                 }
                 catch (Exception ex)
                 {
