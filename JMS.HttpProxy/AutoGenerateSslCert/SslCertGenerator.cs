@@ -37,9 +37,6 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                         matchServer.Certificate = X509CertificateLoader.LoadPkcs12FromFile(path, password);
                     }
                 }
-
-                //防止多个server同时用同一个证书对象
-                cert.Dispose();
             }
             catch (Exception ex)
             {
@@ -108,6 +105,13 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             generate();
         }
 
+
+        async void disposeCert(X509Certificate2 cert)
+        {
+            await Task.Delay(3000);
+            cert?.Dispose();
+        }
+
         async void generate()
         {
             var path = $"${_acmeConfig.Domain}.pfx";
@@ -169,6 +173,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                         OrganizationUnit = "Dev",
                     }, path, _acmeConfig.Password);
 
+                    disposeCert(cert);
                     cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
 
                     _logger.LogInformation($"域名：{_acmeConfig.Domain} 成功生成证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
