@@ -139,7 +139,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                     cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
                     if (cert.NotAfter.ToUniversalTime() > DateTime.UtcNow.AddDays(_acmeConfig.PreDays))
                     {
-                        _logger.LogInformation($"域名：{_acmeConfig.Domain} 使用已有证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
+                        _logger.LogInformation($"域名：{_acmeConfig.Domain} 使用已有证书{path}，有效期到：{cert.NotAfter.ToString("yyyy-MM-dd HH:mm")}");
                         _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, _acmeConfig.Password);
                     }
                 }
@@ -176,7 +176,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
                     disposeCert(cert);
                     cert = X509CertificateLoader.LoadPkcs12FromFile(path, _acmeConfig.Password);
 
-                    _logger.LogInformation($"域名：{_acmeConfig.Domain} 成功生成证书{path}，有效期到：{cert.NotAfter.ToLongDateString()}");
+                    _logger.LogInformation($"域名：{_acmeConfig.Domain} 成功生成证书{path}，有效期到：{cert.NotAfter.ToString("yyyy-MM-dd HH:mm")}");
                     _sslCertGenerator.OnCertBuilded(_acmeConfig.Domain, cert, path, _acmeConfig.Password);
                 }
                 catch (Exception ex)
