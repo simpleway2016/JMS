@@ -81,11 +81,11 @@ namespace JMS.ServiceProvider.AspNetCore
             {
                 while (true)
                 {
-                    cmd = await netClient.ReadServiceDataAsync();
+                    cmd = await netClient.ReadServiceDataAsync().ConfigureAwait(false);
                     switch (cmd)
                     {
                         case "invoke":
-                            return await netClient.ReadServiceDataAsync();
+                            return await netClient.ReadServiceDataAsync().ConfigureAwait(false);
                         case "commit":
                             onCommit( transactionDelegateList, gatewayConnector, faildCommitBuilder, netClient, logger);
                             return null;
@@ -105,7 +105,7 @@ namespace JMS.ServiceProvider.AspNetCore
                 {
                     Thread.Sleep(2000);//延迟2秒，问问网关事务提交情况
                 }
-                if (checkedHealth && await gatewayConnector.CheckTransactionAsync(this.TransactionId))
+                if (checkedHealth && await gatewayConnector.CheckTransactionAsync(this.TransactionId).ConfigureAwait(false))
                 {
                     //网关告知事务已成功，需要提交事务
                     if (transactionDelegateList == null || _storageEngine == null || transactionDelegateList.Any(m => m.StorageEngine == _storageEngine) == false)

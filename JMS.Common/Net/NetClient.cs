@@ -94,7 +94,7 @@ namespace JMS
             {
                 while (true)
                 {
-                    var readed = await this.Socket.ReceiveAsync(data, SocketFlags.Peek);
+                    var readed = await this.Socket.ReceiveAsync(data, SocketFlags.Peek).ConfigureAwait(false);
                     if (readed <= 0)
                         return null;
 
@@ -275,13 +275,13 @@ namespace JMS
             bool exited = false;
             Task.Run(async () =>
             {
-                await Task.Delay(10000);
+                await Task.Delay(10000).ConfigureAwait(false);
                 while (!exited && !Disposed)
                 {                  
                     try
                     {
                         this.WriteServiceData(cmdAction());
-                        await Task.Delay(10000);
+                        await Task.Delay(10000).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -317,7 +317,7 @@ namespace JMS
 
             if (len > MaxCommandSize)
                 throw new SizeLimitException("command size is too big");
-            var ret = await this.PipeReader.ReadAtLeastAsync(len);
+            var ret = await this.PipeReader.ReadAtLeastAsync(len).ConfigureAwait(false);
             if (ret.IsCompleted && ret.Buffer.Length < len)
                 throw new SocketException();
 
@@ -369,7 +369,7 @@ namespace JMS
             var data = ArrayPool<byte>.Shared.Rent(4);
             try
             {
-                await this.ReadDataAsync(data, 0, 4);
+                await this.ReadDataAsync(data, 0, 4).ConfigureAwait(false);
                 return BitConverter.ToInt32(data);
             }
             finally
@@ -388,7 +388,7 @@ namespace JMS
             var data = ArrayPool<byte>.Shared.Rent(1);
             try
             {
-                await this.ReadDataAsync(data, 0, 1);
+                await this.ReadDataAsync(data, 0, 1).ConfigureAwait(false);
                 return data[0] == 1;
             }
             finally
@@ -416,7 +416,7 @@ namespace JMS
             var data = ArrayPool<byte>.Shared.Rent(8);
             try
             {
-                await this.ReadDataAsync(data, 0, 8);
+                await this.ReadDataAsync(data, 0, 8).ConfigureAwait(false);
                 return BitConverter.ToInt64(data);
             }
             finally
@@ -439,7 +439,7 @@ namespace JMS
         /// <returns></returns>
         public virtual async Task ReadDataAsync(byte[] data, int offset, int count)
         {
-            var ret = await this.PipeReader.ReadAtLeastAsync(count);
+            var ret = await this.PipeReader.ReadAtLeastAsync(count).ConfigureAwait(false);
             if (ret.IsCompleted && ret.Buffer.Length < count)
                 throw new SocketException();
 
@@ -485,7 +485,7 @@ namespace JMS
         {
             try
             {
-                var ret = await this.PipeReader.ReadAtLeastAsync(4);
+                var ret = await this.PipeReader.ReadAtLeastAsync(4).ConfigureAwait(false);
                 if (ret.IsCompleted && ret.Buffer.Length < 4)
                     throw new SocketException();
 
@@ -493,7 +493,7 @@ namespace JMS
                 var flag = BitConverter.ToInt32(buffer.First.Span);
                 this.PipeReader.AdvanceTo(buffer.End);
 
-                return await readBytesByFlagAsync(flag);
+                return await readBytesByFlagAsync(flag).ConfigureAwait(false);
             }
             catch (System.IO.IOException ex)
             {
@@ -513,7 +513,7 @@ namespace JMS
 
         public async Task<string> ReadServiceDataAsync()
         {
-            var data = await ReadServiceDataBytesAsync();
+            var data = await ReadServiceDataBytesAsync().ConfigureAwait(false);
             if (data.Length == 0)
                 return null;
             return Encoding.UTF8.GetString(data);
@@ -538,7 +538,7 @@ namespace JMS
 
         public async Task<T> ReadServiceObjectAsync<T>()
         {
-            var datas = await ReadServiceDataBytesAsync();
+            var datas = await ReadServiceDataBytesAsync().ConfigureAwait(false);
             string str = Encoding.UTF8.GetString(datas);
             try
             {
@@ -659,7 +659,7 @@ namespace JMS
                 using (var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(NetClientPool.RELEASESECONDS)))
                 {
                     //不要读取Memory<byte>.Empty，因为会返回0，无法判断是否网络断开
-                    var count = await this.Socket.ReceiveAsync(CheckBs, SocketFlags.Peek, cancellation.Token);
+                    var count = await this.Socket.ReceiveAsync(CheckBs, SocketFlags.Peek, cancellation.Token).ConfigureAwait(false);
                     if (count == 0)
                     {
                         this.Dispose();

@@ -168,7 +168,7 @@ Accept-Language: zh-CN,zh;q=0.9
         }
         public async Task<T> InvokeAsync<T>(string method, RemoteClient tran, params object[] parameters)
         {
-            var ret = await InvokeExAsync<T>(method, tran, parameters);
+            var ret = await InvokeExAsync<T>(method, tran, parameters).ConfigureAwait(false);
             return ret.Data;
         }
 
@@ -193,7 +193,7 @@ Accept-Language: zh-CN,zh;q=0.9
                         return client.AsSSLClientAsync(uri.Host, new System.Net.Security.RemoteCertificateValidationCallback((a, b, c, d) => true));
                     }
                     return Task.CompletedTask;
-                });
+                }).ConfigureAwait(false);
                 isNewClient = true;
             }
             try
@@ -215,7 +215,7 @@ Accept-Language: zh-CN,zh;q=0.9
 
                 var originalSize = _client.MaxCommandSize;
                 _client.MaxCommandSize = int.MaxValue;
-                var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>();
+                var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>().ConfigureAwait(false); 
                 _client.MaxCommandSize = originalSize;
 
                 if (result.Success == false)
@@ -289,7 +289,7 @@ Accept-Language: zh-CN,zh;q=0.9
         public async Task<InvokeResult> GoReadyCommitAsync(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("ready"));
-            var ret = await _client.ReadServiceDataAsync();
+            var ret = await _client.ReadServiceDataAsync().ConfigureAwait(false);
             if (ret == "ok")
             {
                 return new InvokeResult
@@ -329,7 +329,7 @@ Accept-Language: zh-CN,zh;q=0.9
         public async Task<InvokeResult> GoCommitAsync(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("commit"));
-            var ret = await _client.ReadServiceDataAsync();
+            var ret = await _client.ReadServiceDataAsync().ConfigureAwait(false);
             if (ret == "ok")
             {
                 return new InvokeResult
@@ -369,7 +369,7 @@ Accept-Language: zh-CN,zh;q=0.9
         public async Task<InvokeResult> GoRollbackAsync(RemoteClient tran)
         {
             _client.WriteServiceData(Encoding.UTF8.GetBytes("rollback"));
-            var ret = await _client.ReadServiceDataAsync();
+            var ret = await _client.ReadServiceDataAsync().ConfigureAwait(false);
             if (ret == "ok")
             {
                 return new InvokeResult

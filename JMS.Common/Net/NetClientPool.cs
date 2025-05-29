@@ -81,11 +81,11 @@ namespace JMS
             if (freeitem == null)
             {
                 freeitem = new ProxyClient(proxy);
-                await freeitem.ConnectAsync(addr);
+                await freeitem.ConnectAsync(addr).ConfigureAwait(false);
                 freeitem.KeepAlive = true;
                 if (newClientCallback != null)
                 {
-                    await newClientCallback(freeitem);
+                    await newClientCallback(freeitem).ConfigureAwait(false);
                 }
                 CreatedNewClient?.Invoke(null, freeitem);
             }

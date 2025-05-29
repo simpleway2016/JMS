@@ -73,7 +73,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
                     while (true)
                     {
-                        var parametersStrArr = (await netClient.ReadServiceDataAsync()).FromJson<string[]>();
+                        var parametersStrArr = (await netClient.ReadServiceDataAsync().ConfigureAwait(false)).FromJson<string[]>();
                         var controller = controllerFactory.Create(requestPath, context.RequestServices, out ControllerActionDescriptor desc);
                         if (desc == null)
                         {
@@ -94,7 +94,7 @@ namespace JMS.ServiceProvider.AspNetCore
                         {
                             try
                             {
-                                var authRet = await context.AuthenticateAsync(author.AuthenticationSchemes);
+                                var authRet = await context.AuthenticateAsync(author.AuthenticationSchemes).ConfigureAwait(false);
 
                                 if (authRet.Succeeded == false)
                                 {
@@ -338,7 +338,7 @@ namespace JMS.ServiceProvider.AspNetCore
 
                                 var failbuilder = app.ApplicationServices.GetService<ApiFaildCommitBuilder>();
                                 var gatewayConnector = app.ApplicationServices.GetService<IGatewayConnector>();
-                                var nextRequestPath = await tranDelegate.WaitForCommandAsync(tranDelegateList, gatewayConnector, failbuilder, netClient, app.ApplicationServices.GetService<ILogger>());
+                                var nextRequestPath = await tranDelegate.WaitForCommandAsync(tranDelegateList, gatewayConnector, failbuilder, netClient, app.ApplicationServices.GetService<ILogger>()).ConfigureAwait(false);
 
                                 if (nextRequestPath != null)
                                 {

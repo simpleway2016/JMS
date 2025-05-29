@@ -225,7 +225,7 @@ namespace JMS
         {
             if (GatewayAddress == null)
             {
-                await findMasterGatewayAsync();
+                await findMasterGatewayAsync().ConfigureAwait(false);
             }
             var client = NetClientPool.CreateClient(this.ProxyAddress, GatewayAddress);
             try
@@ -236,7 +236,7 @@ namespace JMS
                     Content = serviceName,
                     Header = this.GetCommandHeader(),
                 });
-                var serviceLocations = await client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>();
+                var serviceLocations = await client.ReadServiceObjectAsync<RegisterServiceRunningInfo[]>().ConfigureAwait(false);
                 NetClientPool.AddClientToPool(client);
                 return serviceLocations;
             }
@@ -290,10 +290,10 @@ namespace JMS
 
             if (GatewayAddress == null)
             {
-                await findMasterGatewayAsync();
+                await findMasterGatewayAsync().ConfigureAwait(false);
             }
 
-            var infos = await ListMicroServiceAsync(serviceName);
+            var infos = await ListMicroServiceAsync(serviceName).ConfigureAwait(false);
             var ret = new RegisterServiceLocation[infos.Length];
             for (int i = 0; i < infos.Length; i++)
             {
@@ -427,7 +427,7 @@ namespace JMS
         /// <returns></returns>
         public virtual async Task<T> GetMicroServiceAsync<T>(ClientServiceDetail registerServiceLocation = null) where T : IImplInvoker
         {
-            var ret = await TryGetMicroServiceAsync<T>(registerServiceLocation);
+            var ret = await TryGetMicroServiceAsync<T>(registerServiceLocation).ConfigureAwait(false);
             if (ret == null)
             {
                 var classType = typeof(T);
@@ -492,7 +492,7 @@ namespace JMS
         {
             if (GatewayAddress == null && registerServiceLocation == null)
             {
-                await findMasterGatewayAsync();
+                await findMasterGatewayAsync().ConfigureAwait(false);
             }
 
             var classType = typeof(T);
@@ -505,7 +505,7 @@ namespace JMS
                 try
                 {
                     var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), att.ServiceName);
-                    if (await invoker.InitAsync(registerServiceLocation))
+                    if (await invoker.InitAsync(registerServiceLocation).ConfigureAwait(false))
                     {
                         
                         var ret = (T)Activator.CreateInstance(classType, new object[] { invoker });
@@ -521,7 +521,7 @@ namespace JMS
                     {
                         _masterGatewayProvider.RemoveMaster();
                     }
-                    await findMasterGatewayAsync();
+                    await findMasterGatewayAsync().ConfigureAwait(false);
                 }
             }
             return default(T);
@@ -550,7 +550,7 @@ namespace JMS
         /// <returns></returns>
         public virtual async Task<IMicroService> GetMicroServiceAsync(string serviceName, ClientServiceDetail registerServiceLocation = null)
         {
-            var ret = await TryGetMicroServiceAsync(serviceName, registerServiceLocation);
+            var ret = await TryGetMicroServiceAsync(serviceName, registerServiceLocation).ConfigureAwait(false);
             if (ret == null)
                 throw new MissServiceException($"找不到微服务“{serviceName}”");
 
@@ -606,14 +606,14 @@ namespace JMS
         {
             if (GatewayAddress == null && registerServiceLocation == null)
             {
-                await findMasterGatewayAsync();
+                await findMasterGatewayAsync().ConfigureAwait(false);
             }
             for (int i = 0; i < 2; i++)
             {
                 try
                 {
                     var invoker = new Invoker(this, _masterGatewayProvider?.GetMicroServiceProvider(), serviceName);
-                    if (await invoker.InitAsync(registerServiceLocation))
+                    if (await invoker.InitAsync(registerServiceLocation).ConfigureAwait(false))
                     {
                         _microServices.Add(invoker);
                         return invoker;
@@ -627,7 +627,7 @@ namespace JMS
                     {
                         _masterGatewayProvider.RemoveMaster();
                     }
-                    await findMasterGatewayAsync();
+                    await findMasterGatewayAsync().ConfigureAwait(false);
                 }
             }
 
@@ -681,7 +681,7 @@ namespace JMS
 
         async Task waitTasksAsync(bool throwError = true)
         {
-            var errs = await _transactionTasks.WaitAsync();
+            var errs = await _transactionTasks.WaitAsync().ConfigureAwait(false);
             if (throwError && errs != null && errs.Count > 0)
                 throw errs[0];
 
@@ -735,7 +735,7 @@ namespace JMS
         {
             if (_SupportTransaction)
             {
-                var errors = await endRequestAsync(InvokeType.CommitTranaction);
+                var errors = await endRequestAsync(InvokeType.CommitTranaction).ConfigureAwait(false);
 
                 if (errors != null && errors.Count > 0)
                     throw new TransactionArrayException(errors, $"有{errors.Count}个服务提交事务失败");
@@ -746,7 +746,7 @@ namespace JMS
 
         async Task<List<TransactionException>> endRequestAsync(InvokeType invokeType, bool throwError = true)
         {
-            await waitTasksAsync(throwError);
+            await waitTasksAsync(throwError).ConfigureAwait(false);
 
             if (_Connects.Count > 0)
             {
@@ -762,7 +762,7 @@ namespace JMS
 
                         try
                         {
-                            var ret = await connect.GoReadyCommitAsync(this);
+                            var ret = await connect.GoReadyCommitAsync(this).ConfigureAwait(false);
                             if (ret.Success == false)
                             {
                                 //有人不同意提交事务
@@ -789,7 +789,7 @@ namespace JMS
 
                         try
                         {
-                            await connect.GoRollbackAsync(this);
+                            await connect.GoRollbackAsync(this).ConfigureAwait(false);
                             connect.AddClientToPool();
                         }
                         catch
@@ -820,7 +820,7 @@ namespace JMS
 
                         try
                         {
-                            var ret = invokeType == InvokeType.CommitTranaction ? await connect.GoCommitAsync(this) : await connect.GoRollbackAsync(this);
+                            var ret = invokeType == InvokeType.CommitTranaction ? await connect.GoCommitAsync(this).ConfigureAwait(false) : await connect.GoRollbackAsync(this).ConfigureAwait(false);
                             if (ret.Success == false)
                             {
                                 errors.Add(new TransactionException(connect.InvokingInfo, ret.Error));
@@ -1023,7 +1023,7 @@ namespace JMS
         {
             if (_SupportTransaction)
             {
-                var errors = await endRequestAsync(InvokeType.RollbackTranaction, false);
+                var errors = await endRequestAsync(InvokeType.RollbackTranaction, false).ConfigureAwait(false);
                 if (errors != null && errors.Count > 0)
                     throw new TransactionArrayException(errors, "rollback transaction error");
 

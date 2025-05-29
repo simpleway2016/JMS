@@ -77,7 +77,7 @@ namespace JMS
 
         public async Task<bool> TryLockAsync(string key)
         {
-            if(await _keyLocker.TryLockAsync(this.TransactionId, key))
+            if(await _keyLocker.TryLockAsync(this.TransactionId, key).ConfigureAwait(false))
             {
                 _lockedKeys.TryAdd(key, true);
                 return true;
@@ -98,7 +98,7 @@ namespace JMS
 
         public async Task<bool> TryUnLockAsync(string key)
         {
-            if (await _keyLocker.TryUnLockAsync(this.TransactionId, key))
+            if (await _keyLocker.TryUnLockAsync(this.TransactionId, key).ConfigureAwait(false))
             {
                 _lockedKeys.TryRemove(key, out bool o);
                 return true;
@@ -120,7 +120,7 @@ namespace JMS
 
         public async Task UnLockAnywayAsync(string key)
         {
-            await _keyLocker.UnLockAnywayAsync(key);
+            await _keyLocker.UnLockAnywayAsync(key).ConfigureAwait(false);
             _lockedKeys.TryRemove(key, out bool o);
         }
     }

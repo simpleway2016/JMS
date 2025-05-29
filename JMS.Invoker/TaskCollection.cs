@@ -100,7 +100,7 @@ namespace JMS
                 try
                 {
                     if(!_tasks[i].Task.IsCanceled && !_tasks[i].Task.IsCompleted)
-                    await _tasks[i].Task;
+                    await _tasks[i].Task.ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

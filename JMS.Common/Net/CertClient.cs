@@ -54,7 +54,7 @@ namespace JMS
 
         public override async Task ConnectAsync(NetAddress addr)
         {
-            await base.ConnectAsync(addr);
+            await base.ConnectAsync(addr).ConfigureAwait(false);
             this.AfterConnect();
             if (addr.UseSsl)
             {
@@ -65,11 +65,11 @@ namespace JMS
                     {
                         X509CertificateCollection certs = new X509CertificateCollection();
                         certs.Add(addr.Certificate);
-                        await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "", certs, addr.SslProtocol ?? System.Security.Authentication.SslProtocols.None, false);
+                        await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "", certs, addr.SslProtocol ?? System.Security.Authentication.SslProtocols.None, false).ConfigureAwait(false);
                     }
                     else
                     {
-                        await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "");
+                        await sslStream.AuthenticateAsClientAsync(addr.CertDomain ?? "").ConfigureAwait(false);
                     }
                 }
                 catch (Exception)

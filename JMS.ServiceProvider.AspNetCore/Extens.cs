@@ -118,9 +118,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 ConnectionCounter.OnConnect();
                 try
                 {
-                    if (await HttpHandler.Handle(app, context) == false)
+                    if (await HttpHandler.Handle(app, context).ConfigureAwait(false) == false)
                     {
-                        await next();
+                        await next().ConfigureAwait(false);
                     }
                 }
                 catch (Exception)

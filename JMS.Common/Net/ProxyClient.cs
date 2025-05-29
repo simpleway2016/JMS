@@ -48,11 +48,11 @@ namespace JMS
             _netaddr = addr;
             if (this.ProxyAddress != null)
             {              
-                await base.ConnectAsync(this.ProxyAddress);               
+                await base.ConnectAsync(this.ProxyAddress).ConfigureAwait(false);
             }
             else
             {
-                await base.ConnectAsync(addr);
+                await base.ConnectAsync(addr).ConfigureAwait(false);
             }
         }
 

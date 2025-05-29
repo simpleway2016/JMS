@@ -32,7 +32,7 @@ namespace JMS
             _proxyAddr = proxyAddr;
         }
 
-        public async Task<NetAddress> GetMasterAsync()
+        public Task<NetAddress> GetMasterAsync()
         {            
             var taskCompletionSource = new TaskCompletionSource<NetAddress>();
             var totalCount = _gatewayAddrs.Length;
@@ -46,7 +46,7 @@ namespace JMS
 
             }
 
-            return await taskCompletionSource.Task;
+            return taskCompletionSource.Task;
         }
 
 
@@ -56,13 +56,13 @@ namespace JMS
             NetClient client = null;
             try
             {
-                client = await NetClientPool.CreateClientAsync(_proxyAddr, addr);
+                client = await NetClientPool.CreateClientAsync(_proxyAddr, addr).ConfigureAwait(false);
                 client.ReadTimeout = _timeout;
                 client.WriteServiceData(new GatewayCommand
                 {
                     Type = (int)CommandType.FindMaster
                 });
-                var ret = await client.ReadServiceObjectAsync<InvokeResult<FindMasterResult>>();
+                var ret = await client.ReadServiceObjectAsync<InvokeResult<FindMasterResult>>().ConfigureAwait(false);
                 NetClientPool.AddClientToPool(client);
 
                 if (ret.Success == true)

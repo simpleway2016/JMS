@@ -131,7 +131,7 @@ namespace JMS
         }
         public async Task<T> InvokeAsync<T>(string method, RemoteClient tran, params object[] parameters)
         {
-            var ret = await InvokeExAsync<T>(method, tran, parameters);
+            var ret = await InvokeExAsync<T>(method, tran, parameters).ConfigureAwait(false);
             return ret.Data;
         }
 
@@ -148,7 +148,7 @@ namespace JMS
 
             if (_client == null)
             {
-                _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress });
+                _client = await NetClientPool.CreateClientAsync(tran.ProxyAddress, new NetAddress(InvokingInfo.ServiceLocation.ServiceAddress, InvokingInfo.ServiceLocation.Port, InvokingInfo.ServiceLocation.UseSsl) { Certificate = tran.ServiceClientCertificate, CertDomain = InvokingInfo.ServiceLocation.ServiceAddress }).ConfigureAwait(false);
             }
 
             try
@@ -168,7 +168,7 @@ namespace JMS
 
                 var originalSize = _client.MaxCommandSize;
                 _client.MaxCommandSize = int.MaxValue;
-                var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>();
+                var result = await _client.ReadServiceObjectAsync<InvokeResult<T>>().ConfigureAwait(false);
                 _client.MaxCommandSize = originalSize;
 
                 if (result.Success == false)

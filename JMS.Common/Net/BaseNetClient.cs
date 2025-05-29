@@ -261,7 +261,7 @@ namespace JMS.Common
             }
             try
             {
-                await stream.AuthenticateAsClientAsync(targetHost);
+                await stream.AuthenticateAsClientAsync(targetHost).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -329,7 +329,7 @@ namespace JMS.Common
             }
             try
             {
-                await stream.AuthenticateAsClientAsync(targetHost, clientCertificates, enabledSslProtocols, false);
+                await stream.AuthenticateAsClientAsync(targetHost, clientCertificates, enabledSslProtocols, false).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -369,7 +369,7 @@ namespace JMS.Common
             SslStream sslStream = new SslStream(_innerStream, false);
             try
             {
-                await sslStream.AuthenticateAsServerAsync(sslServerAuthenticationOptions);
+                await sslStream.AuthenticateAsServerAsync(sslServerAuthenticationOptions).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -431,7 +431,7 @@ namespace JMS.Common
             }
             else
             {
-                var ipaddresses = await Dns.GetHostAddressesAsync(addr.Address);
+                var ipaddresses = await Dns.GetHostAddressesAsync(addr.Address).ConfigureAwait(false);
                 var ipv4address = ipaddresses.FirstOrDefault(m => m.AddressFamily == AddressFamily.InterNetwork);
                 if (ipv4address == null)
                     ipv4address = ipaddresses[0];
@@ -444,7 +444,7 @@ namespace JMS.Common
             socket.ReceiveTimeout = 16000;
             try
             {
-                await socket.ConnectAsync(endPoint);
+                await socket.ConnectAsync(endPoint).ConfigureAwait(false);
             }
             catch
             {
@@ -492,7 +492,7 @@ namespace JMS.Common
             ReadOnlySequence<byte> block;
             while (true)
             {
-                ret = await _PipeReader.ReadAsync();
+                ret = await _PipeReader.ReadAsync().ConfigureAwait(false);
                 var buffer = ret.Buffer;
                 if (ret.IsCompleted)
                 {

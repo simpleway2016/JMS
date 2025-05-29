@@ -125,7 +125,7 @@ namespace JMS.GatewayConnection
 
 
             var task = new FindMasterGatewayTask(_allGateways, _timeout, _proxy);
-            var masterAddress = await task.GetMasterAsync();
+            var masterAddress = await task.GetMasterAsync().ConfigureAwait(false);
 
             lock (this)
             {
