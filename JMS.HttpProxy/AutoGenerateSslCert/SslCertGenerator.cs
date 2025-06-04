@@ -25,7 +25,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
 
         }
 
-        public void OnCertBuilded(string domain,string path, string password)
+        public void OnCertBuilded(string domain, string path, string password)
         {
             try
             {
@@ -104,10 +104,24 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
 
         async void generate()
         {
-            var path = $"${_acmeConfig.Domain}.pfx";
+           
 
             var services = new ServiceCollection();
-            services.AddCertificateGenerator();
+
+            var folder = Path.GetDirectoryName(HttpProxyProgram.AppSettingPath);
+            if (!string.IsNullOrWhiteSpace(folder))
+            {
+                _logger.LogInformation($"{_acmeConfig.Domain}证书保存路径：{folder}");
+                services.AddCertificateGenerator(new GenerateOption
+                {
+                    SaveFolder = folder
+                });
+            }
+            else
+            {
+                services.AddCertificateGenerator();
+            }
+
             if (_acmeConfig.DomainProvider == DomainProvider.AlibabaCloud)
             {
                 services.AddAlibabaCloudRecordWriter(_acmeConfig.AccessKeyId, _acmeConfig.AccessKeySecret);
@@ -122,6 +136,9 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             _logger.LogInformation($"开始载入或自动生成ssl证书，域名：{_acmeConfig.Domain} 提前{_acmeConfig.PreDays}天续期");
             X509Certificate2 cert = null;
             var certificateGenerator = serviceProvider.GetRequiredService<ICertificateGenerator>();
+            var generateOption = serviceProvider.GetRequiredService<GenerateOption>();
+            var path = $"{generateOption.GetSaveFolderPath()}${_acmeConfig.Domain}.pfx";
+
             if (File.Exists(path))
             {
                 try
