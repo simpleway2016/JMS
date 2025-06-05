@@ -53,7 +53,7 @@ namespace JMS.HttpProxy
 
         void onChanged()
         {
-            var newValues = HttpProxyProgram.Config.Current.Servers;
+            var newValues = HttpProxyProgram.Config.Current.Servers ?? new ServerConfig[0];
             var removeds = _proxyServerFactory.ProxyServers.Where(m => newValues.Any(n => n.Port == m.Key) == false).Select(m=>m.Value.Config);
             foreach (var removedServerConfig in removeds)
             {
