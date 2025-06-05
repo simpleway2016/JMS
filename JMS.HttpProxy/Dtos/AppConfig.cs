@@ -45,6 +45,7 @@ namespace JMS.HttpProxy.Dtos
         public string Domain { get; set; }
         public string Password { get; set; } = "123456";
         public DomainProvider DomainProvider { get; set; }
+        public string[] DomainWriterCommand { get; set; }
         public string AccessKeyId { get; set; }
         public string AccessKeySecret { get; set; }
         public int PreDays { get; set; } = 5;

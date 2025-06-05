@@ -130,9 +130,13 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             {
                 services.AddTencentCloudRecordWriter(_acmeConfig.AccessKeyId, _acmeConfig.AccessKeySecret);
             }
-            else
+            else if(_acmeConfig.DomainWriterCommand != null)
             {
-                _logger.LogInformation($"DomainProvider无效：{_acmeConfig.DomainProvider}");
+                services.AddSingleton<IAcmeDomainRecoredWriter>(new CommandDomainRecordWriter(_acmeConfig.DomainWriterCommand));
+            }
+            else 
+            {
+                _logger.LogInformation($"没有提供有效的 DomainProvider 和 DomainWriterCommand");
                 return;
             }
             using var serviceProvider = services.BuildServiceProvider();
