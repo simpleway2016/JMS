@@ -126,6 +126,10 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             {
                 services.AddAlibabaCloudRecordWriter(_acmeConfig.AccessKeyId, _acmeConfig.AccessKeySecret);
             }
+            else if (_acmeConfig.DomainProvider == DomainProvider.TencentCloud)
+            {
+                services.AddTencentCloudRecordWriter(_acmeConfig.AccessKeyId, _acmeConfig.AccessKeySecret);
+            }
             else
             {
                 _logger.LogInformation($"DomainProvider无效：{_acmeConfig.DomainProvider}");

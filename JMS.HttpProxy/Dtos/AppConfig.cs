@@ -36,7 +36,8 @@ namespace JMS.HttpProxy.Dtos
 
     public enum DomainProvider
     {
-        AlibabaCloud = 1
+        AlibabaCloud = 1,
+        TencentCloud = 2
     }
 
     public class AcmeConfig
