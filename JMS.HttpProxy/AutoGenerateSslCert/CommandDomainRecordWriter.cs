@@ -20,14 +20,19 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             var startInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = _command[0],
-                Arguments = string.Join(" ", _command.Skip(1).Select(m=> m == "{0}" ?$"\"{value}\"" : $"\"{m}\"")),
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+
+            foreach(var param in _command.Skip(1))
+            {
+                startInfo.ArgumentList.Add(param == "{0}" ? value : param);
+            }
+
             var process = System.Diagnostics.Process.Start(startInfo);
             await process.WaitForExitAsync();
             if( process.ExitCode != 0 )
-                throw new Exception($"Command '{startInfo.FileName} {startInfo.Arguments}' failed with exit code {process.ExitCode} for domain '{domainName}' with value '{value}'.");
+                throw new Exception($"Command '{startInfo.FileName}' failed with exit code {process.ExitCode} for domain '{domainName}' with value '{value}'.");
         }
     }
 }
