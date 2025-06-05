@@ -20,7 +20,7 @@ namespace JMS.HttpProxy.AutoGenerateSslCert
             var startInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = _command[0],
-                Arguments = string.Join(" ", _command.Skip(1).Select(m=>$"\"{m}\"")),
+                Arguments = string.Join(" ", _command.Skip(1).Select(m=> m == "{0}" ?$"\"{value}\"" : $"\"{m}\"")),
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
