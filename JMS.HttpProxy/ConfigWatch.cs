@@ -22,9 +22,12 @@ namespace JMS.HttpProxy
 
         public async Task Run()
         {
-            foreach( var serverConfig in HttpProxyProgram.Config.Current.Servers)
+            if (HttpProxyProgram.Config.Current.Servers != null)
             {
-                OnAddServer(serverConfig);
+                foreach (var serverConfig in HttpProxyProgram.Config.Current.Servers)
+                {
+                    OnAddServer(serverConfig);
+                }
             }
             HttpProxyProgram.Config.ValueChanged += Config_ValueChanged;
             while(true)
@@ -80,7 +83,7 @@ namespace JMS.HttpProxy
 
         private void Config_ValueChanged(object sender, Common.ValueChangedArg<Dtos.AppConfig> e)
         {
-            var groupItemCounts = from m in e.NewValue.Servers
+            var groupItemCounts = from m in e.NewValue.Servers??new ServerConfig[0]
                          group m by m.Port into g
                          select g.Count();
             if (groupItemCounts.Any(m => m > 1))
