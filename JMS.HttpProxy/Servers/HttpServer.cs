@@ -140,7 +140,7 @@ namespace JMS.HttpProxy.Servers
                     }
                     catch (Exception ex)
                     {
-                        _logger?.LogError(ex , "加载证书异常");
+                        _logger?.LogError(ex , $"加载证书异常,{Config.SSL?.Cert}，{Config.SSL?.PrivateKeyPath}");
                     }
                 }
             }
