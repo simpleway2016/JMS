@@ -9,7 +9,7 @@ for /f "delims=" %%a in ('powershell -Command "([xml](Get-Content '%XML_FILE%'))
     set "version=%%a"
 )
 
-dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Linux\WebApiDocker --self-contained true --runtime linux-x64
+dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Linux\WebApiDocker --runtime linux-x64
 cd Publish
 docker build -t jackframework/jmswebapi:%version% -f dockerfile_webapi .
 @echo 现在让网络可以访问docker
