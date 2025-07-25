@@ -134,7 +134,14 @@ namespace JMS.HttpProxy.Servers
                 }
                 else
                 {
-                    this.Certificate = Config?.SSL?.Certificate;
+                    try
+                    {
+                        this.Certificate = Config?.SSL?.Certificate;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex , "加载证书异常");
+                    }
                 }
             }
 
