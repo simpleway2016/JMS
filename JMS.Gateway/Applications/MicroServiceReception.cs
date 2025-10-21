@@ -47,7 +47,7 @@ namespace JMS.Applications
                     _registerServiceManager.RemoveRegisterService(this);
                     return;
                 }
-                else if(ServiceInfo.ServiceAddress == "127.0.0.1")
+                else if(ServiceInfo.ServiceAddress == "127.0.0.1" || (ServiceInfo.Port == 0 && ServiceInfo.ServiceAddress.Contains("/127.0.0.1")))
                 {
                     //注册为本地地址的微服务，只允许这个机器连接
                     ServiceInfo.AllowHostIp = ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString();
