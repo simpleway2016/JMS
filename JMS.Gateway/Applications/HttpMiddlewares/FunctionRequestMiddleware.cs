@@ -4,6 +4,7 @@ using JMS.ServerCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -30,7 +31,7 @@ namespace JMS.Applications.HttpMiddlewares
                     var json = HttpUtility.UrlDecode(arr[1], Encoding.UTF8);
                     if (!json.StartsWith("{"))
                     {
-                        json = new GetServiceProviderRequest { ServiceName = json }.ToJsonString();
+                        json = new GetServiceProviderRequest() { ServiceName = json,ClientAddress = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString() }.ToJsonString();
                     }
                     var cmd = new GatewayCommand
                     {

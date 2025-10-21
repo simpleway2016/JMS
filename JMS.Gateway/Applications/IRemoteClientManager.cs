@@ -62,6 +62,14 @@ namespace JMS.Applications
             {
                 try
                 {
+                    if (serviceInfo.AllowHostIp != null)
+                    {
+                        if (((IPEndPoint)client.Key.Socket.RemoteEndPoint).Address.ToString() != serviceInfo.AllowHostIp)
+                        {
+                            continue;
+                        }
+                    }
+
                     client.Key.WriteServiceData(obj);
                 }
                 catch
@@ -121,6 +129,13 @@ namespace JMS.Applications
             {
                 try
                 {
+                    if (serviceInfo.AllowHostIp != null)
+                    {
+                        if(((IPEndPoint)client.Key.Socket.RemoteEndPoint).Address.ToString() != serviceInfo.AllowHostIp)
+                        {
+                            continue;
+                        }
+                    }
                     client.Key.WriteServiceData(obj);
                 }
                 catch
@@ -134,13 +149,14 @@ namespace JMS.Applications
         {
             _clients.TryAdd(netClient, true);
 
+            var clientIp = ((IPEndPoint)netClient.Socket.RemoteEndPoint).Address.ToString();
             //输出目前所有服务信息
-            netClient.WriteServiceData(list());
+            netClient.WriteServiceData(list(clientIp));
         }
 
-        RegisterServiceRunningInfo[] list()
+        RegisterServiceRunningInfo[] list(string clientIp)
         {
-            var list = _registerServiceManager.GetAllRegisterServices().Where(m => string.IsNullOrWhiteSpace(m.ClientCheckCodeFile));
+            var list = _registerServiceManager.GetAllRegisterServices().Where(m => string.IsNullOrWhiteSpace(m.ClientCheckCodeFile) && (m.AllowHostIp == null || m.AllowHostIp == clientIp));
 
             return list.Select(m => new RegisterServiceRunningInfo
             {

@@ -55,6 +55,7 @@ namespace JMS.Dtos
         public IgnoreCaseDictionary Header = new IgnoreCaseDictionary();
         public string ClientAddress;
         public bool IsGatewayProxy;
+       
     }
 
 }

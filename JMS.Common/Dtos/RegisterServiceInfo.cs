@@ -86,7 +86,10 @@ namespace JMS.Dtos
         /// 是否同一时间只有一个相同的服务器运行（双机热备）
         /// </summary>
         public bool SingletonService;
-        
+        /// <summary>
+        /// 只允许哪个ip地址连接到此微服务，空表示不限制
+        /// </summary>
+        public string? AllowHostIp;
        
     }
 

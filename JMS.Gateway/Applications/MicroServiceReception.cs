@@ -47,6 +47,12 @@ namespace JMS.Applications
                     _registerServiceManager.RemoveRegisterService(this);
                     return;
                 }
+                else if(ServiceInfo.ServiceAddress == "127.0.0.1")
+                {
+                    //注册为本地地址的微服务，只允许这个机器连接
+                    ServiceInfo.AllowHostIp = ((IPEndPoint)netclient.Socket.RemoteEndPoint).Address.ToString();
+                    _Logger?.LogInformation($"微服务{ServiceInfo.ServiceList.Select(m => m.Name).ToJsonString()} {ServiceInfo.Host}:{ServiceInfo.Port} 只允许{ServiceInfo.AllowHostIp}连接");
+                }
 
                 await checkState();
             }

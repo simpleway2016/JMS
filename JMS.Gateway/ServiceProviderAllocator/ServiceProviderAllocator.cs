@@ -67,6 +67,15 @@ namespace JMS
             }
         }
 
+        static string[] loopbackIps = new string[] { "127.0.0.1", "::1" };
+        bool isSameIp(string ip1,string ip2)
+        {
+            if (ip1 == ip2)
+                return true;
+            if (loopbackIps.Contains(ip1) && loopbackIps.Contains(ip2))
+                return true;
+            return false;
+        }
        
         public ClientServiceDetail Alloc(GetServiceProviderRequest request)
         {
@@ -74,6 +83,7 @@ namespace JMS
                 return null;
             var matchServices = _serviceRunningItems.Where(m => m.ServiceInfo.ServiceList.Any(n=>n.Name == request.ServiceName && (n.AllowGatewayProxy || request.IsGatewayProxy == false))
             && m.ServiceInfo.MaxThread > 0
+            && (m.ServiceInfo.AllowHostIp == null || isSameIp(m.ServiceInfo.AllowHostIp , request.ClientAddress))
             && (m.ServiceInfo.MaxRequestCount == 0 || m.ServiceInfo.RequestQuantity < m.ServiceInfo.MaxRequestCount)
             && (m.ClientChecker == null || m.ClientChecker.Check(request.Header)));
 

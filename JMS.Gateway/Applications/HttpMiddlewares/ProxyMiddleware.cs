@@ -28,11 +28,12 @@ namespace JMS.Applications.HttpMiddlewares
                 serviceName = serviceName.Substring(0, indexflag);
             }
 
-            var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest
+            var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest()
             {
                 ServiceName = serviceName,
                 IsGatewayProxy = true,
-                Header = reqheaders
+                Header = reqheaders,
+                ClientAddress = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString()
             });
 
             int contentLength = 0;

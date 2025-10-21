@@ -5,6 +5,7 @@ using JMS.ServerCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -37,11 +38,12 @@ namespace JMS.Applications.HttpMiddlewares
                     serviceName = serviceName.Substring(0, serviceName.IndexOf("?"));
                 }
 
-                var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest
+                var location = _serviceProviderAllocator.Alloc(new GetServiceProviderRequest()
                 {
                     ServiceName = serviceName,
                     IsGatewayProxy = true,
-                    Header = headers
+                    Header = headers,
+                    ClientAddress = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString()
                 });
                 if (location == null)
                 {
