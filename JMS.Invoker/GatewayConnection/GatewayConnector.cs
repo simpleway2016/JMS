@@ -312,6 +312,9 @@ namespace JMS.GatewayConnection
                     && (m.MaxRequestCount == 0 || m.PerformanceInfo.RequestQuantity < m.MaxRequestCount)
                     ).ToArray();
 
+                    if (matchServices.Any(m => m.AllowHostIp != null))
+                        matchServices = matchServices.Where(m=>m.AllowHostIp != null).ToArray();
+
                     break;
                 }
                 catch

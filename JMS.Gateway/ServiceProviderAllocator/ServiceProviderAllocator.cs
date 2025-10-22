@@ -87,6 +87,12 @@ namespace JMS
             && (m.ServiceInfo.MaxRequestCount == 0 || m.ServiceInfo.RequestQuantity < m.ServiceInfo.MaxRequestCount)
             && (m.ClientChecker == null || m.ClientChecker.Check(request.Header)));
 
+            if(matchServices.Any(m=>m.ServiceInfo.AllowHostIp != null))
+            {
+                //如果存在只允许特定ip连接的微服务，则优先使用这些微服务
+                matchServices = matchServices.Where(m => m.ServiceInfo.AllowHostIp != null);
+            }
+
             IEnumerable<ServiceRunningItem> services = null ;
 
             //先查找cpu使用率低于70%的

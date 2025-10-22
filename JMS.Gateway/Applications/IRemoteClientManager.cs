@@ -51,6 +51,7 @@ namespace JMS.Applications
                     UseSsl = serviceInfo.UseSsl,
                     MaxRequestCount = serviceInfo.MaxRequestCount,
                     Properties = serviceInfo.Properties,
+                    AllowHostIp = serviceInfo.AllowHostIp,
                     PerformanceInfo = new PerformanceInfo
                     {
                         RequestQuantity = serviceInfo.RequestQuantity,
@@ -118,6 +119,7 @@ namespace JMS.Applications
                     UseSsl = serviceInfo.UseSsl,
                     MaxRequestCount = serviceInfo.MaxRequestCount,
                     Properties = serviceInfo.Properties,
+                    AllowHostIp = serviceInfo.AllowHostIp,
                     PerformanceInfo = new PerformanceInfo
                     {
                         RequestQuantity = serviceInfo.RequestQuantity,
@@ -169,6 +171,7 @@ namespace JMS.Applications
                 UseSsl = m.UseSsl,
                 MaxRequestCount = m.MaxRequestCount,
                 Properties = m.Properties,
+                AllowHostIp = m.AllowHostIp,
                 PerformanceInfo = new PerformanceInfo
                 {
                     RequestQuantity = m.RequestQuantity,

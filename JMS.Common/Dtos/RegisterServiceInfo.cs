@@ -129,5 +129,9 @@ namespace JMS.Dtos
         /// 当前微服务的负载情况
         /// </summary>
         public PerformanceInfo PerformanceInfo;
+        /// <summary>
+        /// 只允许哪个ip地址连接到此微服务，空表示不限制
+        /// </summary>
+        public string? AllowHostIp;
     }
 }
