@@ -34,17 +34,17 @@ namespace JMS.Common.Json
                 ReferenceHandler = ReferenceHandler.IgnoreCycles,
                 IncludeFields = true,
                 DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-                NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString,
+                NumberHandling = JsonNumberHandling.AllowReadingFromString,
                 PropertyNameCaseInsensitive = true,//不区分大小写,为了兼容之前Newtonsoft.Json的代码
             };
             _SerializerOptions.Converters.Add(new StringJsonConverter());
             _SerializerOptions.Converters.Add(new TypeJsonConverter());
 
-            //NumberHandling使用了JsonNumberHandling.WriteAsString，所以不需要下面的转换器了
             //这些转换器的作用是为了让long、ulong、double在序列化时，超过JS安全整数范围时，转为字符串
-            //_SerializerOptions.Converters.Add(new LongJsonConverter());
-            //_SerializerOptions.Converters.Add(new UlongJsonConverter());
-            //_SerializerOptions.Converters.Add(new DoubleJsonConverter());
+            _SerializerOptions.Converters.Add(new LongJsonConverter());
+            _SerializerOptions.Converters.Add(new UlongJsonConverter());
+            _SerializerOptions.Converters.Add(new DoubleJsonConverter());
+            _SerializerOptions.Converters.Add(new DecimalJsonConverter());
 
             //因为SourceGenerationContext不支持InvokeResult<>泛型，所以，不能让SourceGenerationContext来解析类型
             // _SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
@@ -88,6 +88,44 @@ namespace JMS.Common.Json
         }
     }
 
+    class DecimalJsonConverter : JsonConverter<decimal>
+    {
+
+
+
+        public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.String:
+                    return decimal.Parse(reader.GetString());
+                case JsonTokenType.Number:
+                    return reader.GetDecimal();
+                case JsonTokenType.True:
+                    return 1;
+
+                case JsonTokenType.False:
+                    return 0;
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, decimal value, JsonSerializerOptions options)
+        {
+            // 写入字符串值
+            if (value <= 90071992547409)
+            {
+                writer.WriteNumberValue(value);
+            }
+            else
+            {
+                //js会有精度丢失，所以，转为字符串
+                writer.WriteStringValue(value.ToString());
+            }
+
+        }
+    }
     class DoubleJsonConverter : JsonConverter<double>
     {
 
@@ -98,7 +136,7 @@ namespace JMS.Common.Json
             switch (reader.TokenType)
             {
                 case JsonTokenType.String:
-                    return long.Parse(reader.GetString());
+                    return double.Parse(reader.GetString());
                 case JsonTokenType.Number:
                     return reader.GetDouble();
                 case JsonTokenType.True:

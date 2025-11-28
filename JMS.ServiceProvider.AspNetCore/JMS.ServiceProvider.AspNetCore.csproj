@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net9.0</TargetFrameworks>
-		<Version>9.0.1</Version>
+		<Version>9.0.2</Version>
 		<Authors>Jack</Authors>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
