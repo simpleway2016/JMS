@@ -34,14 +34,18 @@ namespace JMS.Common.Json
                 ReferenceHandler = ReferenceHandler.IgnoreCycles,
                 IncludeFields = true,
                 DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-                NumberHandling = JsonNumberHandling.AllowReadingFromString,
+                NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString,
                 PropertyNameCaseInsensitive = true,//不区分大小写,为了兼容之前Newtonsoft.Json的代码
             };
             _SerializerOptions.Converters.Add(new StringJsonConverter());
             _SerializerOptions.Converters.Add(new TypeJsonConverter());
-            _SerializerOptions.Converters.Add(new LongJsonConverter());
-            _SerializerOptions.Converters.Add(new UlongJsonConverter());
-            _SerializerOptions.Converters.Add(new DoubleJsonConverter());
+
+            //NumberHandling使用了JsonNumberHandling.WriteAsString，所以不需要下面的转换器了
+            //这些转换器的作用是为了让long、ulong、double在序列化时，超过JS安全整数范围时，转为字符串
+            //_SerializerOptions.Converters.Add(new LongJsonConverter());
+            //_SerializerOptions.Converters.Add(new UlongJsonConverter());
+            //_SerializerOptions.Converters.Add(new DoubleJsonConverter());
+
             //因为SourceGenerationContext不支持InvokeResult<>泛型，所以，不能让SourceGenerationContext来解析类型
             // _SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
         }

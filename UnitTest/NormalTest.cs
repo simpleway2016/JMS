@@ -1524,7 +1524,7 @@ Content-Length: 0
             };
 
             var json = cmdObj.ToJsonString();
-            Assert.AreEqual(json, "{\"Type\":0,\"Header\":{},\"Method\":\"aa\"}");
+            Assert.AreEqual(json, "{\"Type\":\"0\",\"Header\":{},\"Method\":\"aa\"}");
 
 
             var invokeCommand = @"{""Type"":""2""}".FromJson<InvokeCommand>();
