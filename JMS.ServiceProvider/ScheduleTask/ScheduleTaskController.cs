@@ -85,7 +85,7 @@ namespace JMS.ScheduleTask
                             foreach (double hour in timers)
                             {
                                 int h = (int)hour;//过滤出哪个小时
-                                int m = (int)((hour % 1) * 100);//过滤出分钟
+                                int m = (int)(hour * 100 % 100);//过滤出分钟
 
                                 //转换成当天的执行时间点
                                 var time = DateTime.Now.Date.AddHours(h).AddMinutes(m);
