@@ -673,17 +673,42 @@ namespace JMS
 
         void waitTasks(bool throwError = true)
         {
-            var errs = _transactionTasks.Wait();
-            if (throwError && errs != null && errs.Count > 0)
-                throw errs[0];
+            if (throwError)
+            {
+                _transactionTasks.Wait();
+            }
+            else
+            {
+                try
+                {
+                    _transactionTasks.Wait();
+                }
+                catch
+                {
+
+                }
+            }
+           
 
         }
 
         async Task waitTasksAsync(bool throwError = true)
         {
-            var errs = await _transactionTasks.WaitAsync().ConfigureAwait(false);
-            if (throwError && errs != null && errs.Count > 0)
-                throw errs[0];
+            if (throwError)
+            {
+                await _transactionTasks.WaitAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                try
+                {
+                   await  _transactionTasks.WaitAsync().ConfigureAwait(false);
+                }
+                catch
+                {
+
+                }
+            }
 
         }
 

@@ -2,6 +2,7 @@
 using JMS.InvokeConnects;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -58,68 +59,32 @@ namespace JMS
         /// 等待所有任务执行完毕
         /// </summary>
         /// <returns></returns>
-        public List<Exception> Wait()
+        public void Wait()
         {
             if (_tasks.Count == 0)
             {
-                return null;
+                return;
             }
 
-            List<Exception> ret = new List<Exception>(_tasks.Count);
-            for (int i = 0; i < _tasks.Count; i++)
-            {
-                try
-                {
-                    if(!_tasks[i].Task.IsCanceled && !_tasks[i].Task.IsCompleted)
-                        _tasks[i].Task.Wait();
-                    else if (_tasks[i].Task.IsFaulted)
-                    {
-                        ret.Add(_tasks[i].Task.Exception.InnerException?? _tasks[i].Task.Exception);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ret.Add(ex);
-                }
-            }
-            
+            Task.WhenAll(_tasks.Select(m => m.Task)).Wait();
+
             _tasks.Clear();
-            return ret;
         }
 
         /// <summary>
         /// 等待所有任务执行完毕
         /// </summary>
         /// <returns></returns>
-        public async Task<List<Exception>> WaitAsync()
+        public async Task WaitAsync()
         {
             if (_tasks.Count == 0)
             {
-                return null;
+                return;
             }
 
-            List<Exception> ret = new List<Exception>(_tasks.Count);
-            for (int i = 0; i < _tasks.Count; i++)
-            {
-                try
-                {
-                    if(!_tasks[i].Task.IsCanceled && !_tasks[i].Task.IsCompleted)
-                    {
-                        await _tasks[i].Task.ConfigureAwait(false);
-                    }
-                    else if (_tasks[i].Task.IsFaulted)
-                    {
-                        ret.Add(_tasks[i].Task.Exception.InnerException ?? _tasks[i].Task.Exception);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ret.Add(ex);
-                }
-            }
+            await Task.WhenAll(_tasks.Select(m=>m.Task)).ConfigureAwait(false);
 
             _tasks.Clear();
-            return ret;
         }
     }
 }
