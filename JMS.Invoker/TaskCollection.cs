@@ -72,6 +72,10 @@ namespace JMS
                 {
                     if(!_tasks[i].Task.IsCanceled && !_tasks[i].Task.IsCompleted)
                         _tasks[i].Task.Wait();
+                    else if (_tasks[i].Task.IsFaulted)
+                    {
+                        ret.Add(_tasks[i].Task.Exception.InnerException?? _tasks[i].Task.Exception);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -100,7 +104,13 @@ namespace JMS
                 try
                 {
                     if(!_tasks[i].Task.IsCanceled && !_tasks[i].Task.IsCompleted)
-                    await _tasks[i].Task.ConfigureAwait(false);
+                    {
+                        await _tasks[i].Task.ConfigureAwait(false);
+                    }
+                    else if (_tasks[i].Task.IsFaulted)
+                    {
+                        ret.Add(_tasks[i].Task.Exception.InnerException ?? _tasks[i].Task.Exception);
+                    }
                 }
                 catch (Exception ex)
                 {
