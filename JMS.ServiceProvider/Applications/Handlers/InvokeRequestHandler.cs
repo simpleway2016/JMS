@@ -376,7 +376,7 @@ namespace JMS.Applications
                     {
                         if (controller?.OnInvokeError(cmd.Method, parameters, ex) == false)
                         {
-                            _logger?.LogError(ex, ex.Message);
+                            _logger?.LogError(ex, $"Method: {cmd.Method} Parameters：{parameters?.ToJsonString()}");
                         }
                     }
                     catch (ResponseEndException)
