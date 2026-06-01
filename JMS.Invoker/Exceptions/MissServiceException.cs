@@ -8,10 +8,12 @@ namespace JMS
     {
         public string TransactionId { get; }
         public int? StatusCode { get; }
-        public RemoteException(string tranid,int? statusCode, string message):base(message)
+        public string Error { get; set; }
+        public RemoteException(string tranid,int? statusCode,string error, string message):base(message)
         {
             this.StatusCode = statusCode;
             this.TransactionId = tranid;
+            this.Error = error;
         }
     }
 }

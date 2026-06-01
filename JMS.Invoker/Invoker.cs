@@ -151,7 +151,7 @@ namespace JMS
             NetClientPool.AddClientToPool(netclient);
 
             if (!ret.Success)
-                throw new RemoteException(null, null, ret.Data);
+                throw new RemoteException(null, null, ret.Data, ret.Data);
             return ret.Data;
         }
 
@@ -171,7 +171,7 @@ namespace JMS
             NetClientPool.AddClientToPool(netclient);
 
             if (!ret.Success)
-                throw new RemoteException(null, null, ret.Data);
+                throw new RemoteException(null, null, ret.Data, ret.Data);
             return ret.Data;
 
         }
@@ -191,7 +191,7 @@ namespace JMS
             NetClientPool.AddClientToPool(netclient);
 
             if (!ret.Success)
-                throw new RemoteException(null, ret.GetStatusCode(), ret.Data);
+                throw new RemoteException(null, ret.GetStatusCode(), ret.Data, ret.Data);
             return ret.Data;
         }
 
@@ -209,7 +209,7 @@ namespace JMS
             NetClientPool.AddClientToPool(netclient);
 
             if (!ret.Success)
-                throw new RemoteException(null, null, ret.Data);
+                throw new RemoteException(null, null, ret.Data, ret.Data);
             return ret.Data;
         }
     }

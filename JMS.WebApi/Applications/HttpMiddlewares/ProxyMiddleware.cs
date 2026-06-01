@@ -384,7 +384,11 @@ namespace JMS.Applications.HttpMiddlewares
 
                 if (ex is RemoteException rex && rex.StatusCode != null)
                 {
-                    client.OutputHttpCode(rex.StatusCode.Value, "error", ex.Message);
+                    client.OutputHttpCode(rex.StatusCode.Value, "error", rex.Error);
+                }
+                else if (ex is RemoteException rex2  )
+                {
+                    client.OutputHttpCode(500, "error", rex2.Error);
                 }
                 else if(ex is OperationCanceledException)
                 {

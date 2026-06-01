@@ -83,7 +83,7 @@ namespace JMS
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
-                    throw new RemoteException(tran.TransactionId, result.GetStatusCode(), $"addr: {InvokingInfo.ServiceLocation.ServiceAddress} \r\nmethod:  {method} \r\nerr:{result.Error}");
+                    throw new RemoteException(tran.TransactionId, result.GetStatusCode(), result.Error, $"addr: {InvokingInfo.ServiceLocation.ServiceAddress} \r\nmethod:  {method} \r\nerr:{result.Error}");
                 }
 
 
@@ -113,7 +113,7 @@ namespace JMS
 
                 if (otherObj != null && otherObj.Success == false)
                 {
-                    throw new RemoteException(tran.TransactionId, otherObj.GetStatusCode(), $"addr: {InvokingInfo.ServiceLocation.ServiceAddress} \r\nmethod:  {method} \r\nerr:{otherObj.Error}");
+                    throw new RemoteException(tran.TransactionId, otherObj.GetStatusCode(), otherObj.Error, $"addr: {InvokingInfo.ServiceLocation.ServiceAddress} \r\nmethod:  {method} \r\nerr:{otherObj.Error}");
                 }
 
                 if (otherObj != null)
@@ -174,7 +174,7 @@ namespace JMS
                 if (result.Success == false)
                 {
                     this.AddClientToPool();
-                    throw new RemoteException(tran.TransactionId, result.GetStatusCode(), $"addr:  {InvokingInfo.ServiceLocation.ServiceAddress}  \r\nmethod:   {method}  \r\nerr:{result.Error}");
+                    throw new RemoteException(tran.TransactionId, result.GetStatusCode(), result.Error, $"addr:  {InvokingInfo.ServiceLocation.ServiceAddress}  \r\nmethod:   {method}  \r\nerr:{result.Error}");
                 }
 
                 if (result.SupportTransaction)
@@ -203,7 +203,7 @@ namespace JMS
 
                 if (otherObj != null && otherObj.Success == false)
                 {
-                    throw new RemoteException(tran.TransactionId, otherObj.GetStatusCode(), $"addr: {InvokingInfo.ServiceLocation.ServiceAddress} \r\nmethod:  {method} \r\nerr:{otherObj.Error}");
+                    throw new RemoteException(tran.TransactionId, otherObj.GetStatusCode(), otherObj.Error, $"addr: {InvokingInfo.ServiceLocation.ServiceAddress} \r\nmethod:  {method} \r\nerr:{otherObj.Error}");
                 }
 
                 if (otherObj != null)

@@ -513,7 +513,15 @@ namespace UnitTest
             if (ret.IsSuccessStatusCode)
                 throw new Exception("IsSuccessStatusCode不应该是true");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (text.Contains("err:ErrMsg") == false)
+            if (text != "ErrMsg") //webapi 不能输出更详细的错误信息（安全方面）
+                throw new Exception("http返回结果错误");
+
+
+            ret = client.GetAsync($"http://localhost:{_jmsWebapiPort}/UserInfoService/GetMyNameError").ConfigureAwait(false).GetAwaiter().GetResult();
+            if (ret.IsSuccessStatusCode)
+                throw new Exception("IsSuccessStatusCode不应该是true");
+            text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (text != "ErrMsg")
                 throw new Exception("http返回结果错误");
 
             //测试返回值是null的情况

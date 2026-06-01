@@ -1,6 +1,7 @@
 ﻿using JMS.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,43 +71,72 @@ namespace JMS.WebApiDocument.Proxies
                     client.SetHeader("X-Forwarded-For", ip);
                 }
 
-                InvokeResult<object> result;
-                if (_parames == null)
+                try
                 {
-                    result = await service.InvokeExAsync<object>(method);
-                }
-                else
-                    result = await service.InvokeExAsync<object>(method, _parames);
-
-                if (result == null)
-                    return;
-
-                InvokeAttributes invokeAttributes;
-
-                if (result.Attributes != null)
-                {
-                    invokeAttributes = result.Attributes.FromJson<InvokeAttributes>();
-                    if (invokeAttributes.StatusCode != null)
+                    InvokeResult<object> result;
+                    if (_parames == null)
                     {
-                        context.Response.StatusCode = invokeAttributes.StatusCode.Value;
+                        result = await service.InvokeExAsync<object>(method);
                     }
-                }
-                if (result.Data is string)
-                {
-                    context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync((string)result.Data);
-                }
-                else if (result.Data != null)
-                {
-                    if (result.Data.GetType().IsValueType)
+                    else
+                        result = await service.InvokeExAsync<object>(method, _parames);
+
+                    if (result == null)
+                        return;
+
+                    InvokeAttributes invokeAttributes;
+
+                    if (result.Attributes != null)
+                    {
+                        invokeAttributes = result.Attributes.FromJson<InvokeAttributes>();
+                        if (invokeAttributes.StatusCode != null)
+                        {
+                            context.Response.StatusCode = invokeAttributes.StatusCode.Value;
+                        }
+                    }
+                    if (result.Data is string)
                     {
                         context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
-                        await context.Response.WriteAsync(result.Data.ToString());
+                        await context.Response.WriteAsync((string)result.Data);
+                    }
+                    else if (result.Data != null)
+                    {
+                        if (result.Data.GetType().IsValueType)
+                        {
+                            context.Response.Headers["Content-Type"] = "text/html; charset=utf-8";
+                            await context.Response.WriteAsync(result.Data.ToString());
+                        }
+                        else
+                        {
+                            context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
+                            await context.Response.WriteAsync(result.Data.ToJsonString());
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    while (ex.InnerException != null)
+                        ex = ex.InnerException;
+
+                    if (ex is RemoteException rex && rex.StatusCode != null)
+                    {
+                        context.Response.StatusCode = rex.StatusCode.Value;
+                        await context.Response.WriteAsync(rex.Error);
+                    }
+                    else if (ex is RemoteException rex2)
+                    {
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync(rex2.Error);
+                    }
+                    else if (ex is OperationCanceledException)
+                    {
+                        context.Response.StatusCode = 408;
+                        await context.Response.WriteAsync("timeout");
                     }
                     else
                     {
-                        context.Response.Headers["Content-Type"] = "application/json; charset=utf-8";
-                        await context.Response.WriteAsync(result.Data.ToJsonString());
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync(ex.Message);
                     }
                 }
             }
