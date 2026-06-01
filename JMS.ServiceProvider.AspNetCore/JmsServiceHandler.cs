@@ -205,7 +205,7 @@ namespace JMS.ServiceProvider.AspNetCore
                                     #region IActionResult
                                     if (result is ObjectResult oret)
                                     {
-                                        if (oret.StatusCode >= 200 && oret.StatusCode < 300)
+                                        if ((oret.StatusCode >= 200 && oret.StatusCode < 300) || oret.StatusCode == null)
                                         {
                                             result = oret.Value;
                                         }
@@ -260,6 +260,10 @@ namespace JMS.ServiceProvider.AspNetCore
                                             releaseNetClient(netClient);
                                             return true;
                                         }
+                                    }
+                                    else if (result is OkResult)
+                                    {
+                                        result = null;
                                     }
                                     else if (result is JsonResult jret)
                                     {

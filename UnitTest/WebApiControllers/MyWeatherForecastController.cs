@@ -29,6 +29,18 @@ namespace UnitTest.Controllers
         }
 
         [HttpGet]
+        public IActionResult ObjectResultTest(string v)
+        {
+            return new ObjectResult(v);
+        }
+
+        [HttpGet]
+        public IActionResult OkResultTest(string v)
+        {
+            return Ok(v);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> SseExample()
         {
             Response.Headers.Add("Content-Type", "text/event-stream");

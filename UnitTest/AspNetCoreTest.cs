@@ -561,6 +561,19 @@ Content-Length2: 0
                         Thread.Sleep(100);
                         service = remoteClient.TryGetMicroService("TestWebService");
                     }
+
+                    var ret_str = service.Invoke<string>("/MyWeatherForecast/ObjectResultTest", "test");
+                    Assert.AreEqual(ret_str, "test");
+
+                    ret_str = service.Invoke<string>("/MyWeatherForecast/ObjectResultTest", new object[] { null });
+                    Assert.AreEqual(ret_str, null);
+
+                    ret_str = service.Invoke<string>("/MyWeatherForecast/OkResultTest", "test");
+                    Assert.AreEqual(ret_str, "test");
+
+                    ret_str = service.Invoke<string>("/MyWeatherForecast/OkResultTest", new object[] { null });
+                    Assert.AreEqual(ret_str, null);
+
                     var ret = service.Invoke<WeatherForecast[]>("/MyWeatherForecast/Get");
                     if (ret.Length != 5)
                         throw new Exception("返回结果错误");
