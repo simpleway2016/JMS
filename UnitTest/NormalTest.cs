@@ -513,7 +513,7 @@ namespace UnitTest
             if (ret.IsSuccessStatusCode)
                 throw new Exception("IsSuccessStatusCode不应该是true");
             text = ret.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (text != "ErrMsg")
+            if (text.Contains("err:ErrMsg") == false)
                 throw new Exception("http返回结果错误");
 
             //测试返回值是null的情况
@@ -1286,7 +1286,7 @@ Content-Length: 0
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
                 string msg = ex.Message;
-                if (msg != "有意触发错误")
+                if (msg.Contains("err:有意触发错误") == false)
                     throw ex;
             }
 
@@ -1423,7 +1423,7 @@ Content-Length: 0
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
                 string msg = ex.Message;
-                if (msg != "有意触发错误")
+                if (msg.Contains("有意触发错误") == false)
                     throw ex;
             }
 

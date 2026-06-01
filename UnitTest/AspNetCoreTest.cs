@@ -630,7 +630,7 @@ Content-Length2: 0
                     }
                     catch (Exception ex)
                     {
-                        if (ex.Message != "2")
+                        if (ex.Message.Contains("err:2") == false)
                         {
                             throw ex;
                         }
