@@ -225,7 +225,7 @@ namespace JMS.ServiceProvider.AspNetCore
                                             {
                                                 Success = false,
                                                 Data = oret.StatusCode,
-                                                Error = oret.Value.ToString()
+                                                Error = oret.Value?.ToString()
 
                                             });
                                             releaseNetClient(netClient);
