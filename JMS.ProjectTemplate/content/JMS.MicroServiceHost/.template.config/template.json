@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Jack.T",
+  "classifications": [ "Common", "Console" ],
+  "identity": "JMS.MicroServiceHost",
+  "name": "JMSFramework microservice project",
+  "shortName": "JMS.MicroServiceHost",
+  "sourceName":"JMS.MicroServiceHost",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  }
+}
