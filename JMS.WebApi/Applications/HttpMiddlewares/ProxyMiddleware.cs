@@ -20,12 +20,12 @@ namespace JMS.Applications.HttpMiddlewares
         private readonly IConfiguration _configuration;
         int _timeout = 30000;
         ILogger _logger;
-        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment,IConfiguration configuration,ILoggerFactory loggerFactory)
+        public ProxyMiddleware(IWebApiHostEnvironment webApiEnvironment, IConfiguration configuration, ILoggerFactory loggerFactory)
         {
             _webApiEnvironment = webApiEnvironment;
             this._configuration = configuration;
             var timeout = configuration.GetSection("InvokeTimeout").Get<int?>();
-            if(timeout != null && timeout >= 0)
+            if (timeout != null && timeout >= 0)
             {
                 _timeout = timeout.Value;
             }
@@ -36,7 +36,7 @@ namespace JMS.Applications.HttpMiddlewares
         {
             bool writeLogger = _logger.IsEnabled(LogLevel.Trace);
 
-            if(writeLogger)
+            if (writeLogger)
             {
                 _logger.LogTrace($"Requesting: {requestPath}\r\n{reqheaders.ToJsonString(true)}");
             }
@@ -98,7 +98,7 @@ namespace JMS.Applications.HttpMiddlewares
             }
             else if (service.ServiceLocation.Type == ServiceType.JmsService)
             {
-                await ProxyJmsService(rc, service, serviceName, client, httpMethod, requestPath, contentLength, reqheaders,writeLogger?_logger:null);
+                await ProxyJmsService(rc, service, serviceName, client, httpMethod, requestPath, contentLength, reqheaders, writeLogger ? _logger : null);
                 return true;
             }
 
@@ -267,6 +267,12 @@ namespace JMS.Applications.HttpMiddlewares
                     proxyClient.Dispose();
                 }
             }
+            catch (OperationCanceledException)
+            {
+                client.KeepAlive = false;
+                client.OutputHttpCode(408, "timeout");
+                proxyClient.Dispose();
+            }
             catch (Exception)
             {
                 proxyClient.Dispose();
@@ -276,8 +282,8 @@ namespace JMS.Applications.HttpMiddlewares
             return true;
         }
 
-        static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client, 
-            string httpMethod, string requestPath, int inputContentLength, IDictionary<string, string> headers,ILogger? logger)
+        static async Task ProxyJmsService(RemoteClient rc, IMicroService service, string serviceName, NetClient client,
+            string httpMethod, string requestPath, int inputContentLength, IDictionary<string, string> headers, ILogger? logger)
         {
             //获取方法名
             try
@@ -292,7 +298,7 @@ namespace JMS.Applications.HttpMiddlewares
                     if (arr.Length > 1 && (index = arr[1].IndexOf("params=")) >= 0)
                     {
                         string queryString = arr[1].Substring(index + 7);
-                        if((index = queryString.IndexOf("&")) > 0)
+                        if ((index = queryString.IndexOf("&")) > 0)
                         {
                             queryString = queryString.Substring(0, index);
                         }
@@ -303,7 +309,7 @@ namespace JMS.Applications.HttpMiddlewares
                         _parames = queryString.FromJson<object[]>();
                     }
                 }
-                
+
                 if (inputContentLength > 0)
                 {
                     if (inputContentLength > client.MaxCommandSize)
@@ -386,11 +392,11 @@ namespace JMS.Applications.HttpMiddlewares
                 {
                     client.OutputHttpCode(rex.StatusCode.Value, "error", rex.Error);
                 }
-                else if (ex is RemoteException rex2  )
+                else if (ex is RemoteException rex2)
                 {
                     client.OutputHttpCode(500, "error", rex2.Error);
                 }
-                else if(ex is OperationCanceledException)
+                else if (ex is OperationCanceledException)
                 {
                     client.OutputHttpCode(408, "timeout");
                 }
