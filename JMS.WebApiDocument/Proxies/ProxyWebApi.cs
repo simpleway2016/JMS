@@ -193,6 +193,11 @@ namespace JMS.WebApiDocument.Proxies
                 }
 
             }
+            catch (OperationCanceledException)
+            {
+                context.Response.StatusCode = 408;
+                await context.Response.WriteAsync("timeout");
+            }
             catch (Exception)
             {
                 proxyClient.Dispose();
