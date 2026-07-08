@@ -16,8 +16,11 @@ dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Linux\WebApi -
 "C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.linux.zip %~dp0Linux\WebApi
 
 dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Mac\WebApi --self-contained true --runtime osx-x64
-"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.mac.zip %~dp0Mac\WebApi
+"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.mac_x64.zip %~dp0Mac\WebApi
+
+dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Mac_arm64\WebApi --self-contained true --runtime osx-x64
+"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.mac_arm64.zip %~dp0Mac_arm64\WebApi
 
 dotnet publish JMS.WebApi\JMS.WebApi.csproj -c release -o Publish\Windows\WebApi --self-contained true --runtime win-x64
-"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.win.zip %~dp0Windows\WebApi
+"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0WebApi%version%.win-x64.zip %~dp0Windows\WebApi
 pause

@@ -15,8 +15,11 @@ dotnet publish JMS.Gateway\JMS.Gateway.csproj -c release -o Publish\Linux\Gatewa
 "C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0Gateway%version%.linux.zip %~dp0Linux\Gateway
 
 dotnet publish JMS.Gateway\JMS.Gateway.csproj -c release -o Publish\Mac\Gateway --self-contained true --runtime osx-x64
-"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0Gateway%version%.mac.zip %~dp0Mac\Gateway
+"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0Gateway%version%.mac_x64.zip %~dp0Mac\Gateway
+
+dotnet publish JMS.Gateway\JMS.Gateway.csproj -c release -o Publish\Mac_arm64\Gateway --self-contained true --runtime osx-arm64
+"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0Gateway%version%.mac_arm64.zip %~dp0Mac_arm64\Gateway
 
 dotnet publish JMS.Gateway\JMS.Gateway.csproj -c release -o Publish\Windows\Gateway --self-contained true --runtime win-x64
-"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0Gateway%version%.win.zip %~dp0Windows\Gateway
+"C:\Program Files\WinRAR\winrar.exe" a -ep1 %~dp0Gateway%version%.win_x64.zip %~dp0Windows\Gateway
 pause
