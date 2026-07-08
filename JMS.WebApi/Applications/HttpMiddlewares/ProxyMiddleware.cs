@@ -267,10 +267,10 @@ namespace JMS.Applications.HttpMiddlewares
                     proxyClient.Dispose();
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
                 client.KeepAlive = false;
-                client.OutputHttpCode(408, "timeout");
+                client.OutputHttpCodeAndClose(408, "timeout", ex.Message);
                 proxyClient.Dispose();
             }
             catch (Exception)
