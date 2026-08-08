@@ -173,7 +173,7 @@ namespace JMS.HttpProxy.Applications.Http
             }
             buffer.Append("\r\n");
 
-            if (HttpProxyProgram.Config.Current.LogDetails)
+            if (HttpProxyProgram.Config.Current.LogDetails || config.LogDetails)
             {
                 _logger.LogInformation($"发送至目的地：\r\n{buffer}");
             }
@@ -198,7 +198,7 @@ namespace JMS.HttpProxy.Applications.Http
 
                 if (inputContentLength > 0)
                 {
-                    if (HttpProxyProgram.Config.Current.LogDetails)
+                    if (HttpProxyProgram.Config.Current.LogDetails|| config.LogDetails)
                     {
                         var bs = ArrayPool<byte>.Shared.Rent(inputContentLength);
                         try
@@ -248,7 +248,7 @@ namespace JMS.HttpProxy.Applications.Http
                 requestPathLine = await proxyClient.PipeReader.ReadHeaders(headers);
 
 
-                if (HttpProxyProgram.Config.Current.LogDetails)
+                if (HttpProxyProgram.Config.Current.LogDetails|| config.LogDetails)
                 {
                     _logger.LogInformation($"接收回来的头部：\r\n{requestPathLine}\r\n{headers.ToJsonString(true)}");
                 }
@@ -277,7 +277,7 @@ namespace JMS.HttpProxy.Applications.Http
 
                 if (inputContentLength > 0)
                 {
-                    if (HttpProxyProgram.Config.Current.LogDetails)
+                    if (HttpProxyProgram.Config.Current.LogDetails|| config.LogDetails)
                     {
                         var bs = ArrayPool<byte>.Shared.Rent(inputContentLength);
                         try

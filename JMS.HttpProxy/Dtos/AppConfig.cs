@@ -105,6 +105,7 @@ namespace JMS.HttpProxy.Dtos
         /// </summary>
         public bool SetXForwarded{get;set;} = true;
         public string AccessControlAllowOrigin { get; set; }
+        public bool LogDetails{ get; set; }
     }
 
 
