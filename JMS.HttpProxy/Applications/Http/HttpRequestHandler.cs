@@ -63,7 +63,7 @@ namespace JMS.HttpProxy.Applications.Http
             headers.TryGetValue("X-Forwarded-For", out string x_for);
 
             var remote_ip = ((IPEndPoint)client.Socket.RemoteEndPoint).Address.ToString();
-            var ip = RequestTimeLimter.GetRemoteIpAddress(HttpProxyProgram.Config.Current.ProxyIps , remote_ip, x_for);
+            var ip = RequestTimeLimter.GetRemoteIpAddress(HttpProxyProgram.Config.Current.ProxyIps, remote_ip, x_for);
             if (_requestTimeLimter.OnRequesting(ip) == false)
             {
                 if (HttpProxyProgram.Config.Current.LogDetails)
@@ -81,10 +81,10 @@ namespace JMS.HttpProxy.Applications.Http
             if (headers.TryGetValue("Host", out string host) == false)
             {
                 headers.Clear();
-                client.OutputHttpCode(500,"miss Host");
+                client.OutputHttpCode(500, "miss Host");
                 return;
             }
-               
+
 
             var config = _httpServer.Config.Proxies.FirstOrDefault(m => string.Equals(m.Host, host, StringComparison.OrdinalIgnoreCase));
             if (config == null)
@@ -103,7 +103,7 @@ namespace JMS.HttpProxy.Applications.Http
                 client.KeepAlive = true;
             }
 
-            if(!string.IsNullOrEmpty(config.RootPath))
+            if (!string.IsNullOrEmpty(config.RootPath))
             {
                 await _staticFilesRequestHandler.Handle(client, headers, requestPathLine, config);
                 return;
@@ -118,14 +118,24 @@ namespace JMS.HttpProxy.Applications.Http
 
             if (headers.TryGetValue("X-Forwarded-For", out string xff))
             {
-                headers["X-Forwarded-For"] = $"{xff}, {remote_ip}";
+                if (config.SetXForwarded)
+                {
+                    headers["X-Forwarded-For"] = $"{xff}, {remote_ip}";
+                }
+                else
+                {
+                    headers.Remove("X-Forwarded-For");
+                }
             }
             else
             {
-                headers["X-Forwarded-For"] = remote_ip;
+                if (config.SetXForwarded)
+                {
+                    headers["X-Forwarded-For"] = remote_ip;
+                }
             }
 
-            
+
 
 
             StringBuilder buffer = new StringBuilder();
@@ -133,7 +143,7 @@ namespace JMS.HttpProxy.Applications.Http
             buffer.Append("\r\n");
 
             Uri target_uri = null;
-            if(config.ChangeHostHeader && config.Target.StartsWith("http://") || config.Target.StartsWith("https://"))
+            if (config.ChangeHostHeader && config.Target.StartsWith("http://") || config.Target.StartsWith("https://"))
             {
                 target_uri = new Uri(config.Target);
             }
@@ -188,8 +198,26 @@ namespace JMS.HttpProxy.Applications.Http
 
                 if (inputContentLength > 0)
                 {
-                    //发送upload数据到服务器
-                    await client.ReadAndSend(proxyClient, inputContentLength);
+                    if (HttpProxyProgram.Config.Current.LogDetails)
+                    {
+                        var bs = ArrayPool<byte>.Shared.Rent(inputContentLength);
+                        try
+                        {
+                            await client.ReadDataAsync(bs, 0, inputContentLength);
+                            _logger.LogInformation($"\r\n{Encoding.UTF8.GetString(bs, 0, inputContentLength)}");
+
+                            proxyClient.InnerStream.Write(bs, 0, inputContentLength);
+                        }
+                        finally
+                        {
+                            ArrayPool<byte>.Shared.Return(bs);
+                        }
+                    }
+                    else
+                    {
+                        //发送upload数据到服务器
+                        await client.ReadAndSend(proxyClient, inputContentLength);
+                    }
 
                 }
                 else if (headers.TryGetValue("Transfer-Encoding", out string transferEncoding) && transferEncoding == "chunked")
@@ -231,7 +259,7 @@ namespace JMS.HttpProxy.Applications.Http
                     int.TryParse(headers["Content-Length"], out inputContentLength);
                 }
 
-                
+
                 buffer.Append(requestPathLine);
                 buffer.Append("\r\n");
 
@@ -249,9 +277,28 @@ namespace JMS.HttpProxy.Applications.Http
 
                 if (inputContentLength > 0)
                 {
-                    await proxyClient.ReadAndSend(client, inputContentLength);
+                    if (HttpProxyProgram.Config.Current.LogDetails)
+                    {
+                        var bs = ArrayPool<byte>.Shared.Rent(inputContentLength);
+                        try
+                        {
+                            await proxyClient.ReadDataAsync(bs, 0, inputContentLength);
+                            _logger.LogInformation($"\r\n{Encoding.UTF8.GetString(bs, 0, inputContentLength)}");
+
+                            client.InnerStream.Write(bs, 0, inputContentLength);
+                        }
+                        finally
+                        {
+                            ArrayPool<byte>.Shared.Return(bs);
+                        }
+                    }
+                    else
+                    {
+                        await proxyClient.ReadAndSend(client, inputContentLength);
+                    }
+
                 }
-                else if(headers.TryGetValue("Content-Type",out string resContentType) && resContentType == "text/event-stream")
+                else if (headers.TryGetValue("Content-Type", out string resContentType) && resContentType == "text/event-stream")
                 {
                     proxyClient.ReadTimeout = 0;
                     client.KeepAlive = false;
@@ -291,7 +338,7 @@ namespace JMS.HttpProxy.Applications.Http
                     proxyClient.Dispose();
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 proxyClient.Dispose();
             }

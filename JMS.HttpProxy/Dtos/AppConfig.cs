@@ -100,6 +100,10 @@ namespace JMS.HttpProxy.Dtos
         /// 是否自动修改请求的Host头
         /// </summary>
         public bool ChangeHostHeader { get; set; }
+        /// <summary>
+        /// 是否设置X-Forwarded-For头
+        /// </summary>
+        public bool SetXForwarded{get;set;} = true;
         public string AccessControlAllowOrigin { get; set; }
     }
 
